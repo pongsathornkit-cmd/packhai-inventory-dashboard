@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>สรุปมูลค่าสินค้าคงคลัง Packhai + FlowAccount</title>
+    <style>
+/* __INLINE_STYLES__ */
+    </style>
+  </head>
+  <body>
+    <div class="dashboard-shell">
+      <aside class="sidebar" aria-label="Inventory dashboard navigation">
+        <div class="sidebar-brand">
+          <div class="brand-mark" aria-hidden="true">P</div>
+          <div>
+            <strong>PACKHAI</strong>
+            <span>Inventory Valuation</span>
+          </div>
+        </div>
+
+        <nav class="sidebar-nav">
+          <a href="#executive">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M9 21v-7h6v7" /></svg>
+            ภาพรวมผู้บริหาร
+          </a>
+          <a href="#valuation">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 16V9m4 7V6m4 10v-4" /></svg>
+            วิเคราะห์มูลค่า
+          </a>
+          <a href="#warehouses">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18M5 8v11h14V8M8 8V5h8v3M8 13h8" /></svg>
+            คลังสินค้า
+          </a>
+          <a class="active" href="#inventory-detail">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h12M6 12h12M6 19h12M3 5h.01M3 12h.01M3 19h.01" /></svg>
+            รายการสินค้า
+          </a>
+          <a href="#methodology">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M12 4h9M4 9h16M4 15h16M4 4v16" /></svg>
+            Methodology
+          </a>
+        </nav>
+
+        <div class="sidebar-status">
+          <span>อัปเดตล่าสุด</span>
+          <strong id="sidebarUpdatedAt">-</strong>
+          <small>ข้อมูลพร้อมใช้งาน</small>
+        </div>
+      </aside>
+
+      <div class="app-shell">
+      <header class="report-header">
+        <div class="header-main">
+          <p class="header-label">Executive Summary</p>
+          <h1>สรุปมูลค่าสินค้าคงคลัง</h1>
+          <p class="header-copy">มุมมองสำหรับเจ้าของกิจการ: ติดตามเงินจมใน stock, ความเสี่ยงราคา, คลังที่สร้างมูลค่า และรายการที่ควรตัดสินใจก่อน โดยใช้ราคาขาย Shopee, Lazada, KTW ตามลำดับ</p>
+        </div>
+        <div class="header-actions">
+          <button class="secondary-button" id="syncAll" type="button" title="Sync Packhai stock and seller prices">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8M18 3v5h-5M6 21v-5h5" /></svg>
+            Sync ทั้งหมด
+          </button>
+          <button class="sync-button" id="syncPackhai" type="button" title="Sync Packhai stock">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7h18M5 7v11a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" /></svg>
+            คลัง Packhai
+          </button>
+          <button class="sync-button" id="syncFlowaccount" type="button" title="Sync FlowAccount stock">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 8h8M8 12h8M8 16h5" /></svg>
+            คลัง FlowAccount
+          </button>
+          <button class="sync-button" id="syncSeller" type="button" title="Sync Seller prices">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 7V5h10v2M6 10h12l-1 10H7zM9 14h6" /></svg>
+            ราคาขาย Seller
+          </button>
+          <button class="icon-button" id="printReport" type="button" title="พิมพ์หรือบันทึกเป็น PDF" aria-label="พิมพ์หรือบันทึกเป็น PDF">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 8V3h10v5M7 17H5a2 2 0 0 1-2-2v-4a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2h-2M7 14h10v7H7z" /></svg>
+          </button>
+          <button class="primary-button" id="downloadCsv" type="button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
+            Export CSV
+          </button>
+        </div>
+      </header>
+
+      <main>
+        <section class="sync-status" id="syncStatus" hidden></section>
+
+        <section class="owner-command" id="executive">
+          <div>
+            <span class="command-label">Executive Summary</span>
+            <h2>ภาพรวมที่ควรดูก่อนประชุม</h2>
+            <p id="ownerSummaryLine"></p>
+          </div>
+          <div class="owner-command-grid" id="ownerCommandPanel"></div>
+        </section>
+
+        <section class="freshness-band" id="freshnessBand"></section>
+
+        <section class="kpi-grid" id="kpiGrid"></section>
+
+        <section class="owner-analytics-grid" id="ownerAnalyticsGrid"></section>
+
+        <section class="strategy-layout" id="valuation">
+          <div class="strategy-panel">
+            <div class="section-heading compact">
+              <div>
+                <h2>สัญญาณสำหรับเจ้าของ</h2>
+                <p>สิ่งที่ควรตัดสินใจจากข้อมูลปัจจุบัน</p>
+              </div>
+            </div>
+            <div class="decision-list" id="decisionSignals"></div>
+          </div>
+
+          <div class="strategy-panel">
+            <div class="section-heading compact">
+              <div>
+                <h2>ควรเพิ่มการวิเคราะห์อะไรต่อ</h2>
+                <p>Metric ที่ช่วยตัดสินใจเรื่องเงินสด กำไร และการสั่งซื้อ</p>
+              </div>
+            </div>
+            <div class="metric-roadmap" id="metricRoadmap"></div>
+          </div>
+        </section>
+
+        <section class="warehouse-products-section" id="warehouses">
+          <div class="section-heading">
+            <div>
+              <h2>สินค้าแยกตามคลัง</h2>
+              <p>สรุปรายการสินค้ามูลค่าสูงสุดของแต่ละคลัง เพื่อดูภาพรวมแยก Packhai, ซ.เจริญกิจ และสุขสวัสดิ์</p>
+            </div>
+          </div>
+          <div class="warehouse-product-grid" id="warehouseProductGroups"></div>
+        </section>
+
+        <section class="insight-layout">
+          <div class="panel span-7">
+            <div class="section-heading">
+              <div>
+                <h2>แหล่งราคาขาย</h2>
+                <p>นับตาม SKU แถวสินค้า และมูลค่าที่ตีราคาได้</p>
+              </div>
+            </div>
+            <div class="source-bars" id="sourceBars"></div>
+            <div class="subsection-heading">
+              <strong>คลังสินค้า</strong>
+              <span>มูลค่าตามแหล่ง stock ที่นำมาคำนวณ</span>
+            </div>
+            <div class="source-bars warehouse-bars" id="warehouseBars"></div>
+          </div>
+
+          <div class="panel span-5">
+            <div class="section-heading">
+              <div>
+                <h2>สินค้า Top Value</h2>
+                <p>เรียงตามมูลค่าคงเหลือสูงสุด</p>
+              </div>
+            </div>
+            <ol class="top-list" id="topProducts"></ol>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="section-heading">
+            <div>
+              <h2>มูลค่าตามกลุ่ม SKU</h2>
+              <p>กลุ่มที่สร้างมูลค่าคงเหลือสูงสุดในคลังที่เลือกจาก Packhai และ FlowAccount</p>
+            </div>
+          </div>
+          <div class="prefix-grid" id="prefixGrid"></div>
+        </section>
+
+        <section class="table-section" id="inventory-detail">
+          <div class="table-header">
+            <div>
+              <h2>รายละเอียดสินค้าในคลัง</h2>
+              <p id="tableSubtitle">ค้นหาและเรียงลำดับข้อมูลสินค้า</p>
+            </div>
+            <div class="table-tools">
+              <label class="search-box" for="searchInput">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.35-4.35M10.5 18a7.5 7.5 0 1 1 0-15 7.5 7.5 0 0 1 0 15z" /></svg>
+                <input id="searchInput" type="search" placeholder="ค้นหาชื่อสินค้า / SKU" autocomplete="off" />
+              </label>
+              <button class="secondary-button" id="sortValue" type="button">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v16m0 0 4-4m-4 4-4-4M17 20V4m0 0 4 4m-4-4-4 4" /></svg>
+                เรียงตามมูลค่าสูงสุด
+              </button>
+              <select id="sortSelect" aria-label="เลือกการเรียงลำดับ">
+                <option value="valueDesc">มูลค่าสูงสุด</option>
+                <option value="qtyDesc">จำนวนคงเหลือสูงสุด</option>
+                <option value="priceDesc">ราคาขายสูงสุด</option>
+                <option value="nameAsc">ชื่อสินค้า A-Z</option>
+                <option value="sourceAsc">แหล่งราคา</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-label">แยกตามคลัง</div>
+            <div class="filter-row" id="warehouseFilters"></div>
+          </div>
+
+          <div class="filter-block">
+            <div class="filter-label">แหล่งราคา</div>
+            <div class="filter-row" id="sourceFilters"></div>
+          </div>
+
+          <div class="table-wrap">
+            <table id="inventoryTable">
+              <thead>
+                <tr>
+                  <th>รูป</th>
+                  <th>SKU</th>
+                  <th>คลัง</th>
+                  <th>สินค้า</th>
+                  <th class="num">คงเหลือ</th>
+                  <th class="num">รอจัด</th>
+                  <th class="num">พร้อมขาย</th>
+                  <th class="num">ราคาขาย</th>
+                  <th>แหล่งราคา</th>
+                  <th class="num">มูลค่าคงเหลือ</th>
+                </tr>
+              </thead>
+              <tbody id="inventoryRows"></tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <p id="paginationStatus"></p>
+            <div>
+              <button class="ghost-button" id="prevPage" type="button">ก่อนหน้า</button>
+              <button class="ghost-button" id="nextPage" type="button">ถัดไป</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="methodology" id="methodology">
+          <div>
+            <h2>Methodology</h2>
+            <p id="methodologyText"></p>
+          </div>
+          <div class="source-table" id="sourceTable"></div>
+        </section>
+      </main>
+      </div>
+    </div>
+
+    <div class="detail-modal" id="productDetailModal" hidden>
+      <div class="detail-backdrop" data-close-detail></div>
+      <section class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
+        <button class="icon-button detail-close" id="closeProductDetail" type="button" title="ปิดรายละเอียดสินค้า" aria-label="ปิดรายละเอียดสินค้า">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+        <div id="productDetailContent"></div>
+      </section>
+    </div>
+
+    <script>
+/* __INLINE_DATA__ */
+    </script>
+    <script>
+/* __INLINE_APP__ */
+    </script>
+  </body>
+</html>

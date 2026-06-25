@@ -1,0 +1,1096 @@
+(function () {
+  const data = window.__PACKHAI_DASHBOARD__;
+  const rows = data.rows || [];
+  const stockRows = rows.filter((row) => Number(row.quantity || 0) > 0);
+  const rowByDetailId = new Map();
+  const detailIdByIdentity = new Map();
+  function productIdentity(row) {
+    return [
+      row?.stockSource || "",
+      row?.warehouseId ?? "",
+      row?.rowNo ?? "",
+      row?.sku || "",
+      row?.quantity ?? "",
+      row?.inventoryValue ?? "",
+    ].join("|");
+  }
+  rows.forEach((row, index) => {
+    row.detailId = `item-${index}`;
+    rowByDetailId.set(row.detailId, row);
+    detailIdByIdentity.set(productIdentity(row), row.detailId);
+  });
+  const pageSize = 50;
+  const state = {
+    query: "",
+    source: "All",
+    warehouse: "All",
+    sort: "valueDesc",
+    page: 1,
+  };
+
+  const sourceColors = {
+    Shopee: "Shopee",
+    Lazada: "Lazada",
+    KTW: "KTW",
+    Missing: "Missing",
+  };
+
+  const fmtInt = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 });
+  const fmtQty = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 2 });
+  const fmtBaht = new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
+    maximumFractionDigits: 0,
+  });
+  const fmtBaht2 = new Intl.NumberFormat("th-TH", {
+    style: "currency",
+    currency: "THB",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+  const fmtPercent = new Intl.NumberFormat("th-TH", {
+    style: "percent",
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+  });
+
+  function $(id) {
+    return document.getElementById(id);
+  }
+
+  function escapeHtml(value) {
+    return String(value ?? "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function productImage(row, variant = "table") {
+    const label = `รูปสินค้า ${row.sku || row.name || ""}`.trim();
+    if (!row.imageUrl) {
+      return `<div class="product-thumb ${variant} missing" aria-label="ไม่มีรูป"></div>`;
+    }
+    return `
+      <div class="product-thumb ${variant}" title="${escapeHtml(row.imageSource || row.priceSource || "")}">
+        <img src="${escapeHtml(row.imageUrl)}" alt="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('missing'); this.remove();" />
+      </div>`;
+  }
+
+  function compactText(value) {
+    return String(value ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  }
+
+  function sourceLabel(source) {
+    if (source === "Shopee") return "Shopee";
+    if (source === "Lazada") return "Lazada";
+    if (source === "KTW") return "KTW";
+    return "ไม่พบราคา";
+  }
+
+  function safePercent(value) {
+    return Number.isFinite(value) ? fmtPercent.format(value) : "0.0%";
+  }
+
+  function getOwnerAnalytics() {
+    const summary = data.summary || {};
+    const totalValue =
+      Number(summary.totalInventoryValue || 0) ||
+      stockRows.reduce((sum, row) => sum + Number(row.inventoryValue || 0), 0);
+    const positiveRows = Number(summary.positiveStockRows || stockRows.length || 0);
+    const valuedRows = Number(summary.valuedPositiveRows || 0);
+    const coverage = positiveRows ? valuedRows / positiveRows : 0;
+    const topRows = [...stockRows].sort((a, b) => b.inventoryValue - a.inventoryValue || b.quantity - a.quantity);
+    const top10Value = topRows.slice(0, 10).reduce((sum, row) => sum + Number(row.inventoryValue || 0), 0);
+    const top10Share = totalValue ? top10Value / totalValue : 0;
+    const top1Value = topRows[0]?.inventoryValue || 0;
+    const top1Share = totalValue ? top1Value / totalValue : 0;
+    const missingSource = (data.sourceBreakdown || []).find((item) => item.source === "Missing") || {};
+    const warehouses = data.warehouseBreakdown || [];
+    const mainWarehouse = warehouses.reduce((max, item) => (Number(item.value || 0) > Number(max.value || 0) ? item : max), warehouses[0] || {});
+    const mainWarehouseShare = totalValue ? Number(mainWarehouse.value || 0) / totalValue : 0;
+    const waitingValue =
+      Number(summary.totalWaitingValue || 0) ||
+      stockRows.reduce((sum, row) => sum + Number(row.waitingValue || 0), 0);
+    const waitingQty =
+      Number(summary.totalWaiting || 0) || stockRows.reduce((sum, row) => sum + Number(row.waiting || 0), 0);
+    const avgValuePerSku = positiveRows ? totalValue / positiveRows : 0;
+    return {
+      totalValue,
+      positiveRows,
+      valuedRows,
+      coverage,
+      topRows,
+      top10Value,
+      top10Share,
+      top1Value,
+      top1Share,
+      missingRows: Number(missingSource.positiveStockRows || 0),
+      missingQty: Number(missingSource.quantity || 0),
+      mainWarehouse,
+      mainWarehouseShare,
+      waitingValue,
+      waitingQty,
+      avgValuePerSku,
+    };
+  }
+
+  function warehouseKey(item) {
+    const warehouseId = item?.warehouseId ?? item?.warehouseName ?? "";
+    return `${item?.stockSource || ""}|${warehouseId}`;
+  }
+
+  function warehouseLabel(item) {
+    return item?.warehouseName || item?.stockSourceLabel || item?.stockSource || "-";
+  }
+
+  function selectedWarehouseLabel() {
+    if (state.warehouse === "All") return "ทุกคลัง";
+    const selected = (data.warehouseBreakdown || []).find((item) => warehouseKey(item) === state.warehouse);
+    return warehouseLabel(selected);
+  }
+
+  function valueOrDash(value) {
+    if (value == null || value === "") return "-";
+    return value;
+  }
+
+  function detailIdForRow(row) {
+    if (row.detailId) return row.detailId;
+    const matchedId = detailIdByIdentity.get(productIdentity(row));
+    if (matchedId) {
+      row.detailId = matchedId;
+      return matchedId;
+    }
+
+    const fallback = rows.find(
+      (item) =>
+        item.sku === row.sku &&
+        item.stockSource === row.stockSource &&
+        String(item.warehouseId ?? "") === String(row.warehouseId ?? "") &&
+        Number(item.quantity || 0) === Number(row.quantity || 0)
+    );
+    if (fallback?.detailId) {
+      row.detailId = fallback.detailId;
+      return fallback.detailId;
+    }
+
+    const detailId = `detail-${rowByDetailId.size}`;
+    row.detailId = detailId;
+    rowByDetailId.set(detailId, row);
+    return detailId;
+  }
+
+  function formatDateTime(value) {
+    if (!value) return "-";
+    try {
+      return new Intl.DateTimeFormat("th-TH", {
+        timeZone: "Asia/Bangkok",
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      }).format(new Date(value));
+    } catch {
+      return "-";
+    }
+  }
+
+  function matchLabel(value) {
+    if (value === "exact") return "ตรง SKU";
+    if (value === "fallback") return "จับคู่สำรอง";
+    if (value === "missing") return "ไม่พบราคา";
+    return valueOrDash(value);
+  }
+
+  function detailField(label, value) {
+    return `
+      <div class="detail-field">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(valueOrDash(value))}</strong>
+      </div>`;
+  }
+
+  function detailMetric(label, value, highlight = false) {
+    return `
+      <article class="detail-metric ${highlight ? "highlight" : ""}">
+        <span>${escapeHtml(label)}</span>
+        <strong>${escapeHtml(valueOrDash(value))}</strong>
+      </article>`;
+  }
+
+  function openProductDetailById(detailId) {
+    const row = rowByDetailId.get(detailId);
+    if (!row) return;
+    openProductDetail(row);
+  }
+
+  function openProductDetail(row) {
+    const modal = $("productDetailModal");
+    const content = $("productDetailContent");
+    if (!modal || !content) return;
+
+    const sourceLink = row.sourceUrl
+      ? `<a class="detail-source-link" href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noreferrer">เปิดแหล่งราคา</a>`
+      : "";
+    const priceText = row.price > 0 ? fmtBaht2.format(row.price) : "-";
+    const inventoryText = fmtBaht.format(row.inventoryValue || 0);
+    const availableText = fmtQty.format(row.available || 0);
+
+    content.innerHTML = `
+      <div class="detail-hero">
+        <div class="detail-image">${productImage(row, "detail")}</div>
+        <div class="detail-title-block">
+          <p class="detail-kicker">${escapeHtml(row.stockSourceLabel || `${row.stockSource || "-"} - ${row.warehouseName || "-"}`)}</p>
+          <h2 id="detailTitle">${escapeHtml(row.name || "-")}</h2>
+          <div class="detail-sku">
+            <span>SKU ${escapeHtml(row.sku || "-")}</span>
+            <span>Barcode ${escapeHtml(row.barcode || "-")}</span>
+            <span class="badge ${sourceColors[row.priceSource] || "Missing"}">${sourceLabel(row.priceSource)}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="detail-metrics">
+        ${detailMetric("มูลค่าคงเหลือ", inventoryText, true)}
+        ${detailMetric("คงเหลือ", `${fmtQty.format(row.quantity || 0)} หน่วย`)}
+        ${detailMetric("พร้อมขาย", `${availableText} หน่วย`)}
+        ${detailMetric("ราคาขาย", priceText)}
+      </div>
+
+      <div class="detail-sections">
+        <section class="detail-block">
+          <h3>คลังและจำนวน</h3>
+          ${detailField("แหล่ง stock", row.stockSource || "-")}
+          ${detailField("คลัง", row.warehouseName || "-")}
+          ${detailField("รอจัด/รอส่ง", `${fmtQty.format(row.waiting || 0)} หน่วย`)}
+          ${detailField("รอนำเข้า", `${fmtQty.format(row.waitImport || 0)} หน่วย`)}
+          ${detailField("จำนวนที่ใช้ตีมูลค่า", `${fmtQty.format(row.stockForValue || row.quantity || 0)} หน่วย`)}
+        </section>
+
+        <section class="detail-block">
+          <h3>ราคาและแหล่งข้อมูล</h3>
+          ${detailField("แหล่งราคา", row.priceSourceLabel || sourceLabel(row.priceSource))}
+          ${detailField("วิธีจับคู่ราคา", matchLabel(row.priceMatchType))}
+          ${detailField("SKU จากแหล่งราคา", row.sourceSku || "-")}
+          ${detailField("จำนวนตัวเลือกที่พบ", row.priceCandidateCount != null ? fmtInt.format(row.priceCandidateCount) : "-")}
+          ${detailField("อัปเดตราคา", formatDateTime(row.sourceCapturedAt))}
+          ${sourceLink}
+        </section>
+      </div>
+
+      <section class="detail-block detail-wide">
+        <h3>ชื่อสินค้าจากแหล่งราคา</h3>
+        <p>${escapeHtml(row.sourceTitle || row.name || "-")}</p>
+      </section>
+
+      ${
+        row.note
+          ? `<section class="detail-block detail-wide"><h3>หมายเหตุ</h3><p>${escapeHtml(row.note)}</p></section>`
+          : ""
+      }`;
+
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    $("closeProductDetail")?.focus();
+  }
+
+  function closeProductDetail() {
+    const modal = $("productDetailModal");
+    if (!modal) return;
+    modal.hidden = true;
+    document.body.classList.remove("modal-open");
+  }
+
+  const syncLabels = {
+    all: "Sync ทั้งหมด",
+    packhai: "Sync คลัง Packhai",
+    flowaccount: "Sync คลัง FlowAccount",
+    seller: "Sync ราคาขาย Seller",
+  };
+  let syncPollTimer = null;
+  let syncStartedHere = false;
+  let syncApiUnavailable =
+    window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
+
+  function setStaticSyncMode(enabled) {
+    syncButtons().forEach((button) => {
+      button.classList.toggle("is-static", enabled);
+      if (enabled) {
+        button.title = "Sync works on the local dashboard server only";
+        button.setAttribute("aria-label", `${button.textContent.trim()} - local sync only`);
+      }
+    });
+  }
+
+  function renderStaticSyncNotice(type = "all") {
+    const el = $("syncStatus");
+    if (!el) return;
+    setStaticSyncMode(true);
+    el.hidden = false;
+    el.className = "sync-status warning";
+    const label = syncLabels[type] || "Sync data";
+    el.innerHTML = `
+      <div>
+        <strong>Online report mode · ${escapeHtml(label)}</strong>
+        <span>GitHub Pages shows the latest published dashboard snapshot. Run Sync on the main local machine, rebuild, then publish the updated dist files to GitHub.</span>
+        <small>The online website is read-only because seller and warehouse sync need local browser sessions and private tokens.</small>
+      </div>
+      <code>GitHub Pages</code>`;
+  }
+
+  function formatSyncTime(value) {
+    if (!value) return "";
+    return new Intl.DateTimeFormat("th-TH", {
+      timeZone: "Asia/Bangkok",
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  }
+
+  function syncButtons() {
+    return [$("syncAll"), $("syncPackhai"), $("syncFlowaccount"), $("syncSeller")].filter(Boolean);
+  }
+
+  function setSyncButtons(status) {
+    const running = Boolean(status?.running);
+    syncButtons().forEach((button) => {
+      button.disabled = running;
+      button.classList.toggle(
+        "is-running",
+        running &&
+          ((status.type === "all" && button.id === "syncAll") ||
+            (status.type === "packhai" && button.id === "syncPackhai") ||
+            (status.type === "flowaccount" && button.id === "syncFlowaccount") ||
+            (status.type === "seller" && button.id === "syncSeller"))
+      );
+    });
+  }
+
+  function renderSyncStatus(status, showIdle = false) {
+    const el = $("syncStatus");
+    if (!el) return;
+    setSyncButtons(status);
+    if (!status || (!showIdle && !status.running && status.ok == null)) {
+      el.hidden = true;
+      return;
+    }
+
+    el.hidden = false;
+    el.className = `sync-status ${
+      status.running ? "running" : status.warning ? "warning" : status.ok === false ? "failed" : "passed"
+    }`;
+    const title = status.running
+      ? "กำลัง Sync ข้อมูล"
+      : status.warning && status.ok === false
+      ? "ยัง Sync ไม่ได้"
+      : status.warning
+      ? "Sync ข้อมูลสำเร็จบางส่วน"
+      : status.ok
+      ? "Sync ข้อมูลสำเร็จ"
+      : "Sync ข้อมูลไม่สำเร็จ";
+    const label = syncLabels[status.type] || "Sync ข้อมูล";
+    const stepText = status.steps?.length
+      ? status.steps
+          .map((step) => `${step.name}: ${step.skipped ? "Skipped" : step.code === 0 ? "OK" : "Error"}`)
+          .join(" · ")
+      : "รอเริ่มประมวลผล";
+    const timeText = status.finishedAt
+      ? `เสร็จ ${formatSyncTime(status.finishedAt)}`
+      : status.startedAt
+      ? `เริ่ม ${formatSyncTime(status.startedAt)}`
+      : "";
+
+    el.innerHTML = `
+      <div>
+        <strong>${escapeHtml(title)} · ${escapeHtml(label)}</strong>
+        <span>${escapeHtml(status.message || "")}</span>
+        <small>${escapeHtml(stepText)}</small>
+      </div>
+      <code>${escapeHtml(timeText)}</code>`;
+  }
+
+  async function getSyncStatus(showIdle = false) {
+    if (syncApiUnavailable) {
+      setStaticSyncMode(true);
+      if (showIdle) renderStaticSyncNotice();
+      return;
+    }
+    try {
+      const response = await fetch("/api/sync/status", { cache: "no-store" });
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      const status = await response.json();
+      renderSyncStatus(status, showIdle);
+      if (status.running) {
+        clearTimeout(syncPollTimer);
+        syncPollTimer = setTimeout(() => getSyncStatus(true), 1500);
+      } else if (syncStartedHere && status.ok) {
+        syncStartedHere = false;
+        setTimeout(() => window.location.reload(), 1200);
+      }
+    } catch (error) {
+      syncApiUnavailable = true;
+      setStaticSyncMode(true);
+      if (!showIdle) return;
+      renderSyncStatus({ ok: false, message: `ไม่สามารถอ่านสถานะ Sync ได้: ${error.message}`, steps: [] }, true);
+    }
+  }
+
+  async function startSync(type) {
+    if (syncApiUnavailable) {
+      renderStaticSyncNotice(type);
+      return;
+    }
+    clearTimeout(syncPollTimer);
+    syncStartedHere = true;
+    renderSyncStatus({ running: true, type, message: "ส่งคำสั่ง Sync ไปที่ server แล้ว", steps: [] }, true);
+    try {
+      const response = await fetch(`/api/sync/${type}`, { method: "POST", cache: "no-store" });
+      if (!response.ok) {
+        syncApiUnavailable = true;
+        syncStartedHere = false;
+        renderStaticSyncNotice(type);
+        return;
+      }
+      const status = await response.json();
+      renderSyncStatus(status, true);
+      getSyncStatus(true);
+    } catch (error) {
+      syncStartedHere = false;
+      renderSyncStatus({ ok: false, type, message: `เริ่ม Sync ไม่ได้: ${error.message}`, steps: [] }, true);
+    }
+  }
+
+  function renderFreshness() {
+    const { sources } = data.metadata;
+    const flowWarehouses = (sources.flowaccount?.warehouses || []).map((item) => item.name).join(" / ");
+    $("freshnessBand").innerHTML = [
+      {
+        title: "ข้อมูลคลัง Packhai",
+        body: `${sources.packhai.exportedAtLabel || "-"} · ${fmtInt.format(sources.packhai.rowCount || 0)} แถว`,
+      },
+      {
+        title: "ข้อมูลคลัง FlowAccount",
+        body: `${sources.flowaccount?.exportedAtLabel || "-"} · ${flowWarehouses || "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์"}`,
+      },
+      {
+        title: "ราคาขาย Seller",
+        body: `Shopee ${sources.shopee.exportedAtLabel || "-"} / Lazada ${sources.lazada.exportedAtLabel || "-"}`,
+      },
+      {
+        title: "กติกาตีมูลค่า",
+        body: "ใช้ราคา Shopee ก่อน ถ้าไม่พบจึงใช้ Lazada และ KTW ตามลำดับ",
+      },
+    ]
+      .map((item) => `<div class="freshness-item"><strong>${item.title}</strong><span>${item.body}</span></div>`)
+      .join("");
+  }
+
+  function renderSidebarStatus() {
+    const target = $("sidebarUpdatedAt");
+    if (!target) return;
+    const sources = data.metadata?.sources || {};
+    const latestLabel =
+      sources.flowaccount?.exportedAtLabel ||
+      sources.packhai?.exportedAtLabel ||
+      sources.shopee?.exportedAtLabel ||
+      sources.lazada?.exportedAtLabel ||
+      "-";
+    target.textContent = latestLabel;
+  }
+
+  function renderKpis() {
+    const s = data.summary;
+    const coverage = s.positiveStockRows ? (s.valuedPositiveRows / s.positiveStockRows) * 100 : 0;
+    const cards = [
+      {
+        cls: "main",
+        label: "มูลค่าคงเหลือรวม",
+        value: fmtBaht.format(s.totalInventoryValue),
+        sub: `คำนวณจาก ${fmtInt.format(s.valuedPositiveRows)} SKU ที่มี stock และพบราคา`,
+      },
+      {
+        label: "จำนวนคงเหลือในคลัง",
+        value: fmtQty.format(s.totalQuantity),
+        sub: `${fmtInt.format(s.positiveStockRows)} แถวสินค้ามีจำนวนคงเหลือมากกว่า 0`,
+      },
+      {
+        label: "Coverage ราคาสำหรับ stock",
+        value: `${coverage.toFixed(1)}%`,
+        sub: `${fmtInt.format(s.missingPositiveRows)} แถว stock บวกยังไม่มีราคา`,
+      },
+      {
+        label: "มูลค่ารอจัดส่ง",
+        value: fmtBaht.format(s.totalWaitingValue),
+        sub: `จำนวนรอจัด/รอส่ง ${fmtQty.format(s.totalWaiting)} หน่วย`,
+      },
+    ];
+    $("kpiGrid").innerHTML = cards
+      .map(
+        (card) => `
+        <article class="kpi-card ${card.cls || ""}">
+          <div class="label">${card.label}</div>
+          <div class="value">${card.value}</div>
+          <div class="sub">${card.sub}</div>
+        </article>`
+      )
+      .join("");
+  }
+
+  function renderOwnerCommand() {
+    const a = getOwnerAnalytics();
+    $("ownerSummaryLine").textContent = `มีสินค้า stock บวก ${fmtInt.format(a.positiveRows)} รายการ มูลค่ารวม ${fmtBaht.format(
+      a.totalValue
+    )} โดย ${warehouseLabel(a.mainWarehouse)} ถือ ${safePercent(a.mainWarehouseShare)} ของมูลค่ารวม และ Top 10 SKU ถือ ${safePercent(
+      a.top10Share
+    )} ของเงินจมใน stock`;
+
+    const commandItems = [
+      {
+        label: "เงินจมใน stock",
+        value: fmtBaht.format(a.totalValue),
+        note: `${fmtQty.format(data.summary.totalQuantity || 0)} หน่วย`,
+      },
+      {
+        label: "Top 10 SKU",
+        value: safePercent(a.top10Share),
+        note: `${fmtBaht.format(a.top10Value)} ของมูลค่ารวม`,
+      },
+      {
+        label: "ยังไม่มีราคาขาย",
+        value: fmtInt.format(a.missingRows),
+        note: `${fmtQty.format(a.missingQty)} หน่วยต้องตรวจ`,
+      },
+    ];
+
+    $("ownerCommandPanel").innerHTML = commandItems
+      .map(
+        (item) => `
+        <article class="command-tile">
+          <span>${escapeHtml(item.label)}</span>
+          <strong>${escapeHtml(item.value)}</strong>
+          <small>${escapeHtml(item.note)}</small>
+        </article>`
+      )
+      .join("");
+  }
+
+  function renderOwnerAnalytics() {
+    const a = getOwnerAnalytics();
+    const cards = [
+      {
+        tone: "cash",
+        label: "Cash Tied In Inventory",
+        value: fmtBaht.format(a.totalValue),
+        body: `เฉลี่ย ${fmtBaht.format(a.avgValuePerSku)} ต่อรายการที่มี stock`,
+        bar: 100,
+      },
+      {
+        tone: "risk",
+        label: "Concentration Risk",
+        value: safePercent(a.top10Share),
+        body: `Top 10 SKU ถือมูลค่า ${fmtBaht.format(a.top10Value)}`,
+        bar: a.top10Share * 100,
+      },
+      {
+        tone: "coverage",
+        label: "Price Coverage",
+        value: safePercent(a.coverage),
+        body: `${fmtInt.format(a.missingRows)} รายการ / ${fmtQty.format(a.missingQty)} หน่วย ยังไม่มีราคา`,
+        bar: a.coverage * 100,
+      },
+      {
+        tone: "ops",
+        label: "Waiting To Ship",
+        value: fmtBaht.format(a.waitingValue),
+        body: `${fmtQty.format(a.waitingQty)} หน่วยอยู่ในสถานะรอจัด/รอส่ง`,
+        bar: a.totalValue ? (a.waitingValue / a.totalValue) * 100 : 0,
+      },
+    ];
+
+    $("ownerAnalyticsGrid").innerHTML = cards
+      .map(
+        (card) => `
+        <article class="owner-card ${card.tone}">
+          <div>
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(card.value)}</strong>
+            <p>${escapeHtml(card.body)}</p>
+          </div>
+          <div class="owner-card-bar"><i style="width:${Math.max(2, Math.min(100, card.bar))}%"></i></div>
+        </article>`
+      )
+      .join("");
+  }
+
+  function renderDecisionSignals() {
+    const a = getOwnerAnalytics();
+    const signals = [
+      {
+        title: "ตรวจสินค้ามูลค่าสูงก่อน",
+        value: `Top 10 = ${safePercent(a.top10Share)}`,
+        text: "ถ้าสินค้ากลุ่มนี้ราคาไม่ถูกหรือ stock ผิด มูลค่ารวมจะเพี้ยนมากที่สุด",
+      },
+      {
+        title: "ปิดช่องว่างสินค้าที่ไม่มีราคา",
+        value: `${fmtInt.format(a.missingRows)} รายการ`,
+        text: "ควรเติมราคาขายหรือจับคู่ SKU เพิ่ม เพื่อให้มูลค่าคลังไม่ต่ำกว่าความจริง",
+      },
+      {
+        title: "ดูคลังที่ถือเงินมากที่สุด",
+        value: `${warehouseLabel(a.mainWarehouse)} ${safePercent(a.mainWarehouseShare)}`,
+        text: "ใช้จัดลำดับตรวจนับ stock และวางแผนย้าย/เติมสินค้าในคลังรอง",
+      },
+      {
+        title: "ติดตามงานรอจัดส่ง",
+        value: fmtBaht.format(a.waitingValue),
+        text: "มูลค่านี้คือ stock ที่กำลังออกจากคลัง ควรเทียบกับคำสั่งซื้อและ SLA รายวัน",
+      },
+    ];
+
+    $("decisionSignals").innerHTML = signals
+      .map(
+        (item) => `
+        <article class="decision-item">
+          <div>
+            <strong>${escapeHtml(item.title)}</strong>
+            <p>${escapeHtml(item.text)}</p>
+          </div>
+          <b>${escapeHtml(item.value)}</b>
+        </article>`
+      )
+      .join("");
+  }
+
+  function renderMetricRoadmap() {
+    const metrics = [
+      {
+        name: "Gross Margin / GM%",
+        formula: "ราคาขาย - ต้นทุนสินค้า - fee platform - ค่าส่งที่ร้านรับ",
+        need: "ต้องเพิ่มต้นทุนต่อ SKU, ค่าธรรมเนียม Shopee/Lazada, โปรโมชัน/ค่าส่ง",
+      },
+      {
+        name: "Sales Velocity",
+        formula: "ยอดขายต่อวันเฉลี่ย 30/60/90 วัน แยก SKU และช่องทางขาย",
+        need: "ต้องเพิ่ม order history จาก Shopee, Lazada, POS หรือ ERP",
+      },
+      {
+        name: "Days Of Inventory",
+        formula: "จำนวนคงเหลือ / ยอดขายเฉลี่ยต่อวัน",
+        need: "ใช้คู่กับ Sales Velocity เพื่อบอกว่าสินค้าอยู่ได้อีกกี่วัน",
+      },
+      {
+        name: "Dead Stock Risk",
+        formula: "stock ที่ไม่มียอดขายใน X วัน หรือไม่เคลื่อนไหวนานเกินเกณฑ์",
+        need: "ต้องเพิ่มวันที่รับเข้า, วันที่ขายล่าสุด, movement รายคลัง",
+      },
+      {
+        name: "Reorder Point",
+        formula: "(ยอดขายเฉลี่ยต่อวัน x lead time) + safety stock",
+        need: "ต้องเพิ่ม lead time supplier, MOQ, safety stock และยอดขายเฉลี่ย",
+      },
+      {
+        name: "GMROI",
+        formula: "กำไรขั้นต้น / มูลค่าต้นทุนสินค้าคงคลังเฉลี่ย",
+        need: "ต้องมีต้นทุนสินค้าและยอดขายตามช่วงเวลา เพื่อวัดว่า stock ใช้เงินคุ้มไหม",
+      },
+    ];
+
+    $("metricRoadmap").innerHTML = metrics
+      .map(
+        (item) => `
+        <article class="metric-item">
+          <strong>${escapeHtml(item.name)}</strong>
+          <span>${escapeHtml(item.formula)}</span>
+          <p>${escapeHtml(item.need)}</p>
+        </article>`
+      )
+      .join("");
+  }
+
+  function renderSourceBars() {
+    const maxValue = Math.max(...data.sourceBreakdown.map((item) => item.value), 1);
+    $("sourceBars").innerHTML = data.sourceBreakdown
+      .map((item) => {
+        const width = Math.max(1, (item.value / maxValue) * 100);
+        return `
+          <div class="source-row">
+            <div class="source-label">${sourceLabel(item.source)}</div>
+            <div class="bar-track"><div class="bar-fill ${item.source}" style="width:${width}%"></div></div>
+            <div class="source-value">${fmtBaht.format(item.value)} · ${fmtInt.format(item.positiveStockRows)} SKU</div>
+          </div>`;
+      })
+      .join("");
+  }
+
+  function renderWarehouseBars() {
+    const warehouses = data.warehouseBreakdown || [];
+    const maxValue = Math.max(...warehouses.map((item) => item.value), 1);
+    $("warehouseBars").innerHTML = warehouses
+      .map((item) => {
+        const width = Math.max(1, (item.value / maxValue) * 100);
+        return `
+          <div class="source-row">
+            <div class="source-label">${escapeHtml(item.warehouseName || item.stockSource || "-")}</div>
+            <div class="bar-track"><div class="bar-fill" style="width:${width}%"></div></div>
+            <div class="source-value">${fmtBaht.format(item.value)} · ${fmtInt.format(item.positiveStockRows)} SKU</div>
+          </div>`;
+      })
+      .join("");
+  }
+
+  function renderWarehouseProductGroups() {
+    const warehouses = data.warehouseBreakdown || [];
+    const target = $("warehouseProductGroups");
+    if (!target) return;
+    if (!warehouses.length) {
+      target.innerHTML = `<p class="empty-note">ยังไม่มีข้อมูลคลังสินค้า</p>`;
+      return;
+    }
+
+    target.innerHTML = warehouses
+      .map((warehouse) => {
+        const key = warehouseKey(warehouse);
+        const items = rows
+          .filter((row) => warehouseKey(row) === key && row.quantity > 0)
+          .sort((a, b) => b.inventoryValue - a.inventoryValue || b.quantity - a.quantity)
+          .slice(0, 5);
+
+        return `
+          <article class="warehouse-product-card">
+            <header>
+              <div>
+                <p>${escapeHtml(warehouse.stockSource || "-")}</p>
+                <h3>${escapeHtml(warehouseLabel(warehouse))}</h3>
+              </div>
+              <strong>${fmtBaht.format(warehouse.value || 0)}</strong>
+            </header>
+            <div class="warehouse-product-meta">
+              <span>${fmtQty.format(warehouse.quantity || 0)} หน่วย</span>
+              <span>${fmtInt.format(warehouse.positiveStockRows || 0)} รายการมี stock</span>
+              <span>ซ่อนรายการคงเหลือ 0</span>
+            </div>
+            <ol class="warehouse-product-list">
+              ${
+                items.length
+                  ? items
+                      .map(
+                        (row) => `
+                          <li class="detail-list-item" data-detail-id="${escapeHtml(detailIdForRow(row))}" tabindex="0" role="button" aria-label="ดูรายละเอียดสินค้า ${escapeHtml(row.sku || row.name || "")}">
+                            ${productImage(row, "warehouse")}
+                            <div>
+                              <strong>${escapeHtml(row.name || "-")}</strong>
+                              <span>${escapeHtml(row.sku || "-")} · ${fmtQty.format(row.quantity)} หน่วย · ${sourceLabel(row.priceSource)}</span>
+                            </div>
+                            <b>${fmtBaht.format(row.inventoryValue || 0)}</b>
+                          </li>`
+                      )
+                      .join("")
+                  : `<li class="empty-note">ไม่มีรายการที่มี stock มากกว่า 0 ในคลังนี้</li>`
+              }
+            </ol>
+          </article>`;
+      })
+      .join("");
+  }
+
+  function renderTopProducts() {
+    $("topProducts").innerHTML = data.topProducts
+      .slice(0, 8)
+      .map(
+        (row) => `
+        <li class="detail-list-item" data-detail-id="${escapeHtml(detailIdForRow(row))}" tabindex="0" role="button" aria-label="ดูรายละเอียดสินค้า ${escapeHtml(row.sku || row.name || "")}">
+          ${productImage(row, "top")}
+          <div>
+            <strong>${escapeHtml(row.name)}</strong>
+            <span>${escapeHtml(row.sku)} · ${fmtQty.format(row.quantity)} หน่วย · ${sourceLabel(row.priceSource)}</span>
+          </div>
+          <b>${fmtBaht.format(row.inventoryValue)}</b>
+        </li>`
+      )
+      .join("");
+  }
+
+  function renderPrefixGrid() {
+    const maxValue = Math.max(...data.prefixBreakdown.map((item) => item.value), 1);
+    $("prefixGrid").innerHTML = data.prefixBreakdown
+      .slice(0, 12)
+      .map(
+        (item) => `
+        <div class="prefix-item">
+          <strong>${escapeHtml(item.prefix)}</strong>
+          <div class="mini-bar"><span style="width:${Math.max(2, (item.value / maxValue) * 100)}%"></span></div>
+          <p>${fmtBaht.format(item.value)} · ${fmtQty.format(item.quantity)} หน่วย · ${fmtInt.format(item.rowCount)} แถว</p>
+        </div>`
+      )
+      .join("");
+  }
+
+  function renderFilters() {
+    const chips = [
+      { source: "All", label: `ทั้งหมด (${fmtInt.format(stockRows.length)})` },
+      ...data.sourceBreakdown.map((item) => ({
+        source: item.source,
+        label: `${sourceLabel(item.source)} (${fmtInt.format(item.positiveStockRows || 0)})`,
+      })),
+    ];
+    $("sourceFilters").innerHTML = chips
+      .map(
+        (chip) => `
+        <button class="filter-chip ${state.source === chip.source ? "active" : ""}" type="button" data-source="${chip.source}">
+          ${chip.label}
+        </button>`
+      )
+      .join("");
+    document.querySelectorAll("#sourceFilters .filter-chip").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.source = button.dataset.source;
+        state.page = 1;
+        renderTable();
+        renderFilters();
+      });
+    });
+  }
+
+  function renderWarehouseFilters() {
+    const chips = [
+      { key: "All", label: `ทุกคลัง (${fmtInt.format(stockRows.length)})` },
+      ...(data.warehouseBreakdown || []).map((item) => ({
+        key: warehouseKey(item),
+        label: `${warehouseLabel(item)} (${fmtInt.format(item.positiveStockRows || 0)})`,
+      })),
+    ];
+
+    $("warehouseFilters").innerHTML = chips
+      .map(
+        (chip) => `
+        <button class="filter-chip ${state.warehouse === chip.key ? "active" : ""}" type="button" data-warehouse="${escapeHtml(chip.key)}">
+          ${escapeHtml(chip.label)}
+        </button>`
+      )
+      .join("");
+    document.querySelectorAll("#warehouseFilters .filter-chip").forEach((button) => {
+      button.addEventListener("click", () => {
+        state.warehouse = button.dataset.warehouse;
+        state.page = 1;
+        renderTable();
+        renderWarehouseFilters();
+      });
+    });
+  }
+
+  function filteredRows() {
+    const query = compactText(state.query);
+    let next = stockRows;
+    if (state.warehouse !== "All") {
+      next = next.filter((row) => warehouseKey(row) === state.warehouse);
+    }
+    if (state.source !== "All") {
+      next = next.filter((row) => row.priceSource === state.source);
+    }
+    if (query) {
+      next = next.filter((row) =>
+        compactText(`${row.sku} ${row.name} ${row.barcode} ${row.sourceTitle} ${row.warehouseName} ${row.stockSourceLabel}`).includes(query)
+      );
+    }
+
+    const sorted = [...next];
+    sorted.sort((a, b) => {
+      if (state.sort === "qtyDesc") return b.quantity - a.quantity || b.inventoryValue - a.inventoryValue;
+      if (state.sort === "priceDesc") return b.price - a.price || b.inventoryValue - a.inventoryValue;
+      if (state.sort === "nameAsc") return a.name.localeCompare(b.name, "th") || a.sku.localeCompare(b.sku, "en");
+      if (state.sort === "sourceAsc") return a.priceSourcePriority - b.priceSourcePriority || b.inventoryValue - a.inventoryValue;
+      return b.inventoryValue - a.inventoryValue || b.quantity - a.quantity;
+    });
+    return sorted;
+  }
+
+  function renderTable() {
+    const all = filteredRows();
+    const maxPage = Math.max(1, Math.ceil(all.length / pageSize));
+    state.page = Math.min(state.page, maxPage);
+    const start = (state.page - 1) * pageSize;
+    const pageRows = all.slice(start, start + pageSize);
+
+    $("inventoryRows").innerHTML = pageRows
+      .map(
+        (row) => `
+        <tr class="detail-table-row" data-detail-id="${escapeHtml(detailIdForRow(row))}" tabindex="0" role="button" aria-label="ดูรายละเอียดสินค้า ${escapeHtml(row.sku || row.name || "")}">
+          <td>${productImage(row)}</td>
+          <td class="sku-cell">${escapeHtml(row.sku || "-")}</td>
+          <td class="warehouse-cell">
+            <strong>${escapeHtml(row.stockSource || "-")}</strong>
+            <span>${escapeHtml(row.warehouseName || "-")}</span>
+          </td>
+          <td>
+            <div class="product-name">${escapeHtml(row.name || "-")}</div>
+            <div class="detail-link">ดูรายละเอียด</div>
+            ${row.note ? `<div class="product-note">${escapeHtml(row.note)}</div>` : ""}
+          </td>
+          <td class="num">${fmtQty.format(row.quantity)}</td>
+          <td class="num">${fmtQty.format(row.waiting)}</td>
+          <td class="num">${fmtQty.format(row.available)}</td>
+          <td class="num">${row.price > 0 ? fmtBaht2.format(row.price) : "-"}</td>
+          <td><span class="badge ${sourceColors[row.priceSource] || "Missing"}">${sourceLabel(row.priceSource)}</span></td>
+          <td class="num"><strong>${fmtBaht.format(row.inventoryValue)}</strong></td>
+        </tr>`
+      )
+      .join("");
+
+    const sourceText = state.source === "All" ? "ทุกแหล่งราคา" : sourceLabel(state.source);
+    const startRow = all.length ? start + 1 : 0;
+    $("tableSubtitle").textContent = `แสดง ${fmtInt.format(all.length)} รายการที่มีคงเหลือ จากทั้งหมด ${fmtInt.format(stockRows.length)} รายการ · คลัง: ${selectedWarehouseLabel()} · ราคา: ${sourceText}`;
+    $("paginationStatus").textContent = `หน้า ${fmtInt.format(state.page)} / ${fmtInt.format(maxPage)} · แถว ${fmtInt.format(startRow)}-${fmtInt.format(Math.min(start + pageSize, all.length))}`;
+    $("prevPage").disabled = state.page <= 1;
+    $("nextPage").disabled = state.page >= maxPage;
+  }
+
+  function renderMethodology() {
+    $("methodologyText").textContent = `${data.metadata.valuationRule}. ${data.metadata.quantityRule}. แถวที่ไม่พบราคาจะไม่ถูกบวกในมูลค่ารวม และแสดงเป็นกลุ่ม Missing เพื่อให้ตรวจสอบต่อได้`;
+    const sourceCards = [
+      ["Packhai", `${data.metadata.sources.packhai.exportedAtLabel} · ${data.metadata.sources.packhai.rowCount} rows`],
+      [
+        "FlowAccount",
+        `${data.metadata.sources.flowaccount?.exportedAtLabel || "-"} · ${fmtInt.format(data.metadata.sources.flowaccount?.rowCount || 0)} rows`,
+      ],
+      ["Shopee Seller", `${data.metadata.sources.shopee.exportedAtLabel} · indexed ${fmtInt.format(data.metadata.sources.shopee.indexedPriceRows)} price rows`],
+      ["Lazada Seller", `${data.metadata.sources.lazada.exportedAtLabel} · indexed ${fmtInt.format(data.metadata.sources.lazada.indexedPriceRows)} price rows`],
+      ["KTW", `${data.metadata.sources.ktw.createdAtLabel} · ${fmtInt.format(data.metadata.sources.ktw.itemCount)} source items`],
+    ];
+    $("sourceTable").innerHTML = sourceCards
+      .map((card) => `<div class="source-card"><strong>${card[0]}</strong><span>${card[1]}</span></div>`)
+      .join("");
+  }
+
+  function csvEscape(value) {
+    const text = String(value ?? "");
+    return /[",\n\r]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
+  }
+
+  function exportCsv() {
+    const headers = [
+      "SKU",
+      "Stock Source",
+      "Warehouse",
+      "Product Name",
+      "Quantity",
+      "Waiting",
+      "Available",
+      "Price",
+      "Price Source",
+      "Inventory Value",
+      "Image URL",
+      "Note",
+    ];
+    const lines = [
+      headers.join(","),
+      ...filteredRows().map((row) =>
+        [
+          row.sku,
+          row.stockSource,
+          row.warehouseName,
+          row.name,
+          row.quantity,
+          row.waiting,
+          row.available,
+          row.price,
+          row.priceSource,
+          row.inventoryValue,
+          row.imageUrl,
+          row.note,
+        ]
+          .map(csvEscape)
+          .join(",")
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "packhai-inventory-valuation-filtered.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function bindEvents() {
+    $("syncAll")?.addEventListener("click", () => startSync("all"));
+    $("syncPackhai")?.addEventListener("click", () => startSync("packhai"));
+    $("syncFlowaccount")?.addEventListener("click", () => startSync("flowaccount"));
+    $("syncSeller")?.addEventListener("click", () => startSync("seller"));
+    $("searchInput").addEventListener("input", (event) => {
+      state.query = event.target.value;
+      state.page = 1;
+      renderTable();
+    });
+    $("sortSelect").addEventListener("change", (event) => {
+      state.sort = event.target.value;
+      state.page = 1;
+      renderTable();
+    });
+    $("sortValue").addEventListener("click", () => {
+      state.sort = "valueDesc";
+      $("sortSelect").value = "valueDesc";
+      state.page = 1;
+      renderTable();
+    });
+    $("prevPage").addEventListener("click", () => {
+      state.page -= 1;
+      renderTable();
+    });
+    $("nextPage").addEventListener("click", () => {
+      state.page += 1;
+      renderTable();
+    });
+    $("downloadCsv").addEventListener("click", exportCsv);
+    $("printReport").addEventListener("click", () => window.print());
+    $("closeProductDetail")?.addEventListener("click", closeProductDetail);
+    document.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-detail]")) {
+        closeProductDetail();
+        return;
+      }
+      const detailTarget = event.target.closest("[data-detail-id]");
+      if (!detailTarget) return;
+      openProductDetailById(detailTarget.dataset.detailId);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape") {
+        closeProductDetail();
+        return;
+      }
+      if (event.key !== "Enter" && event.key !== " ") return;
+      const detailTarget = event.target.closest("[data-detail-id]");
+      if (!detailTarget) return;
+      event.preventDefault();
+      openProductDetailById(detailTarget.dataset.detailId);
+    });
+  }
+
+  renderFreshness();
+  renderSidebarStatus();
+  renderKpis();
+  renderOwnerCommand();
+  renderOwnerAnalytics();
+  renderDecisionSignals();
+  renderMetricRoadmap();
+  renderSourceBars();
+  renderWarehouseBars();
+  renderWarehouseProductGroups();
+  renderTopProducts();
+  renderPrefixGrid();
+  renderWarehouseFilters();
+  renderFilters();
+  renderTable();
+  renderMethodology();
+  bindEvents();
+  if (syncApiUnavailable) {
+    setStaticSyncMode(true);
+  } else {
+    getSyncStatus(false);
+  }
+})();

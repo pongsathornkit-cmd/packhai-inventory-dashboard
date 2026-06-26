@@ -1524,6 +1524,10 @@ tbody tr:hover {
   margin-bottom: 28px;
 }
 
+.expenses-section[hidden] {
+  display: none;
+}
+
 .expense-status {
   display: grid;
   gap: 5px;

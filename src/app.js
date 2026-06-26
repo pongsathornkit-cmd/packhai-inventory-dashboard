@@ -600,6 +600,7 @@
     expenses: [],
     summary: null,
     loading: false,
+    loaded: false,
   };
   const assistantState = {
     messages: [
@@ -635,6 +636,26 @@
 
   function expenseApiUrl(path) {
     return syncApiUrl(path);
+  }
+
+  function isExpenseRoute() {
+    return (location.hash || "").replace(/^#/, "") === "expenses";
+  }
+
+  function updateRouteState() {
+    const hash = location.hash || "#executive";
+    const expensesPage = isExpenseRoute();
+    const expensesSection = $("expenses");
+    if (expensesSection) {
+      expensesSection.hidden = !expensesPage;
+    }
+    document.querySelectorAll(".sidebar-nav a").forEach((link) => {
+      link.classList.toggle("active", link.getAttribute("href") === hash);
+    });
+    if (expensesPage) {
+      if (!expenseState.loaded && !expenseState.loading) loadExpenses(true);
+      window.requestAnimationFrame(() => expensesSection?.scrollIntoView({ block: "start" }));
+    }
   }
 
   function renderExpenseStatus(kind, title, message) {
@@ -797,6 +818,7 @@
     if (!expenseApiReady(showErrors)) {
       renderExpenseKpis();
       renderExpenseRows();
+      expenseState.loaded = true;
       return;
     }
     expenseState.loading = true;
@@ -813,6 +835,7 @@
       renderExpenses();
     } finally {
       expenseState.loading = false;
+      expenseState.loaded = true;
     }
   }
 
@@ -958,6 +981,7 @@
       if (el) el.value = value ?? "";
     };
     location.hash = "expenses";
+    updateRouteState();
     assign("expensePaymentDate", payload.paymentDate || new Date().toISOString().slice(0, 10));
     setSelectValue("expenseRecipientType", payload.recipientType || "company");
     assign("expenseRecipientName", payload.recipientName || "");
@@ -1648,6 +1672,7 @@
       state.page += 1;
       renderTable();
     });
+    window.addEventListener("hashchange", updateRouteState);
     $("downloadCsv").addEventListener("click", exportCsv);
     $("printReport").addEventListener("click", () => window.print());
     $("closeProductDetail")?.addEventListener("click", closeProductDetail);
@@ -1693,7 +1718,7 @@
   bindEvents();
   bindAssistantEvents();
   bindExpenseEvents();
-  loadExpenses(true);
+  updateRouteState();
   if (syncApiUnavailable) {
     setStaticSyncMode(true);
   } else {

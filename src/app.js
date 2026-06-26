@@ -347,23 +347,34 @@
 
     return `
       <td class="warehouse-cell grouped">
-        <strong>รวม ${fmtQty.format(row.quantity || 0)} หน่วย</strong>
-        <span>${fmtInt.format(row.warehouseRows.length)} คลัง / แถว stock</span>
-        <div class="warehouse-breakdown">
+        <div class="warehouse-summary">
+          <strong>\u0e23\u0e27\u0e21 ${fmtQty.format(row.quantity || 0)} \u0e2b\u0e19\u0e48\u0e27\u0e22</strong>
+          <span>${fmtInt.format(row.warehouseRows.length)} \u0e04\u0e25\u0e31\u0e07</span>
+        </div>
+        <div class="warehouse-breakdown" aria-label="\u0e08\u0e33\u0e19\u0e27\u0e19\u0e41\u0e22\u0e01\u0e04\u0e25\u0e31\u0e07">
           ${row.warehouseRows
             .map(
               (item) => `
-                <div class="warehouse-breakdown-line">
-                  <span>
-                    ${escapeHtml(item.warehouseName || item.stockSourceLabel || "-")}
-                    <small>${escapeHtml(item.stockSource || "-")}</small>
-                  </span>
+                <span class="warehouse-chip" title="${escapeHtml(warehouseChipTitle(item))}">
+                  <span>${escapeHtml(shortWarehouseName(item))}</span>
                   <strong>${fmtQty.format(item.quantity || 0)}</strong>
-                </div>`
+                </span>
+                `
             )
             .join("")}
         </div>
       </td>`;
+  }
+
+  function shortWarehouseName(item) {
+    return String(item?.warehouseName || item?.stockSourceLabel || item?.stockSource || "-")
+      .replace(/^\u0e04\u0e25\u0e31\u0e07\s*/u, "")
+      .replace(/PACKHAI\s+\u0e1a\u0e32\u0e07\u0e43\u0e2b\u0e0d\u0e48/iu, "Packhai")
+      .trim();
+  }
+
+  function warehouseChipTitle(item) {
+    return `${item?.warehouseName || item?.stockSourceLabel || "-"} - ${item?.stockSource || "-"} - ${fmtQty.format(item?.quantity || 0)} \u0e2b\u0e19\u0e48\u0e27\u0e22`;
   }
 
   function detailWarehouseBreakdown(row) {

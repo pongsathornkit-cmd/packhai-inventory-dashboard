@@ -1343,14 +1343,18 @@ thead th {
 
 tbody td {
   border-bottom: 1px solid var(--line-2);
-  padding: 12px 14px;
-  vertical-align: top;
+  padding: 8px 12px;
+  vertical-align: middle;
   font-size: 13px;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 tbody tr:hover {
   background: #f8f9ff;
+}
+
+.detail-table-row {
+  height: 86px;
 }
 
 .detail-table-row,
@@ -1376,6 +1380,7 @@ tbody tr:hover {
 
 .warehouse-cell {
   min-width: 150px;
+  max-width: 280px;
 }
 
 .warehouse-cell strong,
@@ -1391,40 +1396,62 @@ tbody tr:hover {
 }
 
 .warehouse-cell.grouped {
-  min-width: 230px;
+  min-width: 260px;
+  max-width: 300px;
+}
+
+.warehouse-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
+.warehouse-summary strong {
+  flex: 0 0 auto;
+}
+
+.warehouse-summary span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .warehouse-breakdown {
-  display: grid;
-  gap: 6px;
-  margin-top: 10px;
-}
-
-.warehouse-breakdown-line {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 10px;
-  padding: 7px 8px;
-  border: 1px solid rgba(102, 118, 184, 0.18);
-  border-radius: 8px;
-  background: #f8f9ff;
+  flex-wrap: nowrap;
+  gap: 6px;
+  margin-top: 6px;
+  max-width: 280px;
+  overflow: hidden;
 }
 
-.warehouse-breakdown-line span {
+.warehouse-chip {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 6px;
   min-width: 0;
-  white-space: normal;
-}
-
-.warehouse-breakdown-line small {
-  display: block;
-  margin-top: 2px;
+  max-width: 132px;
+  padding: 4px 7px;
+  border: 1px solid rgba(102, 118, 184, 0.18);
+  border-radius: 999px;
+  background: #f8f9ff;
   color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.15;
+  white-space: nowrap;
 }
 
-.warehouse-breakdown-line strong {
+.warehouse-chip span {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.warehouse-chip strong {
   flex: 0 0 auto;
   color: var(--pink);
   font-size: 12px;
@@ -1450,7 +1477,11 @@ tbody tr:hover {
   margin-top: 3px;
   color: var(--muted);
   font-size: 11px;
-  line-height: 1.35;
+  line-height: 1.25;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .movement-cell.muted strong,
@@ -2075,23 +2106,46 @@ tbody tr:hover {
   font-size: 12px;
 }
 
+.warehouse-cell .warehouse-summary span,
+.warehouse-cell .warehouse-chip,
+.warehouse-cell .warehouse-chip span {
+  margin-top: 0;
+}
+
+.warehouse-cell .warehouse-chip {
+  display: inline-flex !important;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.warehouse-cell .warehouse-chip span {
+  display: block;
+  color: inherit;
+  font-size: inherit;
+}
+
 .product-name {
   max-width: 520px;
   font-weight: 680;
+  display: -webkit-box;
+  line-height: 1.32;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .detail-link {
-  margin-top: 5px;
+  margin-top: 4px;
   color: var(--teal-dark);
   font-size: 12px;
   font-weight: 800;
 }
 
 .product-thumb {
-  width: 56px;
-  height: 56px;
+  width: 52px;
+  height: 52px;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: var(--surface-2);
   overflow: hidden;
   display: grid;

@@ -156,7 +156,10 @@
   }
 
   function detailIdForRow(row) {
-    if (row.detailId) return row.detailId;
+    if (row.detailId) {
+      if (row.isSkuGroup || !rowByDetailId.has(row.detailId)) rowByDetailId.set(row.detailId, row);
+      return row.detailId;
+    }
     const matchedId = detailIdByIdentity.get(productIdentity(row));
     if (matchedId) {
       row.detailId = matchedId;
@@ -236,6 +239,151 @@
       </div>`;
   }
 
+  function pricePriority(row) {
+    const priority = Number(row?.priceSourcePriority);
+    return Number.isFinite(priority) ? priority : 99;
+  }
+
+  function bestPriceRow(items) {
+    return [...items].sort((a, b) => pricePriority(a) - pricePriority(b) || Number(b.price || 0) - Number(a.price || 0))[0] || {};
+  }
+
+  function newestMovementRow(items) {
+    return [...items].sort((a, b) => movementDateValue(b) - movementDateValue(a))[0] || {};
+  }
+
+  function preferredProductRow(items) {
+    return (
+      [...items].sort(
+        (a, b) =>
+          Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)) ||
+          Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0) ||
+          movementDateValue(b) - movementDateValue(a)
+      )[0] || {}
+    );
+  }
+
+  function sortInventoryRows(items) {
+    const sorted = [...items];
+    sorted.sort((a, b) => {
+      if (state.sort === "qtyDesc") return Number(b.quantity || 0) - Number(a.quantity || 0) || Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0);
+      if (state.sort === "priceDesc") return Number(b.price || 0) - Number(a.price || 0) || Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0);
+      if (state.sort === "movementDesc") return movementDateValue(b) - movementDateValue(a) || Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0);
+      if (state.sort === "nameAsc") return String(a.name || "").localeCompare(String(b.name || ""), "th") || String(a.sku || "").localeCompare(String(b.sku || ""), "en");
+      if (state.sort === "sourceAsc") return pricePriority(a) - pricePriority(b) || Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0);
+      return Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0) || Number(b.quantity || 0) - Number(a.quantity || 0);
+    });
+    return sorted;
+  }
+
+  function aggregateSkuRows(items) {
+    const groups = new Map();
+    items.forEach((row) => {
+      const sku = compactText(row.sku);
+      const key = sku ? `sku:${sku}` : `row:${detailIdForRow(row)}`;
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key).push(row);
+    });
+
+    return sortInventoryRows(
+      [...groups.entries()].map(([key, groupRows], index) => {
+        const warehouseRows = [...groupRows].sort(
+          (a, b) =>
+            Number(b.quantity || 0) - Number(a.quantity || 0) ||
+            Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0) ||
+            warehouseLabel(a).localeCompare(warehouseLabel(b), "th")
+        );
+        const base = preferredProductRow(warehouseRows);
+        const priceRow = bestPriceRow(warehouseRows);
+        const movementRow = newestMovementRow(warehouseRows);
+        const sum = (field) => warehouseRows.reduce((total, row) => total + Number(row[field] || 0), 0);
+        const isGrouped = warehouseRows.length > 1;
+        return {
+          ...base,
+          detailId: isGrouped ? `sku-group-${index}-${key.replace(/[^a-z0-9_-]/gi, "-")}` : detailIdForRow(base),
+          isSkuGroup: isGrouped,
+          warehouseRows,
+          stockSource: isGrouped ? "รวม" : base.stockSource,
+          warehouseName: isGrouped ? `${fmtInt.format(warehouseRows.length)} คลัง` : base.warehouseName,
+          stockSourceLabel: isGrouped ? `รวม ${fmtInt.format(warehouseRows.length)} คลัง` : base.stockSourceLabel,
+          quantity: sum("quantity"),
+          waiting: sum("waiting"),
+          waitImport: sum("waitImport"),
+          available: sum("available"),
+          stockForValue: sum("stockForValue"),
+          inventoryValue: sum("inventoryValue"),
+          availableValue: sum("availableValue"),
+          waitingValue: sum("waitingValue"),
+          price: Number(priceRow.price || 0),
+          priceSource: priceRow.priceSource || base.priceSource,
+          priceSourceLabel: priceRow.priceSourceLabel || base.priceSourceLabel,
+          priceSourcePriority: priceRow.priceSourcePriority ?? base.priceSourcePriority,
+          priceMatchType: priceRow.priceMatchType || base.priceMatchType,
+          priceCandidateCount: priceRow.priceCandidateCount ?? base.priceCandidateCount,
+          sourceSku: priceRow.sourceSku || base.sourceSku,
+          sourceTitle: priceRow.sourceTitle || base.sourceTitle,
+          sourceUrl: priceRow.sourceUrl || base.sourceUrl,
+          sourceCapturedAt: priceRow.sourceCapturedAt || base.sourceCapturedAt,
+          latestStockMovementAt: movementRow.latestStockMovementAt || "",
+          latestStockMovementAtLabel: movementRow.latestStockMovementAtLabel || "",
+          latestStockMovementType: movementRow.latestStockMovementType || "",
+          latestStockMovementDescription: movementRow.latestStockMovementDescription || "",
+          latestStockMovementReferenceNo: movementRow.latestStockMovementReferenceNo || "",
+          latestStockMovementReferenceNo2: movementRow.latestStockMovementReferenceNo2 || "",
+          latestStockMovementChannelName: movementRow.latestStockMovementChannelName || "",
+        };
+      })
+    );
+  }
+
+  function warehouseCell(row) {
+    if (!row.isSkuGroup) {
+      return `
+        <td class="warehouse-cell">
+          <strong>${escapeHtml(row.stockSource || "-")}</strong>
+          <span>${escapeHtml(row.warehouseName || "-")}</span>
+        </td>`;
+    }
+
+    return `
+      <td class="warehouse-cell grouped">
+        <strong>รวม ${fmtQty.format(row.quantity || 0)} หน่วย</strong>
+        <span>${fmtInt.format(row.warehouseRows.length)} คลัง / แถว stock</span>
+        <div class="warehouse-breakdown">
+          ${row.warehouseRows
+            .map(
+              (item) => `
+                <div class="warehouse-breakdown-line">
+                  <span>
+                    ${escapeHtml(item.warehouseName || item.stockSourceLabel || "-")}
+                    <small>${escapeHtml(item.stockSource || "-")}</small>
+                  </span>
+                  <strong>${fmtQty.format(item.quantity || 0)}</strong>
+                </div>`
+            )
+            .join("")}
+        </div>
+      </td>`;
+  }
+
+  function detailWarehouseBreakdown(row) {
+    if (!row.isSkuGroup || !row.warehouseRows?.length) return "";
+    return `
+      <div class="detail-warehouse-breakdown">
+        ${row.warehouseRows
+          .map(
+            (item) => `
+              <article>
+                <span>${escapeHtml(item.stockSource || "-")}</span>
+                <strong>${escapeHtml(item.warehouseName || "-")}</strong>
+                <div>${fmtQty.format(item.quantity || 0)} คงเหลือ · ${fmtQty.format(item.available || 0)} พร้อมขาย</div>
+                <small>${fmtBaht.format(item.inventoryValue || 0)} · ${escapeHtml(movementSummary(item))}</small>
+              </article>`
+          )
+          .join("")}
+      </div>`;
+  }
+
   function matchLabel(value) {
     if (value === "exact") return "ตรง SKU";
     if (value === "fallback") return "จับคู่สำรอง";
@@ -308,6 +456,7 @@
           ${detailField("รอจัด/รอส่ง", `${fmtQty.format(row.waiting || 0)} หน่วย`)}
           ${detailField("รอนำเข้า", `${fmtQty.format(row.waitImport || 0)} หน่วย`)}
           ${detailField("จำนวนที่ใช้ตีมูลค่า", `${fmtQty.format(row.stockForValue || row.quantity || 0)} หน่วย`)}
+          ${detailWarehouseBreakdown(row)}
           ${detailField("รายการเดิน stock ล่าสุด", movementSummary(row))}
           ${detailField("รายละเอียดล่าสุด", row.latestStockMovementDescription || "-")}
         </section>
@@ -2053,20 +2202,12 @@
       );
     }
 
-    const sorted = [...next];
-    sorted.sort((a, b) => {
-      if (state.sort === "qtyDesc") return b.quantity - a.quantity || b.inventoryValue - a.inventoryValue;
-      if (state.sort === "priceDesc") return b.price - a.price || b.inventoryValue - a.inventoryValue;
-      if (state.sort === "movementDesc") return movementDateValue(b) - movementDateValue(a) || b.inventoryValue - a.inventoryValue;
-      if (state.sort === "nameAsc") return a.name.localeCompare(b.name, "th") || a.sku.localeCompare(b.sku, "en");
-      if (state.sort === "sourceAsc") return a.priceSourcePriority - b.priceSourcePriority || b.inventoryValue - a.inventoryValue;
-      return b.inventoryValue - a.inventoryValue || b.quantity - a.quantity;
-    });
-    return sorted;
+    return sortInventoryRows(next);
   }
 
   function renderTable() {
-    const all = filteredRows();
+    const rawRows = filteredRows();
+    const all = aggregateSkuRows(rawRows);
     const maxPage = Math.max(1, Math.ceil(all.length / pageSize));
     state.page = Math.min(state.page, maxPage);
     const start = (state.page - 1) * pageSize;
@@ -2078,10 +2219,7 @@
         <tr class="detail-table-row" data-detail-id="${escapeHtml(detailIdForRow(row))}" tabindex="0" role="button" aria-label="ดูรายละเอียดสินค้า ${escapeHtml(row.sku || row.name || "")}">
           <td>${productImage(row)}</td>
           <td class="sku-cell">${escapeHtml(row.sku || "-")}</td>
-          <td class="warehouse-cell">
-            <strong>${escapeHtml(row.stockSource || "-")}</strong>
-            <span>${escapeHtml(row.warehouseName || "-")}</span>
-          </td>
+          ${warehouseCell(row)}
           <td>
             <div class="product-name">${escapeHtml(row.name || "-")}</div>
             <div class="detail-link">ดูรายละเอียด</div>
@@ -2100,8 +2238,8 @@
 
     const sourceText = state.source === "All" ? "ทุกแหล่งราคา" : sourceLabel(state.source);
     const startRow = all.length ? start + 1 : 0;
-    $("tableSubtitle").textContent = `แสดง ${fmtInt.format(all.length)} รายการที่มีคงเหลือ จากทั้งหมด ${fmtInt.format(stockRows.length)} รายการ · คลัง: ${selectedWarehouseLabel()} · ราคา: ${sourceText}`;
-    $("paginationStatus").textContent = `หน้า ${fmtInt.format(state.page)} / ${fmtInt.format(maxPage)} · แถว ${fmtInt.format(startRow)}-${fmtInt.format(Math.min(start + pageSize, all.length))}`;
+    $("tableSubtitle").textContent = `แสดง ${fmtInt.format(all.length)} SKU ที่มีคงเหลือ (${fmtInt.format(rawRows.length)} แถวคลัง) จากทั้งหมด ${fmtInt.format(stockRows.length)} แถวคลัง · คลัง: ${selectedWarehouseLabel()} · ราคา: ${sourceText}`;
+    $("paginationStatus").textContent = `หน้า ${fmtInt.format(state.page)} / ${fmtInt.format(maxPage)} · SKU ${fmtInt.format(startRow)}-${fmtInt.format(Math.min(start + pageSize, all.length))}`;
     $("prevPage").disabled = state.page <= 1;
     $("nextPage").disabled = state.page >= maxPage;
   }

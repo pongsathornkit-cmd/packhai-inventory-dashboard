@@ -1390,6 +1390,46 @@ tbody tr:hover {
   color: var(--ink-2);
 }
 
+.warehouse-cell.grouped {
+  min-width: 230px;
+}
+
+.warehouse-breakdown {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.warehouse-breakdown-line {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 7px 8px;
+  border: 1px solid rgba(102, 118, 184, 0.18);
+  border-radius: 8px;
+  background: #f8f9ff;
+}
+
+.warehouse-breakdown-line span {
+  min-width: 0;
+  white-space: normal;
+}
+
+.warehouse-breakdown-line small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.warehouse-breakdown-line strong {
+  flex: 0 0 auto;
+  color: var(--pink);
+  font-size: 12px;
+}
+
 .movement-cell {
   min-width: 170px;
 }
@@ -2346,6 +2386,45 @@ tbody tr:hover {
   overflow-wrap: anywhere;
   font-size: 13px;
   line-height: 1.35;
+}
+
+.detail-warehouse-breakdown {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.detail-warehouse-breakdown article {
+  padding: 10px;
+  border: 1px solid rgba(102, 118, 184, 0.2);
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.detail-warehouse-breakdown article span,
+.detail-warehouse-breakdown article small {
+  display: block;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.detail-warehouse-breakdown article strong {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.detail-warehouse-breakdown article div {
+  margin-top: 6px;
+  color: var(--pink);
+  font-size: 13px;
+  font-weight: 820;
+}
+
+.detail-warehouse-breakdown article small {
+  margin-top: 4px;
 }
 
 .detail-wide {

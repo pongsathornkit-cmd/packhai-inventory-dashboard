@@ -1,5 +1,5 @@
 {
-  "exportedAt": "2026-06-26T08:31:41.986Z",
+  "exportedAt": "2026-06-26T11:28:12.830Z",
   "source": "https://advance.flowaccount.com/N8387296/business/reports/inventory",
   "syncDate": "2026-06-26",
   "rowCount": 2852,
@@ -5715,15 +5715,15 @@
       "id": 491661,
       "name": "คลัง ซ.เจริญกิจ",
       "apiName": "คลังซ.เจริญกิจ",
-      "reportedTotal": 1439,
-      "rowCount": 1439
+      "reportedTotal": 1426,
+      "rowCount": 1426
     },
     {
       "id": 491662,
       "name": "คลัง สุขสวัสดิ์",
       "apiName": "คลังสุขสวัสดิ์",
-      "reportedTotal": 1439,
-      "rowCount": 1439
+      "reportedTotal": 1426,
+      "rowCount": 1426
     }
   ],
   "rows": [
@@ -24461,7 +24461,10 @@
       "warehouseName": "คลัง ซ.เจริญกิจ",
       "source": "FlowAccount คลัง ซ.เจริญกิจ",
       "productId": 84493419,
-      "productMasterId": 78866334
+      "productMasterId": 78866334,
+      "manualUpdatedAt": "2026-06-26T11:28:12.830Z",
+      "manualUpdateSource": "AI Command",
+      "manualUpdateNote": "ลดสินค้า SKU V80L-CHINA ที่คลังสุขสวัสดิ์ จำนวน 1 อัน และคลัง ซ.เจริญกิจ จำนวน 1 อัน"
     },
     {
       "sku": "P231-0066",
@@ -47277,7 +47280,10 @@
       "warehouseName": "คลัง สุขสวัสดิ์",
       "source": "FlowAccount คลัง สุขสวัสดิ์",
       "productId": 84493419,
-      "productMasterId": 78866334
+      "productMasterId": 78866334,
+      "manualUpdatedAt": "2026-06-26T11:28:12.830Z",
+      "manualUpdateSource": "AI Command",
+      "manualUpdateNote": "ลดสินค้า SKU V80L-CHINA ที่คลังสุขสวัสดิ์ จำนวน 1 อัน และคลัง ซ.เจริญกิจ จำนวน 1 อัน"
     },
     {
       "sku": "P231-0066",

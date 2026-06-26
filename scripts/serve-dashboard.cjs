@@ -58,12 +58,17 @@ function sendJson(res, status, body) {
 }
 
 function readSyncApiKey() {
+  if (!syncKeyRequired()) return "";
   if (process.env.SYNC_API_KEY) return process.env.SYNC_API_KEY.trim();
   try {
     return fs.readFileSync(localSyncKeyFile, "utf8").trim();
   } catch {
     return "";
   }
+}
+
+function syncKeyRequired() {
+  return /^(1|true|yes|on)$/i.test(String(process.env.SYNC_REQUIRE_KEY || ""));
 }
 
 function applyCors(req, res) {
@@ -109,6 +114,7 @@ function publicSyncState(extra = {}) {
     config: {
       packhaiConfigured: packhaiConfigured(),
       flowaccountConfigured: flowaccountConfigured(),
+      syncKeyRequired: syncKeyRequired(),
     },
   };
 }

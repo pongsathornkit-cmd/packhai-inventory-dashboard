@@ -13,11 +13,11 @@
 
 ตั้งค่าเป็น environment variables บน cloud/VPS:
 
-- `SYNC_API_KEY`: รหัสที่หน้าเว็บต้องใส่ก่อนกด Sync
 - `PACKHAI_AUTH_TOKEN`: token สำหรับดึง stock จาก Packhai
 - `PUBLIC_SYNC_API_BASE`: URL public ของ cloud sync server เช่น `https://packhai-sync.example.com`
 - `GITHUB_TOKEN`: GitHub token ที่ push กลับ repo ได้ ใช้ publish dashboard กลับ GitHub Pages หลัง Sync
 - `SYNC_ALLOWED_ORIGINS`: optional, comma-separated origins เพิ่มเติม เช่น `https://example.com`
+- `SYNC_REQUIRE_KEY`: ตั้งเป็น `0` เพื่อให้กด Sync โดยไม่ต้องใส่รหัส
 
 ## Browser Session
 

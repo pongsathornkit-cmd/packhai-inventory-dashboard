@@ -12,6 +12,8 @@ services:
         value: 0.0.0.0
       - key: SELLER_HEADLESS
         value: "1"
+      - key: SYNC_REQUIRE_KEY
+        value: "0"
       - key: PACKHAI_DATA_DIR
         value: /app/storage/data
       - key: FLOW_PROFILE
@@ -20,8 +22,6 @@ services:
         value: /app/storage/browser-profiles/shopee
       - key: SELLER_SESSION_DIR
         value: /app/storage/browser-profiles/lazada
-      - key: SYNC_API_KEY
-        sync: false
       - key: PACKHAI_AUTH_TOKEN
         sync: false
       - key: PUBLIC_SYNC_API_BASE

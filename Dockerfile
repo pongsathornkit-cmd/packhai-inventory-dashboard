@@ -14,6 +14,7 @@ COPY . .
 ENV HOST=0.0.0.0
 ENV PORT=8123
 ENV SELLER_HEADLESS=1
+ENV SYNC_REQUIRE_KEY=0
 ENV PACKHAI_DATA_DIR=/app/storage/data
 ENV FLOW_PROFILE=/app/storage/browser-profiles/flowaccount
 ENV SHOPEE_SESSION_DIR=/app/storage/browser-profiles/shopee

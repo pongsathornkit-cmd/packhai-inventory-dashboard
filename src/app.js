@@ -365,7 +365,7 @@
       <div>
         <strong>Online Sync setup · ${escapeHtml(label)}</strong>
         <span>This website needs the main Sync server URL before another computer can run warehouse and seller sync.</span>
-        <small>Ask the main computer for the Sync API URL and Sync key, then click Sync again.</small>
+        <small>Ask the main computer for the Sync API URL, then click Sync again.</small>
       </div>
       <code>GitHub Pages</code>`;
   }
@@ -382,14 +382,6 @@
       remoteSyncApiBase = normalizeSyncApiBase(base);
       localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
       syncApiUnavailable = false;
-    }
-    if (!localStorage.getItem("packhaiSyncApiKey")) {
-      const key = window.prompt("ใส่รหัส Sync");
-      if (!key) {
-        renderSyncStatus({ ok: false, warning: true, type, message: "ยังไม่ได้ใส่รหัส Sync", steps: [] }, true);
-        return false;
-      }
-      localStorage.setItem("packhaiSyncApiKey", key.trim());
     }
     setStaticSyncMode(false);
     return true;
@@ -483,7 +475,7 @@
             {
               ok: false,
               warning: true,
-              message: "รหัส Sync ไม่ถูกต้องหรือหมดอายุ กรุณากด Sync แล้วใส่รหัสใหม่",
+              message: "Sync server ยังตั้งค่าให้ต้องใช้รหัสอยู่ กรุณาปิด SYNC_REQUIRE_KEY บน server",
               steps: [],
             },
             true
@@ -534,7 +526,7 @@
         let message = `เริ่ม Sync ไม่ได้: Status ${response.status}`;
         if (response.status === 401) {
           localStorage.removeItem("packhaiSyncApiKey");
-          message = "รหัส Sync ไม่ถูกต้อง กรุณากด Sync อีกครั้งแล้วใส่รหัสใหม่";
+          message = "Sync server ยังตั้งค่าให้ต้องใช้รหัสอยู่ กรุณาปิด SYNC_REQUIRE_KEY บน server";
         }
         renderSyncStatus({ ok: false, warning: response.status === 401, type, message, steps: [] }, true);
         return;

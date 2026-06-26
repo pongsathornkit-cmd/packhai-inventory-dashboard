@@ -27,6 +27,22 @@ test("parses multi-warehouse GitHub stock update command", () => {
   );
 });
 
+test("parses Thai subtract stock command with SKU label", () => {
+  const parsed = parseStockUpdateCommand(
+    "\u0e25\u0e14\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32 SKU V80L-CHINA \u0e17\u0e35\u0e48\u0e04\u0e25\u0e31\u0e07\u0e2a\u0e38\u0e02\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34\u0e4c \u0e08\u0e33\u0e19\u0e27\u0e19 1 \u0e2d\u0e31\u0e19 \u0e41\u0e25\u0e30\u0e04\u0e25\u0e31\u0e07 \u0e0b.\u0e40\u0e08\u0e23\u0e34\u0e0d\u0e01\u0e34\u0e08 \u0e08\u0e33\u0e19\u0e27\u0e19 1 \u0e2d\u0e31\u0e19"
+  );
+
+  assert.equal(parsed.sku, "V80L-CHINA");
+  assert.equal(parsed.operation, "subtract");
+  assert.deepEqual(
+    parsed.allocations.map((item) => ({ warehouseId: item.warehouseId, quantity: item.quantity })),
+    [
+      { warehouseId: 491662, quantity: 1 },
+      { warehouseId: 491661, quantity: 1 },
+    ]
+  );
+});
+
 test("assistant creates a GitHub stock update action from the same command", () => {
   const context = buildAssistantContext({ rows: [], summary: {} }, { expenses: [] }, { now: "2026-06-26T00:00:00.000Z" });
   const result = runRuleAssistant(command, context);

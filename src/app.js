@@ -787,6 +787,14 @@
     return syncApiUrl(path);
   }
 
+  function syncNetworkErrorMessage(error) {
+    if (error instanceof TypeError && /failed to fetch|networkerror|load failed/i.test(error.message || "")) {
+      const target = remoteSyncApiBase || "local server";
+      return `Sync API ติดต่อไม่ได้ (${target}) กรุณาตรวจว่า sync server ยังออนไลน์อยู่ แล้วลองใหม่`;
+    }
+    return error.message || String(error);
+  }
+
   function isExpenseRoute() {
     return (location.hash || "").replace(/^#/, "") === "expenses";
   }
@@ -1564,7 +1572,7 @@
       );
       setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
     } catch (error) {
-      pushAssistantMessage("assistant", `\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08: ${error.message}`, []);
+      pushAssistantMessage("assistant", `\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08: ${syncNetworkErrorMessage(error)}`, []);
     } finally {
       setAssistantBusy(false);
     }

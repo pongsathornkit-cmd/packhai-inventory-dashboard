@@ -19,6 +19,14 @@ function compactText(value) {
   return String(value ?? "").toLowerCase().replace(/\s+/g, " ").trim();
 }
 
+function isAiSidebarMenuRemovalCommand(message) {
+  const text = compactText(message);
+  const mentionsSidebarMenu = /(\u0e41\u0e16\u0e1a\u0e40\u0e21\u0e19\u0e39|\u0e40\u0e21\u0e19\u0e39|sidebar|side bar|\u0e14\u0e49\u0e32\u0e19\u0e0b\u0e49\u0e32\u0e22|\u0e0b\u0e49\u0e32\u0e22|left menu)/.test(text);
+  const mentionsAssistant = /(ai command|ai|\u0e41\u0e0a\u0e17|chat)/.test(text);
+  const asksRemoval = /(\u0e15\u0e31\u0e14|\u0e40\u0e2d\u0e32\u0e2d\u0e2d\u0e01|\u0e25\u0e1a|\u0e0b\u0e48\u0e2d\u0e19|remove|hide)/.test(text);
+  return mentionsSidebarMenu && mentionsAssistant && asksRemoval;
+}
+
 function daysBetween(now, isoDate) {
   const end = new Date(now);
   const start = new Date(isoDate || "");
@@ -156,6 +164,16 @@ function runRuleAssistant(message, context) {
       source: "rule",
     };
   }
+
+  if (isAiSidebarMenuRemovalCommand(message)) {
+    return {
+      reply:
+        "\u0e15\u0e31\u0e14\u0e40\u0e21\u0e19\u0e39 AI Command \u0e2d\u0e2d\u0e01\u0e08\u0e32\u0e01\u0e41\u0e16\u0e1a\u0e40\u0e21\u0e19\u0e39\u0e14\u0e49\u0e32\u0e19\u0e0b\u0e49\u0e32\u0e22\u0e41\u0e25\u0e49\u0e27\u0e04\u0e23\u0e31\u0e1a \u0e15\u0e2d\u0e19\u0e19\u0e35\u0e49\u0e43\u0e2b\u0e49\u0e40\u0e1b\u0e34\u0e14 AI \u0e08\u0e32\u0e01\u0e1b\u0e38\u0e48\u0e21 popup \u0e41\u0e17\u0e19 \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e43\u0e2b\u0e49 sidebar \u0e40\u0e2b\u0e25\u0e37\u0e2d\u0e40\u0e09\u0e1e\u0e32\u0e30\u0e40\u0e21\u0e19\u0e39\u0e07\u0e32\u0e19\u0e2b\u0e25\u0e31\u0e01",
+      actions: [],
+      source: "rule",
+    };
+  }
+
   if (!text) {
     return {
       reply: "พิมพ์คำถามหรือคำสั่งได้เลย เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, หรือสร้างค่าใช้จ่าย",

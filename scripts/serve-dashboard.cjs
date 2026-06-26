@@ -2,10 +2,23 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
+const { chromium, chromiumOptions } = require("./playwright-runtime.cjs");
+const {
+  appendExpense,
+  cancelExpense,
+  findExpense,
+  readExpenseStore,
+  renderExpensesCsv,
+  renderPaymentVoucherHtml,
+  renderWithholdingCertificateHtml,
+  summarizeExpenses,
+} = require("./expense-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
 const distDir = path.join(projectRoot, "dist");
+const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
+const expensesFile = path.join(dataDir, "expenses.json");
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 8123);
 const nodePath = process.execPath;
@@ -55,6 +68,31 @@ function send(res, status, body, contentType = "text/plain; charset=utf-8") {
 
 function sendJson(res, status, body) {
   send(res, status, JSON.stringify(body, null, 2), "application/json; charset=utf-8");
+}
+
+function readJsonBody(req, maxBytes = 1024 * 1024) {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk) => {
+      body += chunk.toString("utf8");
+      if (body.length > maxBytes) {
+        reject(new Error("Request body is too large."));
+        req.destroy();
+      }
+    });
+    req.on("end", () => {
+      if (!body.trim()) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Request body must be valid JSON."));
+      }
+    });
+    req.on("error", reject);
+  });
 }
 
 function readSyncApiKey() {
@@ -117,6 +155,43 @@ function publicSyncState(extra = {}) {
       syncKeyRequired: syncKeyRequired(),
     },
   };
+}
+
+function publicExpenseState(options = {}) {
+  const store = readExpenseStore(expensesFile);
+  const month = options.month || new Date().toISOString().slice(0, 7);
+  return {
+    ok: true,
+    updatedAt: store.updatedAt || "",
+    month,
+    summary: summarizeExpenses(store.expenses, { month }),
+    pnd3Summary: summarizeExpenses(store.expenses, { month, pndType: "PND3" }),
+    pnd53Summary: summarizeExpenses(store.expenses, { month, pndType: "PND53" }),
+    expenses: store.expenses || [],
+  };
+}
+
+async function renderPdf(html) {
+  const browser = await chromium.launch({
+    ...chromiumOptions(),
+    headless: true,
+  });
+  try {
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: "networkidle" });
+    return await page.pdf({
+      format: "A4",
+      printBackground: true,
+      margin: { top: "12mm", right: "10mm", bottom: "12mm", left: "10mm" },
+    });
+  } finally {
+    await browser.close();
+  }
+}
+
+function expenseById(id) {
+  const store = readExpenseStore(expensesFile);
+  return { store, record: findExpense(store, id) };
 }
 
 function summarizeOutput(text) {
@@ -379,6 +454,73 @@ const server = http.createServer((req, res) => {
       return;
     }
     startSync(type, res);
+    return;
+  }
+
+  if (url.pathname === "/api/expenses" && req.method === "GET") {
+    if (!syncAuthorized(req, res)) return;
+    sendJson(res, 200, publicExpenseState({ month: url.searchParams.get("month") || "" }));
+    return;
+  }
+
+  if (url.pathname === "/api/expenses" && req.method === "POST") {
+    if (!syncAuthorized(req, res)) return;
+    readJsonBody(req)
+      .then((body) => {
+        const record = appendExpense(expensesFile, body);
+        sendJson(res, 201, { ...publicExpenseState({ month: record.paymentDate.slice(0, 7) }), record });
+      })
+      .catch((error) => sendJson(res, /required|greater|valid/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/expenses/export.csv" && req.method === "GET") {
+    if (!syncAuthorized(req, res)) return;
+    const store = readExpenseStore(expensesFile);
+    const csv = renderExpensesCsv(store.expenses, {
+      pndType: url.searchParams.get("pndType") || "",
+      month: url.searchParams.get("month") || "",
+    });
+    send(res, 200, `\uFEFF${csv}`, "text/csv; charset=utf-8");
+    return;
+  }
+
+  const expensePdfMatch = url.pathname.match(/^\/api\/expenses\/([^/]+)\/(payment-voucher|wht-certificate)\.pdf$/);
+  if (expensePdfMatch && req.method === "GET") {
+    if (!syncAuthorized(req, res)) return;
+    const [, id, docType] = expensePdfMatch;
+    const { record } = expenseById(id);
+    if (!record) {
+      sendJson(res, 404, { ok: false, message: "Expense was not found." });
+      return;
+    }
+    if (docType === "wht-certificate" && Number(record.withholdingAmount || 0) <= 0) {
+      sendJson(res, 400, { ok: false, message: "This expense has no withholding tax." });
+      return;
+    }
+    const html = docType === "payment-voucher" ? renderPaymentVoucherHtml(record) : renderWithholdingCertificateHtml(record);
+    renderPdf(html)
+      .then((pdf) => {
+        res.writeHead(200, {
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `inline; filename="${docType}-${record.expenseNo}.pdf"`,
+          "Cache-Control": "no-store",
+        });
+        res.end(pdf);
+      })
+      .catch((error) => sendJson(res, 500, { ok: false, message: `PDF generation failed: ${error.message}` }));
+    return;
+  }
+
+  const expenseCancelMatch = url.pathname.match(/^\/api\/expenses\/([^/]+)\/cancel$/);
+  if (expenseCancelMatch && req.method === "POST") {
+    if (!syncAuthorized(req, res)) return;
+    try {
+      const record = cancelExpense(expensesFile, expenseCancelMatch[1]);
+      sendJson(res, 200, { ...publicExpenseState({ month: record.paymentDate.slice(0, 7) }), record });
+    } catch (error) {
+      sendJson(res, 404, { ok: false, message: error.message });
+    }
     return;
   }
 

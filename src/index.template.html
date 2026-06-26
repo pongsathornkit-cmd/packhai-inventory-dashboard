@@ -36,6 +36,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h12M6 12h12M6 19h12M3 5h.01M3 12h.01M3 19h.01" /></svg>
             รายการสินค้า
           </a>
+          <a href="#expenses">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3h10v18H7zM10 7h4M10 11h4M10 15h2M5 7H3m18 0h-2M5 17H3m18 0h-2" /></svg>
+            ค่าใช้จ่าย
+          </a>
           <a href="#methodology">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9M12 4h9M4 9h16M4 15h16M4 4v16" /></svg>
             Methodology
@@ -90,6 +94,150 @@
 
       <main>
         <section class="sync-status" id="syncStatus" hidden></section>
+
+        <section class="expenses-section" id="expenses">
+          <div class="section-heading">
+            <div>
+              <h2>ค่าใช้จ่ายและหัก ณ ที่จ่าย</h2>
+              <p>บันทึกค่าใช้จ่าย คำนวณ VAT/หัก ณ ที่จ่าย ออกใบสำคัญจ่าย และเตรียมรายงาน ภ.ง.ด.3 / ภ.ง.ด.53</p>
+            </div>
+          </div>
+
+          <section class="expense-status" id="expenseStatus" hidden></section>
+          <div class="expense-kpis" id="expenseKpis"></div>
+
+          <div class="expense-workspace">
+            <form class="expense-form" id="expenseForm">
+              <div class="form-title">
+                <h3>ลงค่าใช้จ่ายใหม่</h3>
+                <span>Payment Voucher + 50 ทวิ</span>
+              </div>
+
+              <div class="form-grid">
+                <label>
+                  วันที่จ่าย
+                  <input id="expensePaymentDate" name="paymentDate" type="date" required />
+                </label>
+                <label>
+                  ประเภทผู้รับเงิน
+                  <select id="expenseRecipientType" name="recipientType">
+                    <option value="company">บริษัท / นิติบุคคล (ภ.ง.ด.53)</option>
+                    <option value="individual">บุคคลธรรมดา (ภ.ง.ด.3)</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  ชื่อผู้รับเงิน
+                  <input id="expenseRecipientName" name="recipientName" type="text" placeholder="ชื่อบริษัท / ชื่อบุคคล" required />
+                </label>
+                <label>
+                  เลขประจำตัวผู้เสียภาษี
+                  <input id="expenseRecipientTaxId" name="recipientTaxId" type="text" inputmode="numeric" />
+                </label>
+                <label>
+                  เลขใบกำกับ / เลขบิล
+                  <input id="expenseInvoiceNo" name="invoiceNo" type="text" />
+                </label>
+                <label class="span-2">
+                  ที่อยู่ผู้รับเงิน
+                  <input id="expenseRecipientAddress" name="recipientAddress" type="text" />
+                </label>
+                <label>
+                  หมวดค่าใช้จ่าย
+                  <select id="expenseCategory" name="category">
+                    <option value="ค่าบริการ">ค่าบริการ</option>
+                    <option value="ค่าเช่า">ค่าเช่า</option>
+                    <option value="ค่าโฆษณา">ค่าโฆษณา</option>
+                    <option value="ค่าขนส่ง">ค่าขนส่ง</option>
+                    <option value="ค่าซ่อมแซม">ค่าซ่อมแซม</option>
+                    <option value="ค่าใช้จ่ายทั่วไป">ค่าใช้จ่ายทั่วไป</option>
+                  </select>
+                </label>
+                <label>
+                  รายละเอียด
+                  <input id="expenseDescription" name="description" type="text" placeholder="เช่น ค่าบริการรายเดือน" />
+                </label>
+                <label>
+                  จำนวนเงิน
+                  <input id="expenseAmountInput" name="amountInput" type="number" min="0" step="0.01" required />
+                </label>
+                <label>
+                  วิธีใส่ยอด
+                  <select id="expenseAmountMode" name="amountMode">
+                    <option value="exclusive">ยอดก่อน VAT</option>
+                    <option value="inclusive">ยอดรวม VAT แล้ว</option>
+                  </select>
+                </label>
+                <label>
+                  VAT
+                  <select id="expenseVatMode" name="vatMode">
+                    <option value="vat7">VAT 7%</option>
+                    <option value="none">ไม่มี VAT</option>
+                    <option value="exempt">ยกเว้น VAT</option>
+                  </select>
+                </label>
+                <label>
+                  หัก ณ ที่จ่าย
+                  <select id="expenseWhtRate" name="whtRate">
+                    <option value="0">ไม่หัก</option>
+                    <option value="1">1%</option>
+                    <option value="2">2%</option>
+                    <option value="3" selected>3%</option>
+                    <option value="5">5%</option>
+                  </select>
+                </label>
+                <label class="span-2">
+                  หมายเหตุ
+                  <textarea id="expenseNotes" name="notes" rows="3"></textarea>
+                </label>
+              </div>
+
+              <div class="expense-preview" id="expensePreview"></div>
+              <button class="primary-button" type="submit">บันทึกและออกเลขเอกสาร</button>
+            </form>
+
+            <div class="expense-ledger">
+              <div class="ledger-header">
+                <div>
+                  <h3>ทะเบียนค่าใช้จ่าย</h3>
+                  <p id="expenseLedgerSubtitle">รายการที่บันทึกในระบบ</p>
+                </div>
+                <div class="ledger-actions">
+                  <a class="secondary-button" id="expenseExportAll" href="#" target="_blank" rel="noreferrer">Export ทั้งหมด</a>
+                  <a class="secondary-button" id="expenseExportPnd3" href="#" target="_blank" rel="noreferrer">ภ.ง.ด.3</a>
+                  <a class="secondary-button" id="expenseExportPnd53" href="#" target="_blank" rel="noreferrer">ภ.ง.ด.53</a>
+                </div>
+              </div>
+
+              <div class="expense-filters">
+                <input id="expenseSearch" type="search" placeholder="ค้นหาผู้รับเงิน / เลขเอกสาร / เลขบิล" />
+                <input id="expenseMonth" type="month" />
+                <select id="expensePndFilter">
+                  <option value="All">ทุกแบบ</option>
+                  <option value="PND3">ภ.ง.ด.3</option>
+                  <option value="PND53">ภ.ง.ด.53</option>
+                </select>
+              </div>
+
+              <div class="expense-table-wrap">
+                <table class="expense-table">
+                  <thead>
+                    <tr>
+                      <th>เอกสาร</th>
+                      <th>ผู้รับเงิน</th>
+                      <th>แบบ</th>
+                      <th class="num">ยอดก่อน VAT</th>
+                      <th class="num">VAT</th>
+                      <th class="num">หัก ณ ที่จ่าย</th>
+                      <th class="num">สุทธิจ่าย</th>
+                      <th>จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="expenseRows"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </section>
 
         <section class="owner-command" id="executive">
           <div>

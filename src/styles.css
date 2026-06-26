@@ -1388,6 +1388,310 @@ tbody tr:hover {
   color: var(--soft-muted);
 }
 
+.expenses-section {
+  display: grid;
+  gap: 18px;
+  margin-bottom: 28px;
+}
+
+.expense-status {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  border: 1px solid var(--strong-border);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.expense-status[hidden] {
+  display: none;
+}
+
+.expense-status strong {
+  color: var(--ink-2);
+  font-size: 14px;
+}
+
+.expense-status span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.expense-status.failed {
+  border-color: rgba(217, 45, 111, 0.28);
+  background: var(--red-soft);
+}
+
+.expense-status.warning,
+.expense-status.running {
+  border-color: rgba(94, 110, 199, 0.28);
+  background: var(--amber-soft);
+}
+
+.expense-status.passed {
+  border-color: rgba(47, 158, 131, 0.26);
+  background: var(--green-soft);
+}
+
+.expense-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.expense-kpi {
+  min-height: 132px;
+  padding: 22px 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.expense-kpi.primary {
+  background: linear-gradient(145deg, var(--sidebar) 0%, var(--sidebar-2) 100%);
+  color: #ffffff;
+}
+
+.expense-kpi span,
+.expense-kpi small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.expense-kpi.primary span,
+.expense-kpi.primary small {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.expense-kpi strong {
+  display: block;
+  margin: 12px 0 6px;
+  color: var(--ink);
+  font-size: 30px;
+  line-height: 1.08;
+}
+
+.expense-kpi.primary strong {
+  color: #ffffff;
+}
+
+.expense-workspace {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.92fr) minmax(0, 1.35fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.expense-form,
+.expense-ledger {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.expense-form {
+  padding: 20px;
+}
+
+.form-title,
+.ledger-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.form-title h3,
+.ledger-header h3 {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.form-title span,
+.ledger-header p {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.form-grid label {
+  display: grid;
+  gap: 6px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.form-grid .span-2 {
+  grid-column: span 2;
+}
+
+.form-grid input,
+.form-grid select,
+.form-grid textarea,
+.expense-filters input,
+.expense-filters select {
+  width: 100%;
+  border: 1px solid var(--strong-border);
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+  outline: none;
+}
+
+.form-grid input,
+.form-grid select,
+.expense-filters input,
+.expense-filters select {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.form-grid textarea {
+  min-height: 78px;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.expense-preview {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.expense-preview div {
+  padding: 10px;
+  border-radius: 10px;
+  background: var(--amber-soft);
+}
+
+.expense-preview span,
+.expense-preview strong {
+  display: block;
+}
+
+.expense-preview span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.expense-preview strong {
+  margin-top: 4px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.expense-ledger {
+  min-width: 0;
+  padding: 20px;
+}
+
+.ledger-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.ledger-actions .secondary-button {
+  min-height: 38px;
+  padding: 0 12px;
+  text-decoration: none;
+}
+
+.expense-filters {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 150px 130px;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.expense-table-wrap {
+  overflow-x: auto;
+}
+
+.expense-table {
+  min-width: 980px;
+}
+
+.expense-table td span,
+.expense-table td em {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-style: normal;
+}
+
+.expense-table tr.is-cancelled {
+  opacity: 0.62;
+}
+
+.expense-status-pill {
+  width: fit-content;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--green-soft);
+  color: var(--green) !important;
+  font-weight: 800;
+}
+
+.expense-status-pill.cancelled {
+  background: var(--red-soft);
+  color: var(--red) !important;
+}
+
+.expense-status-pill.draft {
+  background: var(--amber-soft);
+  color: var(--amber) !important;
+}
+
+.expense-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.expense-actions a,
+.expense-actions button,
+.muted-action {
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+.muted-action {
+  color: var(--soft-muted);
+  cursor: default;
+}
+
+.empty-cell {
+  padding: 28px !important;
+  text-align: center;
+  color: var(--muted);
+}
+
 .warehouse-cell span {
   margin-top: 3px;
   color: var(--muted);
@@ -1841,8 +2145,13 @@ tbody tr:hover {
     grid-template-columns: 1fr;
   }
 
+  .expense-workspace {
+    grid-template-columns: 1fr;
+  }
+
   .freshness-band,
   .kpi-grid,
+  .expense-kpis,
   .prefix-grid,
   .warehouse-product-grid,
   .detail-metrics,
@@ -1893,6 +2202,7 @@ tbody tr:hover {
 
   .freshness-band,
   .kpi-grid,
+  .expense-kpis,
   .prefix-grid,
   .warehouse-product-grid,
   .detail-metrics,
@@ -1904,8 +2214,29 @@ tbody tr:hover {
   .report-header,
   .owner-command,
   .strategy-panel,
-  .warehouse-products-section {
+  .warehouse-products-section,
+  .expense-form,
+  .expense-ledger {
     padding: 14px;
+  }
+
+  .form-grid,
+  .expense-preview,
+  .expense-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .form-grid .span-2 {
+    grid-column: auto;
+  }
+
+  .form-title,
+  .ledger-header {
+    display: grid;
+  }
+
+  .ledger-actions {
+    justify-content: stretch;
   }
 
   .owner-command h2 {

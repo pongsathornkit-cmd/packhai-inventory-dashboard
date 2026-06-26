@@ -351,6 +351,7 @@
     packhai: "Sync คลัง Packhai",
     flowaccount: "Sync คลัง FlowAccount",
     seller: "Sync ราคาขาย Seller",
+    expenses: "ระบบค่าใช้จ่าย",
   };
   let syncPollTimer = null;
   let syncStartedHere = false;
@@ -374,6 +375,7 @@
   }
 
   function syncApiUrl(path) {
+    if (!staticReportHost) return path;
     return remoteSyncApiBase ? `${remoteSyncApiBase}${path}` : path;
   }
 
@@ -589,6 +591,307 @@
         true
       );
     }
+  }
+
+  const expenseState = {
+    month: new Date().toISOString().slice(0, 7),
+    query: "",
+    pndType: "All",
+    expenses: [],
+    summary: null,
+    loading: false,
+  };
+
+  function expenseApiReady(showMessage = true) {
+    if (!staticReportHost || remoteSyncApiBase) return true;
+    if (showMessage) {
+      renderExpenseStatus(
+        "warning",
+        "ยังใช้งานค่าใช้จ่ายออนไลน์ไม่ได้",
+        "หน้า GitHub Pages ต้องเชื่อม Sync API URL ก่อนจึงจะบันทึกค่าใช้จ่ายและออก PDF ได้"
+      );
+    }
+    return false;
+  }
+
+  function expenseFetchOptions(method = "GET", body = null) {
+    const options = syncFetchOptions(method);
+    if (body) {
+      options.headers = { ...options.headers, "Content-Type": "application/json" };
+      options.body = JSON.stringify(body);
+    }
+    return options;
+  }
+
+  function expenseApiUrl(path) {
+    return syncApiUrl(path);
+  }
+
+  function renderExpenseStatus(kind, title, message) {
+    const el = $("expenseStatus");
+    if (!el) return;
+    if (!title && !message) {
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    el.className = `expense-status ${kind || "info"}`;
+    el.innerHTML = `
+      <strong>${escapeHtml(title || "")}</strong>
+      <span>${escapeHtml(message || "")}</span>`;
+  }
+
+  function expensePreviewCalc() {
+    const amountInput = Number($("expenseAmountInput")?.value || 0);
+    const amountMode = $("expenseAmountMode")?.value || "exclusive";
+    const vatMode = $("expenseVatMode")?.value || "vat7";
+    const whtRate = Number($("expenseWhtRate")?.value || 0);
+    let subtotal = amountInput;
+    let vatAmount = 0;
+    let grossAmount = amountInput;
+    if (vatMode === "vat7") {
+      if (amountMode === "inclusive") {
+        grossAmount = amountInput;
+        subtotal = Math.round((grossAmount / 1.07 + Number.EPSILON) * 100) / 100;
+        vatAmount = Math.round((grossAmount - subtotal + Number.EPSILON) * 100) / 100;
+      } else {
+        vatAmount = Math.round((subtotal * 0.07 + Number.EPSILON) * 100) / 100;
+        grossAmount = Math.round((subtotal + vatAmount + Number.EPSILON) * 100) / 100;
+      }
+    }
+    const withholdingAmount = Math.round((subtotal * (whtRate / 100) + Number.EPSILON) * 100) / 100;
+    return {
+      subtotal,
+      vatAmount,
+      grossAmount,
+      withholdingAmount,
+      netPayable: Math.round((grossAmount - withholdingAmount + Number.EPSILON) * 100) / 100,
+    };
+  }
+
+  function renderExpensePreview() {
+    const el = $("expensePreview");
+    if (!el) return;
+    const preview = expensePreviewCalc();
+    el.innerHTML = [
+      ["ยอดก่อน VAT", fmtBaht2.format(preview.subtotal || 0)],
+      ["VAT", fmtBaht2.format(preview.vatAmount || 0)],
+      ["ยอดรวม", fmtBaht2.format(preview.grossAmount || 0)],
+      ["หัก ณ ที่จ่าย", fmtBaht2.format(preview.withholdingAmount || 0)],
+      ["สุทธิจ่าย", fmtBaht2.format(preview.netPayable || 0)],
+    ]
+      .map((item) => `<div><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong></div>`)
+      .join("");
+  }
+
+  function renderExpenseKpis() {
+    const el = $("expenseKpis");
+    if (!el) return;
+    const summary = expenseState.summary || {};
+    const cards = [
+      ["ค่าใช้จ่ายเดือนนี้", fmtBaht.format(summary.grossAmount || 0), `${fmtInt.format(summary.count || 0)} รายการ`],
+      ["VAT ซื้อ", fmtBaht2.format(summary.vatAmount || 0), "สำหรับตรวจภาษีซื้อ"],
+      ["หัก ณ ที่จ่าย", fmtBaht2.format(summary.withholdingAmount || 0), `${fmtInt.format(summary.pnd3Count || 0)} ภ.ง.ด.3 / ${fmtInt.format(summary.pnd53Count || 0)} ภ.ง.ด.53`],
+      ["สุทธิจ่าย", fmtBaht.format(summary.netPayable || 0), "หลังหัก ณ ที่จ่าย"],
+    ];
+    el.innerHTML = cards
+      .map(
+        (card, index) => `
+          <article class="expense-kpi ${index === 0 ? "primary" : ""}">
+            <span>${escapeHtml(card[0])}</span>
+            <strong>${escapeHtml(card[1])}</strong>
+            <small>${escapeHtml(card[2])}</small>
+          </article>`
+      )
+      .join("");
+  }
+
+  function updateExpenseExportLinks() {
+    const month = encodeURIComponent(expenseState.month || "");
+    const base = `/api/expenses/export.csv?month=${month}`;
+    const all = $("expenseExportAll");
+    const pnd3 = $("expenseExportPnd3");
+    const pnd53 = $("expenseExportPnd53");
+    if (all) all.href = expenseApiReady(false) ? expenseApiUrl(base) : "#expenses";
+    if (pnd3) pnd3.href = expenseApiReady(false) ? expenseApiUrl(`${base}&pndType=PND3`) : "#expenses";
+    if (pnd53) pnd53.href = expenseApiReady(false) ? expenseApiUrl(`${base}&pndType=PND53`) : "#expenses";
+  }
+
+  function expenseRowsForView() {
+    const query = compactText(expenseState.query);
+    return (expenseState.expenses || [])
+      .filter((row) => !expenseState.month || String(row.paymentDate || "").startsWith(expenseState.month))
+      .filter((row) => expenseState.pndType === "All" || row.pndType === expenseState.pndType)
+      .filter((row) => {
+        if (!query) return true;
+        return compactText(`${row.expenseNo} ${row.whtNo} ${row.recipientName} ${row.invoiceNo} ${row.category} ${row.description}`).includes(query);
+      })
+      .sort((a, b) => String(b.paymentDate || "").localeCompare(String(a.paymentDate || "")) || String(b.expenseNo || "").localeCompare(String(a.expenseNo || "")));
+  }
+
+  function renderExpenseRows() {
+    const body = $("expenseRows");
+    if (!body) return;
+    const rowsForView = expenseRowsForView();
+    $("expenseLedgerSubtitle").textContent = `แสดง ${fmtInt.format(rowsForView.length)} รายการ จากเดือน ${expenseState.month || "-"}`;
+    updateExpenseExportLinks();
+    if (!rowsForView.length) {
+      body.innerHTML = `<tr><td colspan="8" class="empty-cell">ยังไม่มีรายการค่าใช้จ่ายในเงื่อนไขนี้</td></tr>`;
+      return;
+    }
+    body.innerHTML = rowsForView
+      .map((row) => {
+        const voucherUrl = expenseApiUrl(`/api/expenses/${encodeURIComponent(row.id)}/payment-voucher.pdf`);
+        const whtUrl = expenseApiUrl(`/api/expenses/${encodeURIComponent(row.id)}/wht-certificate.pdf`);
+        const whtAction =
+          Number(row.withholdingAmount || 0) > 0
+            ? `<a href="${escapeHtml(whtUrl)}" target="_blank" rel="noreferrer">50 ทวิ</a>`
+            : `<span class="muted-action">ไม่มี WHT</span>`;
+        const statusClass = row.status === "cancelled" ? "cancelled" : row.status === "draft" ? "draft" : "posted";
+        return `
+          <tr class="${statusClass === "cancelled" ? "is-cancelled" : ""}">
+            <td>
+              <strong>${escapeHtml(row.expenseNo || "-")}</strong>
+              <span>${escapeHtml(row.paymentDate || "-")} · ${escapeHtml(row.whtNo || "ไม่มี 50 ทวิ")}</span>
+              <em class="expense-status-pill ${statusClass}">${escapeHtml(row.status || "-")}</em>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.recipientName || "-")}</strong>
+              <span>${escapeHtml(row.invoiceNo || row.category || "-")}</span>
+            </td>
+            <td>${escapeHtml(row.pndType || "-")}</td>
+            <td class="num">${fmtBaht2.format(row.subtotal || 0)}</td>
+            <td class="num">${fmtBaht2.format(row.vatAmount || 0)}</td>
+            <td class="num">${fmtBaht2.format(row.withholdingAmount || 0)}</td>
+            <td class="num"><strong>${fmtBaht2.format(row.netPayable || 0)}</strong></td>
+            <td class="expense-actions">
+              <a href="${escapeHtml(voucherUrl)}" target="_blank" rel="noreferrer">ใบสำคัญจ่าย</a>
+              ${whtAction}
+              ${
+                row.status !== "cancelled"
+                  ? `<button type="button" data-expense-cancel="${escapeHtml(row.id)}">ยกเลิก</button>`
+                  : ""
+              }
+            </td>
+          </tr>`;
+      })
+      .join("");
+  }
+
+  function renderExpenses() {
+    renderExpenseKpis();
+    renderExpenseRows();
+  }
+
+  async function loadExpenses(showErrors = false) {
+    if (!expenseApiReady(showErrors)) {
+      renderExpenseKpis();
+      renderExpenseRows();
+      return;
+    }
+    expenseState.loading = true;
+    try {
+      const response = await fetch(expenseApiUrl(`/api/expenses?month=${encodeURIComponent(expenseState.month)}`), expenseFetchOptions("GET"));
+      if (!response.ok) throw new Error(`Status ${response.status}`);
+      const payload = await response.json();
+      expenseState.expenses = payload.expenses || [];
+      expenseState.summary = payload.summary || null;
+      renderExpenseStatus("", "", "");
+      renderExpenses();
+    } catch (error) {
+      if (showErrors) renderExpenseStatus("failed", "โหลดค่าใช้จ่ายไม่สำเร็จ", error.message);
+      renderExpenses();
+    } finally {
+      expenseState.loading = false;
+    }
+  }
+
+  function collectExpenseForm() {
+    const form = $("expenseForm");
+    const formData = new FormData(form);
+    return {
+      paymentDate: formData.get("paymentDate"),
+      recipientType: formData.get("recipientType"),
+      recipientName: formData.get("recipientName"),
+      recipientTaxId: formData.get("recipientTaxId"),
+      recipientAddress: formData.get("recipientAddress"),
+      category: formData.get("category"),
+      description: formData.get("description"),
+      invoiceNo: formData.get("invoiceNo"),
+      amountInput: Number(formData.get("amountInput") || 0),
+      amountMode: formData.get("amountMode"),
+      vatMode: formData.get("vatMode"),
+      whtRate: Number(formData.get("whtRate") || 0),
+      notes: formData.get("notes"),
+      status: "posted",
+    };
+  }
+
+  async function saveExpense(event) {
+    event.preventDefault();
+    if (!ensureRemoteSyncConfig("expenses")) return;
+    try {
+      renderExpenseStatus("running", "กำลังบันทึกค่าใช้จ่าย", "กำลังออกเลขเอกสารและคำนวณ VAT/WHT");
+      const response = await fetch(expenseApiUrl("/api/expenses"), expenseFetchOptions("POST", collectExpenseForm()));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || `Status ${response.status}`);
+      expenseState.expenses = payload.expenses || [];
+      expenseState.summary = payload.summary || null;
+      $("expenseForm").reset();
+      initExpenseDefaults();
+      renderExpenseStatus("passed", "บันทึกค่าใช้จ่ายสำเร็จ", `ออกเลข ${payload.record?.expenseNo || ""} แล้ว`);
+      renderExpenses();
+    } catch (error) {
+      renderExpenseStatus("failed", "บันทึกค่าใช้จ่ายไม่สำเร็จ", error.message);
+    }
+  }
+
+  async function cancelExpenseRecord(id) {
+    if (!id || !window.confirm("ยืนยันยกเลิกรายการค่าใช้จ่ายนี้?")) return;
+    if (!ensureRemoteSyncConfig("expenses")) return;
+    try {
+      const response = await fetch(expenseApiUrl(`/api/expenses/${encodeURIComponent(id)}/cancel`), expenseFetchOptions("POST"));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || `Status ${response.status}`);
+      expenseState.expenses = payload.expenses || [];
+      expenseState.summary = payload.summary || null;
+      renderExpenseStatus("warning", "ยกเลิกรายการแล้ว", payload.record?.expenseNo || "");
+      renderExpenses();
+    } catch (error) {
+      renderExpenseStatus("failed", "ยกเลิกรายการไม่สำเร็จ", error.message);
+    }
+  }
+
+  function initExpenseDefaults() {
+    const today = new Date().toISOString().slice(0, 10);
+    if ($("expensePaymentDate")) $("expensePaymentDate").value = today;
+    if ($("expenseMonth")) $("expenseMonth").value = expenseState.month;
+    renderExpensePreview();
+  }
+
+  function bindExpenseEvents() {
+    $("expenseForm")?.addEventListener("submit", saveExpense);
+    ["expenseAmountInput", "expenseAmountMode", "expenseVatMode", "expenseWhtRate"].forEach((id) => {
+      $(id)?.addEventListener("input", renderExpensePreview);
+      $(id)?.addEventListener("change", renderExpensePreview);
+    });
+    $("expenseSearch")?.addEventListener("input", (event) => {
+      expenseState.query = event.target.value;
+      renderExpenseRows();
+    });
+    $("expenseMonth")?.addEventListener("change", (event) => {
+      expenseState.month = event.target.value || new Date().toISOString().slice(0, 7);
+      loadExpenses(true);
+    });
+    $("expensePndFilter")?.addEventListener("change", (event) => {
+      expenseState.pndType = event.target.value || "All";
+      renderExpenseRows();
+    });
+    $("expenseRows")?.addEventListener("click", (event) => {
+      const cancelButton = event.target.closest("[data-expense-cancel]");
+      if (!cancelButton) return;
+      cancelExpenseRecord(cancelButton.dataset.expenseCancel);
+    });
   }
 
   function renderFreshness() {
@@ -1226,7 +1529,10 @@
   renderFilters();
   renderTable();
   renderMethodology();
+  initExpenseDefaults();
   bindEvents();
+  bindExpenseEvents();
+  loadExpenses(true);
   if (syncApiUnavailable) {
     setStaticSyncMode(true);
   } else {

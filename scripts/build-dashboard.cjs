@@ -5,6 +5,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
 const srcDir = path.join(projectRoot, "src");
 const distDir = path.join(projectRoot, "dist");
+const localSyncApiBaseFile = path.join(projectRoot, ".sync-api-base.local");
 
 const inputFiles = {
   packhai: path.join(workspaceRoot, "packhai_stock_20260622.json"),
@@ -23,6 +24,15 @@ function readOptionalJson(file, fallback) {
     return readJson(file);
   } catch {
     return fallback;
+  }
+}
+
+function readPublicSyncApiBase() {
+  if (process.env.PUBLIC_SYNC_API_BASE) return process.env.PUBLIC_SYNC_API_BASE.trim();
+  try {
+    return fs.readFileSync(localSyncApiBaseFile, "utf8").trim();
+  } catch {
+    return "";
   }
 }
 
@@ -693,7 +703,7 @@ function build() {
   const template = fs.readFileSync(path.join(srcDir, "index.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "styles.css"), "utf8");
   const app = fs.readFileSync(path.join(srcDir, "app.js"), "utf8");
-  const configScript = `window.__PACKHAI_SYNC_API_BASE__ = ${JSON.stringify(process.env.PUBLIC_SYNC_API_BASE || "")};`;
+  const configScript = `window.__PACKHAI_SYNC_API_BASE__ = ${JSON.stringify(readPublicSyncApiBase())};`;
   const dataScript = `window.__PACKHAI_DASHBOARD__ = ${JSON.stringify(dashboard)};`;
   const html = template
     .replace("/* __INLINE_STYLES__ */", styles)

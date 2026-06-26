@@ -1,4 +1,5 @@
 .packhai-token.local
+.sync-api-base.local
 .sync-key.local
 server.out.log
 server.err.log

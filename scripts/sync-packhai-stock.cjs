@@ -30,6 +30,9 @@ const config = {
   shopId: Number(process.env.PACKHAI_SHOP_ID || 466),
   warehouseId: Number(process.env.PACKHAI_WAREHOUSE_ID || 1),
 };
+const includeStockMovements = process.env.PACKHAI_INCLUDE_STOCK_MOVEMENTS !== "0";
+const movementStartDate = process.env.PACKHAI_STOCK_MOVEMENT_START_DATE || "2020-01-01";
+const movementPageSize = Math.max(100, Number(process.env.PACKHAI_STOCK_MOVEMENT_PAGE_SIZE || 1000));
 
 function numberValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -57,6 +60,25 @@ function todayBangkok() {
   }).formatToParts(new Date());
   const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${map.year}-${map.month}-${map.day}`;
+}
+
+function normalizePackhaiDateTime(value) {
+  const text = String(value || "").trim();
+  if (!text) return "";
+  const isoLike = text.includes("T") ? text : text.replace(" ", "T");
+  const withZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(isoLike) ? isoLike : `${isoLike}+07:00`;
+  const date = new Date(withZone);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString();
+}
+
+function movementType(row) {
+  const addQuantity = numberValue(row.addQuantity);
+  const removeQuantity = numberValue(row.removeQuantity);
+  if (addQuantity > 0 && removeQuantity > 0) return "เข้า/ออก";
+  if (addQuantity > 0) return "นำเข้า";
+  if (removeQuantity > 0) return "นำออก";
+  return "ปรับยอด";
 }
 
 async function postStock(pathname, body, attempt = 1) {
@@ -87,7 +109,7 @@ async function postStock(pathname, body, attempt = 1) {
   }
 
   if (!response.ok || data.status === "error") {
-    if (attempt < 3 && response.status >= 500) {
+    if (attempt < 3 && (response.status >= 500 || data.status === "error")) {
       await new Promise((resolve) => setTimeout(resolve, 750 * attempt));
       return postStock(pathname, body, attempt + 1);
     }
@@ -122,22 +144,90 @@ async function fetchStockSummary(date) {
   return rows;
 }
 
-function mapStockRow(row) {
+async function fetchLatestStockMovements(startDate, endDate) {
+  const latestByStockShopId = new Map();
+  let skip = 0;
+  let total = null;
+  let movementRows = 0;
+
+  while (total == null || skip < total) {
+    const data = await postStock("Stock/get-all-stock-statement-balance", {
+      brand: null,
+      shopID: config.shopId,
+      warehouseID: config.warehouseId,
+      startDate,
+      endDate,
+      skip,
+      take: movementPageSize,
+      isNeedResultCount: true,
+    });
+    const items = data.items || [];
+    total = numberValue(data.resultCount ?? data.totalResult ?? total ?? items.length);
+    movementRows += items.length;
+
+    for (const item of items) {
+      const stockShopId = numberValue(item.stockID ?? item.stockShopID ?? item.stockShopId);
+      const latestAt = normalizePackhaiDateTime(item.created ?? item.createdDatetime);
+      if (!stockShopId || !latestAt) continue;
+      const current = latestByStockShopId.get(stockShopId);
+      if (current && new Date(current.latestStockMovementAt).getTime() >= new Date(latestAt).getTime()) continue;
+      latestByStockShopId.set(stockShopId, {
+        latestStockMovementAt: latestAt,
+        latestStockMovementType: movementType(item),
+        latestStockMovementDescription: String(item.description || "").trim(),
+        latestStockMovementReferenceNo: String(item.referenceNo || "").trim(),
+        latestStockMovementReferenceNo2: String(item.referenceNo2 || "").trim(),
+        latestStockMovementChannelName: String(item.channelName || "").trim(),
+        latestStockMovementAddQuantity: numberValue(item.addQuantity),
+        latestStockMovementRemoveQuantity: numberValue(item.removeQuantity),
+        latestStockMovementTotalQuantity: numberValue(item.totalQuantity),
+      });
+    }
+
+    if (!items.length) break;
+    skip += items.length;
+  }
+
+  return {
+    startDate,
+    endDate,
+    rowCount: movementRows,
+    stockShopCount: latestByStockShopId.size,
+    latestByStockShopId,
+  };
+}
+
+function mapStockRow(row, latestMovement) {
   const sku = normalizeSku(row.sku || row.productCode || row.productSKU || row.productMasterSku);
   const quantity = numberValue(row.quantityRemain ?? row.quantity ?? row.stock);
   const waiting = numberValue(row.quantityOrder ?? row.waiting ?? row.orderQuantity);
   const waitImport = numberValue(row.quantityImport ?? row.waitImport ?? row.waitingImport);
   const available = row.quantityAvailable != null ? numberValue(row.quantityAvailable) : quantity - waiting;
+  const stockShopId = numberValue(row.stockShopID ?? row.stockShopId);
 
   return {
+    stockShopId,
     sku,
     name: String(row.name || row.productName || row.productMasterName || sku).trim(),
     barcode: String(row.barcode || row.productBarcode || "").trim(),
-    prop: String(row.prop || row.optionName || row.productOption || "").trim(),
+    prop: String(
+      row.prop ||
+        row.optionName ||
+        row.productOption ||
+        [row.prop1_description, row.prop2_description, row.prop1Description, row.prop2Description].filter(Boolean).join(" / ")
+    ).trim(),
+    warehouseName: String(row.warehouseName || "").trim(),
+    photoLink: String(row.photoLink || "").trim(),
+    isNoMovement: Boolean(row.isNoMovement),
     quantity,
     waiting,
     waitImport,
     available,
+    quantityStart: numberValue(row.quantityStart),
+    quantityReturn: numberValue(row.quantityReturn),
+    quantityImport: numberValue(row.quantityImport),
+    quantityExport: numberValue(row.quantityExport),
+    ...(latestMovement || {}),
   };
 }
 
@@ -145,7 +235,10 @@ async function main() {
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   const date = process.env.PACKHAI_SYNC_DATE || todayBangkok();
   const apiRows = await fetchStockSummary(date);
-  const rows = apiRows.map(mapStockRow).filter((row) => row.sku);
+  const movement = includeStockMovements ? await fetchLatestStockMovements(movementStartDate, date) : null;
+  const rows = apiRows
+    .map((row) => mapStockRow(row, movement?.latestByStockShopId.get(numberValue(row.stockShopID ?? row.stockShopId))))
+    .filter((row) => row.sku);
   const skuCounts = new Map();
   for (const row of rows) skuCounts.set(row.sku, (skuCounts.get(row.sku) || 0) + 1);
   const duplicateSkus = [...skuCounts.entries()]
@@ -158,11 +251,38 @@ async function main() {
     rowCount: rows.length,
     uniqueSkuCount: skuCounts.size,
     duplicateSkus,
+    stockMovement: movement
+      ? {
+          source: "https://shop.packhai.com/stock-history",
+          endpoint: "Stock/get-all-stock-statement-balance",
+          startDate: movement.startDate,
+          endDate: movement.endDate,
+          rowCount: movement.rowCount,
+          stockShopCount: movement.stockShopCount,
+        }
+      : {
+          skipped: true,
+          reason: "PACKHAI_INCLUDE_STOCK_MOVEMENTS=0",
+        },
     rows,
   };
 
   fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
-  console.log(JSON.stringify({ ok: true, outputFile, date, rows: rows.length, uniqueSkuCount: skuCounts.size }, null, 2));
+  console.log(
+    JSON.stringify(
+      {
+        ok: true,
+        outputFile,
+        date,
+        rows: rows.length,
+        uniqueSkuCount: skuCounts.size,
+        movementRows: movement?.rowCount || 0,
+        movementStockShopCount: movement?.stockShopCount || 0,
+      },
+      null,
+      2
+    )
+  );
 }
 
 main().catch((error) => {

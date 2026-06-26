@@ -197,6 +197,45 @@
     }
   }
 
+  function movementDateValue(row) {
+    const date = new Date(row?.latestStockMovementAt || "");
+    return Number.isNaN(date.getTime()) ? 0 : date.getTime();
+  }
+
+  function movementAgeText(value) {
+    const date = new Date(value || "");
+    if (Number.isNaN(date.getTime())) return "";
+    const days = Math.max(0, Math.floor((Date.now() - date.getTime()) / 86400000));
+    if (days === 0) return "วันนี้";
+    return `${fmtInt.format(days)} วันที่แล้ว`;
+  }
+
+  function movementSummary(row) {
+    if (!row?.latestStockMovementAt) {
+      return row?.stockSource === "Packhai" ? "ยังไม่พบประวัติจาก Packhai" : "ข้อมูล movement จาก Packhai เท่านั้น";
+    }
+    const reference = row.latestStockMovementReferenceNo ? ` · ${row.latestStockMovementReferenceNo}` : "";
+    return `${formatDateTime(row.latestStockMovementAt)} · ${row.latestStockMovementType || "ปรับยอด"}${reference}`;
+  }
+
+  function movementCell(row) {
+    if (!row.latestStockMovementAt) {
+      const note = row.stockSource === "Packhai" ? "ยังไม่พบประวัติ" : "เฉพาะ Packhai";
+      return `
+        <div class="movement-cell muted">
+          <strong>-</strong>
+          <span>${escapeHtml(note)}</span>
+        </div>`;
+    }
+    const reference = row.latestStockMovementReferenceNo ? `<span>${escapeHtml(row.latestStockMovementReferenceNo)}</span>` : "";
+    return `
+      <div class="movement-cell">
+        <strong>${escapeHtml(formatDateTime(row.latestStockMovementAt))}</strong>
+        <span>${escapeHtml(`${row.latestStockMovementType || "ปรับยอด"} · ${movementAgeText(row.latestStockMovementAt)}`)}</span>
+        ${reference}
+      </div>`;
+  }
+
   function matchLabel(value) {
     if (value === "exact") return "ตรง SKU";
     if (value === "fallback") return "จับคู่สำรอง";
@@ -237,6 +276,7 @@
     const priceText = row.price > 0 ? fmtBaht2.format(row.price) : "-";
     const inventoryText = fmtBaht.format(row.inventoryValue || 0);
     const availableText = fmtQty.format(row.available || 0);
+    const movementText = row.latestStockMovementAt ? formatDateTime(row.latestStockMovementAt) : "-";
 
     content.innerHTML = `
       <div class="detail-hero">
@@ -257,6 +297,7 @@
         ${detailMetric("คงเหลือ", `${fmtQty.format(row.quantity || 0)} หน่วย`)}
         ${detailMetric("พร้อมขาย", `${availableText} หน่วย`)}
         ${detailMetric("ราคาขาย", priceText)}
+        ${detailMetric("เดิน stock ล่าสุด", movementText)}
       </div>
 
       <div class="detail-sections">
@@ -267,6 +308,8 @@
           ${detailField("รอจัด/รอส่ง", `${fmtQty.format(row.waiting || 0)} หน่วย`)}
           ${detailField("รอนำเข้า", `${fmtQty.format(row.waitImport || 0)} หน่วย`)}
           ${detailField("จำนวนที่ใช้ตีมูลค่า", `${fmtQty.format(row.stockForValue || row.quantity || 0)} หน่วย`)}
+          ${detailField("รายการเดิน stock ล่าสุด", movementSummary(row))}
+          ${detailField("รายละเอียดล่าสุด", row.latestStockMovementDescription || "-")}
         </section>
 
         <section class="detail-block">
@@ -977,7 +1020,9 @@
     }
     if (query) {
       next = next.filter((row) =>
-        compactText(`${row.sku} ${row.name} ${row.barcode} ${row.sourceTitle} ${row.warehouseName} ${row.stockSourceLabel}`).includes(query)
+        compactText(
+          `${row.sku} ${row.name} ${row.barcode} ${row.sourceTitle} ${row.warehouseName} ${row.stockSourceLabel} ${row.latestStockMovementReferenceNo} ${row.latestStockMovementDescription}`
+        ).includes(query)
       );
     }
 
@@ -985,6 +1030,7 @@
     sorted.sort((a, b) => {
       if (state.sort === "qtyDesc") return b.quantity - a.quantity || b.inventoryValue - a.inventoryValue;
       if (state.sort === "priceDesc") return b.price - a.price || b.inventoryValue - a.inventoryValue;
+      if (state.sort === "movementDesc") return movementDateValue(b) - movementDateValue(a) || b.inventoryValue - a.inventoryValue;
       if (state.sort === "nameAsc") return a.name.localeCompare(b.name, "th") || a.sku.localeCompare(b.sku, "en");
       if (state.sort === "sourceAsc") return a.priceSourcePriority - b.priceSourcePriority || b.inventoryValue - a.inventoryValue;
       return b.inventoryValue - a.inventoryValue || b.quantity - a.quantity;
@@ -1017,6 +1063,7 @@
           <td class="num">${fmtQty.format(row.quantity)}</td>
           <td class="num">${fmtQty.format(row.waiting)}</td>
           <td class="num">${fmtQty.format(row.available)}</td>
+          <td>${movementCell(row)}</td>
           <td class="num">${row.price > 0 ? fmtBaht2.format(row.price) : "-"}</td>
           <td><span class="badge ${sourceColors[row.priceSource] || "Missing"}">${sourceLabel(row.priceSource)}</span></td>
           <td class="num"><strong>${fmtBaht.format(row.inventoryValue)}</strong></td>
@@ -1063,6 +1110,10 @@
       "Quantity",
       "Waiting",
       "Available",
+      "Latest Stock Movement",
+      "Latest Movement Type",
+      "Latest Movement Reference",
+      "Latest Movement Detail",
       "Price",
       "Price Source",
       "Inventory Value",
@@ -1080,6 +1131,10 @@
           row.quantity,
           row.waiting,
           row.available,
+          row.latestStockMovementAt,
+          row.latestStockMovementType,
+          row.latestStockMovementReferenceNo,
+          row.latestStockMovementDescription,
           row.price,
           row.priceSource,
           row.inventoryValue,

@@ -1292,7 +1292,7 @@ select {
 
 table {
   width: 100%;
-  min-width: 1320px;
+  min-width: 1480px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -1358,6 +1358,34 @@ tbody tr:hover {
   font-size: 12px;
   font-weight: 800;
   color: var(--ink-2);
+}
+
+.movement-cell {
+  min-width: 170px;
+}
+
+.movement-cell strong,
+.movement-cell span {
+  display: block;
+}
+
+.movement-cell strong {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.movement-cell span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.movement-cell.muted strong,
+.movement-cell.muted span {
+  color: var(--soft-muted);
 }
 
 .warehouse-cell span {

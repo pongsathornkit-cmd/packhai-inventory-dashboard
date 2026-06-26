@@ -11,7 +11,9 @@ const port = Number(process.env.PORT || 8123);
 const nodePath = process.execPath;
 const toolsDir = path.join(workspaceRoot, "tools");
 const localPackhaiTokenFile = path.join(projectRoot, ".packhai-token.local");
+const localSyncKeyFile = path.join(projectRoot, ".sync-key.local");
 const localFlowProfile = path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada");
+const publishGithub = process.env.SYNC_PUBLISH_GITHUB !== "0";
 
 const syncState = {
   running: false,
@@ -46,6 +48,37 @@ function send(res, status, body, contentType = "text/plain; charset=utf-8") {
 
 function sendJson(res, status, body) {
   send(res, status, JSON.stringify(body, null, 2), "application/json; charset=utf-8");
+}
+
+function readSyncApiKey() {
+  if (process.env.SYNC_API_KEY) return process.env.SYNC_API_KEY.trim();
+  try {
+    return fs.readFileSync(localSyncKeyFile, "utf8").trim();
+  } catch {
+    return "";
+  }
+}
+
+function applyCors(req, res) {
+  const origin = req.headers.origin || "";
+  const allowed =
+    /^https:\/\/pongsathornkit-cmd\.github\.io$/i.test(origin) ||
+    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(origin);
+  if (allowed) {
+    res.setHeader("Access-Control-Allow-Origin", origin);
+    res.setHeader("Access-Control-Allow-Credentials", "false");
+  }
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Sync-Key");
+}
+
+function syncAuthorized(req, res) {
+  const syncApiKey = readSyncApiKey();
+  if (!syncApiKey) return true;
+  if (String(req.headers["x-sync-key"] || "") === syncApiKey) return true;
+  sendJson(res, 401, { ok: false, message: "Unauthorized Sync key" });
+  return false;
 }
 
 function packhaiConfigured() {
@@ -136,6 +169,22 @@ async function pushOptionalStep(promise, errors) {
 
 async function runBuild() {
   return pushStep(runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot));
+}
+
+async function runPublishGithub() {
+  if (!publishGithub) {
+    syncState.steps.push({
+      name: "Publish GitHub Pages",
+      code: null,
+      skipped: true,
+      startedAt: new Date().toISOString(),
+      finishedAt: new Date().toISOString(),
+      output: "",
+      error: "SYNC_PUBLISH_GITHUB=0",
+    });
+    return null;
+  }
+  return runCommand("Publish GitHub Pages", nodePath, [path.join(projectRoot, "scripts", "publish-github-pages.cjs")], projectRoot);
 }
 
 async function runSync(type) {
@@ -229,6 +278,7 @@ async function runSync(type) {
     }
 
     await runBuild();
+    await pushOptionalStep(runPublishGithub(), errors);
     syncState.warning = warnings.length > 0 && errors.length === 0;
     syncState.ok = errors.length === 0;
     syncState.message = errors.length
@@ -264,14 +314,22 @@ function resolveRequestPath(urlPath) {
 }
 
 const server = http.createServer((req, res) => {
+  applyCors(req, res);
   const url = new URL(req.url || "/", `http://${host}:${port}`);
 
+  if (req.method === "OPTIONS") {
+    send(res, 204, "");
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/sync/status") {
+    if (!syncAuthorized(req, res)) return;
     sendJson(res, 200, publicSyncState());
     return;
   }
 
   if (req.method === "POST" && url.pathname.startsWith("/api/sync/")) {
+    if (!syncAuthorized(req, res)) return;
     const type = url.pathname.split("/").pop();
     if (!["packhai", "flowaccount", "seller", "all"].includes(type)) {
       sendJson(res, 404, { ok: false, message: "Unknown sync type" });

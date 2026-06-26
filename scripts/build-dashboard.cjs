@@ -693,10 +693,11 @@ function build() {
   const template = fs.readFileSync(path.join(srcDir, "index.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "styles.css"), "utf8");
   const app = fs.readFileSync(path.join(srcDir, "app.js"), "utf8");
+  const configScript = `window.__PACKHAI_SYNC_API_BASE__ = ${JSON.stringify(process.env.PUBLIC_SYNC_API_BASE || "")};`;
   const dataScript = `window.__PACKHAI_DASHBOARD__ = ${JSON.stringify(dashboard)};`;
   const html = template
     .replace("/* __INLINE_STYLES__ */", styles)
-    .replace("/* __INLINE_DATA__ */", dataScript)
+    .replace("/* __INLINE_DATA__ */", `${configScript}\n${dataScript}`)
     .replace("/* __INLINE_APP__ */", app);
 
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");

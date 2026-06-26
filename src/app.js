@@ -311,15 +311,42 @@
   };
   let syncPollTimer = null;
   let syncStartedHere = false;
-  let syncApiUnavailable =
-    window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
+  const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
+  const syncDefaultTitles = {
+    syncAll: "Sync Packhai stock and seller prices",
+    syncPackhai: "Sync Packhai stock",
+    syncFlowaccount: "Sync FlowAccount stock",
+    syncSeller: "Sync Seller prices",
+  };
+  let remoteSyncApiBase = normalizeSyncApiBase(
+    window.__PACKHAI_SYNC_API_BASE__ || localStorage.getItem("packhaiSyncApiBase") || ""
+  );
+  let syncApiUnavailable = staticReportHost && !remoteSyncApiBase;
+
+  function normalizeSyncApiBase(value) {
+    return String(value || "").trim().replace(/\/+$/, "");
+  }
+
+  function syncApiUrl(path) {
+    return remoteSyncApiBase ? `${remoteSyncApiBase}${path}` : path;
+  }
+
+  function syncFetchOptions(method = "GET") {
+    const headers = {};
+    const key = localStorage.getItem("packhaiSyncApiKey") || "";
+    if (key) headers["X-Sync-Key"] = key;
+    return { method, cache: "no-store", headers };
+  }
 
   function setStaticSyncMode(enabled) {
     syncButtons().forEach((button) => {
       button.classList.toggle("is-static", enabled);
       if (enabled) {
-        button.title = "Sync works on the local dashboard server only";
+        button.title = "Online sync needs the main sync server";
         button.setAttribute("aria-label", `${button.textContent.trim()} - local sync only`);
+      } else {
+        button.title = syncDefaultTitles[button.id] || button.title;
+        button.removeAttribute("aria-label");
       }
     });
   }
@@ -333,11 +360,36 @@
     const label = syncLabels[type] || "Sync data";
     el.innerHTML = `
       <div>
-        <strong>Online report mode · ${escapeHtml(label)}</strong>
-        <span>GitHub Pages shows the latest published dashboard snapshot. Run Sync on the main local machine, rebuild, then publish the updated dist files to GitHub.</span>
-        <small>The online website is read-only because seller and warehouse sync need local browser sessions and private tokens.</small>
+        <strong>Online Sync setup · ${escapeHtml(label)}</strong>
+        <span>This website needs the main Sync server URL before another computer can run warehouse and seller sync.</span>
+        <small>Ask the main computer for the Sync API URL and Sync key, then click Sync again.</small>
       </div>
       <code>GitHub Pages</code>`;
+  }
+
+  function ensureRemoteSyncConfig(type) {
+    if (!staticReportHost) return true;
+    if (!remoteSyncApiBase) {
+      const base = window.prompt("ใส่ Sync API URL จากเครื่องหลัก เช่น https://xxxx.trycloudflare.com");
+      if (!base) {
+        syncApiUnavailable = true;
+        renderStaticSyncNotice(type);
+        return false;
+      }
+      remoteSyncApiBase = normalizeSyncApiBase(base);
+      localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
+      syncApiUnavailable = false;
+    }
+    if (!localStorage.getItem("packhaiSyncApiKey")) {
+      const key = window.prompt("ใส่รหัส Sync");
+      if (!key) {
+        renderSyncStatus({ ok: false, warning: true, type, message: "ยังไม่ได้ใส่รหัส Sync", steps: [] }, true);
+        return false;
+      }
+      localStorage.setItem("packhaiSyncApiKey", key.trim());
+    }
+    setStaticSyncMode(false);
+    return true;
   }
 
   function formatSyncTime(value) {
@@ -420,7 +472,7 @@
       return;
     }
     try {
-      const response = await fetch("/api/sync/status", { cache: "no-store" });
+      const response = await fetch(syncApiUrl("/api/sync/status"), syncFetchOptions("GET"));
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const status = await response.json();
       renderSyncStatus(status, showIdle);
@@ -429,17 +481,20 @@
         syncPollTimer = setTimeout(() => getSyncStatus(true), 1500);
       } else if (syncStartedHere && status.ok) {
         syncStartedHere = false;
-        setTimeout(() => window.location.reload(), 1200);
+        setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
       }
     } catch (error) {
-      syncApiUnavailable = true;
-      setStaticSyncMode(true);
+      if (!remoteSyncApiBase) {
+        syncApiUnavailable = true;
+        setStaticSyncMode(true);
+      }
       if (!showIdle) return;
       renderSyncStatus({ ok: false, message: `ไม่สามารถอ่านสถานะ Sync ได้: ${error.message}`, steps: [] }, true);
     }
   }
 
   async function startSync(type) {
+    if (!ensureRemoteSyncConfig(type)) return;
     if (syncApiUnavailable) {
       renderStaticSyncNotice(type);
       return;
@@ -448,11 +503,11 @@
     syncStartedHere = true;
     renderSyncStatus({ running: true, type, message: "ส่งคำสั่ง Sync ไปที่ server แล้ว", steps: [] }, true);
     try {
-      const response = await fetch(`/api/sync/${type}`, { method: "POST", cache: "no-store" });
+      const response = await fetch(syncApiUrl(`/api/sync/${type}`), syncFetchOptions("POST"));
       if (!response.ok) {
-        syncApiUnavailable = true;
         syncStartedHere = false;
-        renderStaticSyncNotice(type);
+        if (response.status === 401) localStorage.removeItem("packhaiSyncApiKey");
+        renderSyncStatus({ ok: false, type, message: `เริ่ม Sync ไม่ได้: Status ${response.status}`, steps: [] }, true);
         return;
       }
       const status = await response.json();

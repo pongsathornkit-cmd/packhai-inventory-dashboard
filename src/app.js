@@ -606,9 +606,11 @@
         role: "assistant",
         text: "พิมพ์คำถามหรือคำสั่งได้เลย เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, หรือสร้าง draft ค่าใช้จ่าย",
         actions: [],
+        attachments: [],
       },
     ],
     busy: false,
+    attachments: [],
   };
 
   function expenseApiReady(showMessage = true) {
@@ -949,6 +951,63 @@
     $("assistantFab")?.focus();
   }
 
+  function formatFileSize(bytes) {
+    const value = Number(bytes || 0);
+    if (value >= 1048576) return `${(value / 1048576).toFixed(1)} MB`;
+    if (value >= 1024) return `${Math.ceil(value / 1024)} KB`;
+    return `${value} B`;
+  }
+
+  function renderAttachmentList(attachments = [], compact = false) {
+    if (!attachments.length) return "";
+    return `
+      <div class="assistant-attachment-list ${compact ? "compact" : ""}">
+        ${attachments
+          .map(
+            (item) => `
+            <figure class="assistant-attachment-card">
+              <img src="${escapeHtml(item.dataUrl)}" alt="${escapeHtml(item.name || "แนบรูปภาพ")}" loading="lazy" />
+              <figcaption>
+                <strong>${escapeHtml(item.name || "รูปภาพ")}</strong>
+                <span>${escapeHtml(formatFileSize(item.size))}</span>
+              </figcaption>
+            </figure>`
+          )
+          .join("")}
+      </div>`;
+  }
+
+  function renderAssistantAttachments() {
+    const target = $("assistantAttachmentPreview");
+    if (!target) return;
+    const attachments = assistantState.attachments || [];
+    target.hidden = !attachments.length;
+    if (!attachments.length) {
+      target.innerHTML = "";
+      return;
+    }
+    target.innerHTML = `
+      <div class="attachment-preview-head">
+        <strong>รูปที่แนบ ${fmtInt.format(attachments.length)} รูป</strong>
+        <span>ส่งพร้อมข้อความถัดไป</span>
+      </div>
+      <div class="attachment-preview-grid">
+        ${attachments
+          .map(
+            (item) => `
+            <figure class="attachment-preview-card">
+              <img src="${escapeHtml(item.dataUrl)}" alt="${escapeHtml(item.name || "แนบรูปภาพ")}" />
+              <figcaption>
+                <strong>${escapeHtml(item.name || "รูปภาพ")}</strong>
+                <span>${escapeHtml(formatFileSize(item.size))}</span>
+              </figcaption>
+              <button type="button" data-remove-attachment="${escapeHtml(item.id)}" aria-label="ลบรูปภาพ">×</button>
+            </figure>`
+          )
+          .join("")}
+      </div>`;
+  }
+
   function renderAssistantThread() {
     const thread = $("assistantThread");
     if (!thread) return;
@@ -958,6 +1017,7 @@
           <article class="assistant-message ${message.role}">
             <span>${message.role === "user" ? "คุณ" : "AI"}</span>
             <p>${escapeHtml(message.text || "").replace(/\n/g, "<br>")}</p>
+            ${renderAttachmentList(message.attachments || [], true)}
             ${
               message.actions?.length
                 ? `<div class="assistant-actions">
@@ -980,13 +1040,15 @@
     assistantState.busy = busy;
     const submit = $("assistantSubmit");
     const input = $("assistantInput");
+    const attach = $("assistantAttach");
     if (submit) submit.disabled = busy;
     if (input) input.disabled = busy;
+    if (attach) attach.disabled = busy;
     if (submit) submit.textContent = busy ? "กำลังคิด..." : "ส่งคำสั่ง";
   }
 
-  function pushAssistantMessage(role, text, actions = []) {
-    assistantState.messages.push({ role, text, actions });
+  function pushAssistantMessage(role, text, actions = [], attachments = []) {
+    assistantState.messages.push({ role, text, actions, attachments });
     renderAssistantThread();
   }
 
@@ -1225,18 +1287,42 @@
     return actions.some((action) => ["navigate", "filterInventory", "focusSection"].includes(action?.type));
   }
 
-  async function sendAssistantPrompt(prompt) {
+  function assistantImageNotice(attachments = []) {
+    if (!attachments.length) return null;
+    return {
+      reply:
+        `รับรูปภาพ ${fmtInt.format(attachments.length)} รูปแล้วครับ ` +
+        "ตอนนี้แนบรูปไว้ในแชทได้แล้ว ถ้าต้องการให้ผมทำอะไรต่อให้พิมพ์คำสั่งประกอบ เช่น ค้นหา SKU จากรูป, เปิดตารางสินค้า หรือบันทึกข้อมูลจากรูป",
+      actions: [],
+      source: "rule",
+    };
+  }
+
+  async function sendAssistantPrompt(prompt, attachments = []) {
     const text = String(prompt || "").trim();
-    if (!text || assistantState.busy) return;
-    pushAssistantMessage("user", text);
+    const messageAttachments = Array.isArray(attachments) ? attachments : [];
+    if ((!text && !messageAttachments.length) || assistantState.busy) return;
+    pushAssistantMessage("user", text || `แนบรูปภาพ ${fmtInt.format(messageAttachments.length)} รูป`, [], messageAttachments);
     setAssistantBusy(true);
     try {
       let payload;
-      const clientPayload = runClientRuleAssistant(text);
-      if ((staticReportHost && !remoteSyncApiBase) || shouldUseClientAssistant(clientPayload, text)) {
+      const clientPayload = text ? runClientRuleAssistant(text) : assistantImageNotice(messageAttachments);
+      if (!text) {
+        payload = clientPayload;
+      } else if ((staticReportHost && !remoteSyncApiBase) || shouldUseClientAssistant(clientPayload, text)) {
         payload = clientPayload;
       } else {
-        const response = await fetch(expenseApiUrl("/api/assistant"), expenseFetchOptions("POST", { message: text }));
+        const response = await fetch(
+          expenseApiUrl("/api/assistant"),
+          expenseFetchOptions("POST", {
+            message: text,
+            attachments: messageAttachments.map((item) => ({
+              name: item.name,
+              type: item.type,
+              size: item.size,
+            })),
+          })
+        );
         payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
       }
@@ -1246,7 +1332,7 @@
       autoRunAssistantActions(actions);
       if (payload.warning) pushAssistantMessage("assistant", payload.warning, []);
     } catch (error) {
-      const fallback = runClientRuleAssistant(text, { fallback: true, error });
+      const fallback = text ? runClientRuleAssistant(text, { fallback: true, error }) : assistantImageNotice(messageAttachments);
       $("assistantMode").textContent = "Web Command";
       const actions = Array.isArray(fallback.actions) ? fallback.actions : [];
       pushAssistantMessage("assistant", fallback.reply || `สั่งงานไม่สำเร็จ: ${error.message}`, actions);
@@ -1256,10 +1342,81 @@
     }
   }
 
+  function attachmentId() {
+    return `img-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  }
+
+  function readImageFile(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () =>
+        resolve({
+          id: attachmentId(),
+          name: file.name || "clipboard-image.png",
+          type: file.type || "image/png",
+          size: file.size || 0,
+          dataUrl: String(reader.result || ""),
+        });
+      reader.onerror = () => reject(reader.error || new Error("อ่านรูปภาพไม่สำเร็จ"));
+      reader.readAsDataURL(file);
+    });
+  }
+
+  async function addAssistantImageFiles(files = []) {
+    const allowed = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+    const current = assistantState.attachments || [];
+    const availableSlots = Math.max(0, 4 - current.length);
+    const imageFiles = Array.from(files)
+      .filter((file) => allowed.has(file.type) && file.size <= 5 * 1024 * 1024)
+      .slice(0, availableSlots);
+    if (!imageFiles.length) {
+      pushAssistantMessage("assistant", "แนบรูปไม่สำเร็จ: รองรับ PNG, JPG, WebP, GIF ขนาดไม่เกิน 5 MB และแนบได้สูงสุด 4 รูปต่อครั้ง", []);
+      return;
+    }
+    try {
+      const next = await Promise.all(imageFiles.map(readImageFile));
+      assistantState.attachments = [...current, ...next];
+      renderAssistantAttachments();
+      openAssistantPanel(false);
+    } catch (error) {
+      pushAssistantMessage("assistant", `แนบรูปไม่สำเร็จ: ${error.message}`, []);
+    }
+  }
+
+  function clearAssistantAttachments() {
+    assistantState.attachments = [];
+    renderAssistantAttachments();
+    const fileInput = $("assistantImageInput");
+    if (fileInput) fileInput.value = "";
+  }
+
   function bindAssistantEvents() {
     renderAssistantThread();
+    renderAssistantAttachments();
     $("assistantFab")?.addEventListener("click", () => openAssistantPanel(true));
     $("assistantClose")?.addEventListener("click", closeAssistantPanel);
+    $("assistantAttach")?.addEventListener("click", () => $("assistantImageInput")?.click());
+    $("assistantImageInput")?.addEventListener("change", (event) => {
+      addAssistantImageFiles(event.target.files || []);
+    });
+    $("assistantAttachmentPreview")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-remove-attachment]");
+      if (!button) return;
+      assistantState.attachments = (assistantState.attachments || []).filter((item) => item.id !== button.dataset.removeAttachment);
+      renderAssistantAttachments();
+    });
+    document.addEventListener("paste", (event) => {
+      const panel = $("aiChatPanel");
+      if (!panel || panel.hidden) return;
+      if (!panel.contains(document.activeElement) && document.activeElement !== document.body) return;
+      const files = Array.from(event.clipboardData?.items || [])
+        .filter((item) => item.kind === "file" && item.type.startsWith("image/"))
+        .map((item) => item.getAsFile())
+        .filter(Boolean);
+      if (!files.length) return;
+      event.preventDefault();
+      addAssistantImageFiles(files);
+    });
     document.querySelector('.sidebar-nav a[href="#ai-command"]')?.addEventListener("click", (event) => {
       event.preventDefault();
       location.hash = "ai-command";
@@ -1273,14 +1430,18 @@
       event.preventDefault();
       const input = $("assistantInput");
       const prompt = input?.value || "";
+      const attachments = [...(assistantState.attachments || [])];
       if (input) input.value = "";
-      sendAssistantPrompt(prompt);
+      clearAssistantAttachments();
+      sendAssistantPrompt(prompt, attachments);
     });
     document.querySelectorAll("[data-assistant-prompt]").forEach((button) => {
       button.addEventListener("click", () => {
         const prompt = button.dataset.assistantPrompt || "";
+        const attachments = [...(assistantState.attachments || [])];
         if ($("assistantInput")) $("assistantInput").value = prompt;
-        sendAssistantPrompt(prompt);
+        clearAssistantAttachments();
+        sendAssistantPrompt(prompt, attachments);
       });
     });
     $("assistantThread")?.addEventListener("click", (event) => {

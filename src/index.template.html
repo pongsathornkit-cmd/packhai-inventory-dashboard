@@ -416,12 +416,17 @@
           </div>
         </div>
         <div class="assistant-thread" id="assistantThread" aria-live="polite"></div>
+        <div class="assistant-attachment-preview" id="assistantAttachmentPreview" hidden></div>
         <form class="assistant-form" id="assistantForm">
+          <button class="icon-button assistant-attach-button" id="assistantAttach" type="button" title="แนบรูปภาพ" aria-label="แนบรูปภาพ">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21.44 11.05-8.49 8.49a6 6 0 0 1-8.49-8.49l8.49-8.49a4 4 0 0 1 5.66 5.66l-8.49 8.49a2 2 0 1 1-2.83-2.83l8.49-8.49" /></svg>
+          </button>
+          <input id="assistantImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden />
           <input
             id="assistantInput"
             type="text"
             autocomplete="off"
-            placeholder="เช่น สรุปสินค้ามูลค่าสูงสุด / หา stock ไม่เดินเกิน 30 วัน / ค้นหา SKU P301-PC3B1017-1"
+            placeholder="พิมพ์คำสั่ง หรือ paste รูปจาก clipboard ได้เลย"
           />
           <button class="primary-button" id="assistantSubmit" type="submit">ส่งคำสั่ง</button>
         </form>

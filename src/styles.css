@@ -1564,6 +1564,117 @@ tbody tr:hover {
   white-space: normal;
 }
 
+.assistant-attachment-list,
+.attachment-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.assistant-attachment-list {
+  margin-top: 10px;
+}
+
+.assistant-attachment-card,
+.attachment-preview-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  margin: 0;
+  padding: 7px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.assistant-attachment-card img,
+.attachment-preview-card img {
+  width: 58px;
+  height: 58px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: var(--line-2);
+}
+
+.assistant-attachment-card figcaption,
+.attachment-preview-card figcaption {
+  min-width: 0;
+}
+
+.assistant-attachment-card strong,
+.attachment-preview-card strong,
+.assistant-attachment-card span,
+.attachment-preview-card span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-transform: none;
+}
+
+.assistant-attachment-card strong,
+.attachment-preview-card strong {
+  color: var(--ink-2);
+  font-size: 12px;
+}
+
+.assistant-attachment-card span,
+.attachment-preview-card span {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 650;
+}
+
+.assistant-attachment-preview {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px dashed rgba(233, 30, 118, 0.28);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+}
+
+.assistant-attachment-preview[hidden] {
+  display: none;
+}
+
+.attachment-preview-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.attachment-preview-head strong {
+  color: var(--ink-2);
+}
+
+.attachment-preview-card {
+  padding-right: 34px;
+}
+
+.attachment-preview-card button {
+  position: absolute;
+  top: 7px;
+  right: 7px;
+  width: 22px;
+  height: 22px;
+  min-height: 22px;
+  padding: 0;
+  border: 1px solid rgba(233, 30, 118, 0.24);
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
 .assistant-actions,
 .assistant-quick-actions {
   display: flex;
@@ -1587,8 +1698,16 @@ tbody tr:hover {
 
 .assistant-form {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 132px;
+  grid-template-columns: 46px minmax(0, 1fr) 132px;
   gap: 10px;
+}
+
+.assistant-attach-button {
+  width: 46px;
+  min-height: 46px;
+  padding: 0;
+  border-radius: 14px;
+  background: var(--surface);
 }
 
 .assistant-form input {
@@ -2440,8 +2559,20 @@ tbody tr:hover {
 
   .form-grid,
   .expense-preview,
-  .assistant-form,
   .expense-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .assistant-form {
+    grid-template-columns: 46px minmax(0, 1fr);
+  }
+
+  .assistant-form .primary-button {
+    grid-column: 1 / -1;
+  }
+
+  .assistant-attachment-list,
+  .attachment-preview-grid {
     grid-template-columns: 1fr;
   }
 

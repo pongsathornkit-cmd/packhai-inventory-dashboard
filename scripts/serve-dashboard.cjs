@@ -13,10 +13,17 @@ const {
   renderWithholdingCertificateHtml,
   summarizeExpenses,
 } = require("./expense-core.cjs");
+const {
+  assistantSystemPrompt,
+  buildAssistantContext,
+  parseExpenseDraft,
+  runRuleAssistant,
+} = require("./assistant-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
 const distDir = path.join(projectRoot, "dist");
+const dashboardDataFile = path.join(distDir, "inventory-valuation-data.json");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
 const expensesFile = path.join(dataDir, "expenses.json");
 const host = process.env.HOST || "127.0.0.1";
@@ -192,6 +199,139 @@ async function renderPdf(html) {
 function expenseById(id) {
   const store = readExpenseStore(expensesFile);
   return { store, record: findExpense(store, id) };
+}
+
+function readDashboardData() {
+  try {
+    return JSON.parse(fs.readFileSync(dashboardDataFile, "utf8").replace(/^\uFEFF/, ""));
+  } catch {
+    return { summary: {}, rows: [] };
+  }
+}
+
+function extractOpenAIText(data) {
+  if (data.output_text) return data.output_text;
+  const parts = [];
+  for (const item of data.output || []) {
+    for (const content of item.content || []) {
+      if (content.type === "output_text" || content.type === "text") parts.push(content.text || "");
+    }
+  }
+  return parts.join("\n").trim();
+}
+
+function sanitizeAssistantAction(action) {
+  if (!action || typeof action !== "object") return null;
+  if (action.type === "navigate") {
+    return {
+      type: "navigate",
+      label: String(action.label || "เปิดหน้า").slice(0, 80),
+      hash: String(action.hash || "").replace(/^#/, "").slice(0, 80),
+    };
+  }
+  if (action.type === "filterInventory") {
+    return {
+      type: "filterInventory",
+      label: String(action.label || "กรองตาราง").slice(0, 80),
+      query: String(action.query || "").slice(0, 120),
+      sort: ["valueDesc", "qtyDesc", "priceDesc", "movementDesc", "nameAsc", "sourceAsc"].includes(action.sort)
+        ? action.sort
+        : "valueDesc",
+      warehouseName: String(action.warehouseName || "").slice(0, 80),
+      hash: "inventory-detail",
+    };
+  }
+  if (action.type === "fillExpenseForm") {
+    const payload =
+      action.payload && typeof action.payload === "object"
+        ? {
+            ...parseExpenseDraft(action.payload.sourceText || action.payload.notes || ""),
+            ...action.payload,
+            status: "posted",
+          }
+        : parseExpenseDraft("");
+    return {
+      type: "fillExpenseForm",
+      label: String(action.label || "เติมฟอร์มค่าใช้จ่าย").slice(0, 80),
+      payload: {
+        paymentDate: String(payload.paymentDate || new Date().toISOString().slice(0, 10)).slice(0, 10),
+        recipientType: payload.recipientType === "individual" ? "individual" : "company",
+        recipientName: String(payload.recipientName || "").slice(0, 160),
+        recipientTaxId: String(payload.recipientTaxId || "").slice(0, 40),
+        recipientAddress: String(payload.recipientAddress || "").slice(0, 240),
+        category: String(payload.category || "ค่าใช้จ่ายทั่วไป").slice(0, 80),
+        description: String(payload.description || payload.category || "ค่าใช้จ่าย").slice(0, 160),
+        invoiceNo: String(payload.invoiceNo || "").slice(0, 80),
+        amountInput: Number(payload.amountInput || 0),
+        amountMode: payload.amountMode === "inclusive" ? "inclusive" : "exclusive",
+        vatMode: ["vat7", "none", "exempt"].includes(payload.vatMode) ? payload.vatMode : "none",
+        whtRate: [0, 1, 2, 3, 5].includes(Number(payload.whtRate)) ? Number(payload.whtRate) : 0,
+        notes: String(payload.notes || "").slice(0, 240),
+        status: "posted",
+      },
+    };
+  }
+  return null;
+}
+
+function sanitizeAssistantResponse(result, source) {
+  const actions = Array.isArray(result?.actions)
+    ? result.actions.map(sanitizeAssistantAction).filter(Boolean).slice(0, 4)
+    : [];
+  return {
+    ok: true,
+    source,
+    reply: String(result?.reply || "ยังไม่พบคำตอบที่เหมาะสม").slice(0, 3000),
+    actions,
+  };
+}
+
+async function callOpenAIAssistant(message, context) {
+  const apiKey = String(process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) return null;
+  const model = process.env.OPENAI_MODEL || "gpt-5.4-mini";
+  const response = await fetch("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: "system",
+          content: assistantSystemPrompt(),
+        },
+        {
+          role: "user",
+          content: JSON.stringify({
+            message,
+            context,
+          }),
+        },
+      ],
+      max_output_tokens: 900,
+    }),
+  });
+  if (!response.ok) throw new Error(`OpenAI status ${response.status}`);
+  const data = await response.json();
+  const text = extractOpenAIText(data);
+  return JSON.parse(text);
+}
+
+async function runAssistant(message) {
+  const context = buildAssistantContext(readDashboardData(), readExpenseStore(expensesFile));
+  const ruleResult = runRuleAssistant(message, context);
+  if (!process.env.OPENAI_API_KEY) return sanitizeAssistantResponse(ruleResult, "rule");
+  try {
+    const aiResult = await callOpenAIAssistant(message, context);
+    return sanitizeAssistantResponse(aiResult, "openai");
+  } catch (error) {
+    const fallback = sanitizeAssistantResponse(ruleResult, "rule");
+    fallback.warning = `AI fallback: ${error.message}`;
+    return fallback;
+  }
 }
 
 function summarizeOutput(text) {
@@ -521,6 +661,15 @@ const server = http.createServer((req, res) => {
     } catch (error) {
       sendJson(res, 404, { ok: false, message: error.message });
     }
+    return;
+  }
+
+  if (url.pathname === "/api/assistant" && req.method === "POST") {
+    if (!syncAuthorized(req, res)) return;
+    readJsonBody(req)
+      .then((body) => runAssistant(String(body.message || "")))
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, 500, { ok: false, message: error.message }));
     return;
   }
 

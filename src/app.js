@@ -601,6 +601,16 @@
     summary: null,
     loading: false,
   };
+  const assistantState = {
+    messages: [
+      {
+        role: "assistant",
+        text: "พิมพ์คำถามหรือคำสั่งได้เลย เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, หรือสร้าง draft ค่าใช้จ่าย",
+        actions: [],
+      },
+    ],
+    busy: false,
+  };
 
   function expenseApiReady(showMessage = true) {
     if (!staticReportHost || remoteSyncApiBase) return true;
@@ -891,6 +901,156 @@
       const cancelButton = event.target.closest("[data-expense-cancel]");
       if (!cancelButton) return;
       cancelExpenseRecord(cancelButton.dataset.expenseCancel);
+    });
+  }
+
+  function renderAssistantThread() {
+    const thread = $("assistantThread");
+    if (!thread) return;
+    thread.innerHTML = assistantState.messages
+      .map(
+        (message, messageIndex) => `
+          <article class="assistant-message ${message.role}">
+            <span>${message.role === "user" ? "คุณ" : "AI"}</span>
+            <p>${escapeHtml(message.text || "").replace(/\n/g, "<br>")}</p>
+            ${
+              message.actions?.length
+                ? `<div class="assistant-actions">
+                    ${message.actions
+                      .map(
+                        (action, actionIndex) =>
+                          `<button type="button" data-assistant-action="${messageIndex}:${actionIndex}">${escapeHtml(action.label || "ทำรายการ")}</button>`
+                      )
+                      .join("")}
+                  </div>`
+                : ""
+            }
+          </article>`
+      )
+      .join("");
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function setAssistantBusy(busy) {
+    assistantState.busy = busy;
+    const submit = $("assistantSubmit");
+    const input = $("assistantInput");
+    if (submit) submit.disabled = busy;
+    if (input) input.disabled = busy;
+    if (submit) submit.textContent = busy ? "กำลังคิด..." : "ส่งคำสั่ง";
+  }
+
+  function pushAssistantMessage(role, text, actions = []) {
+    assistantState.messages.push({ role, text, actions });
+    renderAssistantThread();
+  }
+
+  function setSelectValue(id, value) {
+    const el = $(id);
+    if (!el) return;
+    el.value = value;
+    el.dispatchEvent(new Event("change", { bubbles: true }));
+  }
+
+  function fillExpenseForm(payload = {}) {
+    const assign = (id, value) => {
+      const el = $(id);
+      if (el) el.value = value ?? "";
+    };
+    location.hash = "expenses";
+    assign("expensePaymentDate", payload.paymentDate || new Date().toISOString().slice(0, 10));
+    setSelectValue("expenseRecipientType", payload.recipientType || "company");
+    assign("expenseRecipientName", payload.recipientName || "");
+    assign("expenseRecipientTaxId", payload.recipientTaxId || "");
+    assign("expenseRecipientAddress", payload.recipientAddress || "");
+    assign("expenseInvoiceNo", payload.invoiceNo || "");
+    setSelectValue("expenseCategory", payload.category || "ค่าใช้จ่ายทั่วไป");
+    assign("expenseDescription", payload.description || payload.category || "");
+    assign("expenseAmountInput", payload.amountInput || "");
+    setSelectValue("expenseAmountMode", payload.amountMode || "exclusive");
+    setSelectValue("expenseVatMode", payload.vatMode || "none");
+    setSelectValue("expenseWhtRate", String(payload.whtRate ?? 0));
+    assign("expenseNotes", payload.notes || "");
+    renderExpensePreview();
+    $("expenseRecipientName")?.focus();
+  }
+
+  function applyInventoryFilterAction(action = {}) {
+    location.hash = action.hash || "inventory-detail";
+    state.query = action.query || "";
+    state.sort = action.sort || "valueDesc";
+    state.page = 1;
+    const warehouseName = compactText(action.warehouseName || "");
+    if (warehouseName) {
+      const warehouse = (data.warehouseBreakdown || []).find((item) => compactText(item.warehouseName || item.stockSource || "").includes(warehouseName));
+      state.warehouse = warehouse ? warehouseKey(warehouse) : "All";
+    }
+    const searchInput = $("searchInput");
+    const sortSelect = $("sortSelect");
+    if (searchInput) searchInput.value = state.query;
+    if (sortSelect) sortSelect.value = state.sort;
+    renderWarehouseFilters();
+    renderFilters();
+    renderTable();
+  }
+
+  function executeAssistantAction(action) {
+    if (!action) return;
+    if (action.type === "navigate") {
+      location.hash = action.hash || "executive";
+      return;
+    }
+    if (action.type === "filterInventory") {
+      applyInventoryFilterAction(action);
+      return;
+    }
+    if (action.type === "fillExpenseForm") {
+      fillExpenseForm(action.payload || {});
+    }
+  }
+
+  async function sendAssistantPrompt(prompt) {
+    const text = String(prompt || "").trim();
+    if (!text || assistantState.busy) return;
+    if (!ensureRemoteSyncConfig("assistant")) return;
+    pushAssistantMessage("user", text);
+    setAssistantBusy(true);
+    try {
+      const response = await fetch(expenseApiUrl("/api/assistant"), expenseFetchOptions("POST", { message: text }));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      $("assistantMode").textContent = payload.source === "openai" ? "OpenAI Assistant" : "Rule Assistant";
+      pushAssistantMessage("assistant", payload.reply || "-", payload.actions || []);
+      if (payload.warning) pushAssistantMessage("assistant", payload.warning, []);
+    } catch (error) {
+      pushAssistantMessage("assistant", `สั่งงานไม่สำเร็จ: ${error.message}`, []);
+    } finally {
+      setAssistantBusy(false);
+    }
+  }
+
+  function bindAssistantEvents() {
+    renderAssistantThread();
+    $("assistantForm")?.addEventListener("submit", (event) => {
+      event.preventDefault();
+      const input = $("assistantInput");
+      const prompt = input?.value || "";
+      if (input) input.value = "";
+      sendAssistantPrompt(prompt);
+    });
+    document.querySelectorAll("[data-assistant-prompt]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const prompt = button.dataset.assistantPrompt || "";
+        if ($("assistantInput")) $("assistantInput").value = prompt;
+        sendAssistantPrompt(prompt);
+      });
+    });
+    $("assistantThread")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-assistant-action]");
+      if (!button) return;
+      const [messageIndex, actionIndex] = button.dataset.assistantAction.split(":").map((part) => Number(part));
+      const action = assistantState.messages[messageIndex]?.actions?.[actionIndex];
+      executeAssistantAction(action);
     });
   }
 
@@ -1531,6 +1691,7 @@
   renderMethodology();
   initExpenseDefaults();
   bindEvents();
+  bindAssistantEvents();
   bindExpenseEvents();
   loadExpenses(true);
   if (syncApiUnavailable) {

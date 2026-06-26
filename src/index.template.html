@@ -28,6 +28,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5m0 14h16M8 16V9m4 7V6m4 10v-4" /></svg>
             วิเคราะห์มูลค่า
           </a>
+          <a href="#ai-command">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v10H8l-4 4V5zM9 9h6M9 12h4" /></svg>
+            AI Command
+          </a>
           <a href="#warehouses">
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 8h18M5 8v11h14V8M8 8V5h8v3M8 13h8" /></svg>
             คลังสินค้า
@@ -94,6 +98,31 @@
 
       <main>
         <section class="sync-status" id="syncStatus" hidden></section>
+
+        <section class="ai-command-center" id="ai-command">
+          <div class="ai-command-head">
+            <div>
+              <h2>AI Command Center</h2>
+              <p>ถามหรือสั่งงานเกี่ยวกับ stock, มูลค่าคลัง, ค่าใช้จ่าย และเอกสารภาษีในเว็บนี้</p>
+            </div>
+            <span id="assistantMode">Rule Assistant</span>
+          </div>
+          <div class="assistant-thread" id="assistantThread" aria-live="polite"></div>
+          <form class="assistant-form" id="assistantForm">
+            <input
+              id="assistantInput"
+              type="text"
+              autocomplete="off"
+              placeholder="เช่น สรุปสินค้ามูลค่าสูงสุด / หา stock ไม่เดินเกิน 30 วัน / สร้างค่าใช้จ่ายค่าขนส่ง 1070 บาท VAT 7 หัก 3%"
+            />
+            <button class="primary-button" id="assistantSubmit" type="submit">ส่งคำสั่ง</button>
+          </form>
+          <div class="assistant-quick-actions">
+            <button type="button" data-assistant-prompt="สรุปสินค้ามูลค่าสูงสุด 10 รายการ">Top Value</button>
+            <button type="button" data-assistant-prompt="หาสินค้าที่ stock ไม่เดินเกิน 30 วัน">Stock ไม่เดิน</button>
+            <button type="button" data-assistant-prompt="สรุปค่าใช้จ่ายเดือนนี้">ค่าใช้จ่ายเดือนนี้</button>
+          </div>
+        </section>
 
         <section class="expenses-section" id="expenses">
           <div class="section-heading">

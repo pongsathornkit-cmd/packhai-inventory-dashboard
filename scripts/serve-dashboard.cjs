@@ -26,6 +26,7 @@ const distDir = path.join(projectRoot, "dist");
 const dashboardDataFile = path.join(distDir, "inventory-valuation-data.json");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
 const expensesFile = path.join(dataDir, "expenses.json");
+const flowaccountSnapshotFile = path.join(dataDir, "flowaccount_stock_selected_warehouses.json");
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 8123);
 const nodePath = process.execPath;
@@ -149,7 +150,7 @@ function packhaiConfigured() {
 }
 
 function flowaccountConfigured() {
-  return Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile);
+  return fs.existsSync(flowaccountSnapshotFile);
 }
 
 function publicSyncState(extra = {}) {
@@ -159,6 +160,7 @@ function publicSyncState(extra = {}) {
     config: {
       packhaiConfigured: packhaiConfigured(),
       flowaccountConfigured: flowaccountConfigured(),
+      flowaccountSource: "github-snapshot",
       syncKeyRequired: syncKeyRequired(),
     },
   };
@@ -421,6 +423,26 @@ async function runBuild() {
   return pushStep(runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot));
 }
 
+function pushFlowaccountSnapshotStep() {
+  const startedAt = new Date().toISOString();
+  let output = "Using committed GitHub snapshot for warehouses: คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์";
+  try {
+    const snapshot = JSON.parse(fs.readFileSync(flowaccountSnapshotFile, "utf8").replace(/^\uFEFF/, ""));
+    output = `Using GitHub snapshot ${path.relative(projectRoot, flowaccountSnapshotFile).replace(/\\/g, "/")} · exportedAt ${snapshot.exportedAt || "-"} · rows ${snapshot.rowCount || 0}`;
+  } catch (error) {
+    output = `Using GitHub snapshot file · ${error.message}`;
+  }
+  syncState.steps.push({
+    name: "Use GitHub stock snapshot",
+    code: 0,
+    skipped: true,
+    startedAt,
+    finishedAt: new Date().toISOString(),
+    output,
+    error: "",
+  });
+}
+
 async function runPublishGithub() {
   if (!publishGithub) {
     syncState.steps.push({
@@ -452,8 +474,6 @@ async function runSync(type) {
     const warnings = [];
     const runPackhai = () =>
       runCommand("Sync Packhai stock", nodePath, [path.join(projectRoot, "scripts", "sync-packhai-stock.cjs")], projectRoot);
-    const runFlowaccount = () =>
-      runCommand("Sync FlowAccount stock", nodePath, [path.join(projectRoot, "scripts", "sync-flowaccount-stock.cjs")], projectRoot);
     const runShopee = () =>
       runCommand("Sync Shopee Seller", nodePath, [path.join(projectRoot, "scripts", "export-shopee-products.cjs")], projectRoot);
     const runLazada = () =>
@@ -474,20 +494,7 @@ async function runSync(type) {
           error: "PACKHAI_AUTH_TOKEN is not configured.",
         });
       }
-      if (flowaccountConfigured()) {
-        await pushOptionalStep(runFlowaccount(), errors);
-      } else {
-        warnings.push("ข้าม FlowAccount เพราะยังไม่พบ browser session สำหรับ FlowAccount");
-        syncState.steps.push({
-          name: "Sync FlowAccount stock",
-          code: null,
-          skipped: true,
-          startedAt: new Date().toISOString(),
-          finishedAt: new Date().toISOString(),
-          output: "",
-          error: "FlowAccount browser session is not configured.",
-        });
-      }
+      pushFlowaccountSnapshotStep();
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
       if (!shopeeStep && !lazadaStep) {
@@ -511,22 +518,7 @@ async function runSync(type) {
       }
       await pushStep(runPackhai());
     } else if (type === "flowaccount") {
-      if (!flowaccountConfigured()) {
-        syncState.steps.push({
-          name: "Sync FlowAccount stock",
-          code: null,
-          skipped: true,
-          startedAt: new Date().toISOString(),
-          finishedAt: new Date().toISOString(),
-          output: "",
-          error: "FlowAccount browser session is not configured.",
-        });
-        syncState.ok = false;
-        syncState.warning = true;
-        syncState.message = "ยัง Sync คลัง FlowAccount ไม่ได้: ต้อง login FlowAccount ใน browser session ก่อน";
-        return;
-      }
-      await pushStep(runFlowaccount());
+      pushFlowaccountSnapshotStep();
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);

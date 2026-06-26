@@ -349,7 +349,7 @@
   const syncLabels = {
     all: "Sync ทั้งหมด",
     packhai: "Sync คลัง Packhai",
-    flowaccount: "Sync คลัง FlowAccount",
+    flowaccount: "คลัง GitHub",
     seller: "Sync ราคาขาย Seller",
     expenses: "ระบบค่าใช้จ่าย",
   };
@@ -359,7 +359,6 @@
   const syncDefaultTitles = {
     syncAll: "Sync Packhai stock and seller prices",
     syncPackhai: "Sync Packhai stock",
-    syncFlowaccount: "Sync FlowAccount stock",
     syncSeller: "Sync Seller prices",
   };
   let remoteSyncApiBase = normalizeSyncApiBase(
@@ -444,7 +443,7 @@
   }
 
   function syncButtons() {
-    return [$("syncAll"), $("syncPackhai"), $("syncFlowaccount"), $("syncSeller")].filter(Boolean);
+    return [$("syncAll"), $("syncPackhai"), $("syncSeller")].filter(Boolean);
   }
 
   function setSyncButtons(status) {
@@ -456,7 +455,6 @@
         running &&
           ((status.type === "all" && button.id === "syncAll") ||
             (status.type === "packhai" && button.id === "syncPackhai") ||
-            (status.type === "flowaccount" && button.id === "syncFlowaccount") ||
             (status.type === "seller" && button.id === "syncSeller"))
       );
     });
@@ -1087,8 +1085,8 @@
         body: `${sources.packhai.exportedAtLabel || "-"} · ${fmtInt.format(sources.packhai.rowCount || 0)} แถว`,
       },
       {
-        title: "ข้อมูลคลัง FlowAccount",
-        body: `${sources.flowaccount?.exportedAtLabel || "-"} · ${flowWarehouses || "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์"}`,
+        title: "ข้อมูลคลัง GitHub",
+        body: `${sources.flowaccount?.exportedAtLabel || "-"} · snapshot: ${flowWarehouses || "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์"}`,
       },
       {
         title: "ราคาขาย Seller",
@@ -1571,7 +1569,7 @@
     const sourceCards = [
       ["Packhai", `${data.metadata.sources.packhai.exportedAtLabel} · ${data.metadata.sources.packhai.rowCount} rows`],
       [
-        "FlowAccount",
+        "GitHub Stock",
         `${data.metadata.sources.flowaccount?.exportedAtLabel || "-"} · ${fmtInt.format(data.metadata.sources.flowaccount?.rowCount || 0)} rows`,
       ],
       ["Shopee Seller", `${data.metadata.sources.shopee.exportedAtLabel} · indexed ${fmtInt.format(data.metadata.sources.shopee.indexedPriceRows)} price rows`],
@@ -1646,7 +1644,6 @@
   function bindEvents() {
     $("syncAll")?.addEventListener("click", () => startSync("all"));
     $("syncPackhai")?.addEventListener("click", () => startSync("packhai"));
-    $("syncFlowaccount")?.addEventListener("click", () => startSync("flowaccount"));
     $("syncSeller")?.addEventListener("click", () => startSync("seller"));
     $("searchInput").addEventListener("input", (event) => {
       state.query = event.target.value;

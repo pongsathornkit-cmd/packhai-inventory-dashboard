@@ -333,6 +333,12 @@ h2 {
   box-shadow: 0 14px 34px rgba(35, 44, 101, 0.08);
 }
 
+.report-header .freshness-band {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin: 2px 0 0;
+}
+
 .report-header .primary-button,
 .report-header .secondary-button,
 .report-header .sync-button,

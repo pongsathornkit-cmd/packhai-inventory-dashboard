@@ -1027,9 +1027,7 @@
   function runClientRuleAssistant(message, options = {}) {
     const text = compactText(message);
     const context = buildClientAssistantContext();
-    const fallbackNote = options.fallback
-      ? "หมายเหตุ: ตอนนี้ backend AI ติดต่อไม่ได้ ผมใช้คำสั่งพื้นฐานจากข้อมูลในหน้าเว็บแทน\n"
-      : "";
+    const fallbackNote = "";
 
     if (!text) {
       return {
@@ -1042,7 +1040,23 @@
     if (/popup|ป๊อปอัพ|แชท|chat|ai/.test(text) && /ช่อง|หน้าต่าง|ลอย|website|เว็บ|เว็บไซต/.test(text)) {
       return {
         reply: `${fallbackNote}ตอนนี้ช่อง AI ถูกปรับเป็น popup ลอยบนหน้าเว็บแล้วครับ กดปุ่ม AI มุมขวาล่างเพื่อเปิด ใช้ปุ่มปิดหรือกด Esc เพื่อย่อกลับได้`,
-        actions: [],
+        actions: [{ type: "focusSection", label: "ดูช่อง AI", selector: "#ai-command", autoRun: true }],
+        source: "rule",
+      };
+    }
+
+    if (/(มูลค่าคงเหลือ|kpi|summary|แถวบนสุด|บนสุด|ด้านบน|top row)/.test(text) && /(ย้าย|เลื่อน|เปิด|ดู|แสดง|ไป|อยู่)/.test(text)) {
+      return {
+        reply: "จัดให้แล้วครับ แถวสรุปมูลค่าคงเหลือรวมอยู่บนสุดของหน้าเว็บ และผมเลื่อนไปให้ดูทันที",
+        actions: [{ type: "focusSection", label: "ดูมูลค่าคงเหลือบนสุด", selector: "#kpiGrid", hash: "", autoRun: true }],
+        source: "rule",
+      };
+    }
+
+    if (/(สินค้าแยกตามคลัง|แยกตามคลัง|แต่ละคลัง|warehouse)/.test(text) && /(เปิด|ดู|เลื่อน|ไป|แสดง)/.test(text)) {
+      return {
+        reply: "เปิดส่วนสินค้าแยกตามคลังให้แล้วครับ",
+        actions: [{ type: "focusSection", label: "ดูสินค้าแยกตามคลัง", selector: "#warehouses", hash: "warehouses", autoRun: true }],
         source: "rule",
       };
     }
@@ -1055,7 +1069,7 @@
         reply: matches.length
           ? `${fallbackNote}สินค้า stock ไม่เดินเกิน ${fmtInt.format(minDays)} วัน:\n${matches.map((row, index) => assistantProductSummary(row, index, true)).join("\n")}`
           : `${fallbackNote}ยังไม่พบสินค้าที่มีประวัติ stock ไม่เดินเกิน ${fmtInt.format(minDays)} วันในข้อมูล Packhai`,
-        actions: [{ type: "filterInventory", label: "เปิดตารางสินค้า", query: "", sort: "movementDesc", hash: "inventory-detail" }],
+        actions: [{ type: "filterInventory", label: "เปิดตารางสินค้า", query: "", sort: "movementDesc", hash: "inventory-detail", autoRun: true }],
         source: "rule",
       };
     }
@@ -1063,7 +1077,7 @@
     if (/มูลค่าสูงสุด|top|แพงสุด|มูลค่า.*สินค้า|เรียง.*มูลค่า/.test(text)) {
       return {
         reply: `${fallbackNote}สินค้ามูลค่าสูงสุดตอนนี้:\n${context.topProducts.slice(0, 10).map((row, index) => assistantProductSummary(row, index)).join("\n")}`,
-        actions: [{ type: "filterInventory", label: "เรียงตารางตามมูลค่า", query: "", sort: "valueDesc", hash: "inventory-detail" }],
+        actions: [{ type: "filterInventory", label: "เรียงตารางตามมูลค่า", query: "", sort: "valueDesc", hash: "inventory-detail", autoRun: true }],
         source: "rule",
       };
     }
@@ -1073,7 +1087,7 @@
       if (query) {
         const matchCount = stockRows.filter((row) => compactText(`${row.sku} ${row.name} ${row.warehouseName} ${row.stockSource}`).includes(compactText(query))).length;
         return {
-          reply: `${fallbackNote}เตรียมค้นหา "${query}" ในตารางสินค้าแล้ว พบประมาณ ${fmtInt.format(matchCount)} แถว กดปุ่มด้านล่างเพื่อเปิดรายการที่เกี่ยวข้อง`,
+          reply: `${fallbackNote}ค้นหา "${query}" ในตารางสินค้าให้แล้ว พบประมาณ ${fmtInt.format(matchCount)} แถว`,
           actions: [
             {
               type: "filterInventory",
@@ -1081,6 +1095,7 @@
               query,
               sort: "valueDesc",
               hash: "inventory-detail",
+              autoRun: true,
             },
           ],
           source: "rule",
@@ -1091,7 +1106,7 @@
     if (/คลัง packhai|ตาราง.*คลัง|เปิด.*สินค้า|inventory|stock/.test(text)) {
       return {
         reply: `${fallbackNote}เปิดตารางรายละเอียดสินค้าให้แล้วครับ สามารถค้นหา เรียงมูลค่า และดูแยกตามคลังต่อได้`,
-        actions: [{ type: "filterInventory", label: "เปิดตารางสินค้า", query: "", sort: "valueDesc", hash: "inventory-detail" }],
+        actions: [{ type: "filterInventory", label: "เปิดตารางสินค้า", query: "", sort: "valueDesc", hash: "inventory-detail", autoRun: true }],
         source: "rule",
       };
     }
@@ -1099,7 +1114,7 @@
     if (/ค่าใช้จ่าย|ภ\.ง\.ด|ภงด|หัก ณ ที่จ่าย|wht/.test(text)) {
       return {
         reply: `${fallbackNote}คำสั่งค่าใช้จ่ายต้องใช้ backend เพื่อบันทึกข้อมูลจริง แต่ผมเปิดหน้าค่าใช้จ่ายให้ตรวจหรือกรอกต่อได้ครับ`,
-        actions: [{ type: "navigate", label: "เปิดหน้าค่าใช้จ่าย", hash: "expenses" }],
+        actions: [{ type: "navigate", label: "เปิดหน้าค่าใช้จ่าย", hash: "expenses", autoRun: true }],
         source: "rule",
       };
     }
@@ -1161,6 +1176,23 @@
     renderTable();
   }
 
+  function focusAssistantSection(action = {}) {
+    const selector = action.selector || (action.hash ? `#${String(action.hash).replace(/^#/, "")}` : "");
+    const target = selector ? document.querySelector(selector) : null;
+    if (!target) return;
+    const hash = String(action.hash || "").replace(/^#/, "");
+    if (hash) {
+      history.replaceState(null, "", `${location.pathname}${location.search}#${hash}`);
+      updateRouteState();
+    }
+    window.requestAnimationFrame(() => {
+      target.scrollIntoView({ block: action.block || "start", behavior: "smooth" });
+      target.classList.remove("ai-focus-highlight");
+      window.requestAnimationFrame(() => target.classList.add("ai-focus-highlight"));
+      window.setTimeout(() => target.classList.remove("ai-focus-highlight"), 1800);
+    });
+  }
+
   function executeAssistantAction(action) {
     if (!action) return;
     if (action.type === "navigate") {
@@ -1171,9 +1203,26 @@
       applyInventoryFilterAction(action);
       return;
     }
+    if (action.type === "focusSection") {
+      focusAssistantSection(action);
+      return;
+    }
     if (action.type === "fillExpenseForm") {
       fillExpenseForm(action.payload || {});
     }
+  }
+
+  function autoRunAssistantActions(actions = []) {
+    const safeAction = actions.find((action) => ["navigate", "filterInventory", "focusSection"].includes(action?.type) && action.autoRun !== false);
+    if (!safeAction) return;
+    window.requestAnimationFrame(() => executeAssistantAction(safeAction));
+  }
+
+  function shouldUseClientAssistant(payload, promptText) {
+    const actions = Array.isArray(payload?.actions) ? payload.actions : [];
+    if (!actions.length) return false;
+    if (/สร้าง.*ค่าใช้จ่าย|ลง.*ค่าใช้จ่าย|บันทึก.*ค่าใช้จ่าย/.test(compactText(promptText))) return false;
+    return actions.some((action) => ["navigate", "filterInventory", "focusSection"].includes(action?.type));
   }
 
   async function sendAssistantPrompt(prompt) {
@@ -1183,20 +1232,25 @@
     setAssistantBusy(true);
     try {
       let payload;
-      if (staticReportHost && !remoteSyncApiBase) {
-        payload = runClientRuleAssistant(text);
+      const clientPayload = runClientRuleAssistant(text);
+      if ((staticReportHost && !remoteSyncApiBase) || shouldUseClientAssistant(clientPayload, text)) {
+        payload = clientPayload;
       } else {
         const response = await fetch(expenseApiUrl("/api/assistant"), expenseFetchOptions("POST", { message: text }));
         payload = await response.json().catch(() => ({}));
         if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
       }
-      $("assistantMode").textContent = payload.source === "openai" ? "OpenAI Assistant" : "Rule Assistant";
-      pushAssistantMessage("assistant", payload.reply || "-", payload.actions || []);
+      $("assistantMode").textContent = payload.source === "openai" ? "OpenAI Assistant" : "Web Command";
+      const actions = Array.isArray(payload.actions) ? payload.actions : [];
+      pushAssistantMessage("assistant", payload.reply || "-", actions);
+      autoRunAssistantActions(actions);
       if (payload.warning) pushAssistantMessage("assistant", payload.warning, []);
     } catch (error) {
       const fallback = runClientRuleAssistant(text, { fallback: true, error });
-      $("assistantMode").textContent = "Rule Assistant";
-      pushAssistantMessage("assistant", fallback.reply || `สั่งงานไม่สำเร็จ: ${error.message}`, fallback.actions || []);
+      $("assistantMode").textContent = "Web Command";
+      const actions = Array.isArray(fallback.actions) ? fallback.actions : [];
+      pushAssistantMessage("assistant", fallback.reply || `สั่งงานไม่สำเร็จ: ${error.message}`, actions);
+      autoRunAssistantActions(actions);
     } finally {
       setAssistantBusy(false);
     }

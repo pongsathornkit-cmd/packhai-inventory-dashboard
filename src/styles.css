@@ -271,44 +271,40 @@ main {
   order: 0;
 }
 
-#inventory-detail {
+#kpiGrid {
   order: 1;
 }
 
-#warehouses {
+#inventory-detail {
   order: 2;
 }
 
-#executive {
+#warehouses {
   order: 3;
 }
 
-#freshnessBand {
+#executive {
   order: 4;
 }
 
-#kpiGrid {
+#ownerAnalyticsGrid {
   order: 5;
 }
 
-#ownerAnalyticsGrid {
+#valuation {
   order: 6;
 }
 
-#valuation {
+main > .insight-layout {
   order: 7;
 }
 
-main > .insight-layout {
+main > .panel {
   order: 8;
 }
 
-main > .panel {
-  order: 9;
-}
-
 #methodology {
-  order: 10;
+  order: 9;
 }
 
 .report-header {
@@ -394,10 +390,22 @@ h2 {
   box-shadow: 0 14px 34px rgba(35, 44, 101, 0.08);
 }
 
+.report-header .header-kpis {
+  grid-column: 1 / -1;
+  order: 1;
+  width: 100%;
+  margin: 4px 0 0;
+}
+
+.report-header .header-kpis .kpi-card {
+  min-height: 132px;
+}
+
 .report-header .freshness-band {
   grid-column: 1 / -1;
+  order: 2;
   width: 100%;
-  margin: 2px 0 0;
+  margin: 0;
 }
 
 .report-header .primary-button,

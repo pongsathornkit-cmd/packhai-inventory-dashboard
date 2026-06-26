@@ -321,6 +321,9 @@
   let remoteSyncApiBase = normalizeSyncApiBase(
     window.__PACKHAI_SYNC_API_BASE__ || localStorage.getItem("packhaiSyncApiBase") || ""
   );
+  if (remoteSyncApiBase) {
+    localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
+  }
   let syncApiUnavailable = staticReportHost && !remoteSyncApiBase;
 
   function normalizeSyncApiBase(value) {
@@ -473,6 +476,21 @@
     }
     try {
       const response = await fetch(syncApiUrl("/api/sync/status"), syncFetchOptions("GET"));
+      if (response.status === 401) {
+        localStorage.removeItem("packhaiSyncApiKey");
+        if (showIdle) {
+          renderSyncStatus(
+            {
+              ok: false,
+              warning: true,
+              message: "รหัส Sync ไม่ถูกต้องหรือหมดอายุ กรุณากด Sync แล้วใส่รหัสใหม่",
+              steps: [],
+            },
+            true
+          );
+        }
+        return;
+      }
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const status = await response.json();
       renderSyncStatus(status, showIdle);
@@ -489,7 +507,14 @@
         setStaticSyncMode(true);
       }
       if (!showIdle) return;
-      renderSyncStatus({ ok: false, message: `ไม่สามารถอ่านสถานะ Sync ได้: ${error.message}`, steps: [] }, true);
+      renderSyncStatus(
+        {
+          ok: false,
+          message: `ไม่สามารถอ่านสถานะ Sync ได้: ${error.message} (${remoteSyncApiBase || "local server"})`,
+          steps: [],
+        },
+        true
+      );
     }
   }
 
@@ -506,8 +531,12 @@
       const response = await fetch(syncApiUrl(`/api/sync/${type}`), syncFetchOptions("POST"));
       if (!response.ok) {
         syncStartedHere = false;
-        if (response.status === 401) localStorage.removeItem("packhaiSyncApiKey");
-        renderSyncStatus({ ok: false, type, message: `เริ่ม Sync ไม่ได้: Status ${response.status}`, steps: [] }, true);
+        let message = `เริ่ม Sync ไม่ได้: Status ${response.status}`;
+        if (response.status === 401) {
+          localStorage.removeItem("packhaiSyncApiKey");
+          message = "รหัส Sync ไม่ถูกต้อง กรุณากด Sync อีกครั้งแล้วใส่รหัสใหม่";
+        }
+        renderSyncStatus({ ok: false, warning: response.status === 401, type, message, steps: [] }, true);
         return;
       }
       const status = await response.json();
@@ -515,7 +544,15 @@
       getSyncStatus(true);
     } catch (error) {
       syncStartedHere = false;
-      renderSyncStatus({ ok: false, type, message: `เริ่ม Sync ไม่ได้: ${error.message}`, steps: [] }, true);
+      renderSyncStatus(
+        {
+          ok: false,
+          type,
+          message: `เริ่ม Sync ไม่ได้: ${error.message} (${remoteSyncApiBase || "local server"})`,
+          steps: [],
+        },
+        true
+      );
     }
   }
 

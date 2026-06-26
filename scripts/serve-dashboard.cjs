@@ -167,6 +167,27 @@ async function pushOptionalStep(promise, errors) {
   }
 }
 
+function sellerWarningMessage(error) {
+  const message = error.message || String(error);
+  const detail = `${error.step?.error || ""} ${error.step?.output || ""}`;
+  if (/Lazada Seller Center is not logged in/i.test(detail)) {
+    return "ข้าม Lazada Seller เพราะ session ในเครื่องหลักหมดอายุหรือยังไม่ได้ login ระบบใช้ข้อมูล Lazada ล่าสุดที่มีอยู่ใน dashboard แทน";
+  }
+  if (/Shopee/i.test(message) && /login|logged in|sign in/i.test(detail)) {
+    return "ข้าม Shopee Seller เพราะ session ในเครื่องหลักหมดอายุหรือยังไม่ได้ login ระบบใช้ข้อมูล Shopee ล่าสุดที่มีอยู่ใน dashboard แทน";
+  }
+  return message;
+}
+
+async function pushWarningStep(promise, warnings) {
+  try {
+    return await pushStep(promise);
+  } catch (error) {
+    warnings.push(sellerWarningMessage(error));
+    return null;
+  }
+}
+
 async function runBuild() {
   return pushStep(runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot));
 }
@@ -236,8 +257,11 @@ async function runSync(type) {
           error: "FlowAccount browser session is not configured.",
         });
       }
-      await pushOptionalStep(runShopee(), errors);
-      await pushOptionalStep(runLazada(), errors);
+      const shopeeStep = await pushWarningStep(runShopee(), warnings);
+      const lazadaStep = await pushWarningStep(runLazada(), warnings);
+      if (!shopeeStep && !lazadaStep) {
+        errors.push("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
+      }
     } else if (type === "packhai") {
       if (!packhaiConfigured()) {
         syncState.steps.push({
@@ -273,8 +297,11 @@ async function runSync(type) {
       }
       await pushStep(runFlowaccount());
     } else if (type === "seller") {
-      await pushStep(runShopee());
-      await pushStep(runLazada());
+      const shopeeStep = await pushWarningStep(runShopee(), warnings);
+      const lazadaStep = await pushWarningStep(runLazada(), warnings);
+      if (!shopeeStep && !lazadaStep) {
+        throw new Error("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
+      }
     }
 
     await runBuild();

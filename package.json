@@ -1,0 +1,17 @@
+{
+  "name": "packhai-inventory-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "start": "node scripts/seed-cloud-storage.cjs && node scripts/build-dashboard.cjs && node scripts/serve-dashboard.cjs",
+    "build": "node scripts/build-dashboard.cjs",
+    "sync:packhai": "node scripts/sync-packhai-stock.cjs",
+    "sync:flowaccount": "node scripts/sync-flowaccount-stock.cjs",
+    "sync:shopee": "node scripts/export-shopee-products.cjs",
+    "sync:lazada": "node scripts/export-lazada-products.cjs"
+  },
+  "dependencies": {
+    "playwright": "^1.54.2"
+  }
+}

@@ -9,11 +9,18 @@ const distDir = path.join(projectRoot, "dist");
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 8123);
 const nodePath = process.execPath;
-const toolsDir = path.join(workspaceRoot, "tools");
 const localPackhaiTokenFile = path.join(projectRoot, ".packhai-token.local");
 const localSyncKeyFile = path.join(projectRoot, ".sync-key.local");
-const localFlowProfile = path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada");
+const localFlowProfile =
+  process.env.FLOW_PROFILE ||
+  (fs.existsSync(path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada"))
+    ? path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada")
+    : path.join(projectRoot, "browser-profiles", "flowaccount"));
 const publishGithub = process.env.SYNC_PUBLISH_GITHUB !== "0";
+const extraAllowedOrigins = String(process.env.SYNC_ALLOWED_ORIGINS || "")
+  .split(",")
+  .map((item) => item.trim().replace(/\/+$/, ""))
+  .filter(Boolean);
 
 const syncState = {
   running: false,
@@ -63,7 +70,8 @@ function applyCors(req, res) {
   const origin = req.headers.origin || "";
   const allowed =
     /^https:\/\/pongsathornkit-cmd\.github\.io$/i.test(origin) ||
-    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(origin);
+    /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(origin) ||
+    extraAllowedOrigins.includes(origin.replace(/\/+$/, ""));
   if (allowed) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "false");
@@ -91,7 +99,7 @@ function packhaiConfigured() {
 }
 
 function flowaccountConfigured() {
-  return fs.existsSync(localFlowProfile);
+  return Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile);
 }
 
 function publicSyncState(extra = {}) {
@@ -225,8 +233,10 @@ async function runSync(type) {
       runCommand("Sync Packhai stock", nodePath, [path.join(projectRoot, "scripts", "sync-packhai-stock.cjs")], projectRoot);
     const runFlowaccount = () =>
       runCommand("Sync FlowAccount stock", nodePath, [path.join(projectRoot, "scripts", "sync-flowaccount-stock.cjs")], projectRoot);
-    const runShopee = () => runCommand("Sync Shopee Seller", nodePath, [path.join(toolsDir, "export_shopee_products.cjs")], workspaceRoot);
-    const runLazada = () => runCommand("Sync Lazada Seller", nodePath, [path.join(toolsDir, "export_lazada_products.cjs")], workspaceRoot);
+    const runShopee = () =>
+      runCommand("Sync Shopee Seller", nodePath, [path.join(projectRoot, "scripts", "export-shopee-products.cjs")], projectRoot);
+    const runLazada = () =>
+      runCommand("Sync Lazada Seller", nodePath, [path.join(projectRoot, "scripts", "export-lazada-products.cjs")], projectRoot);
 
     if (type === "all") {
       if (packhaiConfigured()) {

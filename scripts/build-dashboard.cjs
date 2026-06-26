@@ -6,13 +6,35 @@ const workspaceRoot = path.resolve(projectRoot, "..");
 const srcDir = path.join(projectRoot, "src");
 const distDir = path.join(projectRoot, "dist");
 const localSyncApiBaseFile = path.join(projectRoot, ".sync-api-base.local");
+const dataDir = process.env.PACKHAI_DATA_DIR
+  ? path.resolve(process.env.PACKHAI_DATA_DIR)
+  : path.join(projectRoot, "data");
+
+function preferExisting(primary, fallback) {
+  return fs.existsSync(primary) ? primary : fallback;
+}
 
 const inputFiles = {
-  packhai: path.join(workspaceRoot, "packhai_stock_20260622.json"),
-  flowaccount: path.join(workspaceRoot, "flowaccount_stock_selected_warehouses.json"),
-  shopee: path.join(workspaceRoot, "outputs", "seller_compare", "shopee_products_export.json"),
-  lazada: path.join(workspaceRoot, "outputs", "seller_compare", "lazada_products_export.json"),
-  ktw: path.join(workspaceRoot, "outputs", "ktw_product_source", "ktw_price_update_plan.json"),
+  packhai: preferExisting(
+    path.join(dataDir, "packhai_stock.json"),
+    path.join(workspaceRoot, "packhai_stock_20260622.json")
+  ),
+  flowaccount: preferExisting(
+    path.join(dataDir, "flowaccount_stock_selected_warehouses.json"),
+    path.join(workspaceRoot, "flowaccount_stock_selected_warehouses.json")
+  ),
+  shopee: preferExisting(
+    path.join(dataDir, "seller_compare", "shopee_products_export.json"),
+    path.join(workspaceRoot, "outputs", "seller_compare", "shopee_products_export.json")
+  ),
+  lazada: preferExisting(
+    path.join(dataDir, "seller_compare", "lazada_products_export.json"),
+    path.join(workspaceRoot, "outputs", "seller_compare", "lazada_products_export.json")
+  ),
+  ktw: preferExisting(
+    path.join(dataDir, "ktw_product_source", "ktw_price_update_plan.json"),
+    path.join(workspaceRoot, "outputs", "ktw_product_source", "ktw_price_update_plan.json")
+  ),
 };
 
 function readJson(file) {

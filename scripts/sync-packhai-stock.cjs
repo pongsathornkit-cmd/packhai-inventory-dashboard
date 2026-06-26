@@ -3,7 +3,12 @@ const path = require("path");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
-const outputFile = path.join(workspaceRoot, "packhai_stock_20260622.json");
+const dataDir = process.env.PACKHAI_DATA_DIR
+  ? path.resolve(process.env.PACKHAI_DATA_DIR)
+  : path.join(projectRoot, "data");
+const outputFile = process.env.PACKHAI_STOCK_OUTPUT
+  ? path.resolve(process.env.PACKHAI_STOCK_OUTPUT)
+  : path.join(dataDir, "packhai_stock.json");
 const localTokenFile = path.join(projectRoot, ".packhai-token.local");
 
 function readToken() {
@@ -137,6 +142,7 @@ function mapStockRow(row) {
 }
 
 async function main() {
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   const date = process.env.PACKHAI_SYNC_DATE || todayBangkok();
   const apiRows = await fetchStockSummary(date);
   const rows = apiRows.map(mapStockRow).filter((row) => row.sku);

@@ -32,6 +32,20 @@ function run(git, args, allowFailure = false) {
   return output;
 }
 
+function configureGithubPush(git) {
+  run(git, ["config", "user.name", process.env.GIT_AUTHOR_NAME || "packhai-sync-bot"], true);
+  run(git, ["config", "user.email", process.env.GIT_AUTHOR_EMAIL || "packhai-sync-bot@users.noreply.github.com"], true);
+
+  const token = String(process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim();
+  if (!token) return;
+
+  const remote = run(git, ["remote", "get-url", "origin"], true).trim();
+  if (!/^https:\/\/github\.com\//i.test(remote) || remote.includes("@github.com")) return;
+
+  const authedRemote = remote.replace(/^https:\/\/github\.com\//i, `https://x-access-token:${token}@github.com/`);
+  run(git, ["remote", "set-url", "origin", authedRemote]);
+}
+
 function main() {
   if (!fs.existsSync(path.join(projectRoot, ".git"))) {
     console.log("No git repository found. Skipped GitHub Pages publish.");
@@ -39,6 +53,7 @@ function main() {
   }
 
   const git = findGit();
+  configureGithubPush(git);
   const changed = run(git, ["status", "--short", "dist"]).trim();
   if (!changed) {
     console.log("No generated dashboard changes to publish.");

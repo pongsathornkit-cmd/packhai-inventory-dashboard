@@ -1,0 +1,22 @@
+services:
+  packhai-dashboard:
+    build: .
+    ports:
+      - "8123:8123"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8123
+      SELLER_HEADLESS: "1"
+      SYNC_API_KEY: ${SYNC_API_KEY}
+      PACKHAI_AUTH_TOKEN: ${PACKHAI_AUTH_TOKEN}
+      PUBLIC_SYNC_API_BASE: ${PUBLIC_SYNC_API_BASE}
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      PACKHAI_DATA_DIR: /app/storage/data
+      FLOW_PROFILE: /app/storage/browser-profiles/flowaccount
+      SHOPEE_SESSION_DIR: /app/storage/browser-profiles/shopee
+      SELLER_SESSION_DIR: /app/storage/browser-profiles/lazada
+    volumes:
+      - packhai-storage:/app/storage
+
+volumes:
+  packhai-storage:

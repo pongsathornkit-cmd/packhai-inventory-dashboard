@@ -4,3 +4,6 @@
 server.out.log
 server.err.log
 tmp/
+browser-profiles/
+storage/
+node_modules/

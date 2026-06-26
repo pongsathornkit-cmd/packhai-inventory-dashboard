@@ -1,37 +1,28 @@
 const fs = require("fs");
 const path = require("path");
-const { createRequire } = require("module");
+const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
-const outputFile = path.join(workspaceRoot, "flowaccount_stock_selected_warehouses.json");
+const dataDir = process.env.PACKHAI_DATA_DIR
+  ? path.resolve(process.env.PACKHAI_DATA_DIR)
+  : path.join(projectRoot, "data");
+const outputFile = process.env.FLOWACCOUNT_STOCK_OUTPUT
+  ? path.resolve(process.env.FLOWACCOUNT_STOCK_OUTPUT)
+  : path.join(dataDir, "flowaccount_stock_selected_warehouses.json");
 
+const legacyFlowProfile = path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada");
 const FLOW_PROFILE =
-  process.env.FLOW_PROFILE || path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada");
-const CHROME_EXE =
-  process.env.CHROME_EXE || "C:/Users/ASUS/AppData/Local/Google/Chrome/Application/chrome.exe";
+  process.env.FLOW_PROFILE ||
+  (fs.existsSync(legacyFlowProfile) ? legacyFlowProfile : path.join(projectRoot, "browser-profiles", "flowaccount"));
 const FLOW_URL = "https://advance.flowaccount.com/N8387296/business/reports/inventory";
 const REPORT_BASE = process.env.FLOW_REPORT_BASE || "https://report-canary.flowaccount.com/api/th";
 const REPORT_NAME = process.env.FLOW_REPORT_NAME || "groupStockReport";
+const headless = boolEnv("SELLER_HEADLESS", false);
 const WAREHOUSES = [
   { id: 491661, name: "คลัง ซ.เจริญกิจ", apiName: "คลังซ.เจริญกิจ" },
   { id: 491662, name: "คลัง สุขสวัสดิ์", apiName: "คลังสุขสวัสดิ์" },
 ];
-
-function runtimeRequire() {
-  const candidates = [
-    "C:/Users/ASUS/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/.pnpm/node_modules/",
-    "C:/Users/ASUS/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/",
-  ];
-  for (const candidate of candidates) {
-    try {
-      return createRequire(candidate);
-    } catch {}
-  }
-  return require;
-}
-
-const { chromium } = runtimeRequire()("playwright-core");
 
 function numberValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -80,10 +71,16 @@ function cookieArrayToObject(cookies) {
 
 async function launchAndGetCookies() {
   const ctx = await chromium.launchPersistentContext(FLOW_PROFILE, {
-    headless: false,
-    executablePath: CHROME_EXE,
-    args: ["--no-first-run", "--no-default-browser-check", "--window-position=-32000,-32000"],
-    viewport: null,
+    ...chromiumOptions(),
+    headless,
+    args: [
+      "--no-sandbox",
+      "--disable-dev-shm-usage",
+      "--no-first-run",
+      "--no-default-browser-check",
+      ...(headless ? [] : ["--window-position=-32000,-32000"]),
+    ],
+    viewport: headless ? { width: 1365, height: 900 } : null,
   });
   try {
     const profileCookies = cookieArrayToObject(await ctx.cookies(["https://advance.flowaccount.com"]));
@@ -237,6 +234,7 @@ function aggregateRows(rows) {
 }
 
 async function main() {
+  fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   const date = process.env.FLOWACCOUNT_SYNC_DATE || todayBangkok();
   const session = await launchAndGetCookies();
   const cookies = session.cookies;

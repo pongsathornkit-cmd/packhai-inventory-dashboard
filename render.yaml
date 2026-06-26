@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: packhai-inventory-dashboard
+    runtime: docker
+    plan: starter
+    disk:
+      name: packhai-sync-storage
+      mountPath: /app/storage
+      sizeGB: 5
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      - key: SELLER_HEADLESS
+        value: "1"
+      - key: PACKHAI_DATA_DIR
+        value: /app/storage/data
+      - key: FLOW_PROFILE
+        value: /app/storage/browser-profiles/flowaccount
+      - key: SHOPEE_SESSION_DIR
+        value: /app/storage/browser-profiles/shopee
+      - key: SELLER_SESSION_DIR
+        value: /app/storage/browser-profiles/lazada
+      - key: SYNC_API_KEY
+        sync: false
+      - key: PACKHAI_AUTH_TOKEN
+        sync: false
+      - key: PUBLIC_SYNC_API_BASE
+        sync: false
+      - key: GITHUB_TOKEN
+        sync: false

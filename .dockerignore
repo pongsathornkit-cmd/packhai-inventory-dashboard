@@ -1,0 +1,10 @@
+.git
+.github
+node_modules
+server.out.log
+server.err.log
+tmp
+.packhai-token.local
+.sync-key.local
+.sync-api-base.local
+browser-profiles

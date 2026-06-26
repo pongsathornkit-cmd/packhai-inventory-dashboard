@@ -643,6 +643,7 @@
   function updateRouteState() {
     const hash = location.hash || "#executive";
     const expensesPage = isExpenseRoute();
+    const assistantPage = hash === "#ai-command";
     const expensesSection = $("expenses");
     if (expensesSection) {
       expensesSection.hidden = !expensesPage;
@@ -654,6 +655,7 @@
       if (!expenseState.loaded && !expenseState.loading) loadExpenses(true);
       window.requestAnimationFrame(() => expensesSection?.scrollIntoView({ block: "start" }));
     }
+    if (assistantPage) openAssistantPanel(false);
   }
 
   function renderExpenseStatus(kind, title, message) {
@@ -925,6 +927,28 @@
     });
   }
 
+  function setAssistantPanelOpen(open, focusInput = false) {
+    const widget = $("ai-command");
+    const panel = $("aiChatPanel");
+    const fab = $("assistantFab");
+    if (!widget || !panel || !fab) return;
+    panel.hidden = !open;
+    widget.classList.toggle("is-open", open);
+    fab.setAttribute("aria-expanded", open ? "true" : "false");
+    if (open && focusInput) {
+      window.requestAnimationFrame(() => $("assistantInput")?.focus());
+    }
+  }
+
+  function openAssistantPanel(focusInput = true) {
+    setAssistantPanelOpen(true, focusInput);
+  }
+
+  function closeAssistantPanel() {
+    setAssistantPanelOpen(false);
+    $("assistantFab")?.focus();
+  }
+
   function renderAssistantThread() {
     const thread = $("assistantThread");
     if (!thread) return;
@@ -1053,6 +1077,17 @@
 
   function bindAssistantEvents() {
     renderAssistantThread();
+    $("assistantFab")?.addEventListener("click", () => openAssistantPanel(true));
+    $("assistantClose")?.addEventListener("click", closeAssistantPanel);
+    document.querySelector('.sidebar-nav a[href="#ai-command"]')?.addEventListener("click", (event) => {
+      event.preventDefault();
+      location.hash = "ai-command";
+      openAssistantPanel(true);
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key !== "Escape" || $("aiChatPanel")?.hidden) return;
+      closeAssistantPanel();
+    });
     $("assistantForm")?.addEventListener("submit", (event) => {
       event.preventDefault();
       const input = $("assistantInput");

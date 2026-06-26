@@ -95,31 +95,6 @@
       <main>
         <section class="sync-status" id="syncStatus" hidden></section>
 
-        <section class="ai-command-center" id="ai-command">
-          <div class="ai-command-head">
-            <div>
-              <h2>AI Command Center</h2>
-              <p>ถามหรือสั่งงานเกี่ยวกับ stock, มูลค่าคลัง, ค่าใช้จ่าย และเอกสารภาษีในเว็บนี้</p>
-            </div>
-            <span id="assistantMode">Rule Assistant</span>
-          </div>
-          <div class="assistant-thread" id="assistantThread" aria-live="polite"></div>
-          <form class="assistant-form" id="assistantForm">
-            <input
-              id="assistantInput"
-              type="text"
-              autocomplete="off"
-              placeholder="เช่น สรุปสินค้ามูลค่าสูงสุด / หา stock ไม่เดินเกิน 30 วัน / สร้างค่าใช้จ่ายค่าขนส่ง 1070 บาท VAT 7 หัก 3%"
-            />
-            <button class="primary-button" id="assistantSubmit" type="submit">ส่งคำสั่ง</button>
-          </form>
-          <div class="assistant-quick-actions">
-            <button type="button" data-assistant-prompt="สรุปสินค้ามูลค่าสูงสุด 10 รายการ">Top Value</button>
-            <button type="button" data-assistant-prompt="หาสินค้าที่ stock ไม่เดินเกิน 30 วัน">Stock ไม่เดิน</button>
-            <button type="button" data-assistant-prompt="ค้นหา SKU P301-PC3B1017-1">ค้นหา SKU</button>
-          </div>
-        </section>
-
         <section class="expenses-section" id="expenses" hidden>
           <div class="section-heading">
             <div>
@@ -421,6 +396,42 @@
         </section>
       </main>
       </div>
+    </div>
+
+    <div class="ai-chat-widget" id="ai-command">
+      <button class="ai-chat-fab" id="assistantFab" type="button" aria-controls="aiChatPanel" aria-expanded="false">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v10H8l-4 4V5zM9 9h6M9 12h4" /></svg>
+        <span>AI</span>
+      </button>
+      <section class="ai-chat-panel" id="aiChatPanel" role="dialog" aria-modal="false" aria-labelledby="aiChatTitle" hidden>
+        <div class="ai-command-head">
+          <div>
+            <h2 id="aiChatTitle">AI Command Center</h2>
+            <p>ถามหรือสั่งงานเกี่ยวกับ stock, มูลค่าคลัง, ค่าใช้จ่าย และเอกสารภาษีในเว็บนี้</p>
+          </div>
+          <div class="ai-chat-actions">
+            <span id="assistantMode">Rule Assistant</span>
+            <button class="icon-button" id="assistantClose" type="button" title="ปิด AI" aria-label="ปิด AI">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+            </button>
+          </div>
+        </div>
+        <div class="assistant-thread" id="assistantThread" aria-live="polite"></div>
+        <form class="assistant-form" id="assistantForm">
+          <input
+            id="assistantInput"
+            type="text"
+            autocomplete="off"
+            placeholder="เช่น สรุปสินค้ามูลค่าสูงสุด / หา stock ไม่เดินเกิน 30 วัน / ค้นหา SKU P301-PC3B1017-1"
+          />
+          <button class="primary-button" id="assistantSubmit" type="submit">ส่งคำสั่ง</button>
+        </form>
+        <div class="assistant-quick-actions">
+          <button type="button" data-assistant-prompt="สรุปสินค้ามูลค่าสูงสุด 10 รายการ">Top Value</button>
+          <button type="button" data-assistant-prompt="หาสินค้าที่ stock ไม่เดินเกิน 30 วัน">Stock ไม่เดิน</button>
+          <button type="button" data-assistant-prompt="ค้นหา SKU P301-PC3B1017-1">ค้นหา SKU</button>
+        </div>
+      </section>
     </div>
 
     <div class="detail-modal" id="productDetailModal" hidden>

@@ -1392,17 +1392,63 @@ tbody tr:hover {
   color: var(--soft-muted);
 }
 
-.ai-command-center {
+.ai-chat-widget {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 70;
+  pointer-events: none;
+}
+
+.ai-chat-fab {
+  pointer-events: auto;
+  min-width: 72px;
+  height: 58px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--teal) 0%, var(--teal-2) 100%);
+  color: #ffffff;
+  box-shadow: 0 18px 46px rgba(233, 30, 118, 0.34);
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 900;
+}
+
+.ai-chat-fab svg {
+  width: 21px;
+  height: 21px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.ai-chat-widget.is-open .ai-chat-fab {
+  display: none;
+}
+
+.ai-chat-panel {
+  pointer-events: auto;
+  width: min(520px, calc(100vw - 32px));
+  max-height: min(720px, calc(100vh - 48px));
   display: grid;
   gap: 12px;
-  margin-bottom: 24px;
-  padding: 18px;
+  padding: 16px;
   border: 1px solid rgba(233, 30, 118, 0.18);
   border-radius: var(--radius);
   background:
     linear-gradient(135deg, rgba(233, 30, 118, 0.08), rgba(94, 110, 199, 0.08)),
     var(--surface);
-  box-shadow: var(--shadow-soft);
+  box-shadow: 0 26px 80px rgba(20, 25, 46, 0.2);
+}
+
+.ai-chat-panel[hidden] {
+  display: none;
 }
 
 .ai-command-head {
@@ -1438,8 +1484,20 @@ tbody tr:hover {
   font-weight: 820;
 }
 
+.ai-chat-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ai-chat-actions .icon-button {
+  width: 34px;
+  height: 34px;
+  background: var(--surface);
+}
+
 .assistant-thread {
-  max-height: 260px;
+  max-height: min(360px, 42vh);
   min-height: 126px;
   overflow: auto;
   display: grid;
@@ -2359,6 +2417,26 @@ tbody tr:hover {
   .assistant-form,
   .expense-filters {
     grid-template-columns: 1fr;
+  }
+
+  .ai-chat-widget {
+    right: 12px;
+    bottom: 12px;
+    left: 12px;
+  }
+
+  .ai-chat-fab {
+    margin-left: auto;
+  }
+
+  .ai-chat-panel {
+    width: 100%;
+    max-height: calc(100vh - 24px);
+    padding: 14px;
+  }
+
+  .assistant-thread {
+    max-height: 44vh;
   }
 
   .ai-command-head {

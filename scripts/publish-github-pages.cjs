@@ -54,13 +54,19 @@ function main() {
 
   const git = findGit();
   configureGithubPush(git);
-  const changed = run(git, ["status", "--short", "dist"]).trim();
+  const publishPaths = [
+    "dist/index.html",
+    "dist/inventory-valuation-data.json",
+    "dist/packhai-inventory-valuation.csv",
+    "data/flowaccount_stock_selected_warehouses.json",
+  ];
+  const changed = run(git, ["status", "--short", ...publishPaths]).trim();
   if (!changed) {
     console.log("No generated dashboard changes to publish.");
     return;
   }
 
-  run(git, ["add", "dist/index.html", "dist/inventory-valuation-data.json", "dist/packhai-inventory-valuation.csv"]);
+  run(git, ["add", ...publishPaths]);
   const commitOutput = run(git, ["commit", "-m", "Update inventory dashboard data"], true);
   if (/nothing to commit/i.test(commitOutput)) {
     console.log("No dashboard changes to commit.");

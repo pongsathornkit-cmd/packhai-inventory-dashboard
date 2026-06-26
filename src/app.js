@@ -1086,15 +1086,135 @@
       .trim();
   }
 
+  const githubStockWarehouses = [
+    {
+      id: 491661,
+      name: "\u0e04\u0e25\u0e31\u0e07 \u0e0b.\u0e40\u0e08\u0e23\u0e34\u0e0d\u0e01\u0e34\u0e08",
+      label: "\u0e0b.\u0e40\u0e08\u0e23\u0e34\u0e0d\u0e01\u0e34\u0e08",
+      pattern: /(?:\u0e04\u0e25\u0e31\u0e07\s*)?(?:\u0e0b\.?\s*\u0e40\u0e08\u0e23\u0e34\u0e0d\u0e01\u0e34\u0e08|\u0e40\u0e08\u0e23\u0e34\u0e0d\u0e01\u0e34\u0e08|charoen\s*kit|charoenkit)/giu,
+    },
+    {
+      id: 491662,
+      name: "\u0e04\u0e25\u0e31\u0e07 \u0e2a\u0e38\u0e02\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34\u0e4c",
+      label: "\u0e2a\u0e38\u0e02\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34\u0e4c",
+      pattern: /(?:\u0e04\u0e25\u0e31\u0e07\s*)?(?:\u0e2a\u0e38\u0e02\s*\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34\u0e4c|\u0e2a\u0e38\u0e02\s*\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34|suk\s*sawat|suksawat)/giu,
+    },
+  ];
+
+  function numberFromText(value) {
+    const parsed = Number(String(value || "").replace(/[,\s]/g, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function findAssistantWarehouseMatches(message) {
+    const text = String(message || "");
+    const matches = [];
+    githubStockWarehouses.forEach((warehouse) => {
+      warehouse.pattern.lastIndex = 0;
+      let match;
+      while ((match = warehouse.pattern.exec(text)) !== null) {
+        matches.push({ warehouse, index: match.index, end: match.index + match[0].length });
+      }
+    });
+    return matches.sort((a, b) => a.index - b.index);
+  }
+
+  function extractStockUpdateSku(message) {
+    const text = String(message || "");
+    const patterns = [
+      /(?:\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32|\u0e40\u0e1e\u0e34\u0e48\u0e21\s*stock|\u0e25\u0e07\s*stock|add(?:\s+product|\s+sku|\s+stock)?|update(?:\s+sku)?)\s+([A-Z0-9][A-Z0-9._/-]{1,})/i,
+      /(?:sku|\u0e23\u0e2b\u0e31\u0e2a\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32)\s*[:#]?\s*([A-Z0-9][A-Z0-9._/-]{1,})/i,
+      /\b[A-Z][A-Z0-9]*-[A-Z0-9._/-]+\b/i,
+      /\b[A-Z]\d+[A-Z0-9._/-]*\b/i,
+    ];
+    for (const pattern of patterns) {
+      const match = text.match(pattern);
+      if (match?.[1] || match?.[0]) return String(match[1] || match[0]).trim().toUpperCase();
+    }
+    return "";
+  }
+
+  function stockUpdateOperation(message) {
+    const text = compactText(message);
+    if (/(subtract|remove|deduct|\u0e25\u0e14|\u0e15\u0e31\u0e14)/i.test(text)) return "subtract";
+    if (/(set|replace|\u0e15\u0e31\u0e49\u0e07|\u0e1b\u0e23\u0e31\u0e1a\u0e40\u0e1b\u0e47\u0e19|\u0e41\u0e01\u0e49\u0e40\u0e1b\u0e47\u0e19|\u0e40\u0e1b\u0e47\u0e19\u0e08\u0e33\u0e19\u0e27\u0e19)/i.test(text)) return "set";
+    return "add";
+  }
+
+  function hasStockUpdateIntent(message) {
+    return /(?:add|update|set|insert|adjust|\u0e40\u0e1e\u0e34\u0e48\u0e21|\u0e40\u0e15\u0e34\u0e21|\u0e1b\u0e23\u0e31\u0e1a|\u0e15\u0e31\u0e49\u0e07|\u0e41\u0e01\u0e49|\u0e25\u0e07|\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01)/i.test(
+      String(message || "")
+    );
+  }
+
+  function extractStockUpdateQuantity(segment) {
+    const match = String(segment || "").match(
+      /(?:\u0e08\u0e33\u0e19\u0e27\u0e19|qty|quantity|=|:)?\s*([+-]?\d[\d,]*(?:\.\d+)?)\s*(?:\u0e2d\u0e31\u0e19|\u0e0a\u0e34\u0e49\u0e19|\u0e2b\u0e19\u0e48\u0e27\u0e22|pcs?|units?)?/i
+    );
+    return match ? numberFromText(match[1]) : 0;
+  }
+
+  function parseClientStockUpdateCommand(message) {
+    const text = String(message || "");
+    const matches = findAssistantWarehouseMatches(text);
+    if (!matches.length || !hasStockUpdateIntent(text)) return null;
+    const sku = extractStockUpdateSku(text);
+    if (!sku) return null;
+    const allocations = [];
+    matches.forEach((match, index) => {
+      const next = matches[index + 1];
+      const segment = text.slice(match.end, next ? next.index : text.length);
+      const quantity = extractStockUpdateQuantity(segment);
+      if (quantity <= 0) return;
+      const existing = allocations.find((item) => item.warehouseId === match.warehouse.id);
+      if (existing) existing.quantity += quantity;
+      else {
+        allocations.push({
+          warehouseId: match.warehouse.id,
+          warehouseName: match.warehouse.name,
+          warehouseLabel: match.warehouse.label,
+          quantity,
+        });
+      }
+    });
+    if (!allocations.length) return null;
+    return { sku, operation: stockUpdateOperation(text), allocations, sourceText: text.trim().slice(0, 500) };
+  }
+
+  function stockOperationLabel(operation) {
+    if (operation === "set") return "\u0e15\u0e31\u0e49\u0e07\u0e08\u0e33\u0e19\u0e27\u0e19\u0e04\u0e07\u0e40\u0e2b\u0e25\u0e37\u0e2d";
+    if (operation === "subtract") return "\u0e25\u0e14\u0e08\u0e33\u0e19\u0e27\u0e19";
+    return "\u0e40\u0e1e\u0e34\u0e48\u0e21\u0e08\u0e33\u0e19\u0e27\u0e19";
+  }
+
+  function formatClientStockUpdateReply(update) {
+    const lines = update.allocations
+      .map((item) => `- ${item.warehouseName}: ${fmtQty.format(item.quantity)} \u0e2b\u0e19\u0e48\u0e27\u0e22`)
+      .join("\n");
+    return (
+      `\u0e1c\u0e21\u0e2d\u0e48\u0e32\u0e19\u0e04\u0e33\u0e2a\u0e31\u0e48\u0e07\u0e44\u0e14\u0e49\u0e40\u0e1b\u0e47\u0e19 ${stockOperationLabel(update.operation)} SKU ${update.sku}\n${lines}\n` +
+      `\u0e01\u0e14\u0e1b\u0e38\u0e48\u0e21\u0e14\u0e49\u0e32\u0e19\u0e25\u0e48\u0e32\u0e07\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e25\u0e07\u0e04\u0e25\u0e31\u0e07 GitHub Stock \u0e41\u0e25\u0e30 publish dashboard`
+    );
+  }
+
   function runClientRuleAssistant(message, options = {}) {
     const text = compactText(message);
     const context = buildClientAssistantContext();
     const fallbackNote = "";
+    const stockUpdate = parseClientStockUpdateCommand(message);
 
     if (!text) {
       return {
         reply: "พิมพ์คำถามหรือคำสั่งได้เลย เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, หรือค้นหา SKU",
         actions: [],
+        source: "rule",
+      };
+    }
+
+    if (stockUpdate) {
+      return {
+        reply: formatClientStockUpdateReply(stockUpdate),
+        actions: [{ type: "stockUpdate", label: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock", payload: stockUpdate }],
         source: "rule",
       };
     }
@@ -1255,6 +1375,35 @@
     });
   }
 
+  async function applyStockUpdateAction(action = {}) {
+    if (!ensureRemoteSyncConfig("flowaccount")) {
+      pushAssistantMessage(
+        "assistant",
+        "\u0e22\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2d\u0e2d\u0e19\u0e44\u0e25\u0e19\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49: \u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35 Sync API URL \u0e02\u0e2d\u0e07 server \u0e01\u0e48\u0e2d\u0e19",
+        []
+      );
+      return;
+    }
+    setAssistantBusy(true);
+    pushAssistantMessage("assistant", "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e41\u0e25\u0e30 publish dashboard...", []);
+    try {
+      const response = await fetch(expenseApiUrl("/api/github-stock/adjust"), expenseFetchOptions("POST", action.payload || action));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      pushAssistantMessage(
+        "assistant",
+        payload.message ||
+          "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e23\u0e2d GitHub Pages \u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48",
+        [{ type: "filterInventory", label: "\u0e14\u0e39 SKU", query: action.payload?.sku || "", sort: "valueDesc", hash: "inventory-detail" }]
+      );
+      setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
+    } catch (error) {
+      pushAssistantMessage("assistant", `\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08: ${error.message}`, []);
+    } finally {
+      setAssistantBusy(false);
+    }
+  }
+
   function executeAssistantAction(action) {
     if (!action) return;
     if (action.type === "navigate") {
@@ -1271,6 +1420,10 @@
     }
     if (action.type === "fillExpenseForm") {
       fillExpenseForm(action.payload || {});
+      return;
+    }
+    if (action.type === "stockUpdate") {
+      applyStockUpdateAction(action);
     }
   }
 

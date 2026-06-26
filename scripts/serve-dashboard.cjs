@@ -19,6 +19,7 @@ const {
   parseExpenseDraft,
   runRuleAssistant,
 } = require("./assistant-core.cjs");
+const { applyGithubStockUpdate, sanitizeStockUpdatePayload } = require("./github-stock-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -273,6 +274,18 @@ function sanitizeAssistantAction(action) {
       },
     };
   }
+  if (action.type === "stockUpdate") {
+    try {
+      const payload = sanitizeStockUpdatePayload(action.payload || action);
+      return {
+        type: "stockUpdate",
+        label: String(action.label || "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock").slice(0, 80),
+        payload,
+      };
+    } catch {
+      return null;
+    }
+  }
   return null;
 }
 
@@ -325,6 +338,9 @@ async function callOpenAIAssistant(message, context) {
 async function runAssistant(message) {
   const context = buildAssistantContext(readDashboardData(), readExpenseStore(expensesFile));
   const ruleResult = runRuleAssistant(message, context);
+  if ((ruleResult.actions || []).some((action) => action?.type === "stockUpdate")) {
+    return sanitizeAssistantResponse(ruleResult, "rule");
+  }
   if (!process.env.OPENAI_API_KEY) return sanitizeAssistantResponse(ruleResult, "rule");
   try {
     const aiResult = await callOpenAIAssistant(message, context);
@@ -334,6 +350,33 @@ async function runAssistant(message) {
     fallback.warning = `AI fallback: ${error.message}`;
     return fallback;
   }
+}
+
+function stockUpdateResultMessage(result, publishStep) {
+  const lines = (result.allocations || [])
+    .map(
+      (item) =>
+        `- ${item.warehouseName}: ${Number(item.beforeQuantity || 0).toLocaleString("th-TH")} -> ${Number(
+          item.afterQuantity || 0
+        ).toLocaleString("th-TH")} \u0e2b\u0e19\u0e48\u0e27\u0e22`
+    )
+    .join("\n");
+  const published = publishStep?.code === 0 ? "\u0e2a\u0e48\u0e07\u0e02\u0e36\u0e49\u0e19 GitHub Pages \u0e41\u0e25\u0e49\u0e27" : "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e43\u0e19 server \u0e41\u0e25\u0e49\u0e27";
+  return `\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock SKU ${result.sku} \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08\n${lines}\n${published} \u0e23\u0e2d\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e27\u0e47\u0e1a\u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48\u0e41\u0e25\u0e49\u0e27 refresh`;
+}
+
+async function saveGithubStockUpdate(body) {
+  const payload = sanitizeStockUpdatePayload(body.payload || body);
+  const result = applyGithubStockUpdate(flowaccountSnapshotFile, payload);
+  const buildStep = await runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot);
+  const publishStep = await runPublishGithub();
+  return {
+    ok: true,
+    result,
+    buildStep,
+    publishStep,
+    message: stockUpdateResultMessage(result, publishStep),
+  };
 }
 
 function summarizeOutput(text) {
@@ -662,6 +705,15 @@ const server = http.createServer((req, res) => {
       .then((body) => runAssistant(String(body.message || "")))
       .then((result) => sendJson(res, 200, result))
       .catch((error) => sendJson(res, 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/github-stock/adjust" && req.method === "POST") {
+    if (!syncAuthorized(req, res)) return;
+    readJsonBody(req)
+      .then(saveGithubStockUpdate)
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, /needs|valid|quantity|warehouse/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
     return;
   }
 

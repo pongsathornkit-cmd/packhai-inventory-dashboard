@@ -1,4 +1,5 @@
 const { summarizeExpenses } = require("./expense-core.cjs");
+const { formatStockUpdateReply, parseStockUpdateCommand } = require("./github-stock-core.cjs");
 
 function numberValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -141,6 +142,20 @@ function parseInventorySearch(message) {
 
 function runRuleAssistant(message, context) {
   const text = compactText(message);
+  const stockUpdate = parseStockUpdateCommand(message);
+  if (stockUpdate) {
+    return {
+      reply: formatStockUpdateReply(stockUpdate),
+      actions: [
+        {
+          type: "stockUpdate",
+          label: "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock",
+          payload: stockUpdate,
+        },
+      ],
+      source: "rule",
+    };
+  }
   if (!text) {
     return {
       reply: "พิมพ์คำถามหรือคำสั่งได้เลย เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, หรือสร้างค่าใช้จ่าย",
@@ -235,8 +250,9 @@ function assistantSystemPrompt() {
   return [
     "You are an assistant embedded in a Thai inventory and expense dashboard.",
     "Answer in Thai, concise and executive-friendly.",
-    "Only suggest actions from this allowlist: filterInventory, navigate, fillExpenseForm.",
+    "Only suggest actions from this allowlist: filterInventory, navigate, fillExpenseForm, stockUpdate.",
     "Never claim that an expense has been saved. Expense creation must be a draft/action for user confirmation.",
+    "Never claim that stock has been saved. Stock changes must be a stockUpdate action for user confirmation.",
     "Return JSON only with keys: reply, actions.",
   ].join("\n");
 }

@@ -990,6 +990,127 @@
     renderAssistantThread();
   }
 
+  function daysBetween(now, isoDate) {
+    const end = new Date(now);
+    const start = new Date(isoDate || "");
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) return null;
+    return Math.max(0, Math.floor((end.getTime() - start.getTime()) / 86400000));
+  }
+
+  function assistantProductSummary(row, index, includeAge = false) {
+    const age = includeAge && row.stockMovementAgeDays != null ? ` · ไม่เดิน ${fmtInt.format(row.stockMovementAgeDays)} วัน` : "";
+    return `${index + 1}. ${row.sku || "-"} · ${row.name || "-"} · ${fmtBaht.format(row.inventoryValue || 0)} · คงเหลือ ${fmtQty.format(row.quantity || 0)}${age}`;
+  }
+
+  function buildClientAssistantContext() {
+    const now = new Date().toISOString();
+    const positiveRows = stockRows.filter((row) => Number(row.quantity || 0) > 0);
+    const topProducts = [...positiveRows]
+      .sort((a, b) => Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0) || Number(b.quantity || 0) - Number(a.quantity || 0))
+      .slice(0, 20);
+    const staleStock = positiveRows
+      .map((row) => ({ ...row, stockMovementAgeDays: daysBetween(now, row.latestStockMovementAt) }))
+      .filter((row) => row.stockMovementAgeDays != null)
+      .sort((a, b) => Number(b.stockMovementAgeDays || 0) - Number(a.stockMovementAgeDays || 0) || Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0))
+      .slice(0, 50);
+    return { positiveRows, topProducts, staleStock };
+  }
+
+  function extractAssistantSearchQuery(message) {
+    return String(message || "")
+      .replace(/^(ช่วย)?\s*(ค้นหา|หา|search|ดู)\s*/i, "")
+      .replace(/^(สินค้า|sku|รหัสสินค้า)\s*/i, "")
+      .replace(/\s*(ใน)?\s*(ตาราง|คลัง|stock|inventory)\s*$/i, "")
+      .trim();
+  }
+
+  function runClientRuleAssistant(message, options = {}) {
+    const text = compactText(message);
+    const context = buildClientAssistantContext();
+    const fallbackNote = options.fallback
+      ? "หมายเหตุ: ตอนนี้ backend AI ติดต่อไม่ได้ ผมใช้คำสั่งพื้นฐานจากข้อมูลในหน้าเว็บแทน\n"
+      : "";
+
+    if (!text) {
+      return {
+        reply: "พิมพ์คำถามหรือคำสั่งได้เลย เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, หรือค้นหา SKU",
+        actions: [],
+        source: "rule",
+      };
+    }
+
+    if (/popup|ป๊อปอัพ|แชท|chat|ai/.test(text) && /ช่อง|หน้าต่าง|ลอย|website|เว็บ|เว็บไซต/.test(text)) {
+      return {
+        reply: `${fallbackNote}ตอนนี้ช่อง AI ถูกปรับเป็น popup ลอยบนหน้าเว็บแล้วครับ กดปุ่ม AI มุมขวาล่างเพื่อเปิด ใช้ปุ่มปิดหรือกด Esc เพื่อย่อกลับได้`,
+        actions: [],
+        source: "rule",
+      };
+    }
+
+    if (/ไม่เดิน|movement|เคลื่อนไหว|เกิน\s*\d+\s*วัน/.test(text)) {
+      const dayMatch = text.match(/(\d+)\s*วัน/);
+      const minDays = dayMatch ? Number(dayMatch[1]) : 30;
+      const matches = context.staleStock.filter((row) => Number(row.stockMovementAgeDays || 0) >= minDays).slice(0, 10);
+      return {
+        reply: matches.length
+          ? `${fallbackNote}สินค้า stock ไม่เดินเกิน ${fmtInt.format(minDays)} วัน:\n${matches.map((row, index) => assistantProductSummary(row, index, true)).join("\n")}`
+          : `${fallbackNote}ยังไม่พบสินค้าที่มีประวัติ stock ไม่เดินเกิน ${fmtInt.format(minDays)} วันในข้อมูล Packhai`,
+        actions: [{ type: "filterInventory", label: "เปิดตารางสินค้า", query: "", sort: "movementDesc", hash: "inventory-detail" }],
+        source: "rule",
+      };
+    }
+
+    if (/มูลค่าสูงสุด|top|แพงสุด|มูลค่า.*สินค้า|เรียง.*มูลค่า/.test(text)) {
+      return {
+        reply: `${fallbackNote}สินค้ามูลค่าสูงสุดตอนนี้:\n${context.topProducts.slice(0, 10).map((row, index) => assistantProductSummary(row, index)).join("\n")}`,
+        actions: [{ type: "filterInventory", label: "เรียงตารางตามมูลค่า", query: "", sort: "valueDesc", hash: "inventory-detail" }],
+        source: "rule",
+      };
+    }
+
+    if (/^(ช่วย)?\s*(ค้นหา|หา|search|ดู)\s+|sku|รหัสสินค้า/i.test(text)) {
+      const query = extractAssistantSearchQuery(message);
+      if (query) {
+        const matchCount = stockRows.filter((row) => compactText(`${row.sku} ${row.name} ${row.warehouseName} ${row.stockSource}`).includes(compactText(query))).length;
+        return {
+          reply: `${fallbackNote}เตรียมค้นหา "${query}" ในตารางสินค้าแล้ว พบประมาณ ${fmtInt.format(matchCount)} แถว กดปุ่มด้านล่างเพื่อเปิดรายการที่เกี่ยวข้อง`,
+          actions: [
+            {
+              type: "filterInventory",
+              label: `ค้นหา ${query.slice(0, 24)}`,
+              query,
+              sort: "valueDesc",
+              hash: "inventory-detail",
+            },
+          ],
+          source: "rule",
+        };
+      }
+    }
+
+    if (/คลัง packhai|ตาราง.*คลัง|เปิด.*สินค้า|inventory|stock/.test(text)) {
+      return {
+        reply: `${fallbackNote}เปิดตารางรายละเอียดสินค้าให้แล้วครับ สามารถค้นหา เรียงมูลค่า และดูแยกตามคลังต่อได้`,
+        actions: [{ type: "filterInventory", label: "เปิดตารางสินค้า", query: "", sort: "valueDesc", hash: "inventory-detail" }],
+        source: "rule",
+      };
+    }
+
+    if (/ค่าใช้จ่าย|ภ\.ง\.ด|ภงด|หัก ณ ที่จ่าย|wht/.test(text)) {
+      return {
+        reply: `${fallbackNote}คำสั่งค่าใช้จ่ายต้องใช้ backend เพื่อบันทึกข้อมูลจริง แต่ผมเปิดหน้าค่าใช้จ่ายให้ตรวจหรือกรอกต่อได้ครับ`,
+        actions: [{ type: "navigate", label: "เปิดหน้าค่าใช้จ่าย", hash: "expenses" }],
+        source: "rule",
+      };
+    }
+
+    return {
+      reply: `${fallbackNote}ตอนนี้ผมช่วยคำสั่งหลักได้ เช่น สรุปสินค้ามูลค่าสูงสุด, หา stock ไม่เดิน, ค้นหา SKU, เปิดตารางสินค้า หรือเปิดหน้าค่าใช้จ่าย`,
+      actions: [],
+      source: "rule",
+    };
+  }
+
   function setSelectValue(id, value) {
     const el = $(id);
     if (!el) return;
@@ -1058,18 +1179,24 @@
   async function sendAssistantPrompt(prompt) {
     const text = String(prompt || "").trim();
     if (!text || assistantState.busy) return;
-    if (!ensureRemoteSyncConfig("assistant")) return;
     pushAssistantMessage("user", text);
     setAssistantBusy(true);
     try {
-      const response = await fetch(expenseApiUrl("/api/assistant"), expenseFetchOptions("POST", { message: text }));
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      let payload;
+      if (staticReportHost && !remoteSyncApiBase) {
+        payload = runClientRuleAssistant(text);
+      } else {
+        const response = await fetch(expenseApiUrl("/api/assistant"), expenseFetchOptions("POST", { message: text }));
+        payload = await response.json().catch(() => ({}));
+        if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      }
       $("assistantMode").textContent = payload.source === "openai" ? "OpenAI Assistant" : "Rule Assistant";
       pushAssistantMessage("assistant", payload.reply || "-", payload.actions || []);
       if (payload.warning) pushAssistantMessage("assistant", payload.warning, []);
     } catch (error) {
-      pushAssistantMessage("assistant", `สั่งงานไม่สำเร็จ: ${error.message}`, []);
+      const fallback = runClientRuleAssistant(text, { fallback: true, error });
+      $("assistantMode").textContent = "Rule Assistant";
+      pushAssistantMessage("assistant", fallback.reply || `สั่งงานไม่สำเร็จ: ${error.message}`, fallback.actions || []);
     } finally {
       setAssistantBusy(false);
     }

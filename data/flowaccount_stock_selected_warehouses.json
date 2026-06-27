@@ -1,11 +1,11 @@
 {
-  "exportedAt": "2026-06-27T08:11:43.302Z",
+  "exportedAt": "2026-06-27T08:32:49.288Z",
   "source": "https://advance.flowaccount.com/N8387296/business/reports/inventory",
   "syncDate": "2026-06-27",
-  "rowCount": 12,
+  "rowCount": 13,
   "rawRowCount": 2878,
   "aggregatedRowCount": 2852,
-  "uniqueSkuCount": 10,
+  "uniqueSkuCount": 11,
   "duplicateSkus": [
     {
       "sku": "FD-S2000",
@@ -34,8 +34,8 @@
       "reportedTotal": 1439,
       "rawRowCount": 1439,
       "aggregatedRowCount": 1426,
-      "rowCount": 9,
-      "zeroRowCount": 1417
+      "rowCount": 10,
+      "zeroRowCount": 1416
     }
   ],
   "rows": [
@@ -150,6 +150,22 @@
       "source": "FlowAccount คลัง สุขสวัสดิ์",
       "productId": 80340792,
       "productMasterId": 74924516
+    },
+    {
+      "sku": "G211XCHINA",
+      "name": "POLO ( G211X ) เครื่องยนต์เบนซิน 7.0 HP รับประกันสินค้า 1 ปี สตาร์ทมือ สูบเดี่ยว 4 จังหวะ (สินค้าพร้อมจัดส่งทันที)",
+      "barcode": "",
+      "prop": "",
+      "quantity": 105,
+      "waiting": 0,
+      "waitImport": 0,
+      "available": 105,
+      "stockSource": "FlowAccount",
+      "warehouseId": 491662,
+      "warehouseName": "คลัง สุขสวัสดิ์",
+      "source": "FlowAccount คลัง สุขสวัสดิ์",
+      "productId": 84492758,
+      "productMasterId": 76606747
     },
     {
       "sku": "JETST-130",

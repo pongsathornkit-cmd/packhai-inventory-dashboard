@@ -1,11 +1,11 @@
 {
-  "exportedAt": "2026-06-27T08:01:17.736Z",
+  "exportedAt": "2026-06-27T08:11:43.302Z",
   "source": "https://advance.flowaccount.com/N8387296/business/reports/inventory",
   "syncDate": "2026-06-27",
-  "rowCount": 11,
+  "rowCount": 12,
   "rawRowCount": 2878,
   "aggregatedRowCount": 2852,
-  "uniqueSkuCount": 9,
+  "uniqueSkuCount": 10,
   "duplicateSkus": [
     {
       "sku": "FD-S2000",
@@ -24,8 +24,8 @@
       "reportedTotal": 1439,
       "rawRowCount": 1439,
       "aggregatedRowCount": 1426,
-      "rowCount": 2,
-      "zeroRowCount": 1424
+      "rowCount": 3,
+      "zeroRowCount": 1423
     },
     {
       "id": 491662,
@@ -54,6 +54,22 @@
       "source": "FlowAccount คลัง ซ.เจริญกิจ",
       "productId": 80340792,
       "productMasterId": 74924516
+    },
+    {
+      "sku": "P231-0120-1",
+      "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 2.5นิ้ว 3นิ้ว 150W (สินค้าพร้อมจัดส่งทันที)ใช้ลมเป่าระบายความร้อน เครื่องเป่าเตา เป่าลม Blower พัดลมหอยโข่ง (P231-0120)",
+      "barcode": "",
+      "prop": "",
+      "quantity": 80,
+      "waiting": 0,
+      "waitImport": 0,
+      "available": 80,
+      "stockSource": "FlowAccount",
+      "warehouseId": 491661,
+      "warehouseName": "คลัง ซ.เจริญกิจ",
+      "source": "FlowAccount คลัง ซ.เจริญกิจ",
+      "productId": 84493503,
+      "productMasterId": 74979256
     },
     {
       "sku": "V80L-CHINA",

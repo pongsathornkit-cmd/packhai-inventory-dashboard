@@ -509,7 +509,7 @@
   const syncLabels = {
     all: "Sync ทั้งหมด",
     packhai: "Sync คลัง Packhai",
-    flowaccount: "คลัง GitHub",
+    flowaccount: "Sync คลัง FlowAccount",
     seller: "Sync ราคาขาย Seller",
     expenses: "ระบบค่าใช้จ่าย",
   };
@@ -517,8 +517,9 @@
   let syncStartedHere = false;
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
   const syncDefaultTitles = {
-    syncAll: "Sync Packhai stock and seller prices",
+    syncAll: "Sync Packhai, FlowAccount stock and seller prices",
     syncPackhai: "Sync Packhai stock",
+    syncFlowaccount: "Sync FlowAccount stock",
     syncSeller: "Sync Seller prices",
   };
   let remoteSyncApiBase = normalizeSyncApiBase(
@@ -603,7 +604,7 @@
   }
 
   function syncButtons() {
-    return [$("syncAll"), $("syncPackhai"), $("syncSeller")].filter(Boolean);
+    return [$("syncAll"), $("syncPackhai"), $("syncFlowaccount"), $("syncSeller")].filter(Boolean);
   }
 
   function setSyncButtons(status) {
@@ -615,6 +616,7 @@
         running &&
           ((status.type === "all" && button.id === "syncAll") ||
             (status.type === "packhai" && button.id === "syncPackhai") ||
+            (status.type === "flowaccount" && button.id === "syncFlowaccount") ||
             (status.type === "seller" && button.id === "syncSeller"))
       );
     });
@@ -1361,7 +1363,7 @@
       .join("\n");
     return (
       `\u0e1c\u0e21\u0e2d\u0e48\u0e32\u0e19\u0e04\u0e33\u0e2a\u0e31\u0e48\u0e07\u0e44\u0e14\u0e49\u0e40\u0e1b\u0e47\u0e19 ${stockOperationLabel(update.operation)} SKU ${update.sku}\n${lines}\n` +
-      `\u0e01\u0e14\u0e1b\u0e38\u0e48\u0e21\u0e14\u0e49\u0e32\u0e19\u0e25\u0e48\u0e32\u0e07\u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e25\u0e07\u0e04\u0e25\u0e31\u0e07 GitHub Stock \u0e41\u0e25\u0e30 publish dashboard`
+      `\u0e43\u0e0a\u0e49\u0e1b\u0e38\u0e48\u0e21 Sync \u0e04\u0e25\u0e31\u0e07 FlowAccount \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e36\u0e07 stock \u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14\u0e08\u0e32\u0e01 FlowAccount`
     );
   }
 
@@ -1795,8 +1797,8 @@
         body: `${sources.packhai.exportedAtLabel || "-"} · ${fmtInt.format(sources.packhai.rowCount || 0)} แถว`,
       },
       {
-        title: "ข้อมูลคลัง GitHub",
-        body: `${sources.flowaccount?.exportedAtLabel || "-"} · snapshot: ${flowWarehouses || "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์"}`,
+        title: "ข้อมูลคลัง FlowAccount",
+        body: `${sources.flowaccount?.exportedAtLabel || "-"} · ${flowWarehouses || "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์"}`,
       },
       {
         title: "ราคาขาย Seller",
@@ -2268,7 +2270,7 @@
     const sourceCards = [
       ["Packhai", `${data.metadata.sources.packhai.exportedAtLabel} · ${data.metadata.sources.packhai.rowCount} rows`],
       [
-        "GitHub Stock",
+        "FlowAccount",
         `${data.metadata.sources.flowaccount?.exportedAtLabel || "-"} · ${fmtInt.format(data.metadata.sources.flowaccount?.rowCount || 0)} rows`,
       ],
       ["Shopee Seller", `${data.metadata.sources.shopee.exportedAtLabel} · indexed ${fmtInt.format(data.metadata.sources.shopee.indexedPriceRows)} price rows`],
@@ -2343,6 +2345,7 @@
   function bindEvents() {
     $("syncAll")?.addEventListener("click", () => startSync("all"));
     $("syncPackhai")?.addEventListener("click", () => startSync("packhai"));
+    $("syncFlowaccount")?.addEventListener("click", () => startSync("flowaccount"));
     $("syncSeller")?.addEventListener("click", () => startSync("seller"));
     $("searchInput").addEventListener("input", (event) => {
       state.query = event.target.value;

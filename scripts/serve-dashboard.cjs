@@ -151,7 +151,7 @@ function packhaiConfigured() {
 }
 
 function flowaccountConfigured() {
-  return fs.existsSync(flowaccountSnapshotFile);
+  return Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile) || fs.existsSync(flowaccountSnapshotFile);
 }
 
 function publicSyncState(extra = {}) {
@@ -161,7 +161,7 @@ function publicSyncState(extra = {}) {
     config: {
       packhaiConfigured: packhaiConfigured(),
       flowaccountConfigured: flowaccountConfigured(),
-      flowaccountSource: "github-snapshot",
+      flowaccountSource: "flowaccount-sync",
       syncKeyRequired: syncKeyRequired(),
     },
   };
@@ -424,7 +424,7 @@ function runCommand(name, command, args, cwd) {
 async function pushStep(promise) {
   try {
     const step = await promise;
-    syncState.steps.push(step);
+    if (step) syncState.steps.push(step);
     return step;
   } catch (error) {
     if (error.step) syncState.steps.push(error.step);
@@ -466,26 +466,6 @@ async function runBuild() {
   return pushStep(runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot));
 }
 
-function pushFlowaccountSnapshotStep() {
-  const startedAt = new Date().toISOString();
-  let output = "Using committed GitHub snapshot for warehouses: คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์";
-  try {
-    const snapshot = JSON.parse(fs.readFileSync(flowaccountSnapshotFile, "utf8").replace(/^\uFEFF/, ""));
-    output = `Using GitHub snapshot ${path.relative(projectRoot, flowaccountSnapshotFile).replace(/\\/g, "/")} · exportedAt ${snapshot.exportedAt || "-"} · rows ${snapshot.rowCount || 0}`;
-  } catch (error) {
-    output = `Using GitHub snapshot file · ${error.message}`;
-  }
-  syncState.steps.push({
-    name: "Use GitHub stock snapshot",
-    code: 0,
-    skipped: true,
-    startedAt,
-    finishedAt: new Date().toISOString(),
-    output,
-    error: "",
-  });
-}
-
 async function runPublishGithub() {
   if (!publishGithub) {
     syncState.steps.push({
@@ -517,6 +497,8 @@ async function runSync(type) {
     const warnings = [];
     const runPackhai = () =>
       runCommand("Sync Packhai stock", nodePath, [path.join(projectRoot, "scripts", "sync-packhai-stock.cjs")], projectRoot);
+    const runFlowaccount = () =>
+      runCommand("Sync FlowAccount stock", nodePath, [path.join(projectRoot, "scripts", "sync-flowaccount-stock.cjs")], projectRoot);
     const runShopee = () =>
       runCommand("Sync Shopee Seller", nodePath, [path.join(projectRoot, "scripts", "export-shopee-products.cjs")], projectRoot);
     const runLazada = () =>
@@ -537,7 +519,7 @@ async function runSync(type) {
           error: "PACKHAI_AUTH_TOKEN is not configured.",
         });
       }
-      pushFlowaccountSnapshotStep();
+      await pushOptionalStep(runFlowaccount(), errors);
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
       if (!shopeeStep && !lazadaStep) {
@@ -561,7 +543,7 @@ async function runSync(type) {
       }
       await pushStep(runPackhai());
     } else if (type === "flowaccount") {
-      pushFlowaccountSnapshotStep();
+      await pushStep(runFlowaccount());
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);

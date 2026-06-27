@@ -1,7 +1,7 @@
 {
-  "exportedAt": "2026-06-26T15:17:38.498Z",
+  "exportedAt": "2026-06-27T07:14:46.589Z",
   "source": "https://advance.flowaccount.com/N8387296/business/reports/inventory",
-  "syncDate": "2026-06-26",
+  "syncDate": "2026-06-27",
   "rowCount": 2852,
   "uniqueSkuCount": 1426,
   "duplicateSkus": [
@@ -5715,15 +5715,15 @@
       "id": 491661,
       "name": "คลัง ซ.เจริญกิจ",
       "apiName": "คลังซ.เจริญกิจ",
-      "reportedTotal": 1426,
-      "rowCount": 1426
+      "reportedTotal": 1439,
+      "rowCount": 1439
     },
     {
       "id": 491662,
       "name": "คลัง สุขสวัสดิ์",
       "apiName": "คลังสุขสวัสดิ์",
-      "reportedTotal": 1426,
-      "rowCount": 1426
+      "reportedTotal": 1439,
+      "rowCount": 1439
     }
   ],
   "rows": [
@@ -24452,19 +24452,16 @@
       "name": "Prasertsteel ถังฉีดโฟม 80 ลิตร รุ่น V80L สแตนเลส แรงดันการทำงาน 3.5 บาร์ ใช้สำหรับล้างรถ งานคาร์แคร์ พร้อมจัดส่งทันที - 80ลิตรNew",
       "barcode": "",
       "prop": "",
-      "quantity": 20,
+      "quantity": 0,
       "waiting": 0,
       "waitImport": 0,
-      "available": 20,
+      "available": 0,
       "stockSource": "FlowAccount",
       "warehouseId": 491661,
       "warehouseName": "คลัง ซ.เจริญกิจ",
       "source": "FlowAccount คลัง ซ.เจริญกิจ",
       "productId": 84493419,
-      "productMasterId": 78866334,
-      "manualUpdatedAt": "2026-06-26T15:17:38.498Z",
-      "manualUpdateSource": "AI Command",
-      "manualUpdateNote": "เพิ่มสินค้า V80L-CHINA เข้าไปที่คลังสุขสวัสดิ์ จำนวน 100 อัน และ ซ.เจริญกิจ จำนวน 10 อัน"
+      "productMasterId": 78866334
     },
     {
       "sku": "P231-0066",
@@ -47271,19 +47268,16 @@
       "name": "Prasertsteel ถังฉีดโฟม 80 ลิตร รุ่น V80L สแตนเลส แรงดันการทำงาน 3.5 บาร์ ใช้สำหรับล้างรถ งานคาร์แคร์ พร้อมจัดส่งทันที - 80ลิตรNew",
       "barcode": "",
       "prop": "",
-      "quantity": 200,
+      "quantity": 0,
       "waiting": 0,
       "waitImport": 0,
-      "available": 200,
+      "available": 0,
       "stockSource": "FlowAccount",
       "warehouseId": 491662,
       "warehouseName": "คลัง สุขสวัสดิ์",
       "source": "FlowAccount คลัง สุขสวัสดิ์",
       "productId": 84493419,
-      "productMasterId": 78866334,
-      "manualUpdatedAt": "2026-06-26T15:17:38.498Z",
-      "manualUpdateSource": "AI Command",
-      "manualUpdateNote": "เพิ่มสินค้า V80L-CHINA เข้าไปที่คลังสุขสวัสดิ์ จำนวน 100 อัน และ ซ.เจริญกิจ จำนวน 10 อัน"
+      "productMasterId": 78866334
     },
     {
       "sku": "P231-0066",

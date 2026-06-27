@@ -101,6 +101,7 @@ function emptyFlowaccountStock() {
 
 function stockSourceLabel(item) {
   const warehouseName = String(item.warehouseName || "").trim();
+  if (item.stockSource === "FlowAccount") return warehouseName ? `FlowAccount - ${warehouseName}` : "FlowAccount";
   if (item.stockSource === "GitHub") return warehouseName ? `GitHub - ${warehouseName}` : "GitHub";
   return warehouseName || "คลัง Packhai";
 }
@@ -116,10 +117,10 @@ function buildStockRows(packhai, flowaccount) {
 
   const flowRows = (flowaccount.rows || []).map((item) => ({
     ...item,
-    stockSource: "GitHub",
+    stockSource: "FlowAccount",
     warehouseId: item.warehouseId || "",
     warehouseName: item.warehouseName || "",
-    stockSourceLabel: stockSourceLabel({ stockSource: "GitHub", warehouseName: item.warehouseName || "" }),
+    stockSourceLabel: stockSourceLabel({ stockSource: "FlowAccount", warehouseName: item.warehouseName || "" }),
   }));
 
   return [...packhaiRows, ...flowRows];
@@ -531,11 +532,11 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
     metadata: {
       generatedAt: new Date().toISOString(),
       generatedAtLabel: thaiDateTime(new Date().toISOString()),
-      reportTitle: "สรุปมูลค่าสินค้าคงคลัง Packhai + GitHub Stock",
+      reportTitle: "สรุปมูลค่าสินค้าคงคลัง Packhai + FlowAccount",
       valuationRule:
-        "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และคลัง GitHub เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
+        "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และ FlowAccount เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
       quantityRule:
-        "ใช้ field quantity จาก Packhai และ remaining จาก snapshot บน GitHub เป็นจำนวนคงเหลือในคลัง โดย GitHub snapshot เก็บเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์เท่านั้น",
+        "ใช้ field quantity จาก Packhai และ remaining จาก FlowAccount sync เป็นจำนวนคงเหลือในคลัง โดย FlowAccount sync ดึงเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์เท่านั้น",
       pricePriority: ["Shopee Seller Center", "Lazada Seller Center", "ktw.co.th"],
       sources: {
         packhai: {
@@ -550,7 +551,7 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
         flowaccount: {
           file: path.relative(projectRoot, inputFiles.flowaccount).replace(/\\/g, "/"),
           source: stockSources.flowaccount.source || "https://advance.flowaccount.com/N8387296/business/reports/inventory",
-          storage: "github-snapshot",
+          storage: "flowaccount-sync",
           exportedAt: stockSources.flowaccount.exportedAt,
           exportedAtLabel: thaiDateTime(stockSources.flowaccount.exportedAt),
           rowCount: stockSources.flowaccount.rowCount,

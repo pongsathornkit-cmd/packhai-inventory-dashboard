@@ -1,13 +1,13 @@
 {
-  "exportedAt": "2026-06-27T12:16:37.922Z",
+  "exportedAt": "2026-06-27T12:22:11.583Z",
   "source": "Seller platform order payments",
   "rule": "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
   "counts": {
     "targetShopee": 3,
     "targetLazada": 0,
-    "cachedBefore": 0,
-    "requestedNew": 3,
-    "fetchedNew": 3,
+    "cachedBefore": 3,
+    "requestedNew": 0,
+    "fetchedNew": 0,
     "totalOrders": 3,
     "errors": 0
   },

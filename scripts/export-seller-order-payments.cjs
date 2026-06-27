@@ -98,16 +98,25 @@ function collectTargets() {
   }
 
   const movements = readJsonSafe(movementFile, { rows: [] });
-  const targets = { Shopee: new Set(), Lazada: new Set() };
+  const targets = { Shopee: new Map(), Lazada: new Map() };
   for (const row of movements.rows || []) {
     if (!row?.isSaleOut) continue;
     const platform = row.platform === "Shopee" || row.channelName === "Shopee" ? "Shopee" : row.platform === "Lazada" || row.channelName === "Lazada" ? "Lazada" : "";
     const orderNo = normalizeOrderNo(row.platformOrderNo || row.orderNo || row.referenceNo2);
-    if (platform && orderNo) targets[platform].add(orderNo);
+    if (!platform || !orderNo) continue;
+    const createdAt = String(row.createdAt || row.latestStockMovementAt || "");
+    const previous = targets[platform].get(orderNo);
+    if (!previous || createdAt > previous.createdAt) {
+      targets[platform].set(orderNo, { orderNo, createdAt });
+    }
   }
+  const newestFirst = (items) =>
+    [...items.values()]
+      .sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")) || a.orderNo.localeCompare(b.orderNo))
+      .map((item) => item.orderNo);
   return {
-    Shopee: [...targets.Shopee].sort(),
-    Lazada: [...targets.Lazada].sort(),
+    Shopee: newestFirst(targets.Shopee),
+    Lazada: newestFirst(targets.Lazada),
   };
 }
 

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
+const { buildFlowaccountStockOutput, numberValue } = require("./flowaccount-stock-transform.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -23,23 +24,6 @@ const WAREHOUSES = [
   { id: 491661, name: "คลัง ซ.เจริญกิจ", apiName: "คลังซ.เจริญกิจ" },
   { id: 491662, name: "คลัง สุขสวัสดิ์", apiName: "คลังสุขสวัสดิ์" },
 ];
-
-function numberValue(value) {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (value && typeof value === "object") {
-    return numberValue(value.text ?? value.value ?? value.stock ?? value.quantity ?? value.remaining);
-  }
-  const parsed = Number(String(value ?? "").replace(/[,\s]|THB/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function normalizeSku(value) {
-  return String(value ?? "")
-    .trim()
-    .replace(/^'+/, "")
-    .replace(/\.0$/, "")
-    .toUpperCase();
-}
 
 function todayBangkok() {
   const parts = new Intl.DateTimeFormat("en-CA", {
@@ -195,44 +179,6 @@ async function fetchWarehouseRows(cookies, warehouse, date) {
   };
 }
 
-function mapReportRow(row, warehouse) {
-  const sku = normalizeSku(row.productCode || row.code || row.sku);
-  const quantity = numberValue(row.remaining ?? row.remainingStock ?? row.quantity);
-  return {
-    sku,
-    name: String(row.productName || row.name || sku).trim(),
-    barcode: String(row.barCode || row.barcode || row.productBarcode || "").trim(),
-    prop: "",
-    quantity,
-    waiting: 0,
-    waitImport: 0,
-    available: quantity,
-    stockSource: "FlowAccount",
-    warehouseId: warehouse.id,
-    warehouseName: warehouse.name,
-    source: `FlowAccount ${warehouse.name}`,
-    productId: row.productId || "",
-    productMasterId: row.productMasterId || "",
-  };
-}
-
-function aggregateRows(rows) {
-  const byKey = new Map();
-  for (const row of rows) {
-    if (!row.sku) continue;
-    const key = `${row.warehouseId}|${row.sku}`;
-    if (!byKey.has(key)) {
-      byKey.set(key, { ...row });
-      continue;
-    }
-    const current = byKey.get(key);
-    current.quantity += row.quantity;
-    current.available += row.available;
-    current.waiting += row.waiting;
-  }
-  return [...byKey.values()];
-}
-
 async function main() {
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   const date = process.env.FLOWACCOUNT_SYNC_DATE || todayBangkok();
@@ -244,31 +190,12 @@ async function main() {
     warehouseResults.push(await fetchWarehouseRows(cookies, warehouse, date));
   }
 
-  const rows = aggregateRows(
-    warehouseResults.flatMap((result) => result.rows.map((row) => mapReportRow(row, result.warehouse)))
-  );
-  const skuCounts = new Map();
-  for (const row of rows) skuCounts.set(row.sku, (skuCounts.get(row.sku) || 0) + 1);
-  const duplicateSkus = [...skuCounts.entries()]
-    .filter(([, count]) => count > 1)
-    .map(([sku, count]) => ({ sku, count }));
-
-  const output = {
+  const output = buildFlowaccountStockOutput({
     exportedAt: new Date().toISOString(),
-    source: "https://advance.flowaccount.com/N8387296/business/reports/inventory",
+    source: FLOW_URL,
     syncDate: date,
-    rowCount: rows.length,
-    uniqueSkuCount: skuCounts.size,
-    duplicateSkus,
-    warehouses: warehouseResults.map((result) => ({
-      id: result.warehouse.id,
-      name: result.warehouse.name,
-      apiName: result.warehouse.apiName,
-      reportedTotal: result.total,
-      rowCount: result.rows.length,
-    })),
-    rows,
-  };
+    warehouseResults,
+  });
 
   fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
   console.log(
@@ -277,8 +204,9 @@ async function main() {
         ok: true,
         outputFile,
         date,
-        rows: rows.length,
-        uniqueSkuCount: skuCounts.size,
+        rows: output.rowCount,
+        rawRows: output.rawRowCount,
+        uniqueSkuCount: output.uniqueSkuCount,
         warehouses: output.warehouses,
       },
       null,

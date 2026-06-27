@@ -523,7 +523,7 @@ async function runSync(type) {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
       if (!shopeeStep && !lazadaStep) {
-        errors.push("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
+        warnings.push("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada ใช้ราคาล่าสุดที่มีอยู่ใน dashboard แทน");
       }
     } else if (type === "packhai") {
       if (!packhaiConfigured()) {

@@ -1,0 +1,71 @@
+{
+  "exportedAt": "2026-06-27T12:16:37.922Z",
+  "source": "Seller platform order payments",
+  "rule": "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
+  "counts": {
+    "targetShopee": 3,
+    "targetLazada": 0,
+    "cachedBefore": 0,
+    "requestedNew": 3,
+    "fetchedNew": 3,
+    "totalOrders": 3,
+    "errors": 0
+  },
+  "errors": [],
+  "orders": [
+    {
+      "platform": "Shopee",
+      "orderNo": "2606264THMK8KJ",
+      "collectedAmount": 400,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-27T12:16:31.741Z",
+      "orderId": 236165948269170,
+      "items": [
+        {
+          "name": "POLO( PC-2 ) สวิทซ์แรงดัน สำหรับระบบน้ำ จะตัดต่อการทำงานของปั๊มน้ำอัตโนมัติตามแรงดันที่ตั้งไว้ (สินค้าพร้อมจัดส่งทัน (-)",
+          "skuText": "[15893 ]",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "2606264UEU4DCN",
+      "collectedAmount": 975,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-27T12:16:31.365Z",
+      "orderId": 236166928201109,
+      "items": [
+        {
+          "name": "POLO( PC-2 ) สวิทซ์แรงดัน สำหรับระบบน้ำ จะตัดต่อการทำงานของปั๊มน้ำอัตโนมัติตามแรงดันที่ตั้งไว้ (สินค้าพร้อมจัดส่งทัน (-)",
+          "skuText": "[15893 ]",
+          "amount": 10
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "26062651F2DQVB",
+      "collectedAmount": 100,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-27T12:16:32.208Z",
+      "orderId": 236173378297739,
+      "items": [
+        {
+          "name": "POLO( PC-2 ) สวิทซ์แรงดัน สำหรับระบบน้ำ จะตัดต่อการทำงานของปั๊มน้ำอัตโนมัติตามแรงดันที่ตั้งไว้ (สินค้าพร้อมจัดส่งทัน (-)",
+          "skuText": "[15893 ]",
+          "amount": 1
+        }
+      ]
+    }
+  ]
+}

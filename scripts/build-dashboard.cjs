@@ -1,5 +1,9 @@
 const fs = require("fs");
 const path = require("path");
+const {
+  buildSellerPaymentIndex,
+  enrichMovementWithSellerPayment,
+} = require("./seller-order-payment-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -34,6 +38,10 @@ const inputFiles = {
   ktw: preferExisting(
     path.join(dataDir, "ktw_product_source", "ktw_price_update_plan.json"),
     path.join(workspaceRoot, "outputs", "ktw_product_source", "ktw_price_update_plan.json")
+  ),
+  sellerPayments: preferExisting(
+    path.join(dataDir, "seller_compare", "seller_order_payments.json"),
+    path.join(workspaceRoot, "outputs", "seller_compare", "seller_order_payments.json")
   ),
 };
 
@@ -99,6 +107,29 @@ function emptyFlowaccountStock() {
   };
 }
 
+function emptySellerPayments() {
+  return {
+    exportedAt: "",
+    source: "Seller platform order payments",
+    orders: [],
+  };
+}
+
+function groupPackhaiMovements(packhai, paymentIndex) {
+  const byStockShopId = new Map();
+  for (const movement of packhai.stockMovement?.rows || []) {
+    const enriched = enrichMovementWithSellerPayment(movement, paymentIndex);
+    const key = Number(enriched.stockShopId || 0);
+    if (!key) continue;
+    if (!byStockShopId.has(key)) byStockShopId.set(key, []);
+    byStockShopId.get(key).push(enriched);
+  }
+  for (const list of byStockShopId.values()) {
+    list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+  return byStockShopId;
+}
+
 function stockSourceLabel(item) {
   const warehouseName = String(item.warehouseName || "").trim();
   if (item.stockSource === "FlowAccount") return warehouseName ? `FlowAccount - ${warehouseName}` : "FlowAccount";
@@ -106,10 +137,12 @@ function stockSourceLabel(item) {
   return warehouseName || "คลัง Packhai";
 }
 
-function buildStockRows(packhai, flowaccount) {
+function buildStockRows(packhai, flowaccount, paymentIndex) {
+  const packhaiMovementsByStockShopId = groupPackhaiMovements(packhai, paymentIndex);
   const packhaiRows = (packhai.rows || []).map((item) => ({
     ...item,
     stockSource: "Packhai",
+    stockMovements: packhaiMovementsByStockShopId.get(Number(item.stockShopId || 0)) || [],
     warehouseId: item.warehouseId || "packhai",
     warehouseName: item.warehouseName || "คลัง Packhai",
     stockSourceLabel: stockSourceLabel({ stockSource: "Packhai", warehouseName: item.warehouseName || "คลัง Packhai" }),
@@ -527,6 +560,13 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
     .filter((row) => row.inventoryValue > 0)
     .sort((a, b) => b.inventoryValue - a.inventoryValue)
     .slice(0, 30);
+  const stockMovementMeta = stockSources.packhai.stockMovement
+    ? {
+        ...stockSources.packhai.stockMovement,
+        rows: undefined,
+        file: "stock-movements.json",
+      }
+    : null;
 
   return {
     metadata: {
@@ -546,7 +586,7 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
           exportedAtLabel: thaiDateTime(stockSources.packhai.exportedAt),
           rowCount: stockSources.packhai.rowCount,
           uniqueSkuCount: stockSources.packhai.uniqueSkuCount,
-          stockMovement: stockSources.packhai.stockMovement || null,
+          stockMovement: stockMovementMeta,
         },
         flowaccount: {
           file: path.relative(projectRoot, inputFiles.flowaccount).replace(/\\/g, "/"),
@@ -578,6 +618,13 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
           createdAtLabel: thaiDateTime(ktw.createdAt),
           itemCount: ktw.items?.length || 0,
           indexedPriceRows: indices.ktw.rowCount,
+        },
+        sellerPayments: {
+          file: path.relative(projectRoot, inputFiles.sellerPayments).replace(/\\/g, "/"),
+          exportedAt: stockSources.sellerPayments.exportedAt || "",
+          exportedAtLabel: thaiDateTime(stockSources.sellerPayments.exportedAt),
+          rowCount: stockSources.sellerPaymentIndex.rowCount,
+          rule: "ใช้ยอดเงินจาก Shopee/Lazada Seller platform เท่านั้น ไม่ใช้ยอดเงินจาก Packhai",
         },
       },
     },
@@ -662,18 +709,22 @@ function build() {
   const shopee = readJson(inputFiles.shopee);
   const lazada = readJson(inputFiles.lazada);
   const ktw = readJson(inputFiles.ktw);
+  const sellerPayments = readOptionalJson(inputFiles.sellerPayments, emptySellerPayments());
 
   const indices = {
     shopee: buildShopeeIndex(shopee),
     lazada: buildLazadaIndex(lazada),
     ktw: buildKtwIndex(ktw),
   };
+  const sellerPaymentIndex = buildSellerPaymentIndex(sellerPayments);
 
-  const stockRows = buildStockRows(packhai, flowaccount);
+  const stockRows = buildStockRows(packhai, flowaccount, sellerPaymentIndex);
   const duplicateStockRows = stockRows.length - new Set(stockRows.map((row) => `${row.warehouseId || row.stockSource}|${normalizeSku(row.sku)}`)).size;
   const stockSources = {
     packhai,
     flowaccount,
+    sellerPayments,
+    sellerPaymentIndex,
     duplicateSkuRows: Math.max(0, duplicateStockRows),
   };
 
@@ -716,6 +767,7 @@ function build() {
       latestStockMovementAddQuantity: numberValue(item.latestStockMovementAddQuantity),
       latestStockMovementRemoveQuantity: numberValue(item.latestStockMovementRemoveQuantity),
       latestStockMovementTotalQuantity: numberValue(item.latestStockMovementTotalQuantity),
+      stockMovementCount: (item.stockMovements || []).length,
       stockForValue: Math.max(0, quantity),
       price,
       priceSource: source,
@@ -738,6 +790,7 @@ function build() {
   });
 
   rows.sort((a, b) => b.inventoryValue - a.inventoryValue || a.sku.localeCompare(b.sku, "en"));
+  const stockMovements = stockRows.flatMap((item) => item.stockMovements || []);
 
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
@@ -756,6 +809,16 @@ function build() {
 
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");
   fs.writeFileSync(path.join(distDir, "inventory-valuation-data.json"), JSON.stringify(dashboard, null, 2), "utf8");
+  fs.writeFileSync(
+    path.join(distDir, "stock-movements.json"),
+    JSON.stringify({
+      exportedAt: stockSources.packhai.exportedAt || "",
+      source: stockSources.packhai.stockMovement?.source || "https://shop.packhai.com/stock-history",
+      rowCount: stockMovements.length,
+      rows: stockMovements,
+    }),
+    "utf8"
+  );
   writeCsv(path.join(distDir, "packhai-inventory-valuation.csv"), rows);
 
   console.log(

@@ -2505,6 +2505,119 @@ tbody tr:hover {
   text-decoration: none;
 }
 
+.movement-history-block {
+  padding: 0;
+  overflow: hidden;
+}
+
+.movement-history-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: start;
+  padding: 14px 15px 10px;
+  border-bottom: 1px solid var(--line-2);
+}
+
+.movement-history-head h3,
+.movement-history-head p {
+  margin: 0;
+}
+
+.movement-history-head p {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.movement-history-head > span {
+  flex: 0 0 auto;
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 9px;
+  border-radius: 999px;
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+  font-size: 11px;
+  font-weight: 820;
+  white-space: nowrap;
+}
+
+.movement-history-table-wrap {
+  max-height: 340px;
+  overflow: auto;
+}
+
+.movement-history-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 780px;
+}
+
+.movement-history-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 10px;
+  background: var(--ink-2);
+  color: #fff;
+  font-size: 11px;
+  line-height: 1.25;
+  text-align: left;
+}
+
+.movement-history-table td {
+  padding: 9px 10px;
+  border-top: 1px solid var(--line-2);
+  vertical-align: top;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.movement-history-table td strong,
+.movement-history-table td span {
+  display: block;
+}
+
+.movement-history-table td span {
+  margin-top: 3px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.movement-history-table .num {
+  text-align: right;
+}
+
+.payment-badge {
+  display: inline-flex;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 850;
+  white-space: nowrap;
+}
+
+.payment-badge.matched {
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+
+.payment-badge.missing {
+  background: #fff0f6;
+  color: var(--pink);
+}
+
+.payment-badge.neutral {
+  background: var(--surface);
+  color: var(--muted);
+}
+
 @media (max-width: 1180px) {
   .dashboard-shell {
     grid-template-columns: 238px minmax(0, 1fr);

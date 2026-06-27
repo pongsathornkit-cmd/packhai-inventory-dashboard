@@ -503,6 +503,13 @@ async function runSync(type) {
       runCommand("Sync Shopee Seller", nodePath, [path.join(projectRoot, "scripts", "export-shopee-products.cjs")], projectRoot);
     const runLazada = () =>
       runCommand("Sync Lazada Seller", nodePath, [path.join(projectRoot, "scripts", "export-lazada-products.cjs")], projectRoot);
+    const runSellerPayments = () =>
+      runCommand(
+        "Sync Seller order payments",
+        nodePath,
+        [path.join(projectRoot, "scripts", "export-seller-order-payments.cjs")],
+        projectRoot
+      );
 
     if (type === "all") {
       if (packhaiConfigured()) {
@@ -522,6 +529,7 @@ async function runSync(type) {
       await pushOptionalStep(runFlowaccount(), errors);
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
+      await pushWarningStep(runSellerPayments(), warnings);
       if (!shopeeStep && !lazadaStep) {
         warnings.push("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada ใช้ราคาล่าสุดที่มีอยู่ใน dashboard แทน");
       }
@@ -547,6 +555,7 @@ async function runSync(type) {
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
+      await pushWarningStep(runSellerPayments(), warnings);
       if (!shopeeStep && !lazadaStep) {
         throw new Error("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
       }

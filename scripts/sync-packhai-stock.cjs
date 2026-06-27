@@ -1,5 +1,10 @@
 const fs = require("fs");
 const path = require("path");
+const {
+  buildStockMovementSnapshot,
+  normalizeSku,
+  numberValue,
+} = require("./packhai-stock-movement-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -34,23 +39,6 @@ const includeStockMovements = process.env.PACKHAI_INCLUDE_STOCK_MOVEMENTS !== "0
 const movementStartDate = process.env.PACKHAI_STOCK_MOVEMENT_START_DATE || "2020-01-01";
 const movementPageSize = Math.max(100, Number(process.env.PACKHAI_STOCK_MOVEMENT_PAGE_SIZE || 1000));
 
-function numberValue(value) {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  if (value && typeof value === "object") {
-    return numberValue(value.text ?? value.value ?? value.stock ?? value.quantity);
-  }
-  const parsed = Number(String(value ?? "").replace(/[,\s]|THB/g, ""));
-  return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function normalizeSku(value) {
-  return String(value ?? "")
-    .trim()
-    .replace(/^'+/, "")
-    .replace(/\.0$/, "")
-    .toUpperCase();
-}
-
 function todayBangkok() {
   const parts = new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Bangkok",
@@ -60,25 +48,6 @@ function todayBangkok() {
   }).formatToParts(new Date());
   const map = Object.fromEntries(parts.map((part) => [part.type, part.value]));
   return `${map.year}-${map.month}-${map.day}`;
-}
-
-function normalizePackhaiDateTime(value) {
-  const text = String(value || "").trim();
-  if (!text) return "";
-  const isoLike = text.includes("T") ? text : text.replace(" ", "T");
-  const withZone = /(?:Z|[+-]\d{2}:?\d{2})$/i.test(isoLike) ? isoLike : `${isoLike}+07:00`;
-  const date = new Date(withZone);
-  if (Number.isNaN(date.getTime())) return "";
-  return date.toISOString();
-}
-
-function movementType(row) {
-  const addQuantity = numberValue(row.addQuantity);
-  const removeQuantity = numberValue(row.removeQuantity);
-  if (addQuantity > 0 && removeQuantity > 0) return "เข้า/ออก";
-  if (addQuantity > 0) return "นำเข้า";
-  if (removeQuantity > 0) return "นำออก";
-  return "ปรับยอด";
 }
 
 async function postStock(pathname, body, attempt = 1) {
@@ -144,11 +113,10 @@ async function fetchStockSummary(date) {
   return rows;
 }
 
-async function fetchLatestStockMovements(startDate, endDate) {
-  const latestByStockShopId = new Map();
+async function fetchStockMovements(startDate, endDate) {
+  const movementItems = [];
   let skip = 0;
   let total = null;
-  let movementRows = 0;
 
   while (total == null || skip < total) {
     const data = await postStock("Stock/get-all-stock-statement-balance", {
@@ -163,38 +131,13 @@ async function fetchLatestStockMovements(startDate, endDate) {
     });
     const items = data.items || [];
     total = numberValue(data.resultCount ?? data.totalResult ?? total ?? items.length);
-    movementRows += items.length;
-
-    for (const item of items) {
-      const stockShopId = numberValue(item.stockID ?? item.stockShopID ?? item.stockShopId);
-      const latestAt = normalizePackhaiDateTime(item.created ?? item.createdDatetime);
-      if (!stockShopId || !latestAt) continue;
-      const current = latestByStockShopId.get(stockShopId);
-      if (current && new Date(current.latestStockMovementAt).getTime() >= new Date(latestAt).getTime()) continue;
-      latestByStockShopId.set(stockShopId, {
-        latestStockMovementAt: latestAt,
-        latestStockMovementType: movementType(item),
-        latestStockMovementDescription: String(item.description || "").trim(),
-        latestStockMovementReferenceNo: String(item.referenceNo || "").trim(),
-        latestStockMovementReferenceNo2: String(item.referenceNo2 || "").trim(),
-        latestStockMovementChannelName: String(item.channelName || "").trim(),
-        latestStockMovementAddQuantity: numberValue(item.addQuantity),
-        latestStockMovementRemoveQuantity: numberValue(item.removeQuantity),
-        latestStockMovementTotalQuantity: numberValue(item.totalQuantity),
-      });
-    }
+    movementItems.push(...items);
 
     if (!items.length) break;
     skip += items.length;
   }
 
-  return {
-    startDate,
-    endDate,
-    rowCount: movementRows,
-    stockShopCount: latestByStockShopId.size,
-    latestByStockShopId,
-  };
+  return buildStockMovementSnapshot(movementItems, { startDate, endDate });
 }
 
 function mapStockRow(row, latestMovement) {
@@ -235,7 +178,7 @@ async function main() {
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   const date = process.env.PACKHAI_SYNC_DATE || todayBangkok();
   const apiRows = await fetchStockSummary(date);
-  const movement = includeStockMovements ? await fetchLatestStockMovements(movementStartDate, date) : null;
+  const movement = includeStockMovements ? await fetchStockMovements(movementStartDate, date) : null;
   const rows = apiRows
     .map((row) => mapStockRow(row, movement?.latestByStockShopId.get(numberValue(row.stockShopID ?? row.stockShopId))))
     .filter((row) => row.sku);
@@ -259,6 +202,7 @@ async function main() {
           endDate: movement.endDate,
           rowCount: movement.rowCount,
           stockShopCount: movement.stockShopCount,
+          rows: movement.rows,
         }
       : {
           skipped: true,

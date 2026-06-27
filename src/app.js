@@ -2,6 +2,12 @@
   const data = window.__PACKHAI_DASHBOARD__;
   const rows = data.rows || [];
   const stockRows = rows.filter((row) => Number(row.quantity || 0) > 0);
+  let stockMovementRows = data.stockMovements || [];
+  const stockMovementsByStockShopId = new Map();
+  let stockMovementLoadState = stockMovementRows.length ? "loaded" : "idle";
+  let stockMovementLoadError = "";
+  let stockMovementLoadPromise = null;
+  let activeDetailRow = null;
   const rowByDetailId = new Map();
   const detailIdByIdentity = new Map();
   function productIdentity(row) {
@@ -155,6 +161,51 @@
     return value;
   }
 
+  function indexStockMovements(items) {
+    stockMovementsByStockShopId.clear();
+    (items || []).forEach((movement) => {
+      const key = String(movement.stockShopId || "");
+      if (!key) return;
+      if (!stockMovementsByStockShopId.has(key)) stockMovementsByStockShopId.set(key, []);
+      stockMovementsByStockShopId.get(key).push(movement);
+    });
+    stockMovementsByStockShopId.forEach((list) => {
+      list.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    });
+  }
+
+  function stockMovementFileUrl() {
+    const file = data.metadata?.sources?.packhai?.stockMovement?.file || "stock-movements.json";
+    const version = encodeURIComponent(data.metadata?.generatedAt || Date.now());
+    return `${file}?v=${version}`;
+  }
+
+  function loadStockMovements() {
+    if (stockMovementLoadState === "loaded") return Promise.resolve(stockMovementRows);
+    if (stockMovementLoadPromise) return stockMovementLoadPromise;
+    stockMovementLoadState = "loading";
+    stockMovementLoadPromise = fetch(stockMovementFileUrl(), { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`stock movements ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        stockMovementRows = payload.rows || [];
+        indexStockMovements(stockMovementRows);
+        stockMovementLoadState = "loaded";
+        stockMovementLoadError = "";
+        return stockMovementRows;
+      })
+      .catch((error) => {
+        stockMovementLoadState = "error";
+        stockMovementLoadError = error.message || String(error);
+        return [];
+      });
+    return stockMovementLoadPromise;
+  }
+
+  indexStockMovements(stockMovementRows);
+
   function detailIdForRow(row) {
     if (row.detailId) {
       if (row.isSkuGroup || !rowByDetailId.has(row.detailId)) rowByDetailId.set(row.detailId, row);
@@ -239,6 +290,11 @@
       </div>`;
   }
 
+  function stockMovementsForRow(row) {
+    const key = String(row?.stockShopId || "");
+    return key ? stockMovementsByStockShopId.get(key) || [] : [];
+  }
+
   function pricePriority(row) {
     const priority = Number(row?.priceSourcePriority);
     return Number.isFinite(priority) ? priority : 99;
@@ -296,13 +352,19 @@
         const base = preferredProductRow(warehouseRows);
         const priceRow = bestPriceRow(warehouseRows);
         const movementRow = newestMovementRow(warehouseRows);
+        const stockMovements = warehouseRows
+          .flatMap((item) => stockMovementsForRow(item))
+          .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
         const sum = (field) => warehouseRows.reduce((total, row) => total + Number(row[field] || 0), 0);
+        const expectedStockMovementCount = stockMovements.length || sum("stockMovementCount");
         const isGrouped = warehouseRows.length > 1;
         return {
           ...base,
           detailId: isGrouped ? `sku-group-${index}-${key.replace(/[^a-z0-9_-]/gi, "-")}` : detailIdForRow(base),
           isSkuGroup: isGrouped,
           warehouseRows,
+          stockMovements,
+          stockMovementCount: expectedStockMovementCount,
           stockSource: isGrouped ? "รวม" : base.stockSource,
           warehouseName: isGrouped ? `${fmtInt.format(warehouseRows.length)} คลัง` : base.warehouseName,
           stockSourceLabel: isGrouped ? `รวม ${fmtInt.format(warehouseRows.length)} คลัง` : base.stockSourceLabel,
@@ -418,6 +480,146 @@
       </article>`;
   }
 
+  function detailMovementRows(row) {
+    const sourceRows = row.isSkuGroup
+      ? row.stockMovements?.length
+        ? row.stockMovements
+        : row.warehouseRows?.flatMap((item) => stockMovementsForRow(item)) || []
+      : stockMovementsForRow(row);
+    const seen = new Set();
+    return sourceRows
+      .filter(Boolean)
+      .filter((movement) => {
+        const key = [
+          movement.stockShopId || "",
+          movement.createdAt || "",
+          movement.referenceNo || "",
+          movement.platformOrderNo || "",
+          movement.addQuantity || 0,
+          movement.removeQuantity || 0,
+          movement.totalQuantity || 0,
+        ].join("|");
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
+  function movementPlatformLabel(movement) {
+    return movement.platform || movement.channelName || "-";
+  }
+
+  function movementPaymentBadge(movement) {
+    if (Number(movement.removeQuantity || 0) <= 0) {
+      return `<span class="payment-badge neutral">ไม่ใช่ขายออก</span>`;
+    }
+    if (!["Shopee", "Lazada"].includes(movement.platform || "")) {
+      return `<span class="payment-badge neutral">ไม่ใช่ Shopee/Lazada</span>`;
+    }
+    if (movement.platformPaymentStatus === "matched") {
+      return `<span class="payment-badge matched">${escapeHtml(fmtBaht2.format(movement.platformPaymentAmount || 0))}</span>`;
+    }
+    return `<span class="payment-badge missing">ยังไม่มีข้อมูล Seller</span>`;
+  }
+
+  function movementPaymentDetail(movement) {
+    if (movement.platformPaymentStatus === "matched") {
+      const source = movement.platformPaymentSource || `${movement.platform} Seller Center`;
+      const captured = movement.platformPaymentCapturedAt ? ` · ${formatDateTime(movement.platformPaymentCapturedAt)}` : "";
+      return `${source}${captured}`;
+    }
+    if (Number(movement.removeQuantity || 0) > 0 && ["Shopee", "Lazada"].includes(movement.platform || "")) {
+      return "รอข้อมูลยอดเงินจาก Seller platform เท่านั้น";
+    }
+    return "";
+  }
+
+  function movementQuantityText(movement) {
+    const add = Number(movement.addQuantity || 0);
+    const remove = Number(movement.removeQuantity || 0);
+    if (add > 0 && remove > 0) return `+${fmtQty.format(add)} / -${fmtQty.format(remove)}`;
+    if (add > 0) return `+${fmtQty.format(add)}`;
+    if (remove > 0) return `-${fmtQty.format(remove)}`;
+    return "0";
+  }
+
+  function stockMovementHistoryTable(row) {
+    const movements = detailMovementRows(row);
+    const expectedCount = Number(row.stockMovementCount || 0);
+    if (!movements.length && expectedCount > 0 && stockMovementLoadState !== "loaded") {
+      const message =
+        stockMovementLoadState === "error"
+          ? `โหลดประวัติเดิน stock ไม่สำเร็จ: ${stockMovementLoadError || "-"}`
+          : "กำลังโหลดประวัติเดิน stock จาก Packhai...";
+      return `
+        <section class="detail-block detail-wide movement-history-block">
+          <h3>ประวัติเดิน stock จาก Packhai</h3>
+          <p>${escapeHtml(message)}</p>
+        </section>`;
+    }
+    const saleOutRows = movements.filter((movement) => Number(movement.removeQuantity || 0) > 0);
+    const matchedPaymentRows = saleOutRows.filter((movement) => movement.platformPaymentStatus === "matched");
+    const summary = `${fmtInt.format(movements.length)} รายการ · ขายออก ${fmtInt.format(saleOutRows.length)} รายการ · พบยอด Seller ${fmtInt.format(matchedPaymentRows.length)} รายการ`;
+    if (!movements.length) {
+      return `
+        <section class="detail-block detail-wide movement-history-block">
+          <h3>ประวัติเดิน stock จาก Packhai</h3>
+          <p>ยังไม่มีประวัติเดิน stock จาก shop.packhai.com สำหรับรายการนี้</p>
+        </section>`;
+    }
+    return `
+      <section class="detail-block detail-wide movement-history-block">
+        <div class="movement-history-head">
+          <div>
+            <h3>ประวัติเดิน stock ทุก order จาก Packhai</h3>
+            <p>${escapeHtml(summary)}</p>
+          </div>
+          <span>ยอดเงินใช้เฉพาะ Shopee/Lazada Seller</span>
+        </div>
+        <div class="movement-history-table-wrap">
+          <table class="movement-history-table">
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th>ช่องทาง / Order</th>
+                <th>เดิน stock</th>
+                <th>คงเหลือหลังรายการ</th>
+                <th>ยอดเงินจาก platform</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${movements
+                .map(
+                  (movement) => `
+                    <tr>
+                      <td>
+                        <strong>${escapeHtml(formatDateTime(movement.createdAt))}</strong>
+                        <span>${escapeHtml(movement.type || "-")}</span>
+                      </td>
+                      <td>
+                        <strong>${escapeHtml(movementPlatformLabel(movement))}</strong>
+                        <span>Packhai ${escapeHtml(movement.referenceNo || "-")}</span>
+                        <span>Platform ${escapeHtml(movement.platformOrderNo || "-")}</span>
+                      </td>
+                      <td class="num">
+                        <strong>${escapeHtml(movementQuantityText(movement))}</strong>
+                        <span>${escapeHtml(movement.description || "")}</span>
+                      </td>
+                      <td class="num">${fmtQty.format(movement.totalQuantity || 0)}</td>
+                      <td>
+                        ${movementPaymentBadge(movement)}
+                        <span>${escapeHtml(movementPaymentDetail(movement))}</span>
+                      </td>
+                    </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>`;
+  }
+
   function openProductDetailById(detailId) {
     const row = rowByDetailId.get(detailId);
     if (!row) return;
@@ -428,6 +630,12 @@
     const modal = $("productDetailModal");
     const content = $("productDetailContent");
     if (!modal || !content) return;
+    activeDetailRow = row;
+    if (stockMovementLoadState === "idle" && Number(row.stockMovementCount || 0) > 0) {
+      loadStockMovements().then(() => {
+        if (activeDetailRow === row && !modal.hidden) openProductDetail(row);
+      });
+    }
 
     const sourceLink = row.sourceUrl
       ? `<a class="detail-source-link" href="${escapeHtml(row.sourceUrl)}" target="_blank" rel="noreferrer">เปิดแหล่งราคา</a>`
@@ -483,6 +691,8 @@
         </section>
       </div>
 
+      ${stockMovementHistoryTable(row)}
+
       <section class="detail-block detail-wide">
         <h3>ชื่อสินค้าจากแหล่งราคา</h3>
         <p>${escapeHtml(row.sourceTitle || row.name || "-")}</p>
@@ -503,6 +713,7 @@
     const modal = $("productDetailModal");
     if (!modal) return;
     modal.hidden = true;
+    activeDetailRow = null;
     document.body.classList.remove("modal-open");
   }
 

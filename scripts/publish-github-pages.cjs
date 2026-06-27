@@ -57,8 +57,11 @@ function main() {
   const publishPaths = [
     "dist/index.html",
     "dist/inventory-valuation-data.json",
+    "dist/stock-movements.json",
     "dist/packhai-inventory-valuation.csv",
+    "data/packhai_stock.json",
     "data/flowaccount_stock_selected_warehouses.json",
+    "data/seller_compare/seller_order_payments.json",
   ];
   const changed = run(git, ["status", "--short", ...publishPaths]).trim();
   if (!changed) {

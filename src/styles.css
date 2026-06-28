@@ -601,7 +601,15 @@ svg {
   font-size: 12px;
 }
 
-.sync-status a {
+.sync-status-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.sync-status a,
+.sync-status button {
   display: inline-flex;
   min-height: 34px;
   align-items: center;
@@ -609,10 +617,16 @@ svg {
   padding: 0 14px;
   border: 1px solid currentColor;
   border-radius: 999px;
+  background: transparent;
   color: inherit;
+  cursor: pointer;
   font-size: 12px;
   font-weight: 800;
   text-decoration: none;
+}
+
+.sync-status button {
+  font-family: inherit;
 }
 
 .payment-collection-report {

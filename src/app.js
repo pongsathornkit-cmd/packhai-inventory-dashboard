@@ -730,6 +730,11 @@
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
   const githubSyncWorkflowUrl =
     "https://github.com/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml";
+  const githubSyncRunsApiUrl =
+    "https://api.github.com/repos/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml/runs?per_page=1&event=workflow_dispatch";
+  let lastStaticSyncType = "all";
+  let githubSyncStatusCache = null;
+  let githubSyncStatusLoading = false;
   const syncDefaultTitles = {
     syncAll: "Sync Packhai, FlowAccount stock and seller prices",
     syncPackhai: "Sync Packhai stock",
@@ -802,8 +807,8 @@
     syncButtons().forEach((button) => {
       button.classList.toggle("is-static", enabled);
       if (enabled) {
-        button.title = "Online sync needs the main sync server";
-        button.setAttribute("aria-label", `${button.textContent.trim()} - local sync only`);
+        button.title = "Run this sync on GitHub Actions";
+        button.setAttribute("aria-label", `${button.textContent.trim()} - GitHub Actions sync`);
       } else {
         button.title = syncDefaultTitles[button.id] || button.title;
         button.removeAttribute("aria-label");
@@ -811,24 +816,95 @@
     });
   }
 
-  function renderStaticSyncNotice(type = "all") {
+  function githubSyncWorkflowHint(type) {
+    if (type === "seller-payments") return "เลือก sync_type = seller-payments และ payment_batch_size = 25 หรือ 0";
+    if (type === "flowaccount") return "เลือก sync_type = flowaccount เพื่ออัปเดตคลัง ซ.เจริญกิจ / สุขสวัสดิ์";
+    if (type === "packhai") return "เลือก sync_type = packhai เพื่ออัปเดตคลัง Packhai และ stock movement";
+    if (type === "seller") return "เลือก sync_type = seller เพื่ออัปเดตราคาขาย Shopee/Lazada";
+    return "เลือก sync_type = all ถ้าต้องการรันครบทุกแหล่งข้อมูล";
+  }
+
+  function githubRunLabel(run) {
+    if (!run) return "ยังไม่ได้อ่านสถานะล่าสุด";
+    const timeText = formatSyncTime(run.updated_at || run.run_started_at || run.created_at);
+    if (run.status !== "completed") return `กำลังรันบน GitHub Actions · ${timeText || "กำลังประมวลผล"}`;
+    if (run.conclusion === "success") return `ล่าสุดสำเร็จ · ${timeText}`;
+    if (run.conclusion === "cancelled") return `ล่าสุดถูกยกเลิก · ${timeText}`;
+    return `ล่าสุดไม่สำเร็จ · ${timeText}`;
+  }
+
+  function githubRunClass(run) {
+    if (!run) return "warning";
+    if (run.status !== "completed") return "running";
+    if (run.conclusion === "success") return "passed";
+    if (run.conclusion === "cancelled") return "warning";
+    return "failed";
+  }
+
+  function bindStaticSyncActions() {
+    $("syncStatus")?.querySelector("[data-sync-run-refresh]")?.addEventListener("click", () => {
+      loadGitHubSyncStatus(lastStaticSyncType, true);
+    });
+    $("syncStatus")?.querySelector("[data-dashboard-refresh]")?.addEventListener("click", () => {
+      const freshUrl = `${window.location.pathname}?v=${Date.now()}${window.location.hash || ""}`;
+      window.location.href = freshUrl;
+    });
+  }
+
+  function renderStaticSyncNotice(type = "all", run = githubSyncStatusCache) {
     const el = $("syncStatus");
     if (!el) return;
+    lastStaticSyncType = type;
     setStaticSyncMode(true);
     el.hidden = false;
-    el.className = "sync-status warning";
+    el.className = `sync-status ${githubSyncStatusLoading ? "running" : githubRunClass(run)}`;
     const label = syncLabels[type] || "Sync data";
+    const runStatus = githubSyncStatusLoading ? "กำลังอ่านสถานะ GitHub Actions..." : githubRunLabel(run);
+    const runLink = run?.html_url || githubSyncWorkflowUrl;
     el.innerHTML = `
       <div>
-        <strong>GitHub Sync Runner · ${escapeHtml(label)}</strong>
-        <span>ยังไม่มี Sync API server ถาวร จึงเปิด GitHub Actions ให้รัน sync แทน</span>
-        <small>ในหน้า GitHub ให้กด Run workflow แล้วเลือก sync_type ที่ต้องการ</small>
+        <strong>Sync ผ่าน GitHub Actions · ${escapeHtml(label)}</strong>
+        <span>รัน sync บน GitHub ได้เลย ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
+        <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}</small>
       </div>
-      <a href="${githubSyncWorkflowUrl}" target="_blank" rel="noopener">Open workflow</a>`;
+      <div class="sync-status-actions">
+        <a href="${githubSyncWorkflowUrl}" target="_blank" rel="noopener">Open GitHub Sync</a>
+        <a href="${runLink}" target="_blank" rel="noopener">Latest run</a>
+        <button type="button" data-sync-run-refresh>ตรวจสถานะ</button>
+        <button type="button" data-dashboard-refresh>รีเฟรชหน้า</button>
+      </div>`;
+    bindStaticSyncActions();
+    if (staticReportHost && !githubSyncStatusCache && !githubSyncStatusLoading) {
+      loadGitHubSyncStatus(type, false);
+    }
+  }
+
+  async function loadGitHubSyncStatus(type = lastStaticSyncType, showLoading = false) {
+    if (!staticReportHost || remoteSyncApiBase || githubSyncStatusLoading) return;
+    try {
+      githubSyncStatusLoading = true;
+      if (showLoading) renderStaticSyncNotice(type, githubSyncStatusCache);
+      const response = await fetch(githubSyncRunsApiUrl, { cache: "no-store" });
+      if (!response.ok) throw new Error(`GitHub status ${response.status}`);
+      const data = await response.json();
+      githubSyncStatusCache = Array.isArray(data.workflow_runs) ? data.workflow_runs[0] || null : null;
+      githubSyncStatusLoading = false;
+      renderStaticSyncNotice(type, githubSyncStatusCache);
+    } catch (error) {
+      githubSyncStatusLoading = false;
+      githubSyncStatusCache = {
+        status: "completed",
+        conclusion: "failure",
+        updated_at: new Date().toISOString(),
+        html_url: githubSyncWorkflowUrl,
+      };
+      renderStaticSyncNotice(type, githubSyncStatusCache);
+    }
   }
 
   function openGitHubSyncWorkflow(type) {
     renderStaticSyncNotice(type);
+    loadGitHubSyncStatus(type, true);
     window.open(githubSyncWorkflowUrl, "_blank", "noopener");
   }
 

@@ -47,6 +47,8 @@ test("GitHub Actions sync workflow decrypts env and runs sync job", () => {
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /pages: write/);
   assert.match(workflow, /actions\/deploy-pages@v4/);
+  assert.match(readRepoFile("scripts/run-sync-job.cjs"), /sync-status\.json/);
+  assert.match(readRepoFile("scripts/publish-github-pages.cjs"), /dist\/sync-status\.json/);
   assert.doesNotMatch(workflow, /add-mask/);
   assert.doesNotMatch(workflow, /done < \.tmp\/github-actions-sync\.env/);
   assert.doesNotMatch(workflow, /PACKHAI_AUTH_STATE_DIR:\s*\$\{\{\s*runner\.temp/);

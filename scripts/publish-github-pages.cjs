@@ -58,6 +58,7 @@ function main() {
     "dist/index.html",
     "dist/inventory-valuation-data.json",
     "dist/stock-movements.json",
+    "dist/sync-status.json",
     "dist/packhai-inventory-valuation.csv",
     "data/packhai_stock.json",
     "data/flowaccount_stock_selected_warehouses.json",

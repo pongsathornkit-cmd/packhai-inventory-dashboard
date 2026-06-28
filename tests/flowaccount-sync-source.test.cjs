@@ -103,5 +103,7 @@ test("online dashboard shows sync setup notice when no public sync API is config
   const appSource = readRepoFile("src/app.js");
 
   assert.match(appSource, /if\s*\(syncApiUnavailable\)\s*{\s*renderStaticSyncNotice\("seller-payments"\);/);
-  assert.match(appSource, /ยังไม่มี Sync API URL ที่ออนไลน์/);
+  assert.match(appSource, /githubSyncWorkflowUrl/);
+  assert.match(appSource, /openGitHubSyncWorkflow\(type\)/);
+  assert.match(appSource, /actions\/workflows\/sync-dashboard\.yml/);
 });

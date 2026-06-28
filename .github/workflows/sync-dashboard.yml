@@ -1,0 +1,102 @@
+name: Sync inventory dashboard
+
+on:
+  workflow_dispatch:
+    inputs:
+      sync_type:
+        description: Sync job to run
+        required: true
+        default: seller-payments
+        type: choice
+        options:
+          - all
+          - packhai
+          - flowaccount
+          - seller
+          - seller-payments
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: packhai-sync-dashboard
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      SELLER_HEADLESS: "1"
+      SYNC_REQUIRE_KEY: "0"
+      PACKHAI_CLOUD_ENV_FILE: ${{ github.workspace }}/.tmp/github-actions-sync.env
+      PACKHAI_DATA_DIR: ${{ github.workspace }}/data
+      PACKHAI_AUTH_STATE_DIR: ${{ runner.temp }}/packhai-auth-states
+      FLOW_PROFILE: ${{ runner.temp }}/browser-profiles/flowaccount
+      SHOPEE_SESSION_DIR: ${{ runner.temp }}/browser-profiles/shopee
+      SELLER_SESSION_DIR: ${{ runner.temp }}/browser-profiles/lazada
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Decrypt sync environment
+        env:
+          PACKHAI_SYNC_ENV_PASSPHRASE: ${{ secrets.PACKHAI_SYNC_ENV_PASSPHRASE }}
+        run: |
+          if [ ! -f ".github/sync-secrets/cloud-sync.env.enc" ]; then
+            echo "Missing .github/sync-secrets/cloud-sync.env.enc. Run npm run sync:seal-env first." >&2
+            exit 1
+          fi
+          if [ -z "$PACKHAI_SYNC_ENV_PASSPHRASE" ]; then
+            echo "Missing GitHub secret PACKHAI_SYNC_ENV_PASSPHRASE." >&2
+            exit 1
+          fi
+          node scripts/open-sealed-sync-env.cjs
+
+      - name: Configure runtime paths
+        run: |
+          {
+            echo "PACKHAI_DATA_DIR=$GITHUB_WORKSPACE/data"
+            echo "PACKHAI_AUTH_STATE_DIR=$RUNNER_TEMP/packhai-auth-states"
+            echo "FLOW_PROFILE=$RUNNER_TEMP/browser-profiles/flowaccount"
+            echo "SHOPEE_SESSION_DIR=$RUNNER_TEMP/browser-profiles/shopee"
+            echo "SELLER_SESSION_DIR=$RUNNER_TEMP/browser-profiles/lazada"
+          } >> "$GITHUB_ENV"
+          git config user.name "packhai-sync-bot"
+          git config user.email "packhai-sync-bot@users.noreply.github.com"
+
+      - name: Run sync
+        run: node scripts/run-sync-job.cjs --type "${{ inputs.sync_type }}"
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Upload dashboard artifact
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

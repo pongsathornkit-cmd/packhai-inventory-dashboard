@@ -601,6 +601,20 @@ svg {
   font-size: 12px;
 }
 
+.sync-status a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  color: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
 .payment-collection-report {
   display: grid;
   gap: 14px;

@@ -13,7 +13,8 @@
     "auth:export": "node scripts/export-browser-auth-state.cjs --write-env-file .tmp/render-auth-state.env",
     "cloud:env": "node scripts/prepare-cloud-env.cjs",
     "sync:configure-api": "node scripts/configure-public-sync-api.cjs",
-    "sync:smoke": "node scripts/smoke-sync-server.cjs"
+    "sync:smoke": "node scripts/smoke-sync-server.cjs",
+    "sync:seal-env": "node scripts/seal-sync-env.cjs"
   },
   "dependencies": {
     "playwright": "^1.54.2"

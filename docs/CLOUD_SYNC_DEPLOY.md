@@ -131,3 +131,22 @@ Do not use GitHub Actions secrets for the browser storage states. The Shopee, La
 5. After the service is live and `/api/sync/status` returns `ready: true`, run `npm run sync:configure-api -- --base https://YOUR-SYNC-SERVER --require-ready --publish`.
 
 The app loads `/etc/secrets/cloud-sync.env` during `npm start`, before it seeds storage, builds the dashboard, and starts `/api/sync/*`.
+
+## GitHub Actions sync runner
+
+ถ้าไม่ต้องการใช้ Render/VPS สามารถใช้ GitHub Actions เป็นตัวรัน sync ได้ โดยเข้ารหัส `.tmp/cloud-sync.env` แล้วเก็บ passphrase เป็น GitHub Secret ขนาดเล็ก:
+
+```bash
+npm run cloud:env -- --github-token-from-gh
+npm run sync:seal-env -- --generate-passphrase
+```
+
+นำค่า `passphrase` ที่ command แสดง ไปตั้งเป็น GitHub Actions secret ชื่อ `PACKHAI_SYNC_ENV_PASSPHRASE` แล้ว commit ไฟล์ `.github/sync-secrets/cloud-sync.env.enc`
+
+จากนั้นเปิด:
+
+```text
+https://github.com/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml
+```
+
+เลือก `Run workflow` และเลือก `sync_type` ที่ต้องการ เช่น `seller-payments`, `seller`, `flowaccount`, `packhai`, หรือ `all`

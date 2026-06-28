@@ -728,6 +728,8 @@
   let syncPollTimer = null;
   let syncStartedHere = false;
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
+  const githubSyncWorkflowUrl =
+    "https://github.com/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml";
   const syncDefaultTitles = {
     syncAll: "Sync Packhai, FlowAccount stock and seller prices",
     syncPackhai: "Sync Packhai stock",
@@ -818,11 +820,16 @@
     const label = syncLabels[type] || "Sync data";
     el.innerHTML = `
       <div>
-        <strong>ตั้งค่า Online Sync · ${escapeHtml(label)}</strong>
-        <span>ยังไม่มี Sync API URL ที่ออนไลน์ จึงยัง Sync คลังและยอดเก็บเงินจากเครื่องอื่นไม่ได้</span>
-        <small>เปิด cloud sync server หรือใส่ Sync API URL ใหม่ แล้วกด Sync อีกครั้ง</small>
+        <strong>GitHub Sync Runner · ${escapeHtml(label)}</strong>
+        <span>ยังไม่มี Sync API server ถาวร จึงเปิด GitHub Actions ให้รัน sync แทน</span>
+        <small>ในหน้า GitHub ให้กด Run workflow แล้วเลือก sync_type ที่ต้องการ</small>
       </div>
-      <code>GitHub Pages</code>`;
+      <a href="${githubSyncWorkflowUrl}" target="_blank" rel="noopener">Open workflow</a>`;
+  }
+
+  function openGitHubSyncWorkflow(type) {
+    renderStaticSyncNotice(type);
+    window.open(githubSyncWorkflowUrl, "_blank", "noopener");
   }
 
   function renderSyncReadiness(status) {
@@ -991,7 +998,10 @@
   }
 
   async function startSync(type) {
-    if (!ensureRemoteSyncConfig(type)) return;
+    if (!ensureRemoteSyncConfig(type)) {
+      if (staticReportHost) openGitHubSyncWorkflow(type);
+      return;
+    }
     if (syncApiUnavailable) {
       renderStaticSyncNotice(type);
       return;

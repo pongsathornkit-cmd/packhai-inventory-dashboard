@@ -1,11 +1,37 @@
 {
-  "generatedAt": "2026-06-28T16:43:38.942Z",
-  "type": "seller-payments",
-  "ok": true,
-  "warning": false,
-  "message": "Sync ข้อมูลทั้งหมดสำเร็จ",
-  "warnings": [],
+  "generatedAt": "2026-06-28T17:01:24.950Z",
+  "type": "all",
+  "ok": false,
+  "warning": true,
+  "message": "Sync บางส่วนไม่สำเร็จ: Sync Lazada Seller: Error: Lazada Seller Center is not logged in. Please log in in the opened browser and rerun this script.",
+  "warnings": [
+    "Sync Lazada Seller: Error: Lazada Seller Center is not logged in. Please log in in the opened browser and rerun this script."
+  ],
   "steps": [
+    {
+      "name": "Sync Packhai stock",
+      "code": 0,
+      "output": "{\n  \"ok\": true,\n  \"outputFile\": \"/home/runner/work/packhai-inventory-dashboard/packhai-inventory-dashboard/data/packhai_stock.json\",\n  \"date\": \"2026-06-28\",\n  \"rows\": 2458,\n  \"uniqueSkuCount\": 2457,\n  \"movementRows\": 47134,\n  \"movementStockShopCount\": 2459\n}",
+      "error": ""
+    },
+    {
+      "name": "Sync FlowAccount stock",
+      "code": 0,
+      "output": "    {\n      \"id\": 491662,\n      \"name\": \"คลัง สุขสวัสดิ์\",\n      \"apiName\": \"คลังสุขสวัสดิ์\",\n      \"reportedTotal\": 1440,\n      \"rawRowCount\": 1440,\n      \"aggregatedRowCount\": 1427,\n      \"rowCount\": 10,\n      \"zeroRowCount\": 1417\n    }\n  ]\n}",
+      "error": ""
+    },
+    {
+      "name": "Sync Shopee Seller",
+      "code": 0,
+      "output": "    \"delistedTotal\": 55,\n    \"draft\": 77,\n    \"draftTotal\": 77,\n    \"deboosted\": 3,\n    \"deboostedTotal\": 3,\n    \"reviewing\": 0,\n    \"reviewingTotal\": 0,\n    \"combined\": 9839,\n    \"uniqueParentSku\": 3795\n  },\n  \"outputFile\": \"/home/runner/work/packhai-inventory-dashboard/packhai-inventory-dashboard/data/seller_compare/shopee_products_export.json\"\n}",
+      "error": ""
+    },
+    {
+      "name": "Sync Lazada Seller",
+      "code": 1,
+      "output": "",
+      "error": "Error: Lazada Seller Center is not logged in. Please log in in the opened browser and rerun this script.\n    at main (/home/runner/work/packhai-inventory-dashboard/packhai-inventory-dashboard/scripts/export-lazada-products.cjs:187:13)"
+    },
     {
       "name": "Sync Seller order payments",
       "code": 0,

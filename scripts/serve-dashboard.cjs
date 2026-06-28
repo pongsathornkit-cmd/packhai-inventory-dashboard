@@ -22,7 +22,6 @@ const {
 const { applyGithubStockUpdate, sanitizeStockUpdatePayload } = require("./github-stock-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
-const workspaceRoot = path.resolve(projectRoot, "..");
 const distDir = path.join(projectRoot, "dist");
 const dashboardDataFile = path.join(distDir, "inventory-valuation-data.json");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
@@ -36,11 +35,6 @@ const localSyncKeyFile = path.join(projectRoot, ".sync-key.local");
 const authStateDir = process.env.PACKHAI_AUTH_STATE_DIR
   ? path.resolve(process.env.PACKHAI_AUTH_STATE_DIR)
   : path.join(projectRoot, "storage-states");
-const localFlowProfile =
-  process.env.FLOW_PROFILE ||
-  (fs.existsSync(path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada"))
-    ? path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada")
-    : path.join(projectRoot, "browser-profiles", "flowaccount"));
 const publishGithub = process.env.SYNC_PUBLISH_GITHUB !== "0";
 const extraAllowedOrigins = String(process.env.SYNC_ALLOWED_ORIGINS || "")
   .split(",")
@@ -153,8 +147,12 @@ function packhaiConfigured() {
   }
 }
 
+function websiteStockConfigured() {
+  return fs.existsSync(flowaccountSnapshotFile);
+}
+
 function flowaccountConfigured() {
-  return Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile) || fs.existsSync(flowaccountSnapshotFile);
+  return websiteStockConfigured();
 }
 
 function storageStateConfigured(kind) {
@@ -175,15 +173,11 @@ function lazadaAuthConfigured() {
   return storageStateConfigured("lazada") || Boolean(process.env.SELLER_SESSION_DIR);
 }
 
-function flowaccountAuthConfigured() {
-  return storageStateConfigured("flowaccount") || Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile);
-}
-
 function syncReadiness() {
   const config = {
     packhaiConfigured: packhaiConfigured(),
     flowaccountConfigured: flowaccountConfigured(),
-    flowaccountAuthConfigured: flowaccountAuthConfigured(),
+    websiteStockConfigured: websiteStockConfigured(),
     shopeeAuthConfigured: shopeeAuthConfigured(),
     lazadaAuthConfigured: lazadaAuthConfigured(),
     githubPublishConfigured: Boolean(String(process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim()),
@@ -191,7 +185,7 @@ function syncReadiness() {
   };
   const missing = [];
   if (!config.packhaiConfigured) missing.push("PACKHAI_AUTH_TOKEN");
-  if (!config.flowaccountAuthConfigured) missing.push("FLOWACCOUNT_STORAGE_STATE_B64");
+  if (!config.websiteStockConfigured) missing.push("WEBSITE_STOCK_SNAPSHOT");
   if (!config.shopeeAuthConfigured) missing.push("SHOPEE_STORAGE_STATE_B64");
   if (!config.lazadaAuthConfigured) missing.push("LAZADA_STORAGE_STATE_B64");
   if (!config.githubPublishConfigured && publishGithub) missing.push("GITHUB_TOKEN");
@@ -210,7 +204,7 @@ function publicSyncState(extra = {}) {
     ...extra,
     config: {
       ...readiness.config,
-      flowaccountSource: "flowaccount-sync",
+      flowaccountSource: "website-stock",
     },
     ready: readiness.ready,
     missingConfig: readiness.missing,
@@ -547,8 +541,8 @@ async function runSync(type) {
     const warnings = [];
     const runPackhai = () =>
       runCommand("Sync Packhai stock", nodePath, [path.join(projectRoot, "scripts", "sync-packhai-stock.cjs")], projectRoot);
-    const runFlowaccount = () =>
-      runCommand("Sync FlowAccount stock", nodePath, [path.join(projectRoot, "scripts", "sync-flowaccount-stock.cjs")], projectRoot);
+    const runWebsiteStockSnapshot = () =>
+      runCommand("Use Website stock snapshot", nodePath, [path.join(projectRoot, "scripts", "use-website-stock-snapshot.cjs")], projectRoot);
     const runShopee = () =>
       runCommand("Sync Shopee Seller", nodePath, [path.join(projectRoot, "scripts", "export-shopee-products.cjs")], projectRoot);
     const runLazada = () =>
@@ -576,7 +570,7 @@ async function runSync(type) {
           error: "PACKHAI_AUTH_TOKEN is not configured.",
         });
       }
-      await pushOptionalStep(runFlowaccount(), errors);
+      await pushOptionalStep(runWebsiteStockSnapshot(), errors);
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
       await pushWarningStep(runSellerPayments(), warnings);
@@ -601,7 +595,7 @@ async function runSync(type) {
       }
       await pushStep(runPackhai());
     } else if (type === "flowaccount") {
-      await pushStep(runFlowaccount());
+      await pushStep(runWebsiteStockSnapshot());
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);

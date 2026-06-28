@@ -108,7 +108,7 @@ function main() {
     steps.push(runStep("Sync Packhai stock", "sync-packhai-stock.cjs"));
   }
   if (args.type === "all" || args.type === "flowaccount") {
-    steps.push(runStep("Sync FlowAccount stock", "sync-flowaccount-stock.cjs"));
+    steps.push(runStep("Use Website stock snapshot", "use-website-stock-snapshot.cjs"));
   }
   if (args.type === "all" || args.type === "seller") {
     steps.push(sellerOptional("Sync Shopee Seller", "export-shopee-products.cjs", warnings));

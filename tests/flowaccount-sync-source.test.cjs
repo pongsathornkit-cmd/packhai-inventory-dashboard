@@ -9,13 +9,17 @@ function readRepoFile(relativePath) {
   return fs.readFileSync(path.join(projectRoot, relativePath), "utf8");
 }
 
-test("sync server runs FlowAccount export instead of GitHub snapshot for FlowAccount stock", () => {
+test("sync server uses website stock snapshot instead of FlowAccount export", () => {
   const source = readRepoFile("scripts/serve-dashboard.cjs");
+  const runJobSource = readRepoFile("scripts/run-sync-job.cjs");
 
-  assert.match(source, /runFlowaccount\s*=\s*\(\)\s*=>\s*\n\s*runCommand\("Sync FlowAccount stock"/);
-  assert.match(source, /path\.join\(projectRoot,\s*"scripts",\s*"sync-flowaccount-stock\.cjs"\)/);
-  assert.doesNotMatch(source, /pushFlowaccountSnapshotStep/);
-  assert.match(source, /flowaccountSource:\s*"flowaccount-sync"/);
+  assert.match(source, /runWebsiteStockSnapshot\s*=\s*\(\)\s*=>\s*\n\s*runCommand\("Use Website stock snapshot"/);
+  assert.match(source, /path\.join\(projectRoot,\s*"scripts",\s*"use-website-stock-snapshot\.cjs"\)/);
+  assert.doesNotMatch(source, /runCommand\("Sync FlowAccount stock"/);
+  assert.doesNotMatch(source, /path\.join\(projectRoot,\s*"scripts",\s*"sync-flowaccount-stock\.cjs"\)/);
+  assert.match(source, /flowaccountSource:\s*"website-stock"/);
+  assert.match(runJobSource, /runStep\("Use Website stock snapshot",\s*"use-website-stock-snapshot\.cjs"\)/);
+  assert.doesNotMatch(runJobSource, /runStep\("Sync FlowAccount stock"/);
 });
 
 test("sync server does not append null steps when publish is skipped", () => {
@@ -31,18 +35,20 @@ test("sync all keeps stock sync usable when seller sessions fail", () => {
   assert.match(source, /warnings\.push\("[^"]*Seller[^"]*Shopee[^"]*Lazada/);
 });
 
-test("dashboard labels FlowAccount rows as FlowAccount, not GitHub stock", () => {
+test("dashboard labels selected warehouse rows as Website Stock, not FlowAccount sync", () => {
   const buildSource = readRepoFile("scripts/build-dashboard.cjs");
   const appSource = readRepoFile("src/app.js");
   const templateSource = readRepoFile("src/index.template.html");
 
-  assert.match(buildSource, /stockSource:\s*"FlowAccount"/);
+  assert.match(buildSource, /WEBSITE_STOCK_SOURCE\s*=\s*"Website Stock"/);
+  assert.match(buildSource, /storage:\s*"website-stock"/);
   assert.doesNotMatch(buildSource, /Packhai \+ GitHub Stock/);
   assert.doesNotMatch(buildSource, /github-snapshot/);
-  assert.doesNotMatch(appSource, /GitHub Stock/);
+  assert.doesNotMatch(buildSource, /storage:\s*"flowaccount-sync"/);
+  assert.match(appSource, /Website Stock/);
+  assert.match(templateSource, /Website Stock/);
   assert.match(appSource, /syncFlowaccount/);
   assert.match(templateSource, /id="syncFlowaccount"/);
-  assert.doesNotMatch(templateSource, /Packhai \+ GitHub Stock/);
 });
 
 test("dashboard exposes a dedicated sync path for platform collection payments", () => {
@@ -74,7 +80,7 @@ test("sync server exposes cloud readiness without leaking secret values", () => 
   assert.match(serverSource, /function\s+syncReadiness/);
   assert.match(serverSource, /shopeeAuthConfigured/);
   assert.match(serverSource, /lazadaAuthConfigured/);
-  assert.match(serverSource, /flowaccountAuthConfigured/);
+  assert.doesNotMatch(serverSource, /FLOWACCOUNT_STORAGE_STATE_B64/);
   assert.match(serverSource, /ready:\s*readiness\.ready/);
   assert.doesNotMatch(serverSource, /STORAGE_STATE_B64[^,\n]*value/i);
   assert.match(appSource, /renderSyncReadiness/);

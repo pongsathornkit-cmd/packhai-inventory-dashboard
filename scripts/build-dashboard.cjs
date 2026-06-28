@@ -15,6 +15,7 @@ const localSyncApiBaseFile = path.join(projectRoot, ".sync-api-base.local");
 const dataDir = process.env.PACKHAI_DATA_DIR
   ? path.resolve(process.env.PACKHAI_DATA_DIR)
   : path.join(projectRoot, "data");
+const WEBSITE_STOCK_SOURCE = "Website Stock";
 
 function preferExisting(primary, fallback) {
   return fs.existsSync(primary) ? primary : fallback;
@@ -101,7 +102,7 @@ function roundMoney(value) {
 function emptyFlowaccountStock() {
   return {
     exportedAt: "",
-    source: "https://advance.flowaccount.com/N8387296/business/reports/inventory",
+    source: "Website Stock snapshot",
     syncDate: "",
     rowCount: 0,
     uniqueSkuCount: 0,
@@ -139,6 +140,7 @@ function groupPackhaiMovements(packhai, paymentIndex) {
 
 function stockSourceLabel(item) {
   const warehouseName = String(item.warehouseName || "").trim();
+  if (item.stockSource === WEBSITE_STOCK_SOURCE) return warehouseName ? `${WEBSITE_STOCK_SOURCE} - ${warehouseName}` : WEBSITE_STOCK_SOURCE;
   if (item.stockSource === "FlowAccount") return warehouseName ? `FlowAccount - ${warehouseName}` : "FlowAccount";
   if (item.stockSource === "GitHub") return warehouseName ? `GitHub - ${warehouseName}` : "GitHub";
   return warehouseName || "คลัง Packhai";
@@ -157,10 +159,10 @@ function buildStockRows(packhai, flowaccount, paymentIndex) {
 
   const flowRows = (flowaccount.rows || []).map((item) => ({
     ...item,
-    stockSource: "FlowAccount",
+    stockSource: WEBSITE_STOCK_SOURCE,
     warehouseId: item.warehouseId || "",
     warehouseName: item.warehouseName || "",
-    stockSourceLabel: stockSourceLabel({ stockSource: "FlowAccount", warehouseName: item.warehouseName || "" }),
+    stockSourceLabel: stockSourceLabel({ stockSource: WEBSITE_STOCK_SOURCE, warehouseName: item.warehouseName || "" }),
   }));
 
   return [...packhaiRows, ...flowRows];
@@ -579,11 +581,11 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
     metadata: {
       generatedAt: new Date().toISOString(),
       generatedAtLabel: thaiDateTime(new Date().toISOString()),
-      reportTitle: "สรุปมูลค่าสินค้าคงคลัง Packhai + FlowAccount",
+      reportTitle: "สรุปมูลค่าสินค้าคงคลัง Packhai + Website Stock",
       valuationRule:
-        "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และ FlowAccount เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
+        "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และ Website Stock เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
       quantityRule:
-        "ใช้ field quantity จาก Packhai และ remaining จาก FlowAccount sync เป็นจำนวนคงเหลือในคลัง โดย FlowAccount sync ดึงเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์เท่านั้น",
+        "ใช้ field quantity จาก Packhai และไฟล์ Website Stock เป็นจำนวนคงเหลือในคลัง โดย Website Stock เก็บเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์บนเว็บไซต์นี้ ไม่ต้อง sync จาก FlowAccount",
       pricePriority: ["Shopee Seller Center", "Lazada Seller Center", "ktw.co.th"],
       sources: {
         packhai: {
@@ -597,8 +599,8 @@ function summarizeRows(rows, stockSources, shopee, lazada, ktw, indices) {
         },
         flowaccount: {
           file: path.relative(projectRoot, inputFiles.flowaccount).replace(/\\/g, "/"),
-          source: stockSources.flowaccount.source || "https://advance.flowaccount.com/N8387296/business/reports/inventory",
-          storage: "flowaccount-sync",
+          source: "Website Stock snapshot",
+          storage: "website-stock",
           exportedAt: stockSources.flowaccount.exportedAt,
           exportedAtLabel: thaiDateTime(stockSources.flowaccount.exportedAt),
           rowCount: stockSources.flowaccount.rowCount,

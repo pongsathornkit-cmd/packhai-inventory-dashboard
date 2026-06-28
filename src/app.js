@@ -720,7 +720,7 @@
   const syncLabels = {
     all: "ข้อมูลทั้งหมด",
     packhai: "คลัง Packhai",
-    flowaccount: "คลัง FlowAccount",
+    flowaccount: "Website Stock",
     seller: "ราคาขาย Seller",
     expenses: "ระบบค่าใช้จ่าย",
   };
@@ -735,9 +735,9 @@
   let githubSyncStatusCache = null;
   let githubSyncStatusLoading = false;
   const syncDefaultTitles = {
-    syncAll: "Sync Packhai, FlowAccount stock and seller prices",
+    syncAll: "Sync Packhai, Website Stock and seller prices",
     syncPackhai: "Sync Packhai stock",
-    syncFlowaccount: "Sync FlowAccount stock",
+    syncFlowaccount: "Use Website Stock snapshot",
     syncSeller: "Sync Seller prices",
     syncSellerPayments: "Sync seller platform collection payments",
   };
@@ -817,10 +817,10 @@
 
   function githubSyncWorkflowHint(type) {
     if (type === "seller-payments") return "ระบบอัปเดตยอดเก็บเงิน Platform อัตโนมัติ และไล่ย้อนหลังต่อเนื่องจนกว่าจะครบ";
-    if (type === "flowaccount") return "ระบบอัปเดตคลัง ซ.เจริญกิจ / สุขสวัสดิ์ อัตโนมัติ";
+    if (type === "flowaccount") return "ระบบใช้ข้อมูล Website Stock ของคลัง ซ.เจริญกิจ / สุขสวัสดิ์ ที่เก็บบนเว็บไซต์นี้";
     if (type === "packhai") return "ระบบอัปเดตคลัง Packhai และ stock movement อัตโนมัติ";
     if (type === "seller") return "ระบบอัปเดตราคาขาย Shopee/Lazada อัตโนมัติ";
-    return "ระบบ Sync ทั้งหมดอัตโนมัติ: Packhai, FlowAccount, ราคาขาย และยอดเก็บเงิน Platform";
+    return "ระบบ Sync ทั้งหมดอัตโนมัติ: Packhai, Website Stock, ราคาขาย และยอดเก็บเงิน Platform";
   }
 
   function githubRunLabel(run) {
@@ -1754,7 +1754,7 @@
       .join("\n");
     return (
       `\u0e1c\u0e21\u0e2d\u0e48\u0e32\u0e19\u0e04\u0e33\u0e2a\u0e31\u0e48\u0e07\u0e44\u0e14\u0e49\u0e40\u0e1b\u0e47\u0e19 ${stockOperationLabel(update.operation)} SKU ${update.sku}\n${lines}\n` +
-      `\u0e43\u0e0a\u0e49\u0e1b\u0e38\u0e48\u0e21 Sync \u0e04\u0e25\u0e31\u0e07 FlowAccount \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e36\u0e07 stock \u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14\u0e08\u0e32\u0e01 FlowAccount`
+      `\u0e01\u0e14\u0e1b\u0e38\u0e48\u0e21\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e01\u0e47\u0e1a\u0e40\u0e02\u0e49\u0e32 Website Stock \u0e41\u0e25\u0e30 publish dashboard`
     );
   }
 
@@ -2188,7 +2188,7 @@
         body: `${sources.packhai.exportedAtLabel || "-"} · ${fmtInt.format(sources.packhai.rowCount || 0)} แถว`,
       },
       {
-        title: "ข้อมูลคลัง FlowAccount",
+        title: "ข้อมูลคลัง Website Stock",
         body: `${sources.flowaccount?.exportedAtLabel || "-"} · ${flowWarehouses || "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์"}`,
       },
       {
@@ -2756,7 +2756,7 @@
     const sourceCards = [
       ["Packhai", `${data.metadata.sources.packhai.exportedAtLabel} · ${data.metadata.sources.packhai.rowCount} rows`],
       [
-        "FlowAccount",
+        "Website Stock",
         `${data.metadata.sources.flowaccount?.exportedAtLabel || "-"} · ${fmtInt.format(data.metadata.sources.flowaccount?.rowCount || 0)} rows`,
       ],
       ["Shopee Seller", `${data.metadata.sources.shopee.exportedAtLabel} · indexed ${fmtInt.format(data.metadata.sources.shopee.indexedPriceRows)} price rows`],

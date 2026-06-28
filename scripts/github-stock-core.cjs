@@ -16,6 +16,7 @@ const WAREHOUSES = [
     pattern: /(?:\u0e04\u0e25\u0e31\u0e07\s*)?(?:\u0e2a\u0e38\u0e02\s*\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34\u0e4c|\u0e2a\u0e38\u0e02\s*\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34|suk\s*sawat|suksawat)/giu,
   },
 ];
+const WEBSITE_STOCK_SOURCE = "Website Stock";
 
 function numberValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
@@ -151,7 +152,7 @@ function formatStockUpdateReply(update) {
     .join("\n");
   return (
     `\u0e1c\u0e21\u0e2d\u0e48\u0e32\u0e19\u0e04\u0e33\u0e2a\u0e31\u0e48\u0e07\u0e44\u0e14\u0e49\u0e40\u0e1b\u0e47\u0e19 ${operationLabel(update.operation)} SKU ${update.sku}\n${lines}\n` +
-    `\u0e43\u0e0a\u0e49\u0e1b\u0e38\u0e48\u0e21 Sync \u0e04\u0e25\u0e31\u0e07 FlowAccount \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e14\u0e36\u0e07 stock \u0e25\u0e48\u0e32\u0e2a\u0e38\u0e14\u0e08\u0e32\u0e01 FlowAccount`
+    `\u0e01\u0e14\u0e1b\u0e38\u0e48\u0e21\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e40\u0e1e\u0e37\u0e48\u0e2d\u0e40\u0e01\u0e47\u0e1a\u0e40\u0e02\u0e49\u0e32 Website Stock \u0e41\u0e25\u0e30 publish dashboard`
   );
 }
 
@@ -224,10 +225,10 @@ function applyGithubStockUpdate(file, payload, options = {}) {
         waiting: 0,
         waitImport: 0,
         available: 0,
-        stockSource: "FlowAccount",
+        stockSource: WEBSITE_STOCK_SOURCE,
         warehouseId: allocation.warehouseId,
         warehouseName: allocation.warehouseName,
-        source: `FlowAccount ${allocation.warehouseName}`,
+        source: `${WEBSITE_STOCK_SOURCE} ${allocation.warehouseName}`,
         productId: template.productId || "",
         productMasterId: template.productMasterId || "",
       };
@@ -236,8 +237,8 @@ function applyGithubStockUpdate(file, payload, options = {}) {
     row.sku = update.sku;
     row.warehouseId = allocation.warehouseId;
     row.warehouseName = allocation.warehouseName;
-    row.stockSource = "FlowAccount";
-    row.source = `FlowAccount ${allocation.warehouseName}`;
+    row.stockSource = WEBSITE_STOCK_SOURCE;
+    row.source = `${WEBSITE_STOCK_SOURCE} ${allocation.warehouseName}`;
     row.quantity = nextQuantity;
     row.available = nextQuantity;
     row.waiting = numberValue(row.waiting);
@@ -281,6 +282,7 @@ function applyGithubStockUpdate(file, payload, options = {}) {
 
 module.exports = {
   WAREHOUSES,
+  WEBSITE_STOCK_SOURCE,
   applyGithubStockUpdate,
   formatStockUpdateReply,
   operationLabel,

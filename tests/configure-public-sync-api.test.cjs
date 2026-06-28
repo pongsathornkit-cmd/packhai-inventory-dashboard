@@ -15,6 +15,9 @@ test("configure-public-sync-api wires a live backend URL into the static dashboa
 
   assert.match(source, /normalizePublicSyncApiBase/);
   assert.match(source, /\/api\/health/);
+  assert.match(source, /\/api\/sync\/status/);
+  assert.match(source, /--require-ready/);
+  assert.match(source, /Missing:/);
   assert.match(source, /\.sync-api-base\.local/);
   assert.match(source, /build-dashboard\.cjs/);
   assert.match(source, /publish-github-pages\.cjs/);

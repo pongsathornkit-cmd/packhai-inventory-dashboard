@@ -81,11 +81,12 @@ docker compose up -d --build
 หลัง Render/VPS live แล้ว ให้ผูก URL กลับเข้า GitHub Pages ด้วยคำสั่ง:
 
 ```bash
-npm run sync:configure-api -- --base https://YOUR-SYNC-SERVER --publish
+npm run sync:configure-api -- --base https://YOUR-SYNC-SERVER --require-ready --publish
 ```
 
-คำสั่งนี้จะตรวจ `https://YOUR-SYNC-SERVER/api/health`, เขียน `.sync-api-base.local`,
-rebuild dashboard และ publish กลับ GitHub Pages ให้ปุ่ม Sync ยิงไปหา backend ถาวร
+คำสั่งนี้จะตรวจ `https://YOUR-SYNC-SERVER/api/health` และ `/api/sync/status`
+ถ้า backend ยังขาด config จะหยุดพร้อมรายชื่อ `missingConfig`
+ถ้าพร้อมแล้วจะเขียน `.sync-api-base.local`, rebuild dashboard และ publish กลับ GitHub Pages ให้ปุ่ม Sync ยิงไปหา backend ถาวร
 
 ตรวจ readiness หลัง deploy:
 

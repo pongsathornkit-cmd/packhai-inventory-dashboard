@@ -12,12 +12,14 @@ function parseArgs(argv) {
   const args = {
     base: "",
     skipHealth: false,
+    requireReady: false,
     publish: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--base") args.base = argv[++i] || "";
     else if (item === "--skip-health") args.skipHealth = true;
+    else if (item === "--require-ready") args.requireReady = true;
     else if (item === "--publish") args.publish = true;
     else if (!item.startsWith("--") && !args.base) args.base = item;
   }
@@ -57,9 +59,15 @@ async function main() {
   if (!base) throw new Error("Usage: node scripts/configure-public-sync-api.cjs --base https://your-sync-server");
 
   let health = null;
+  let syncStatus = null;
   if (!args.skipHealth) {
     health = await readJson(`${base}/api/health`);
     if (!health.ok) throw new Error(`${base}/api/health is not ok`);
+    syncStatus = await readJson(`${base}/api/sync/status`);
+    if (args.requireReady && !syncStatus.ready) {
+      const missing = (syncStatus.missingConfig || health.missingConfig || []).join(", ") || "unknown config";
+      throw new Error(`${base} is online but not ready for sync. Missing: ${missing}`);
+    }
   }
 
   fs.writeFileSync(syncApiBaseFile, `${base}\n`, "utf8");
@@ -85,6 +93,14 @@ async function main() {
               ready: health.ready,
               missingConfig: health.missingConfig || [],
               checkedAt: health.checkedAt || "",
+            }
+          : null,
+        syncStatus: syncStatus
+          ? {
+              ready: syncStatus.ready,
+              running: syncStatus.running,
+              missingConfig: syncStatus.missingConfig || [],
+              message: syncStatus.message || "",
             }
           : null,
         published: args.publish,

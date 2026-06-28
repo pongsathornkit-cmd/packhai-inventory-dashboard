@@ -629,6 +629,21 @@ svg {
   font-family: inherit;
 }
 
+@media (max-width: 900px) {
+  .sync-status {
+    grid-template-columns: 1fr;
+  }
+
+  .sync-status-actions {
+    justify-content: flex-start;
+  }
+
+  .sync-status a,
+  .sync-status button {
+    flex: 1 1 142px;
+  }
+}
+
 .payment-collection-report {
   display: grid;
   gap: 14px;

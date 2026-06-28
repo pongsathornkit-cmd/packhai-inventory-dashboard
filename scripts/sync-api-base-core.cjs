@@ -10,7 +10,7 @@ function normalizePublicSyncApiBase(value, options = {}) {
   }
 
   if (url.protocol !== "https:") return "";
-  if (options.source !== "env" && /\.trycloudflare\.com$/i.test(url.hostname)) return "";
+  if (/\.trycloudflare\.com$/i.test(url.hostname)) return "";
   url.hash = "";
   url.search = "";
   return url.toString().replace(/\/+$/, "");

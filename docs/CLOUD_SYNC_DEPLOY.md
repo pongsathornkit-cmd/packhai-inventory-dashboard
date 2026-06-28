@@ -105,3 +105,15 @@ curl https://YOUR-SYNC-SERVER/api/sync/status
 ```
 
 ถ้า `ready` เป็น `false` ให้ดู `missingConfig` แล้วเติม environment variables ที่ขาดใน Render
+
+## Render secret file checklist
+
+Do not use GitHub Actions secrets for the browser storage states. The Shopee, Lazada, and FlowAccount storage-state values are much larger than a normal GitHub secret. Use a Render Secret File or a VPS `.env` file instead.
+
+1. Run `npm run auth:export` on the logged-in machine.
+2. Run `npm run cloud:env -- --public-sync-api-base https://YOUR-SYNC-SERVER --github-token-from-gh`.
+3. Upload `.tmp/cloud-sync.env` to the cloud server as `/etc/secrets/cloud-sync.env`.
+4. Keep `PACKHAI_CLOUD_ENV_FILE=/etc/secrets/cloud-sync.env`.
+5. After the service is live and `/api/sync/status` returns `ready: true`, run `npm run sync:configure-api -- --base https://YOUR-SYNC-SERVER --require-ready --publish`.
+
+The app loads `/etc/secrets/cloud-sync.env` during `npm start`, before it seeds storage, builds the dashboard, and starts `/api/sync/*`.

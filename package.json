@@ -4,7 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
-    "start": "node scripts/seed-cloud-storage.cjs && node scripts/build-dashboard.cjs && node scripts/serve-dashboard.cjs",
+    "start": "node scripts/start-cloud-sync.cjs",
     "build": "node scripts/build-dashboard.cjs",
     "sync:packhai": "node scripts/sync-packhai-stock.cjs",
     "sync:flowaccount": "node scripts/sync-flowaccount-stock.cjs",

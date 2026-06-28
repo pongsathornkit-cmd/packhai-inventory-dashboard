@@ -10,10 +10,17 @@ test("public sync API base ignores ephemeral tunnel URLs read from local files",
   );
 });
 
-test("public sync API base keeps explicit environment URLs and stable HTTPS URLs", () => {
+test("public sync API base rejects ephemeral tunnel URLs even when passed explicitly", () => {
   assert.equal(
     normalizePublicSyncApiBase("https://ourselves-dress-move-babies.trycloudflare.com/", { source: "env" }),
-    "https://ourselves-dress-move-babies.trycloudflare.com"
+    ""
+  );
+});
+
+test("public sync API base keeps stable HTTPS URLs", () => {
+  assert.equal(
+    normalizePublicSyncApiBase("https://packhai-sync.example.com/", { source: "env" }),
+    "https://packhai-sync.example.com"
   );
   assert.equal(
     normalizePublicSyncApiBase("https://packhai-sync.example.com/", { source: "local-file" }),

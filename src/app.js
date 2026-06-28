@@ -735,13 +735,15 @@
     syncSeller: "Sync Seller prices",
     syncSellerPayments: "Sync seller platform collection payments",
   };
-  const embeddedSyncApiBase = normalizeSyncApiBase(window.__PACKHAI_SYNC_API_BASE__ || "");
-  const storedSyncApiBase = normalizeSyncApiBase(localStorage.getItem("packhaiSyncApiBase") || "");
-  if (staticReportHost && !embeddedSyncApiBase && isEphemeralSyncApiBase(storedSyncApiBase)) {
+  const rawEmbeddedSyncApiBase = normalizeSyncApiBase(window.__PACKHAI_SYNC_API_BASE__ || "");
+  const rawStoredSyncApiBase = normalizeSyncApiBase(localStorage.getItem("packhaiSyncApiBase") || "");
+  const embeddedSyncApiBase =
+    staticReportHost && isEphemeralSyncApiBase(rawEmbeddedSyncApiBase) ? "" : rawEmbeddedSyncApiBase;
+  const storedSyncApiBase = staticReportHost && isEphemeralSyncApiBase(rawStoredSyncApiBase) ? "" : rawStoredSyncApiBase;
+  if (staticReportHost && isEphemeralSyncApiBase(rawStoredSyncApiBase)) {
     localStorage.removeItem("packhaiSyncApiBase");
   }
-  let remoteSyncApiBase =
-    embeddedSyncApiBase || (staticReportHost && isEphemeralSyncApiBase(storedSyncApiBase) ? "" : storedSyncApiBase);
+  let remoteSyncApiBase = embeddedSyncApiBase || storedSyncApiBase;
   if (remoteSyncApiBase) {
     localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
   }

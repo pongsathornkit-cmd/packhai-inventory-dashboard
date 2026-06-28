@@ -94,7 +94,8 @@ test("online dashboard ignores saved temporary tunnel URLs and does not prompt u
   const appSource = readRepoFile("src/app.js");
 
   assert.match(appSource, /function\s+isEphemeralSyncApiBase/);
-  assert.match(appSource, /isEphemeralSyncApiBase\(storedSyncApiBase\)/);
+  assert.match(appSource, /isEphemeralSyncApiBase\(rawEmbeddedSyncApiBase\)/);
+  assert.match(appSource, /isEphemeralSyncApiBase\(rawStoredSyncApiBase\)/);
   assert.doesNotMatch(appSource, /window\.prompt/);
 });
 

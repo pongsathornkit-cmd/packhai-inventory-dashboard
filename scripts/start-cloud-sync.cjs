@@ -1,0 +1,37 @@
+const path = require("path");
+const { spawnSync } = require("child_process");
+
+const { loadCloudEnv } = require("./cloud-env-loader.cjs");
+
+const projectRoot = path.resolve(__dirname, "..");
+const nodePath = process.execPath;
+
+function runScript(scriptName) {
+  const result = spawnSync(nodePath, [path.join(projectRoot, "scripts", scriptName)], {
+    cwd: projectRoot,
+    env: process.env,
+    stdio: "inherit",
+    windowsHide: true,
+  });
+
+  if (result.error) throw result.error;
+  if (result.status !== 0) {
+    process.exit(result.status || 1);
+  }
+}
+
+function main() {
+  const loaded = loadCloudEnv();
+  if (loaded.length) {
+    const summary = loaded
+      .map((item) => `${item.file} (${item.keys.length} keys)`)
+      .join(", ");
+    console.log(`Loaded cloud env file(s): ${summary}`);
+  }
+
+  runScript("seed-cloud-storage.cjs");
+  runScript("build-dashboard.cjs");
+  runScript("serve-dashboard.cjs");
+}
+
+main();

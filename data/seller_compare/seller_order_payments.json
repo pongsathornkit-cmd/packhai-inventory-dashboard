@@ -1,14 +1,14 @@
 {
-  "exportedAt": "2026-06-28T07:39:40.839Z",
+  "exportedAt": "2026-06-28T08:19:30.726Z",
   "source": "Seller platform order payments",
   "rule": "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
   "counts": {
     "targetShopee": 4383,
     "targetLazada": 2184,
-    "cachedBefore": 3,
+    "cachedBefore": 5,
     "requestedNew": 1,
     "fetchedNew": 1,
-    "totalOrders": 4,
+    "totalOrders": 6,
     "errors": 0
   },
   "errors": [],
@@ -51,6 +51,24 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "2606264W8R476E",
+      "collectedAmount": 1851,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T08:16:45.356Z",
+      "orderId": 236168871206094,
+      "items": [
+        {
+          "name": "MARATHON YH-WT006 โต๊ะเครื่องมือช่าง ขนาด 1210X610X1500 MM รับประกันสินค้า 1 ปี ( M325-0020 ) Max100kg พร้อมจัดส่งทันที",
+          "skuText": "[P551-0020 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "26062651F2DQVB",
       "collectedAmount": 100,
       "currency": "THB",
@@ -63,6 +81,34 @@
         {
           "name": "POLO( PC-2 ) สวิทซ์แรงดัน สำหรับระบบน้ำ จะตัดต่อการทำงานของปั๊มน้ำอัตโนมัติตามแรงดันที่ตั้งไว้ (สินค้าพร้อมจัดส่งทัน (-)",
           "skuText": "[15893 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "2606265BQHSHK3",
+      "collectedAmount": 2314,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T08:19:30.406Z",
+      "orderId": 236184400266851,
+      "items": [
+        {
+          "name": "POLO เครื่องเชื่อม MIG 160 แอมป์ รุ่น MIG160 กำลังไฟเข้า 5.28 กิโลวัตต์ แรงดันไฟเข้า 1 เฟส 220 โวลต์ (ECOMIG150 1KG/5KG)",
+          "skuText": "[V108-ECOMIG150 ]",
+          "amount": 1
+        },
+        {
+          "name": "POLO ใบเลื่อยวงเดือน 7 นิ้ว x 40T (184มม.x 40ฟัน) ความเร็วรอบ 9,000 รอบ/นาที รูกลาง 25.4 มม. แหวน 20 มม. ใช้สำหรับตัดไม้",
+          "skuText": "[P525-1060 ]",
+          "amount": 1
+        },
+        {
+          "name": "POLO ใบเลื่อยวงเดือน 7 นิ้ว x 24T (184มม.x 24ฟัน) ความเร็วรอบ 9,000 รอบ/นาที รูกลาง 25.4 มม. แหวน 20 มม. ใช้สำหรับตัดไม้",
+          "skuText": "[P525-1040 ]",
           "amount": 1
         }
       ]

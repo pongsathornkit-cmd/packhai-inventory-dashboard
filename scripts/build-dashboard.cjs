@@ -5,6 +5,7 @@ const {
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
 } = require("./seller-order-payment-core.cjs");
+const { normalizePublicSyncApiBase } = require("./sync-api-base-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -59,9 +60,11 @@ function readOptionalJson(file, fallback) {
 }
 
 function readPublicSyncApiBase() {
-  if (process.env.PUBLIC_SYNC_API_BASE) return process.env.PUBLIC_SYNC_API_BASE.trim();
+  if (process.env.PUBLIC_SYNC_API_BASE) {
+    return normalizePublicSyncApiBase(process.env.PUBLIC_SYNC_API_BASE, { source: "env" });
+  }
   try {
-    return fs.readFileSync(localSyncApiBaseFile, "utf8").trim();
+    return normalizePublicSyncApiBase(fs.readFileSync(localSyncApiBaseFile, "utf8"), { source: "local-file" });
   } catch {
     return "";
   }

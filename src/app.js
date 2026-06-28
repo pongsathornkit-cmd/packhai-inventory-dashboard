@@ -752,6 +752,29 @@
     return remoteSyncApiBase ? `${remoteSyncApiBase}${path}` : path;
   }
 
+  function clearRemoteSyncApiBase() {
+    const failedBase = remoteSyncApiBase;
+    remoteSyncApiBase = "";
+    localStorage.removeItem("packhaiSyncApiBase");
+    syncApiUnavailable = staticReportHost;
+    setStaticSyncMode(true);
+    return failedBase;
+  }
+
+  function renderSyncApiBaseFailure(type, error) {
+    const failedBase = clearRemoteSyncApiBase();
+    renderSyncStatus(
+      {
+        ok: false,
+        warning: true,
+        type,
+        message: `Sync API URL ติดต่อไม่ได้: ${failedBase || "ยังไม่ได้ตั้งค่า"} (${error.message}) ลบ URL เก่าแล้ว กด Sync อีกครั้งเพื่อใส่ URL ใหม่ หรือเปิด cloud sync server ให้ online`,
+        steps: [],
+      },
+      true
+    );
+  }
+
   function syncFetchOptions(method = "GET") {
     const headers = {};
     const key = localStorage.getItem("packhaiSyncApiKey") || "";
@@ -913,6 +936,11 @@
         setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
       }
     } catch (error) {
+      if (staticReportHost && remoteSyncApiBase) {
+        if (showIdle) renderSyncApiBaseFailure("all", error);
+        else clearRemoteSyncApiBase();
+        return;
+      }
       if (!remoteSyncApiBase) {
         syncApiUnavailable = true;
         setStaticSyncMode(true);
@@ -955,6 +983,10 @@
       getSyncStatus(true);
     } catch (error) {
       syncStartedHere = false;
+      if (staticReportHost && remoteSyncApiBase) {
+        renderSyncApiBaseFailure(type, error);
+        return;
+      }
       renderSyncStatus(
         {
           ok: false,

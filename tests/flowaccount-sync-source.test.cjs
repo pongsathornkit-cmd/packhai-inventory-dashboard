@@ -57,3 +57,11 @@ test("dashboard exposes a dedicated sync path for platform collection payments",
   assert.match(appSource, /syncSellerPayments/);
   assert.match(appSource, /startSync\("seller-payments"\)/);
 });
+
+test("online dashboard clears stale sync API URL when a remote fetch fails", () => {
+  const appSource = readRepoFile("src/app.js");
+
+  assert.match(appSource, /function\s+clearRemoteSyncApiBase/);
+  assert.match(appSource, /localStorage\.removeItem\("packhaiSyncApiBase"\)/);
+  assert.match(appSource, /renderSyncApiBaseFailure\(type,\s*error\)/);
+});

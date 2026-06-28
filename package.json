@@ -10,7 +10,8 @@
     "sync:flowaccount": "node scripts/sync-flowaccount-stock.cjs",
     "sync:shopee": "node scripts/export-shopee-products.cjs",
     "sync:lazada": "node scripts/export-lazada-products.cjs",
-    "auth:export": "node scripts/export-browser-auth-state.cjs --write-env-file .tmp/render-auth-state.env"
+    "auth:export": "node scripts/export-browser-auth-state.cjs --write-env-file .tmp/render-auth-state.env",
+    "sync:configure-api": "node scripts/configure-public-sync-api.cjs"
   },
   "dependencies": {
     "playwright": "^1.54.2"

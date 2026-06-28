@@ -77,3 +77,21 @@ docker compose up -d --build
 
 บน Render มี `RENDER_EXTERNAL_URL` ให้อัตโนมัติ ถ้าไม่ได้ใส่ `PUBLIC_SYNC_API_BASE`
 ระบบ build จะใช้ `RENDER_EXTERNAL_URL` เป็น Sync API URL แทน
+
+หลัง Render/VPS live แล้ว ให้ผูก URL กลับเข้า GitHub Pages ด้วยคำสั่ง:
+
+```bash
+npm run sync:configure-api -- --base https://YOUR-SYNC-SERVER --publish
+```
+
+คำสั่งนี้จะตรวจ `https://YOUR-SYNC-SERVER/api/health`, เขียน `.sync-api-base.local`,
+rebuild dashboard และ publish กลับ GitHub Pages ให้ปุ่ม Sync ยิงไปหา backend ถาวร
+
+ตรวจ readiness หลัง deploy:
+
+```bash
+curl https://YOUR-SYNC-SERVER/api/health
+curl https://YOUR-SYNC-SERVER/api/sync/status
+```
+
+ถ้า `ready` เป็น `false` ให้ดู `missingConfig` แล้วเติม environment variables ที่ขาดใน Render

@@ -1,21 +1,18 @@
 {
-  "exportedAt": "2026-06-28T09:41:07.830Z",
+  "exportedAt": "2026-06-28T10:20:09.058Z",
   "source": "Seller platform order payments",
   "rule": "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
   "counts": {
     "targetShopee": 4430,
     "targetLazada": 2195,
-    "cachedBefore": 9,
-    "requestedNew": 25,
-    "fetchedNew": 21,
+    "cachedBefore": 30,
+    "requestedNew": 1,
+    "fetchedNew": 0,
     "totalOrders": 30,
-    "errors": 4
+    "errors": 1
   },
   "errors": [
-    "Shopee 260628961KN9A4: payment not found",
-    "Shopee 26062770BNX5EN: payment not found",
-    "Shopee 2606277E7THYRC: payment not found",
-    "Shopee 26062881PU23G7: payment not found"
+    "Shopee 260628961KN9A4: payment not found"
   ],
   "orders": [
     {

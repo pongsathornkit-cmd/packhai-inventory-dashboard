@@ -17,6 +17,8 @@ services:
         value: "0"
       - key: PACKHAI_DATA_DIR
         value: /app/storage/data
+      - key: PACKHAI_AUTH_STATE_DIR
+        value: /app/storage/auth-states
       - key: FLOW_PROFILE
         value: /app/storage/browser-profiles/flowaccount
       - key: SHOPEE_SESSION_DIR
@@ -28,4 +30,10 @@ services:
       - key: PUBLIC_SYNC_API_BASE
         sync: false
       - key: GITHUB_TOKEN
+        sync: false
+      - key: SHOPEE_STORAGE_STATE_B64
+        sync: false
+      - key: LAZADA_STORAGE_STATE_B64
+        sync: false
+      - key: FLOWACCOUNT_STORAGE_STATE_B64
         sync: false

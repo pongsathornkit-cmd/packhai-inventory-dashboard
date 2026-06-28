@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
+const { openAuthContext } = require("./browser-auth-state.cjs");
 const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -120,21 +121,14 @@ async function openCdpSession() {
 }
 
 async function openPersistentSession() {
-  const context = await chromium.launchPersistentContext(sessionDir, {
-    ...chromiumOptions(),
+  return openAuthContext({
+    kind: "lazada",
+    persistentDir: sessionDir,
     headless,
     viewport: { width: 1365, height: 900 },
     locale: "th-TH",
     args: ["--no-sandbox", "--disable-dev-shm-usage", ...(headless ? [] : ["--start-maximized"])],
   });
-  const page = context.pages()[0] || (await context.newPage());
-  return {
-    mode: `profile:${sessionDir}`,
-    page,
-    close: async () => {
-      await context.close();
-    },
-  };
 }
 
 async function openSellerSession() {

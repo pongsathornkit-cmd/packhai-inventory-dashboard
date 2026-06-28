@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
+const { openAuthContext } = require("./browser-auth-state.cjs");
+const { boolEnv } = require("./playwright-runtime.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -26,15 +27,16 @@ function normSku(value) {
 async function main() {
   fs.mkdirSync(outputDir, { recursive: true });
 
-  const context = await chromium.launchPersistentContext(sessionDir, {
-    ...chromiumOptions(),
+  const session = await openAuthContext({
+    kind: "shopee",
+    persistentDir: sessionDir,
     headless,
     viewport: { width: 1365, height: 900 },
     locale: "th-TH",
     args: ["--no-sandbox", "--disable-dev-shm-usage", ...(headless ? [] : ["--start-maximized"])],
   });
+  const { context, page } = session;
 
-  const page = context.pages()[0] || (await context.newPage());
   let spc = null;
   page.on("response", (response) => {
     const match = response.url().match(/[?&]SPC_CDS=([^&]+)/);
@@ -188,7 +190,7 @@ async function main() {
   fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
   console.log(JSON.stringify({ ok: true, counts: output.counts, outputFile }, null, 2));
 
-  await context.close();
+  await session.close();
 }
 
 main().catch((error) => {

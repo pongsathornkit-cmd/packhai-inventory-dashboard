@@ -7,7 +7,7 @@
 
 - GitHub Pages: หน้า report online เดิม
 - Cloud/VPS Sync Server: รัน `npm start`, รับคำสั่ง `/api/sync/*`, ดึง Packhai/FlowAccount/Shopee/Lazada, build dashboard
-- Persistent storage: เก็บ `data/` และ `browser-profiles/` เพื่อให้ข้อมูลและ login session อยู่ข้าม restart
+- Persistent storage: เก็บ `data/`, `auth-states/` และ `browser-profiles/` เพื่อให้ข้อมูลและ login session อยู่ข้าม restart
 
 ## Required Secrets
 
@@ -16,19 +16,43 @@
 - `PACKHAI_AUTH_TOKEN`: token สำหรับดึง stock จาก Packhai
 - `PUBLIC_SYNC_API_BASE`: URL public ของ cloud sync server เช่น `https://packhai-sync.example.com`
 - `GITHUB_TOKEN`: GitHub token ที่ push กลับ repo ได้ ใช้ publish dashboard กลับ GitHub Pages หลัง Sync
+- `SHOPEE_STORAGE_STATE_B64`: storage state จาก Shopee Seller Center
+- `LAZADA_STORAGE_STATE_B64`: storage state จาก Lazada Seller Center
+- `FLOWACCOUNT_STORAGE_STATE_B64`: storage state จาก FlowAccount
 - `SYNC_ALLOWED_ORIGINS`: optional, comma-separated origins เพิ่มเติม เช่น `https://example.com`
 - `SYNC_REQUIRE_KEY`: ตั้งเป็น `0` เพื่อให้กด Sync โดยไม่ต้องใส่รหัส
 
 ## Browser Session
 
-FlowAccount, Shopee Seller และ Lazada Seller ใช้ browser profile:
+FlowAccount, Shopee Seller และ Lazada Seller ใช้ browser auth state:
 
 - `FLOW_PROFILE`
 - `SHOPEE_SESSION_DIR`
 - `SELLER_SESSION_DIR`
+- `FLOWACCOUNT_STORAGE_STATE_B64`
+- `SHOPEE_STORAGE_STATE_B64`
+- `LAZADA_STORAGE_STATE_B64`
 
-ถ้า profile ยังไม่ได้ login บน cloud งานส่วนนั้นจะขึ้น warning และใช้ข้อมูลล่าสุดที่มีอยู่แทน
-ต้อง login หนึ่งครั้งบน cloud/VPS เพื่อให้ Sync ราคา/stock จากระบบที่ใช้ session ได้เต็มรูปแบบ
+บน cloud แนะนำให้ใช้ Playwright storage state แทนการย้าย Chrome profile ทั้งก้อน เพราะไฟล์ profile จาก Windows
+อาจติด OS encryption และมีขนาดใหญ่มาก
+
+บนเครื่องที่ login Seller/FlowAccount อยู่แล้ว ให้ export storage state:
+
+```bash
+npm run auth:export
+```
+
+คำสั่งนี้จะสร้างไฟล์ลับใน `.tmp/render-auth-state.env` และไฟล์ JSON ใน `storage-states/`
+ซึ่งถูก ignore จาก git แล้ว ห้าม commit ไฟล์เหล่านี้
+
+นำค่าจาก `.tmp/render-auth-state.env` ไปใส่เป็น Render environment variables:
+
+- `SHOPEE_STORAGE_STATE_B64`
+- `LAZADA_STORAGE_STATE_B64`
+- `FLOWACCOUNT_STORAGE_STATE_B64`
+
+ถ้า storage state หมดอายุ งานส่วนนั้นจะขึ้น warning และใช้ข้อมูลล่าสุดที่มีอยู่แทน
+ต้อง export ใหม่เมื่อ session ของ platform หมดอายุ
 
 ## Recommended Hosting
 
@@ -50,3 +74,6 @@ docker compose up -d --build
 
 หลัง deploy ได้ URL จริงแล้ว ให้นำ URL นั้นไปใส่ `PUBLIC_SYNC_API_BASE`
 และ rebuild/publish dashboard เพื่อให้ GitHub Pages ยิงปุ่ม Sync ไปหา cloud server แทนเครื่อง local
+
+บน Render มี `RENDER_EXTERNAL_URL` ให้อัตโนมัติ ถ้าไม่ได้ใส่ `PUBLIC_SYNC_API_BASE`
+ระบบ build จะใช้ `RENDER_EXTERNAL_URL` เป็น Sync API URL แทน

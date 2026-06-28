@@ -1,10 +1,10 @@
 {
-  "exportedAt": "2026-06-27T08:32:49.288Z",
+  "exportedAt": "2026-06-28T07:39:20.350Z",
   "source": "https://advance.flowaccount.com/N8387296/business/reports/inventory",
-  "syncDate": "2026-06-27",
+  "syncDate": "2026-06-28",
   "rowCount": 13,
-  "rawRowCount": 2878,
-  "aggregatedRowCount": 2852,
+  "rawRowCount": 2880,
+  "aggregatedRowCount": 2854,
   "uniqueSkuCount": 11,
   "duplicateSkus": [
     {
@@ -21,21 +21,21 @@
       "id": 491661,
       "name": "คลัง ซ.เจริญกิจ",
       "apiName": "คลังซ.เจริญกิจ",
-      "reportedTotal": 1439,
-      "rawRowCount": 1439,
-      "aggregatedRowCount": 1426,
+      "reportedTotal": 1440,
+      "rawRowCount": 1440,
+      "aggregatedRowCount": 1427,
       "rowCount": 3,
-      "zeroRowCount": 1423
+      "zeroRowCount": 1424
     },
     {
       "id": 491662,
       "name": "คลัง สุขสวัสดิ์",
       "apiName": "คลังสุขสวัสดิ์",
-      "reportedTotal": 1439,
-      "rawRowCount": 1439,
-      "aggregatedRowCount": 1426,
+      "reportedTotal": 1440,
+      "rawRowCount": 1440,
+      "aggregatedRowCount": 1427,
       "rowCount": 10,
-      "zeroRowCount": 1416
+      "zeroRowCount": 1417
     }
   ],
   "rows": [

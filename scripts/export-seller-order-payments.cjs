@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
+const { openAuthContext } = require("./browser-auth-state.cjs");
 const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -163,14 +164,15 @@ function shopeeItemsFromCard(card) {
 }
 
 async function openShopeePage() {
-  const context = await chromium.launchPersistentContext(shopeeSessionDir, {
-    ...chromiumOptions(),
+  const session = await openAuthContext({
+    kind: "shopee",
+    persistentDir: shopeeSessionDir,
     headless,
     viewport: { width: 1365, height: 900 },
     locale: "th-TH",
     args: ["--no-sandbox", "--disable-dev-shm-usage", ...(headless ? [] : ["--start-maximized"])],
   });
-  const page = context.pages()[0] || (await context.newPage());
+  const { page } = session;
   let spc = null;
   let shopId = Number(process.env.SHOPEE_SHOP_ID || 0);
 
@@ -201,12 +203,12 @@ async function openShopeePage() {
     .then((text) => /log in|login|password|sign up/i.test(text))
     .catch(() => true);
   if (!spc || loginLike) {
-    await context.close();
+    await session.close();
     throw new Error("Shopee Seller Center is not logged in.");
   }
   if (!shopId) shopId = 18147317;
 
-  return { context, page, spc, shopId };
+  return { context: session.context, page, spc, shopId, close: session.close, mode: session.mode };
 }
 
 async function fetchShopeePayment(page, spc, shopId, orderSn) {
@@ -302,7 +304,7 @@ async function exportShopeePayments(orderNos, existingMap, errors) {
       await sleep(shopeeDelayMs);
     }
   } finally {
-    await session.context.close().catch(() => {});
+    await session.close().catch(() => {});
   }
   return records;
 }
@@ -356,19 +358,14 @@ async function openLazadaCdpSession() {
 }
 
 async function openLazadaPersistentSession() {
-  const context = await chromium.launchPersistentContext(lazadaSessionDir, {
-    ...chromiumOptions(),
+  return openAuthContext({
+    kind: "lazada",
+    persistentDir: lazadaSessionDir,
     headless,
     viewport: { width: 1365, height: 900 },
     locale: "th-TH",
     args: ["--no-sandbox", "--disable-dev-shm-usage", ...(headless ? [] : ["--start-maximized"])],
   });
-  const page = context.pages()[0] || (await context.newPage());
-  return {
-    mode: `profile:${lazadaSessionDir}`,
-    page,
-    close: async () => context.close(),
-  };
 }
 
 async function openLazadaPage() {

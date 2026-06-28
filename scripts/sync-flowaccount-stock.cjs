@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
-const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
+const { openAuthContext } = require("./browser-auth-state.cjs");
+const { boolEnv } = require("./playwright-runtime.cjs");
 const { buildFlowaccountStockOutput, numberValue } = require("./flowaccount-stock-transform.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -54,18 +55,18 @@ function cookieArrayToObject(cookies) {
 }
 
 async function launchAndGetCookies() {
-  const ctx = await chromium.launchPersistentContext(FLOW_PROFILE, {
-    ...chromiumOptions(),
+  const session = await openAuthContext({
+    kind: "flowaccount",
+    persistentDir: FLOW_PROFILE,
     headless,
     args: [
-      "--no-sandbox",
-      "--disable-dev-shm-usage",
       "--no-first-run",
       "--no-default-browser-check",
       ...(headless ? [] : ["--window-position=-32000,-32000"]),
     ],
     viewport: headless ? { width: 1365, height: 900 } : null,
   });
+  const ctx = session.context;
   try {
     const profileCookies = cookieArrayToObject(await ctx.cookies(["https://advance.flowaccount.com"]));
     if (profileCookies.u1) {
@@ -76,7 +77,7 @@ async function launchAndGetCookies() {
       };
     }
 
-    const page = ctx.pages()[0] || (await ctx.newPage());
+    const page = session.page;
     let lastError = null;
     for (let attempt = 1; attempt <= 3; attempt += 1) {
       try {
@@ -107,7 +108,7 @@ async function launchAndGetCookies() {
     if (!state.cookies.u1) throw new Error(`FlowAccount session has no u1 token at ${state.url}`);
     return state;
   } finally {
-    await ctx.close();
+    await session.close();
   }
 }
 

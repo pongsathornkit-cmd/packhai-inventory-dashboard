@@ -7,4 +7,5 @@ tmp/
 .tmp/
 browser-profiles/
 storage/
+storage-states/
 node_modules/

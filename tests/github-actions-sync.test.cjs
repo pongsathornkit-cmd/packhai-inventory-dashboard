@@ -38,6 +38,8 @@ test("GitHub Actions sync workflow decrypts env and runs sync job", () => {
   assert.match(workflow, /PACKHAI_SYNC_ENV_PASSPHRASE/);
   assert.match(workflow, /open-sealed-sync-env\.cjs/);
   assert.match(workflow, /run-sync-job\.cjs/);
+  assert.match(workflow, /payment_batch_size/);
+  assert.match(workflow, /SELLER_ORDER_PAYMENT_MAX_NEW:\s*\$\{\{\s*inputs\.payment_batch_size\s*\}\}/);
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /pages: write/);
   assert.match(workflow, /actions\/deploy-pages@v4/);

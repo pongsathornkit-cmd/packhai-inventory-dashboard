@@ -804,9 +804,9 @@
     const label = syncLabels[type] || "Sync data";
     el.innerHTML = `
       <div>
-        <strong>Online Sync setup · ${escapeHtml(label)}</strong>
-        <span>This website needs the main Sync server URL before another computer can run warehouse and seller sync.</span>
-        <small>Ask the main computer for the Sync API URL, then click Sync again.</small>
+        <strong>ตั้งค่า Online Sync · ${escapeHtml(label)}</strong>
+        <span>ยังไม่มี Sync API URL ที่ออนไลน์ จึงยัง Sync คลังและยอดเก็บเงินจากเครื่องอื่นไม่ได้</span>
+        <small>เปิด cloud sync server หรือใส่ Sync API URL ใหม่ แล้วกด Sync อีกครั้ง</small>
       </div>
       <code>GitHub Pages</code>`;
   }

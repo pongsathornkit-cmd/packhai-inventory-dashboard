@@ -46,6 +46,28 @@ function configureGithubPush(git) {
   run(git, ["remote", "set-url", "origin", authedRemote]);
 }
 
+function currentBranch(git) {
+  return (
+    process.env.GITHUB_REF_NAME ||
+    run(git, ["branch", "--show-current"], true).trim() ||
+    "main"
+  );
+}
+
+function pushWithRetry(git) {
+  const firstPush = run(git, ["push"], true);
+  if (!/failed|rejected|error/i.test(firstPush)) return;
+
+  const branch = currentBranch(git);
+  run(git, ["fetch", "origin", branch]);
+  const rebase = run(git, ["rebase", `origin/${branch}`], true);
+  if (/CONFLICT|could not apply|error:/i.test(rebase)) {
+    run(git, ["rebase", "--abort"], true);
+    throw new Error(`git rebase origin/${branch} failed\n${rebase}`);
+  }
+  run(git, ["push"]);
+}
+
 function main() {
   if (!fs.existsSync(path.join(projectRoot, ".git"))) {
     console.log("No git repository found. Skipped GitHub Pages publish.");
@@ -76,7 +98,7 @@ function main() {
     console.log("No dashboard changes to commit.");
     return;
   }
-  run(git, ["push"]);
+  pushWithRetry(git);
   console.log("Published updated dashboard files to GitHub Pages.");
 }
 

@@ -89,6 +89,9 @@ jobs:
           git config user.name "packhai-sync-bot"
           git config user.email "packhai-sync-bot@users.noreply.github.com"
 
+      - name: Refresh checkout
+        run: git pull --ff-only origin main
+
       - name: Run sync
         run: node scripts/run-sync-job.cjs --type "${{ github.event_name == 'schedule' && 'all' || inputs.sync_type || 'seller-payments' }}"
 

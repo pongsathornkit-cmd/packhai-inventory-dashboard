@@ -625,6 +625,13 @@ svg {
   text-decoration: none;
 }
 
+.sync-status .sync-status-primary {
+  border-color: var(--teal);
+  background: var(--teal);
+  color: #ffffff;
+  box-shadow: 0 10px 20px rgba(233, 30, 118, 0.18);
+}
+
 .sync-status button {
   font-family: inherit;
 }

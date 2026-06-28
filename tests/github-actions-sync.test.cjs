@@ -35,11 +35,14 @@ test("GitHub Actions sync workflow decrypts env and runs sync job", () => {
   const sealSource = readRepoFile("scripts/seal-sync-env.cjs");
 
   assert.match(workflow, /workflow_dispatch/);
+  assert.match(workflow, /schedule:/);
+  assert.match(workflow, /0 2-13\/2 \* \* \*/);
   assert.match(workflow, /PACKHAI_SYNC_ENV_PASSPHRASE/);
   assert.match(workflow, /open-sealed-sync-env\.cjs/);
   assert.match(workflow, /run-sync-job\.cjs/);
   assert.match(workflow, /payment_batch_size/);
-  assert.match(workflow, /SELLER_ORDER_PAYMENT_MAX_NEW:\s*\$\{\{\s*inputs\.payment_batch_size\s*\}\}/);
+  assert.match(workflow, /github\.event_name == 'schedule'/);
+  assert.match(workflow, /SELLER_ORDER_PAYMENT_MAX_NEW:\s*\$\{\{[^}]*inputs\.payment_batch_size[^}]*\}\}/);
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /pages: write/);
   assert.match(workflow, /actions\/deploy-pages@v4/);

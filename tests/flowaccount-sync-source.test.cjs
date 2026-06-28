@@ -109,6 +109,8 @@ test("online dashboard shows sync setup notice when no public sync API is config
   assert.match(appSource, /loadGitHubSyncStatus\(type,\s*true\)/);
   assert.match(appSource, /data-sync-run-refresh/);
   assert.match(appSource, /data-dashboard-refresh/);
+  assert.match(appSource, /Auto Sync/);
   assert.match(appSource, /actions\/workflows\/sync-dashboard\.yml/);
   assert.doesNotMatch(appSource, /local sync only/);
+  assert.doesNotMatch(appSource, /window\.open\(githubSyncWorkflowUrl/);
 });

@@ -718,20 +718,20 @@
   }
 
   const syncLabels = {
-    all: "Sync ทั้งหมด",
-    packhai: "Sync คลัง Packhai",
-    flowaccount: "Sync คลัง FlowAccount",
-    seller: "Sync ราคาขาย Seller",
+    all: "ข้อมูลทั้งหมด",
+    packhai: "คลัง Packhai",
+    flowaccount: "คลัง FlowAccount",
+    seller: "ราคาขาย Seller",
     expenses: "ระบบค่าใช้จ่าย",
   };
-  syncLabels["seller-payments"] = "Sync ยอดเก็บเงิน Platform";
+  syncLabels["seller-payments"] = "ยอดเก็บเงิน Platform";
   let syncPollTimer = null;
   let syncStartedHere = false;
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
   const githubSyncWorkflowUrl =
     "https://github.com/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml";
   const githubSyncRunsApiUrl =
-    "https://api.github.com/repos/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml/runs?per_page=1&event=workflow_dispatch";
+    "https://api.github.com/repos/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml/runs?per_page=1";
   let lastStaticSyncType = "all";
   let githubSyncStatusCache = null;
   let githubSyncStatusLoading = false;
@@ -807,8 +807,8 @@
     syncButtons().forEach((button) => {
       button.classList.toggle("is-static", enabled);
       if (enabled) {
-        button.title = "Run this sync on GitHub Actions";
-        button.setAttribute("aria-label", `${button.textContent.trim()} - GitHub Actions sync`);
+        button.title = "ดูสถานะ Auto Sync และรีเฟรชข้อมูลล่าสุด";
+        button.setAttribute("aria-label", `${button.textContent.trim()} - Auto Sync status`);
       } else {
         button.title = syncDefaultTitles[button.id] || button.title;
         button.removeAttribute("aria-label");
@@ -817,11 +817,11 @@
   }
 
   function githubSyncWorkflowHint(type) {
-    if (type === "seller-payments") return "เลือก sync_type = seller-payments และ payment_batch_size = 25 หรือ 0";
-    if (type === "flowaccount") return "เลือก sync_type = flowaccount เพื่ออัปเดตคลัง ซ.เจริญกิจ / สุขสวัสดิ์";
-    if (type === "packhai") return "เลือก sync_type = packhai เพื่ออัปเดตคลัง Packhai และ stock movement";
-    if (type === "seller") return "เลือก sync_type = seller เพื่ออัปเดตราคาขาย Shopee/Lazada";
-    return "เลือก sync_type = all ถ้าต้องการรันครบทุกแหล่งข้อมูล";
+    if (type === "seller-payments") return "ระบบทยอยอัปเดตยอดเก็บเงิน Platform อัตโนมัติ";
+    if (type === "flowaccount") return "ระบบอัปเดตคลัง ซ.เจริญกิจ / สุขสวัสดิ์ อัตโนมัติ";
+    if (type === "packhai") return "ระบบอัปเดตคลัง Packhai และ stock movement อัตโนมัติ";
+    if (type === "seller") return "ระบบอัปเดตราคาขาย Shopee/Lazada อัตโนมัติ";
+    return "ระบบอัปเดต Packhai, FlowAccount, ราคาขาย และยอดเก็บเงินเป็นรอบ";
   }
 
   function githubRunLabel(run) {
@@ -863,15 +863,15 @@
     const runLink = run?.html_url || githubSyncWorkflowUrl;
     el.innerHTML = `
       <div>
-        <strong>Sync ผ่าน GitHub Actions · ${escapeHtml(label)}</strong>
-        <span>รัน sync บน GitHub ได้เลย ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
+        <strong>Auto Sync เปิดใช้งาน · ${escapeHtml(label)}</strong>
+        <span>ระบบอัปเดตเองบน GitHub ทุก 2 ชั่วโมงช่วง 09:00-19:00 ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
         <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}</small>
       </div>
       <div class="sync-status-actions">
-        <a href="${githubSyncWorkflowUrl}" target="_blank" rel="noopener">Open GitHub Sync</a>
-        <a href="${runLink}" target="_blank" rel="noopener">Latest run</a>
-        <button type="button" data-sync-run-refresh>ตรวจสถานะ</button>
-        <button type="button" data-dashboard-refresh>รีเฟรชหน้า</button>
+        <button class="sync-status-primary" type="button" data-dashboard-refresh>รีเฟรชข้อมูลล่าสุด</button>
+        <button type="button" data-sync-run-refresh>ตรวจสถานะ Auto Sync</button>
+        <a href="${runLink}" target="_blank" rel="noopener">ดู run ล่าสุด</a>
+        <a href="${githubSyncWorkflowUrl}" target="_blank" rel="noopener">Manual Sync</a>
       </div>`;
     bindStaticSyncActions();
     if (staticReportHost && !githubSyncStatusCache && !githubSyncStatusLoading) {
@@ -905,7 +905,6 @@
   function openGitHubSyncWorkflow(type) {
     renderStaticSyncNotice(type);
     loadGitHubSyncStatus(type, true);
-    window.open(githubSyncWorkflowUrl, "_blank", "noopener");
   }
 
   function renderSyncReadiness(status) {

@@ -1,14 +1,14 @@
 {
-  "exportedAt": "2026-06-28T08:19:30.726Z",
+  "exportedAt": "2026-06-28T09:26:16.906Z",
   "source": "Seller platform order payments",
   "rule": "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
   "counts": {
     "targetShopee": 4383,
     "targetLazada": 2184,
-    "cachedBefore": 5,
-    "requestedNew": 1,
-    "fetchedNew": 1,
-    "totalOrders": 6,
+    "cachedBefore": 6,
+    "requestedNew": 3,
+    "fetchedNew": 3,
+    "totalOrders": 9,
     "errors": 0
   },
   "errors": [],
@@ -87,6 +87,39 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "2606265B3E0QHJ",
+      "collectedAmount": 116,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T09:26:15.828Z",
+      "orderId": 236183725219378,
+      "items": [
+        {
+          "name": "ฉากเหล็กรับชั้น Golden Seal",
+          "skuText": "[8907 ]",
+          "amount": 1
+        },
+        {
+          "name": "\"สายลมอเนกประสงค์\" (5966)",
+          "skuText": "[5966 ]",
+          "amount": 1
+        },
+        {
+          "name": "ด้ามจับใบเลื่อย (7963)",
+          "skuText": "[7963 ]",
+          "amount": 1
+        },
+        {
+          "name": "MAKITA มากีต้า MP002705B D-74728 ดอกสว่าน SDS (4ดอก/ชุด) กล่องใส D-74728 SDS PLUS DRILL BIT SET (4PC/SET) Code D-74728",
+          "skuText": "[MP002705B ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "2606265BQHSHK3",
       "collectedAmount": 2314,
       "currency": "THB",
@@ -110,6 +143,47 @@
           "name": "POLO ใบเลื่อยวงเดือน 7 นิ้ว x 24T (184มม.x 24ฟัน) ความเร็วรอบ 9,000 รอบ/นาที รูกลาง 25.4 มม. แหวน 20 มม. ใช้สำหรับตัดไม้",
           "skuText": "[P525-1040 ]",
           "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "2606276BE2QCN0",
+      "collectedAmount": 604,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T09:26:15.029Z",
+      "orderId": 236218442216096,
+      "items": [
+        {
+          "name": "POLO PID138501 สว่านกระแทกไฟฟ้า ขนาดเจาะสูงสุด 13 มม.(1/2 นิ้ว) กำลังไฟ 850 วัตต์ (P651-PID138501)",
+          "skuText": "[P651-PID138501 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "2606276GJ0XMY5",
+      "collectedAmount": 1017,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ส่งสินค้าแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T09:26:16.605Z",
+      "orderId": 236223943283685,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 4
+        },
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 4 WAY [15896 Haitun1]",
+          "amount": 4
         }
       ]
     },

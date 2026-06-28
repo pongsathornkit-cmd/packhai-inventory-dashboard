@@ -1,6 +1,7 @@
 const path = require("path");
 const { spawnSync } = require("child_process");
 const { loadCloudEnv } = require("./cloud-env-loader.cjs");
+const { materializeStorageStateEnv } = require("./materialize-auth-state-env.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const nodePath = process.execPath;
@@ -56,6 +57,15 @@ function main() {
   if (!validTypes.has(args.type)) throw new Error(`Unknown sync type: ${args.type}`);
 
   loadCloudEnv();
+  const authStates = materializeStorageStateEnv();
+  if (authStates.length) {
+    console.log(
+      JSON.stringify({
+        name: "Materialize auth states",
+        written: authStates.map((item) => ({ kind: item.kind, file: item.file, bytes: item.bytes })),
+      })
+    );
+  }
   const warnings = [];
 
   if (args.type === "all" || args.type === "packhai") {

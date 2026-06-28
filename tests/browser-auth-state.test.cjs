@@ -9,6 +9,7 @@ const {
   loadStorageState,
   resolveStorageStateFile,
 } = require("../scripts/browser-auth-state.cjs");
+const { materializeStorageStateEnv } = require("../scripts/materialize-auth-state-env.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 
@@ -44,6 +45,26 @@ test("auth state can be loaded from explicit file", () => {
   assert.equal(resolveStorageStateFile("lazada", file), file);
   assert.equal(loaded.source, "file");
   assert.equal(loaded.state.cookies[0].name, "x");
+});
+
+test("cloud auth states materialize to files before spawning sync scripts", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "packhai-materialized-auth-"));
+  const state = { cookies: [{ name: "SPC", value: "1" }], origins: [] };
+  const env = {
+    SHOPEE_STORAGE_STATE_B64: Buffer.from(JSON.stringify(state), "utf8").toString("base64"),
+    PACKHAI_AUTH_STATE_DIR: dir,
+  };
+
+  try {
+    const written = materializeStorageStateEnv(env);
+    assert.equal(written.length, 1);
+    assert.equal(written[0].kind, "shopee");
+    assert.ok(fs.existsSync(env.SHOPEE_STORAGE_STATE_FILE));
+    assert.equal(env.SHOPEE_STORAGE_STATE_B64, undefined);
+    assert.deepEqual(JSON.parse(fs.readFileSync(env.SHOPEE_STORAGE_STATE_FILE, "utf8")), state);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });
 
 test("seller and FlowAccount sync scripts support portable auth state", () => {

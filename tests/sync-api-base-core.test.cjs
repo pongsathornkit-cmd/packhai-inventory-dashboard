@@ -19,18 +19,20 @@ test("public sync API base rejects ephemeral tunnel URLs even when passed explic
 
 test("public sync API base keeps stable HTTPS URLs", () => {
   assert.equal(
-    normalizePublicSyncApiBase("https://packhai-sync.example.com/", { source: "env" }),
-    "https://packhai-sync.example.com"
+    normalizePublicSyncApiBase("https://packhai-inventory-dashboard.onrender.com/", { source: "env" }),
+    "https://packhai-inventory-dashboard.onrender.com"
   );
   assert.equal(
-    normalizePublicSyncApiBase("https://packhai-sync.example.com/", { source: "local-file" }),
-    "https://packhai-sync.example.com"
+    normalizePublicSyncApiBase("https://packhai-inventory-dashboard.onrender.com/", { source: "local-file" }),
+    "https://packhai-inventory-dashboard.onrender.com"
   );
 });
 
 test("public sync API base rejects invalid or insecure public values", () => {
   assert.equal(normalizePublicSyncApiBase("not-a-url", { source: "env" }), "");
   assert.equal(normalizePublicSyncApiBase("http://example.com", { source: "env" }), "");
+  assert.equal(normalizePublicSyncApiBase("https://example-sync.invalid", { source: "env" }), "");
+  assert.equal(normalizePublicSyncApiBase("https://YOUR-SYNC-SERVER", { source: "env" }), "");
 });
 
 test("public sync API base can fall back to Render external URL", () => {
@@ -47,10 +49,10 @@ test("public sync API base can fall back to Render external URL", () => {
 test("explicit public sync API base wins over Render external URL", () => {
   assert.equal(
     selectPublicSyncApiBase({
-      publicSyncApiBase: "https://sync.example.com",
+      publicSyncApiBase: "https://packhai-sync.onrender.com",
       renderExternalUrl: "https://packhai-inventory-dashboard.onrender.com",
-      localFileSyncApiBase: "https://local.example.com",
+      localFileSyncApiBase: "https://local-sync.onrender.com",
     }),
-    "https://sync.example.com"
+    "https://packhai-sync.onrender.com"
   );
 });

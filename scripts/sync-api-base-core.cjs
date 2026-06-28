@@ -11,6 +11,8 @@ function normalizePublicSyncApiBase(value, options = {}) {
 
   if (url.protocol !== "https:") return "";
   if (/\.trycloudflare\.com$/i.test(url.hostname)) return "";
+  if (/\.invalid$/i.test(url.hostname)) return "";
+  if (/your-sync-server/i.test(url.hostname)) return "";
   url.hash = "";
   url.search = "";
   return url.toString().replace(/\/+$/, "");

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const { spawnSync } = require("child_process");
+const { normalizePublicSyncApiBase } = require("./sync-api-base-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const defaultOutput = path.join(projectRoot, ".tmp", "cloud-sync.env");
@@ -67,6 +68,9 @@ function main() {
     process.env.GITHUB_TOKEN ||
     process.env.GH_TOKEN ||
     (args.githubTokenFromGh ? readGithubTokenFromGh() : "");
+  const publicSyncApiBase = normalizePublicSyncApiBase(args.publicSyncApiBase || process.env.PUBLIC_SYNC_API_BASE, {
+    source: "env",
+  });
   const env = {
     HOST: "0.0.0.0",
     SELLER_HEADLESS: "1",
@@ -77,7 +81,7 @@ function main() {
     SHOPEE_SESSION_DIR: "/app/storage/browser-profiles/shopee",
     SELLER_SESSION_DIR: "/app/storage/browser-profiles/lazada",
     PACKHAI_AUTH_TOKEN: process.env.PACKHAI_AUTH_TOKEN || readSecretFile(packhaiTokenFile),
-    PUBLIC_SYNC_API_BASE: args.publicSyncApiBase || process.env.PUBLIC_SYNC_API_BASE || "",
+    PUBLIC_SYNC_API_BASE: publicSyncApiBase,
     GITHUB_TOKEN: githubToken,
     SHOPEE_STORAGE_STATE_B64: authStateEnv.SHOPEE_STORAGE_STATE_B64 || process.env.SHOPEE_STORAGE_STATE_B64 || "",
     LAZADA_STORAGE_STATE_B64: authStateEnv.LAZADA_STORAGE_STATE_B64 || process.env.LAZADA_STORAGE_STATE_B64 || "",
@@ -113,6 +117,7 @@ function main() {
           required: required.includes(key),
         })),
         missingRequired: required.filter((key) => !String(env[key] || "")),
+        publicSyncApiBasePresent: Boolean(publicSyncApiBase),
         githubTokenSource: githubToken
           ? args.githubToken
             ? "argument"

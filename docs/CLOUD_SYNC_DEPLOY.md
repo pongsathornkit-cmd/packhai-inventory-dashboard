@@ -60,6 +60,8 @@ npm run cloud:env -- --public-sync-api-base https://YOUR-SYNC-SERVER --github-to
 คำสั่งนี้จะสร้าง `.tmp/cloud-sync.env` จาก token/session local และไม่แสดงค่าลับบนหน้าจอ
 ไฟล์นี้มี secrets เต็ม ห้าม commit หรือส่งใน chat
 
+ถ้ายังไม่รู้ URL ของ Render/VPS จริง ให้รันคำสั่งนี้โดยไม่ใส่ `--public-sync-api-base` ได้ ระบบจะเว้น `PUBLIC_SYNC_API_BASE` ไว้ และบน Render จะ fallback ไปใช้ `RENDER_EXTERNAL_URL` หลัง service online
+
 ถ้า storage state หมดอายุ งานส่วนนั้นจะขึ้น warning และใช้ข้อมูลล่าสุดที่มีอยู่แทน
 ต้อง export ใหม่เมื่อ session ของ platform หมดอายุ
 
@@ -123,7 +125,7 @@ npm run sync:smoke -- --base https://YOUR-SYNC-SERVER --sync seller-payments --t
 Do not use GitHub Actions secrets for the browser storage states. The Shopee, Lazada, and FlowAccount storage-state values are much larger than a normal GitHub secret. Use a Render Secret File or a VPS `.env` file instead.
 
 1. Run `npm run auth:export` on the logged-in machine.
-2. Run `npm run cloud:env -- --public-sync-api-base https://YOUR-SYNC-SERVER --github-token-from-gh`.
+2. Run `npm run cloud:env -- --github-token-from-gh` if the final Render URL is not known yet, or include `--public-sync-api-base https://YOUR-SYNC-SERVER` after the URL is known.
 3. Upload `.tmp/cloud-sync.env` to the cloud server as `/etc/secrets/cloud-sync.env`.
 4. Keep `PACKHAI_CLOUD_ENV_FILE=/etc/secrets/cloud-sync.env`.
 5. After the service is live and `/api/sync/status` returns `ready: true`, run `npm run sync:configure-api -- --base https://YOUR-SYNC-SERVER --require-ready --publish`.

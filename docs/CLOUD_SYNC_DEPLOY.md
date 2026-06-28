@@ -106,6 +106,18 @@ curl https://YOUR-SYNC-SERVER/api/sync/status
 
 ถ้า `ready` เป็น `false` ให้ดู `missingConfig` แล้วเติม environment variables ที่ขาดใน Render
 
+หลัง deploy แล้วสามารถทดสอบ backend แบบไม่แสดง secrets ได้ด้วย:
+
+```bash
+npm run sync:smoke -- --base https://YOUR-SYNC-SERVER
+```
+
+ถ้าต้องการทดสอบให้รันงาน sync จริง 1 ประเภท:
+
+```bash
+npm run sync:smoke -- --base https://YOUR-SYNC-SERVER --sync seller-payments --timeout 300
+```
+
 ## Render secret file checklist
 
 Do not use GitHub Actions secrets for the browser storage states. The Shopee, Lazada, and FlowAccount storage-state values are much larger than a normal GitHub secret. Use a Render Secret File or a VPS `.env` file instead.

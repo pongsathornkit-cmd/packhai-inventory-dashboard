@@ -43,6 +43,7 @@ test("GitHub Actions sync workflow decrypts env and runs sync job", () => {
   assert.match(workflow, /actions\/deploy-pages@v4/);
   assert.doesNotMatch(workflow, /add-mask/);
   assert.doesNotMatch(workflow, /done < \.tmp\/github-actions-sync\.env/);
+  assert.doesNotMatch(workflow, /PACKHAI_AUTH_STATE_DIR:\s*\$\{\{\s*runner\.temp/);
   assert.match(sealSource, /excludedKeys/);
   assert.match(sealSource, /GITHUB_TOKEN/);
   assert.match(sealSource, /PUBLIC_SYNC_API_BASE/);

@@ -104,6 +104,9 @@ test("online dashboard shows sync setup notice when no public sync API is config
 
   assert.match(appSource, /if\s*\(syncApiUnavailable\)\s*{\s*renderStaticSyncNotice\("seller-payments"\);/);
   assert.match(appSource, /githubSyncRunsApiUrl/);
+  assert.match(appSource, /staticSyncStatusUrl/);
+  assert.match(appSource, /sync-status\.json/);
+  assert.match(appSource, /loadStaticSyncStatusFile/);
   assert.match(appSource, /api\.github\.com\/repos/);
   assert.match(appSource, /openStaticSyncStatus\(type\)/);
   assert.match(appSource, /loadGitHubSyncStatus\(type,\s*true\)/);

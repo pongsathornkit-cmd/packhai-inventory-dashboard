@@ -728,6 +728,7 @@
   let syncPollTimer = null;
   let syncStartedHere = false;
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
+  const staticSyncStatusUrl = "sync-status.json";
   const githubSyncRunsApiUrl =
     "https://api.github.com/repos/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml/runs?per_page=1";
   let lastStaticSyncType = "all";
@@ -826,6 +827,7 @@
     if (!run) return "ยังไม่ได้อ่านสถานะล่าสุด";
     const timeText = formatSyncTime(run.updated_at || run.run_started_at || run.created_at);
     if (run.status !== "completed") return `กำลังรันบน Cloud · ${timeText || "กำลังประมวลผล"}`;
+    if (run.warning) return `ล่าสุดสำเร็จบางส่วน · ${timeText}`;
     if (run.conclusion === "success") return `ล่าสุดสำเร็จ · ${timeText}`;
     if (run.conclusion === "cancelled") return `ล่าสุดถูกยกเลิก · ${timeText}`;
     return `ล่าสุดไม่สำเร็จ · ${timeText}`;
@@ -834,6 +836,7 @@
   function githubRunClass(run) {
     if (!run) return "warning";
     if (run.status !== "completed") return "running";
+    if (run.warning) return "warning";
     if (run.conclusion === "success") return "passed";
     if (run.conclusion === "cancelled") return "warning";
     return "failed";
@@ -858,11 +861,12 @@
     el.className = `sync-status ${githubSyncStatusLoading ? "running" : githubRunClass(run)}`;
     const label = syncLabels[type] || "Sync data";
     const runStatus = githubSyncStatusLoading ? "กำลังอ่านสถานะ Auto Sync..." : githubRunLabel(run);
+    const runMessage = run?.warning && run?.message ? ` · ${run.message}` : "";
     el.innerHTML = `
       <div>
         <strong>Auto Sync เปิดใช้งาน · ${escapeHtml(label)}</strong>
         <span>ระบบ Sync ข้อมูลทั้งหมดอัตโนมัติบน Cloud ทุก 2 ชั่วโมงช่วง 09:00-19:00 ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
-        <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}</small>
+        <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}${escapeHtml(runMessage)}</small>
       </div>
       <div class="sync-status-actions">
         <button class="sync-status-primary" type="button" data-dashboard-refresh>รีเฟรชข้อมูลล่าสุด</button>
@@ -874,15 +878,36 @@
     }
   }
 
+  function normalizeStaticSyncStatus(data) {
+    return {
+      status: "completed",
+      conclusion: data?.ok && !data?.warning ? "success" : "failure",
+      warning: Boolean(data?.warning),
+      message: String(data?.message || ""),
+      updated_at: data?.generatedAt || data?.finishedAt || data?.updatedAt || new Date().toISOString(),
+      steps: Array.isArray(data?.steps) ? data.steps : [],
+    };
+  }
+
+  async function loadStaticSyncStatusFile() {
+    const response = await fetch(`${staticSyncStatusUrl}?v=${Date.now()}`, { cache: "no-store" });
+    if (!response.ok) throw new Error(`Sync status ${response.status}`);
+    return normalizeStaticSyncStatus(await response.json());
+  }
+
   async function loadGitHubSyncStatus(type = lastStaticSyncType, showLoading = false) {
     if (!staticReportHost || remoteSyncApiBase || githubSyncStatusLoading) return;
     try {
       githubSyncStatusLoading = true;
       if (showLoading) renderStaticSyncNotice(type, githubSyncStatusCache);
-      const response = await fetch(githubSyncRunsApiUrl, { cache: "no-store" });
-      if (!response.ok) throw new Error(`GitHub status ${response.status}`);
-      const data = await response.json();
-      githubSyncStatusCache = Array.isArray(data.workflow_runs) ? data.workflow_runs[0] || null : null;
+      try {
+        githubSyncStatusCache = await loadStaticSyncStatusFile();
+      } catch {
+        const response = await fetch(githubSyncRunsApiUrl, { cache: "no-store" });
+        if (!response.ok) throw new Error(`GitHub status ${response.status}`);
+        const data = await response.json();
+        githubSyncStatusCache = Array.isArray(data.workflow_runs) ? data.workflow_runs[0] || null : null;
+      }
       githubSyncStatusLoading = false;
       renderStaticSyncNotice(type, githubSyncStatusCache);
     } catch (error) {

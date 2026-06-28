@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs");
 const { spawnSync } = require("child_process");
 const { loadCloudEnv } = require("./cloud-env-loader.cjs");
 const { materializeStorageStateEnv } = require("./materialize-auth-state-env.cjs");
@@ -25,6 +26,15 @@ function summarize(text) {
     .slice(0, 1600);
 }
 
+function concise(text) {
+  return (
+    String(text || "")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .find(Boolean) || "failed"
+  ).slice(0, 260);
+}
+
 function runStep(name, scriptName, options = {}) {
   const result = spawnSync(nodePath, [path.join(projectRoot, "scripts", scriptName)], {
     cwd: projectRoot,
@@ -47,8 +57,33 @@ function runStep(name, scriptName, options = {}) {
 
 function sellerOptional(stepName, scriptName, warnings) {
   const step = runStep(stepName, scriptName, { optional: true });
-  if (step.code !== 0) warnings.push(`${stepName}: ${step.error || step.output || "failed"}`);
+  if (step.code !== 0) warnings.push(`${stepName}: ${concise(step.error || step.output)}`);
   return step;
+}
+
+function writeSyncStatusFile(type, steps, warnings) {
+  const statusFile = path.join(projectRoot, "dist", "sync-status.json");
+  fs.mkdirSync(path.dirname(statusFile), { recursive: true });
+  fs.writeFileSync(
+    statusFile,
+    JSON.stringify(
+      {
+        generatedAt: new Date().toISOString(),
+        type,
+        ok: warnings.length === 0,
+        warning: warnings.length > 0,
+        message: warnings.length
+          ? `Sync บางส่วนไม่สำเร็จ: ${warnings.join(" · ")}`
+          : "Sync ข้อมูลทั้งหมดสำเร็จ",
+        warnings,
+        steps,
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+  return statusFile;
 }
 
 function main() {
@@ -67,24 +102,26 @@ function main() {
     );
   }
   const warnings = [];
+  const steps = [];
 
   if (args.type === "all" || args.type === "packhai") {
-    runStep("Sync Packhai stock", "sync-packhai-stock.cjs");
+    steps.push(runStep("Sync Packhai stock", "sync-packhai-stock.cjs"));
   }
   if (args.type === "all" || args.type === "flowaccount") {
-    runStep("Sync FlowAccount stock", "sync-flowaccount-stock.cjs");
+    steps.push(runStep("Sync FlowAccount stock", "sync-flowaccount-stock.cjs"));
   }
   if (args.type === "all" || args.type === "seller") {
-    sellerOptional("Sync Shopee Seller", "export-shopee-products.cjs", warnings);
-    sellerOptional("Sync Lazada Seller", "export-lazada-products.cjs", warnings);
-    sellerOptional("Sync Seller order payments", "export-seller-order-payments.cjs", warnings);
+    steps.push(sellerOptional("Sync Shopee Seller", "export-shopee-products.cjs", warnings));
+    steps.push(sellerOptional("Sync Lazada Seller", "export-lazada-products.cjs", warnings));
+    steps.push(sellerOptional("Sync Seller order payments", "export-seller-order-payments.cjs", warnings));
   }
   if (args.type === "seller-payments") {
-    runStep("Sync Seller order payments", "export-seller-order-payments.cjs");
+    steps.push(runStep("Sync Seller order payments", "export-seller-order-payments.cjs"));
   }
 
-  runStep("Build dashboard", "build-dashboard.cjs");
-  runStep("Publish dashboard", "publish-github-pages.cjs");
+  steps.push(runStep("Build dashboard", "build-dashboard.cjs"));
+  const statusFile = writeSyncStatusFile(args.type, steps, warnings);
+  steps.push(runStep("Publish dashboard", "publish-github-pages.cjs"));
 
   console.log(
     JSON.stringify(
@@ -93,6 +130,7 @@ function main() {
         type: args.type,
         warning: warnings.length > 0,
         warnings,
+        statusFile,
       },
       null,
       2

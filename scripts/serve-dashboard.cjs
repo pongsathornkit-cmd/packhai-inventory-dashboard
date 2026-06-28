@@ -33,6 +33,9 @@ const port = Number(process.env.PORT || 8123);
 const nodePath = process.execPath;
 const localPackhaiTokenFile = path.join(projectRoot, ".packhai-token.local");
 const localSyncKeyFile = path.join(projectRoot, ".sync-key.local");
+const authStateDir = process.env.PACKHAI_AUTH_STATE_DIR
+  ? path.resolve(process.env.PACKHAI_AUTH_STATE_DIR)
+  : path.join(projectRoot, "storage-states");
 const localFlowProfile =
   process.env.FLOW_PROFILE ||
   (fs.existsSync(path.join(workspaceRoot, ".codex-seller-browser-session-vatfix-lazada"))
@@ -154,16 +157,63 @@ function flowaccountConfigured() {
   return Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile) || fs.existsSync(flowaccountSnapshotFile);
 }
 
+function storageStateConfigured(kind) {
+  const key = String(kind || "").trim().toUpperCase();
+  if (!key) return false;
+  if (String(process.env[`${key}_STORAGE_STATE_B64`] || "").trim()) return true;
+  if (String(process.env[`${key}_STORAGE_STATE_JSON`] || "").trim()) return true;
+  const envFile = String(process.env[`${key}_STORAGE_STATE_FILE`] || "").trim();
+  if (envFile && fs.existsSync(path.resolve(envFile))) return true;
+  return fs.existsSync(path.join(authStateDir, `${key.toLowerCase()}.json`));
+}
+
+function shopeeAuthConfigured() {
+  return storageStateConfigured("shopee") || Boolean(process.env.SHOPEE_SESSION_DIR);
+}
+
+function lazadaAuthConfigured() {
+  return storageStateConfigured("lazada") || Boolean(process.env.SELLER_SESSION_DIR);
+}
+
+function flowaccountAuthConfigured() {
+  return storageStateConfigured("flowaccount") || Boolean(process.env.FLOW_PROFILE) || fs.existsSync(localFlowProfile);
+}
+
+function syncReadiness() {
+  const config = {
+    packhaiConfigured: packhaiConfigured(),
+    flowaccountConfigured: flowaccountConfigured(),
+    flowaccountAuthConfigured: flowaccountAuthConfigured(),
+    shopeeAuthConfigured: shopeeAuthConfigured(),
+    lazadaAuthConfigured: lazadaAuthConfigured(),
+    githubPublishConfigured: Boolean(String(process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim()),
+    syncKeyRequired: syncKeyRequired(),
+  };
+  const missing = [];
+  if (!config.packhaiConfigured) missing.push("PACKHAI_AUTH_TOKEN");
+  if (!config.flowaccountAuthConfigured) missing.push("FLOWACCOUNT_STORAGE_STATE_B64");
+  if (!config.shopeeAuthConfigured) missing.push("SHOPEE_STORAGE_STATE_B64");
+  if (!config.lazadaAuthConfigured) missing.push("LAZADA_STORAGE_STATE_B64");
+  if (!config.githubPublishConfigured && publishGithub) missing.push("GITHUB_TOKEN");
+  if (config.syncKeyRequired) missing.push("SYNC_REQUIRE_KEY=0");
+  return {
+    ready: missing.length === 0,
+    missing,
+    config,
+  };
+}
+
 function publicSyncState(extra = {}) {
+  const readiness = syncReadiness();
   return {
     ...syncState,
     ...extra,
     config: {
-      packhaiConfigured: packhaiConfigured(),
-      flowaccountConfigured: flowaccountConfigured(),
+      ...readiness.config,
       flowaccountSource: "flowaccount-sync",
-      syncKeyRequired: syncKeyRequired(),
     },
+    ready: readiness.ready,
+    missingConfig: readiness.missing,
   };
 }
 
@@ -609,9 +659,12 @@ const server = http.createServer((req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/api/health") {
+    const readiness = syncReadiness();
     sendJson(res, 200, {
       ok: true,
       service: "packhai-inventory-dashboard",
+      ready: readiness.ready,
+      missingConfig: readiness.missing,
       syncRunning: syncState.running,
       checkedAt: new Date().toISOString(),
     });

@@ -67,6 +67,21 @@ test("sync server exposes a health endpoint for cloud hosting checks", () => {
   assert.match(renderSource, /healthCheckPath:\s*\/api\/health/);
 });
 
+test("sync server exposes cloud readiness without leaking secret values", () => {
+  const serverSource = readRepoFile("scripts/serve-dashboard.cjs");
+  const appSource = readRepoFile("src/app.js");
+
+  assert.match(serverSource, /function\s+syncReadiness/);
+  assert.match(serverSource, /shopeeAuthConfigured/);
+  assert.match(serverSource, /lazadaAuthConfigured/);
+  assert.match(serverSource, /flowaccountAuthConfigured/);
+  assert.match(serverSource, /ready:\s*readiness\.ready/);
+  assert.doesNotMatch(serverSource, /STORAGE_STATE_B64[^,\n]*value/i);
+  assert.match(appSource, /renderSyncReadiness/);
+  assert.match(appSource, /getSyncStatus\(true\)/);
+  assert.match(appSource, /Sync server ออนไลน์/);
+});
+
 test("online dashboard clears stale sync API URL when a remote fetch fails", () => {
   const appSource = readRepoFile("src/app.js");
 

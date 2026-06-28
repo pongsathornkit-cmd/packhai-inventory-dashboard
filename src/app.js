@@ -823,6 +823,27 @@
       <code>GitHub Pages</code>`;
   }
 
+  function renderSyncReadiness(status) {
+    if (!status?.config) return;
+    const missing = Array.isArray(status.missingConfig) ? status.missingConfig : [];
+    const ready = Boolean(status.ready);
+    const type = status.type || "all";
+    const message = ready
+      ? "Sync server ออนไลน์และตั้งค่า token/session ครบแล้ว สามารถกด Sync จากเครื่องนี้ได้"
+      : `Sync server ออนไลน์แล้ว แต่ยังขาด ${missing.join(", ") || "บางค่า"} จึงยัง Sync จริงไม่ครบ`;
+    renderSyncStatus(
+      {
+        ...status,
+        type,
+        ok: ready ? true : false,
+        warning: !ready,
+        message,
+        steps: [],
+      },
+      true
+    );
+  }
+
   function ensureRemoteSyncConfig(type) {
     if (!staticReportHost) return true;
     if (!remoteSyncApiBase) {
@@ -933,7 +954,11 @@
       }
       if (!response.ok) throw new Error(`Status ${response.status}`);
       const status = await response.json();
-      renderSyncStatus(status, showIdle);
+      if (showIdle && !status.running && status.ok == null && status.config) {
+        renderSyncReadiness(status);
+      } else {
+        renderSyncStatus(status, showIdle);
+      }
       if (status.running) {
         clearTimeout(syncPollTimer);
         syncPollTimer = setTimeout(() => getSyncStatus(true), 1500);
@@ -2770,6 +2795,6 @@
   if (syncApiUnavailable) {
     renderStaticSyncNotice("seller-payments");
   } else {
-    getSyncStatus(false);
+    getSyncStatus(true);
   }
 })();

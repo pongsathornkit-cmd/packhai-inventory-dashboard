@@ -44,3 +44,16 @@ test("dashboard labels FlowAccount rows as FlowAccount, not GitHub stock", () =>
   assert.match(templateSource, /id="syncFlowaccount"/);
   assert.doesNotMatch(templateSource, /Packhai \+ GitHub Stock/);
 });
+
+test("dashboard exposes a dedicated sync path for platform collection payments", () => {
+  const serverSource = readRepoFile("scripts/serve-dashboard.cjs");
+  const appSource = readRepoFile("src/app.js");
+  const templateSource = readRepoFile("src/index.template.html");
+
+  assert.match(serverSource, /type\s*===\s*"seller-payments"/);
+  assert.match(serverSource, /pushStep\(runSellerPayments\(\)\)/);
+  assert.match(serverSource, /\["packhai",\s*"flowaccount",\s*"seller",\s*"seller-payments",\s*"all"\]/);
+  assert.match(templateSource, /id="syncSellerPayments"/);
+  assert.match(appSource, /syncSellerPayments/);
+  assert.match(appSource, /startSync\("seller-payments"\)/);
+});

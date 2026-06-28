@@ -137,7 +137,62 @@ function enrichMovementWithSellerPayment(movement, paymentIndex) {
   };
 }
 
+function emptyPlatformSummary(platform = "") {
+  return {
+    platform,
+    targetOrderCount: 0,
+    matchedOrderCount: 0,
+    missingOrderCount: 0,
+    collectedAmount: 0,
+    coverage: 0,
+  };
+}
+
+function finalizePlatformSummary(summary) {
+  summary.missingOrderCount = Math.max(0, summary.targetOrderCount - summary.matchedOrderCount);
+  summary.collectedAmount = roundMoney(summary.collectedAmount);
+  summary.coverage = summary.targetOrderCount ? summary.matchedOrderCount / summary.targetOrderCount : 0;
+  return summary;
+}
+
+function buildPlatformPaymentSummary(movements) {
+  const summary = emptyPlatformSummary("All");
+  const byPlatform = {
+    Shopee: emptyPlatformSummary("Shopee"),
+    Lazada: emptyPlatformSummary("Lazada"),
+  };
+  const seenOrders = new Set();
+
+  for (const movement of movements || []) {
+    if (Number(movement?.removeQuantity || 0) <= 0) continue;
+    const platform = normalizePlatform(movement.platform || movement.channelName);
+    if (!["Shopee", "Lazada"].includes(platform)) continue;
+    const orderNo = normalizeOrderNo(movement.platformOrderNo || movement.referenceNo2 || movement.orderNo);
+    if (!orderNo) continue;
+    const key = `${platform}|${orderNo}`;
+    if (seenOrders.has(key)) continue;
+    seenOrders.add(key);
+
+    const target = byPlatform[platform];
+    summary.targetOrderCount += 1;
+    target.targetOrderCount += 1;
+
+    if (movement.platformPaymentStatus === "matched") {
+      const amount = roundMoney(movement.platformPaymentAmount);
+      summary.matchedOrderCount += 1;
+      target.matchedOrderCount += 1;
+      summary.collectedAmount += amount;
+      target.collectedAmount += amount;
+    }
+  }
+
+  finalizePlatformSummary(summary);
+  Object.values(byPlatform).forEach(finalizePlatformSummary);
+  return { ...summary, byPlatform };
+}
+
 module.exports = {
+  buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
   normalizeOrderNo,

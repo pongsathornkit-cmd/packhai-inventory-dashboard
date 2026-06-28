@@ -559,6 +559,8 @@ async function runSync(type) {
       if (!shopeeStep && !lazadaStep) {
         throw new Error("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
       }
+    } else if (type === "seller-payments") {
+      await pushStep(runSellerPayments());
     }
 
     await runBuild();
@@ -615,7 +617,7 @@ const server = http.createServer((req, res) => {
   if (req.method === "POST" && url.pathname.startsWith("/api/sync/")) {
     if (!syncAuthorized(req, res)) return;
     const type = url.pathname.split("/").pop();
-    if (!["packhai", "flowaccount", "seller", "all"].includes(type)) {
+    if (!["packhai", "flowaccount", "seller", "seller-payments", "all"].includes(type)) {
       sendJson(res, 404, { ok: false, message: "Unknown sync type" });
       return;
     }

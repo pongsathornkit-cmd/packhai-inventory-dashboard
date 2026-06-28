@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const {
+  buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
 } = require("./seller-order-payment-core.cjs");
@@ -791,11 +792,14 @@ function build() {
 
   rows.sort((a, b) => b.inventoryValue - a.inventoryValue || a.sku.localeCompare(b.sku, "en"));
   const stockMovements = stockRows.flatMap((item) => item.stockMovements || []);
+  const platformPaymentSummary = buildPlatformPaymentSummary(stockMovements);
 
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
   };
+  dashboard.summary.platformPayment = platformPaymentSummary;
+  dashboard.platformPaymentSummary = platformPaymentSummary;
 
   const template = fs.readFileSync(path.join(srcDir, "index.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "styles.css"), "utf8");

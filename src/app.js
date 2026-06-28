@@ -724,6 +724,7 @@
     seller: "Sync ราคาขาย Seller",
     expenses: "ระบบค่าใช้จ่าย",
   };
+  syncLabels["seller-payments"] = "Sync ยอดเก็บเงิน Platform";
   let syncPollTimer = null;
   let syncStartedHere = false;
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
@@ -732,6 +733,7 @@
     syncPackhai: "Sync Packhai stock",
     syncFlowaccount: "Sync FlowAccount stock",
     syncSeller: "Sync Seller prices",
+    syncSellerPayments: "Sync seller platform collection payments",
   };
   let remoteSyncApiBase = normalizeSyncApiBase(
     window.__PACKHAI_SYNC_API_BASE__ || localStorage.getItem("packhaiSyncApiBase") || ""
@@ -815,7 +817,7 @@
   }
 
   function syncButtons() {
-    return [$("syncAll"), $("syncPackhai"), $("syncFlowaccount"), $("syncSeller")].filter(Boolean);
+    return [$("syncAll"), $("syncPackhai"), $("syncFlowaccount"), $("syncSeller"), $("syncSellerPayments")].filter(Boolean);
   }
 
   function setSyncButtons(status) {
@@ -828,7 +830,8 @@
           ((status.type === "all" && button.id === "syncAll") ||
             (status.type === "packhai" && button.id === "syncPackhai") ||
             (status.type === "flowaccount" && button.id === "syncFlowaccount") ||
-            (status.type === "seller" && button.id === "syncSeller"))
+            (status.type === "seller" && button.id === "syncSeller") ||
+            (status.type === "seller-payments" && button.id === "syncSellerPayments"))
       );
     });
   }
@@ -2024,6 +2027,101 @@
       .join("");
   }
 
+  function getPlatformPaymentSummary() {
+    const fallbackPlatform = (platform) => ({
+      platform,
+      targetOrderCount: 0,
+      matchedOrderCount: 0,
+      missingOrderCount: 0,
+      collectedAmount: 0,
+      coverage: 0,
+    });
+    const summary = data.summary?.platformPayment || data.platformPaymentSummary || {};
+    const byPlatform = summary.byPlatform || {};
+    return {
+      platform: "All",
+      targetOrderCount: Number(summary.targetOrderCount || 0),
+      matchedOrderCount: Number(summary.matchedOrderCount || 0),
+      missingOrderCount: Number(summary.missingOrderCount || 0),
+      collectedAmount: Number(summary.collectedAmount || 0),
+      coverage: Number(summary.coverage || 0),
+      byPlatform: {
+        Shopee: { ...fallbackPlatform("Shopee"), ...(byPlatform.Shopee || {}) },
+        Lazada: { ...fallbackPlatform("Lazada"), ...(byPlatform.Lazada || {}) },
+      },
+    };
+  }
+
+  function renderPaymentCollectionReport() {
+    const el = $("paymentCollectionReport");
+    if (!el) return;
+    const summary = getPlatformPaymentSummary();
+    const source = data.metadata?.sources?.sellerPayments || {};
+    const rows = [summary.byPlatform.Shopee, summary.byPlatform.Lazada];
+    const cards = [
+      {
+        label: "ออเดอร์ขายออกจาก Platform",
+        value: fmtInt.format(summary.targetOrderCount),
+        sub: "นับจากรายการเดิน stock ที่ขายออกใน Packhai",
+      },
+      {
+        label: "พบยอดเก็บเงินแล้ว",
+        value: fmtInt.format(summary.matchedOrderCount),
+        sub: `${safePercent(summary.coverage)} ของออเดอร์ platform`,
+      },
+      {
+        label: "ยอดเก็บเงินที่ดึงได้",
+        value: fmtBaht.format(summary.collectedAmount),
+        sub: "ใช้ยอดจาก Shopee/Lazada Seller เท่านั้น",
+      },
+      {
+        label: "ยังรอข้อมูล Seller",
+        value: fmtInt.format(summary.missingOrderCount),
+        sub: "ออเดอร์ขายออกที่ยังจับคู่ยอดเก็บเงินไม่ได้",
+      },
+    ];
+
+    el.innerHTML = `
+      <div class="section-heading payment-heading">
+        <div>
+          <h2>ภาพรวมสถานะการเก็บเงินจาก Platform</h2>
+          <p>ตรวจยอดเก็บเงินจริงจาก Shopee/Lazada Seller เทียบกับรายการขายออกใน Packhai เพื่อดู coverage และออเดอร์ที่ยังขาดข้อมูล</p>
+        </div>
+        <span>อัปเดตยอดเก็บเงิน ${escapeHtml(source.exportedAtLabel || "-")} · ${fmtInt.format(source.rowCount || 0)} รายการ</span>
+      </div>
+      <div class="payment-report-grid">
+        ${cards
+          .map(
+            (card) => `
+          <article class="payment-report-card">
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(card.value)}</strong>
+            <small>${escapeHtml(card.sub)}</small>
+          </article>`
+          )
+          .join("")}
+      </div>
+      <div class="payment-platform-list">
+        ${rows
+          .map((item) => {
+            const coverage = Math.max(0, Math.min(1, Number(item.coverage || 0)));
+            return `
+            <article class="payment-platform-row">
+              <div>
+                <strong>${escapeHtml(item.platform)}</strong>
+                <span>${fmtInt.format(item.matchedOrderCount || 0)} / ${fmtInt.format(item.targetOrderCount || 0)} ออเดอร์พบยอดเก็บเงิน</span>
+              </div>
+              <div class="payment-platform-meter" aria-label="${escapeHtml(item.platform)} payment coverage">
+                <i style="width:${Math.round(coverage * 100)}%"></i>
+              </div>
+              <strong>${safePercent(coverage)}</strong>
+              <span>${fmtBaht.format(item.collectedAmount || 0)}</span>
+            </article>`;
+          })
+          .join("")}
+      </div>`;
+  }
+
   function renderSidebarStatus() {
     const target = $("sidebarUpdatedAt");
     if (!target) return;
@@ -2558,6 +2656,7 @@
     $("syncPackhai")?.addEventListener("click", () => startSync("packhai"));
     $("syncFlowaccount")?.addEventListener("click", () => startSync("flowaccount"));
     $("syncSeller")?.addEventListener("click", () => startSync("seller"));
+    $("syncSellerPayments")?.addEventListener("click", () => startSync("seller-payments"));
     $("searchInput").addEventListener("input", (event) => {
       state.query = event.target.value;
       state.page = 1;
@@ -2611,6 +2710,7 @@
   renderFreshness();
   renderSidebarStatus();
   renderKpis();
+  renderPaymentCollectionReport();
   renderOwnerCommand();
   renderOwnerAnalytics();
   renderDecisionSignals();

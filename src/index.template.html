@@ -64,6 +64,10 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 7V5h10v2M6 10h12l-1 10H7zM9 14h6" /></svg>
             ราคาขาย Seller
           </button>
+          <button class="sync-button" id="syncSellerPayments" type="button" title="Sync seller platform collection payments">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16v10H4zM7 11h.01M17 13a3 3 0 1 1-6 0 3 3 0 0 1 6 0zM4 20h16" /></svg>
+            ยอดเก็บเงิน Platform
+          </button>
         </div>
 
         <div class="sidebar-status">
@@ -95,6 +99,7 @@
 
       <main>
         <section class="sync-status" id="syncStatus" hidden></section>
+        <section class="payment-collection-report" id="paymentCollectionReport"></section>
 
         <section class="expenses-section" id="expenses" hidden>
           <div class="section-heading">

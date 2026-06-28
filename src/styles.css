@@ -1623,6 +1623,35 @@ tbody tr:hover {
   font-size: 12px;
 }
 
+.stock-adjust-button {
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(233, 30, 118, 0.24);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--teal-dark);
+  font-size: 11px;
+  font-weight: 820;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.stock-adjust-button:hover {
+  border-color: rgba(233, 30, 118, 0.48);
+  background: var(--teal-soft);
+}
+
+.stock-adjust-button.inline {
+  margin-top: 6px;
+}
+
+.stock-adjust-button.chip {
+  min-height: 20px;
+  padding: 0 6px;
+  font-size: 10px;
+}
+
 .movement-cell {
   min-width: 170px;
 }
@@ -2647,6 +2676,10 @@ tbody tr:hover {
   margin-top: 4px;
 }
 
+.detail-warehouse-breakdown .stock-adjust-button.detail {
+  margin-top: 9px;
+}
+
 .detail-wide {
   margin-top: 12px;
 }
@@ -2756,6 +2789,123 @@ tbody tr:hover {
 
 .movement-history-table .num {
   text-align: right;
+}
+
+.stock-transaction-table {
+  min-width: 860px;
+}
+
+.stock-adjust-panel {
+  max-width: 560px;
+}
+
+.stock-adjust-form {
+  display: grid;
+  gap: 14px;
+}
+
+.stock-adjust-form h2 {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.stock-adjust-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stock-adjust-summary div,
+.stock-adjust-field {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+}
+
+.stock-adjust-summary span,
+.stock-adjust-field span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  line-height: 1.35;
+}
+
+.stock-adjust-summary strong {
+  display: block;
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 15px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.stock-adjust-field {
+  display: grid;
+  gap: 8px;
+}
+
+.stock-adjust-field input,
+.stock-adjust-field textarea {
+  width: 100%;
+  border: 1px solid var(--strong-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--ink);
+  font: inherit;
+  outline: none;
+}
+
+.stock-adjust-field input {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 20px;
+  font-weight: 820;
+}
+
+.stock-adjust-field textarea {
+  resize: vertical;
+  min-height: 74px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.stock-adjust-status {
+  padding: 11px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.stock-adjust-status.running {
+  border-color: rgba(102, 118, 184, 0.28);
+  color: var(--ink-2);
+}
+
+.stock-adjust-status.passed {
+  border-color: rgba(41, 134, 121, 0.28);
+  background: var(--teal-soft);
+  color: var(--teal-dark);
+}
+
+.stock-adjust-status.failed {
+  border-color: rgba(217, 45, 111, 0.28);
+  background: var(--red-soft);
+  color: #a2224d;
+}
+
+.stock-adjust-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
 }
 
 .payment-badge {

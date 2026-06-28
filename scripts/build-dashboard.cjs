@@ -112,6 +112,7 @@ function emptyFlowaccountStock() {
       { id: 491662, name: "คลัง สุขสวัสดิ์", rowCount: 0 },
     ],
     rows: [],
+    stockTransactions: [],
   };
 }
 
@@ -800,11 +801,24 @@ function build() {
 
   rows.sort((a, b) => b.inventoryValue - a.inventoryValue || a.sku.localeCompare(b.sku, "en"));
   const stockMovements = stockRows.flatMap((item) => item.stockMovements || []);
+  const websiteStockTransactions = (stockSources.flowaccount.stockTransactions || [])
+    .map((item) => ({
+      ...item,
+      sku: normalizeSku(item.sku),
+      warehouseId: item.warehouseId || "",
+      warehouseName: item.warehouseName || "",
+      beforeQuantity: numberValue(item.beforeQuantity),
+      inputQuantity: numberValue(item.inputQuantity),
+      afterQuantity: numberValue(item.afterQuantity),
+      deltaQuantity: numberValue(item.deltaQuantity),
+    }))
+    .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   const platformPaymentSummary = buildPlatformPaymentSummary(stockMovements);
 
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
+    websiteStockTransactions,
   };
   dashboard.summary.platformPayment = platformPaymentSummary;
   dashboard.platformPaymentSummary = platformPaymentSummary;

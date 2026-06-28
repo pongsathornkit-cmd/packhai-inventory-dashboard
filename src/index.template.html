@@ -453,6 +453,48 @@
       </section>
     </div>
 
+    <div class="detail-modal stock-adjust-modal" id="stockAdjustModal" hidden>
+      <div class="detail-backdrop" data-close-stock-adjust></div>
+      <section class="detail-panel stock-adjust-panel" role="dialog" aria-modal="true" aria-labelledby="stockAdjustTitle">
+        <button class="icon-button detail-close" id="closeStockAdjust" type="button" title="ปิดหน้าปรับ stock" aria-label="ปิดหน้าปรับ stock">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+        <form id="stockAdjustForm" class="stock-adjust-form">
+          <div>
+            <p class="detail-kicker">Website Stock Transaction</p>
+            <h2 id="stockAdjustTitle">ปรับจำนวน stock คงเหลือ</h2>
+          </div>
+          <div class="stock-adjust-summary">
+            <div>
+              <span>SKU</span>
+              <strong id="stockAdjustSku">-</strong>
+            </div>
+            <div>
+              <span>คลัง</span>
+              <strong id="stockAdjustWarehouse">-</strong>
+            </div>
+            <div>
+              <span>คงเหลือปัจจุบัน</span>
+              <strong id="stockAdjustCurrent">-</strong>
+            </div>
+          </div>
+          <label class="stock-adjust-field">
+            <span>จำนวนคงเหลือใหม่</span>
+            <input id="stockAdjustQuantity" type="number" min="0" step="1" inputmode="numeric" required />
+          </label>
+          <label class="stock-adjust-field">
+            <span>หมายเหตุ transaction</span>
+            <textarea id="stockAdjustNote" rows="3" placeholder="เช่น ตรวจนับจริง, ย้ายคลัง, ปรับยอดผิดพลาด"></textarea>
+          </label>
+          <div class="stock-adjust-status" id="stockAdjustStatus" hidden></div>
+          <div class="stock-adjust-actions">
+            <button class="ghost-button" type="button" data-close-stock-adjust>ยกเลิก</button>
+            <button class="primary-button" id="stockAdjustSubmit" type="submit">บันทึก transaction</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
     <script>
 /* __INLINE_DATA__ */
     </script>

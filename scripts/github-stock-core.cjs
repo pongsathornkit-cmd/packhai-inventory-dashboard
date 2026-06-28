@@ -171,7 +171,7 @@ function sanitizeStockUpdatePayload(payload = {}) {
           }
         : null;
     })
-    .filter((item) => item && item.quantity > 0)
+    .filter((item) => item && (operation === "set" ? item.quantity >= 0 : item.quantity > 0))
     .slice(0, 4);
 
   if (!sku || !allocations.length) throw new Error("Stock update needs SKU and at least one warehouse quantity.");
@@ -180,6 +180,8 @@ function sanitizeStockUpdatePayload(payload = {}) {
     operation,
     allocations,
     sourceText: String(payload.sourceText || "").slice(0, 500),
+    actor: String(payload.actor || "Website").slice(0, 80),
+    note: String(payload.note || "").slice(0, 500),
   };
 }
 
@@ -201,15 +203,22 @@ function productTemplate(rows, sku) {
   return rows.find((row) => normalizeSku(row.sku) === sku) || null;
 }
 
+function transactionId(now, sku, warehouseId, index) {
+  const stamp = String(now || new Date().toISOString()).replace(/[-:.]/g, "").replace(/[^\dTZ]/g, "");
+  const safeSku = normalizeSku(sku).replace(/[^A-Z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return `stock-tx-${stamp}-${safeSku}-${warehouseId}-${index + 1}`;
+}
+
 function applyGithubStockUpdate(file, payload, options = {}) {
   const update = sanitizeStockUpdatePayload(payload);
   const snapshot = JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
   const rows = Array.isArray(snapshot.rows) ? snapshot.rows : [];
   const now = options.now || new Date().toISOString();
   const touched = [];
+  const transactions = [];
   const template = productTemplate(rows, update.sku) || {};
 
-  for (const allocation of update.allocations) {
+  for (const [index, allocation] of update.allocations.entries()) {
     let row = rows.find(
       (item) => normalizeSku(item.sku) === update.sku && String(item.warehouseId) === String(allocation.warehouseId)
     );
@@ -244,12 +253,30 @@ function applyGithubStockUpdate(file, payload, options = {}) {
     row.waiting = numberValue(row.waiting);
     row.waitImport = numberValue(row.waitImport);
     row.manualUpdatedAt = now;
-    row.manualUpdateSource = "AI Command";
-    row.manualUpdateNote = update.sourceText || "";
-    touched.push({ ...allocation, beforeQuantity, afterQuantity: nextQuantity });
+    row.manualUpdateSource = "Website Stock Adjustment";
+    row.manualUpdateNote = update.note || update.sourceText || "";
+    const transaction = {
+      id: transactionId(now, update.sku, allocation.warehouseId, index),
+      createdAt: now,
+      sku: update.sku,
+      warehouseId: allocation.warehouseId,
+      warehouseName: allocation.warehouseName,
+      operation: update.operation,
+      beforeQuantity,
+      inputQuantity: allocation.quantity,
+      afterQuantity: nextQuantity,
+      deltaQuantity: nextQuantity - beforeQuantity,
+      actor: update.actor,
+      note: update.note,
+      sourceText: update.sourceText,
+      source: WEBSITE_STOCK_SOURCE,
+    };
+    transactions.push(transaction);
+    touched.push({ ...allocation, beforeQuantity, afterQuantity: nextQuantity, transactionId: transaction.id });
   }
 
   snapshot.rows = rows;
+  snapshot.stockTransactions = [...transactions, ...(Array.isArray(snapshot.stockTransactions) ? snapshot.stockTransactions : [])].slice(0, 2000);
   snapshot.exportedAt = now;
   snapshot.syncDate = now.slice(0, 10);
   snapshot.rowCount = rows.length;
@@ -274,6 +301,7 @@ function applyGithubStockUpdate(file, payload, options = {}) {
     sku: update.sku,
     operation: update.operation,
     allocations: touched,
+    transactions,
     exportedAt: now,
     rowCount: snapshot.rowCount,
     uniqueSkuCount: snapshot.uniqueSkuCount,

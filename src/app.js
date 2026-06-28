@@ -2,12 +2,14 @@
   const data = window.__PACKHAI_DASHBOARD__;
   const rows = data.rows || [];
   const stockRows = rows.filter((row) => Number(row.quantity || 0) > 0);
+  const websiteStockTransactions = data.websiteStockTransactions || [];
   let stockMovementRows = data.stockMovements || [];
   const stockMovementsByStockShopId = new Map();
   let stockMovementLoadState = stockMovementRows.length ? "loaded" : "idle";
   let stockMovementLoadError = "";
   let stockMovementLoadPromise = null;
   let activeDetailRow = null;
+  let activeStockAdjustRow = null;
   const rowByDetailId = new Map();
   const detailIdByIdentity = new Map();
   function productIdentity(row) {
@@ -295,6 +297,104 @@
     return key ? stockMovementsByStockShopId.get(key) || [] : [];
   }
 
+  function isWebsiteStockWarehouse(row) {
+    return (
+      row?.stockSource === "Website Stock" &&
+      (String(row.warehouseId) === "491661" || String(row.warehouseId) === "491662")
+    );
+  }
+
+  function stockAdjustButton(row, className = "") {
+    if (!isWebsiteStockWarehouse(row)) return "";
+    return `
+      <button class="stock-adjust-button ${escapeHtml(className)}" type="button" data-stock-adjust-id="${escapeHtml(
+        detailIdForRow(row)
+      )}" title="ปรับจำนวน stock คงเหลือ">
+        ปรับ
+      </button>`;
+  }
+
+  function websiteStockTransactionsForRow(row) {
+    const sku = String(row?.sku || "").trim().toUpperCase();
+    if (!sku) return [];
+    const warehouseIds = new Set(
+      row?.isSkuGroup && Array.isArray(row.warehouseRows)
+        ? row.warehouseRows.filter(isWebsiteStockWarehouse).map((item) => String(item.warehouseId))
+        : isWebsiteStockWarehouse(row)
+        ? [String(row.warehouseId)]
+        : []
+    );
+    return websiteStockTransactions
+      .filter((item) => {
+        if (String(item.sku || "").trim().toUpperCase() !== sku) return false;
+        return !warehouseIds.size || warehouseIds.has(String(item.warehouseId));
+      })
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
+  function stockOperationText(operation) {
+    if (operation === "set") return "ตั้งยอด";
+    if (operation === "subtract") return "ลด";
+    return "เพิ่ม";
+  }
+
+  function websiteStockTransactionTable(row) {
+    const transactions = websiteStockTransactionsForRow(row).slice(0, 40);
+    if (!transactions.length) {
+      return `
+        <section class="detail-block detail-wide movement-history-block">
+          <div class="movement-history-head">
+            <div>
+              <h3>ประวัติการปรับ Website Stock</h3>
+              <p>ยังไม่มี transaction ที่บันทึกจากเว็บไซต์สำหรับ SKU นี้</p>
+            </div>
+            <span>0 รายการ</span>
+          </div>
+        </section>`;
+    }
+    return `
+      <section class="detail-block detail-wide movement-history-block">
+        <div class="movement-history-head">
+          <div>
+            <h3>ประวัติการปรับ Website Stock</h3>
+            <p>เก็บ transaction ทุกครั้งที่ปรับยอดคงเหลือของคลัง ซ.เจริญกิจ และ สุขสวัสดิ์</p>
+          </div>
+          <span>${fmtInt.format(transactions.length)} รายการล่าสุด</span>
+        </div>
+        <div class="movement-history-table-wrap">
+          <table class="movement-history-table stock-transaction-table">
+            <thead>
+              <tr>
+                <th>เวลา</th>
+                <th>คลัง</th>
+                <th>รายการ</th>
+                <th class="num">ก่อน</th>
+                <th class="num">หลัง</th>
+                <th class="num">เปลี่ยน</th>
+                <th>หมายเหตุ</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${transactions
+                .map(
+                  (item) => `
+                    <tr>
+                      <td><strong>${escapeHtml(formatDateTime(item.createdAt))}</strong><span>${escapeHtml(item.actor || "-")}</span></td>
+                      <td>${escapeHtml(item.warehouseName || "-")}</td>
+                      <td>${escapeHtml(stockOperationText(item.operation))}</td>
+                      <td class="num">${fmtQty.format(item.beforeQuantity || 0)}</td>
+                      <td class="num">${fmtQty.format(item.afterQuantity || 0)}</td>
+                      <td class="num">${fmtQty.format(item.deltaQuantity || 0)}</td>
+                      <td><span>${escapeHtml(item.note || item.sourceText || "-")}</span></td>
+                    </tr>`
+                )
+                .join("")}
+            </tbody>
+          </table>
+        </div>
+      </section>`;
+  }
+
   function pricePriority(row) {
     const priority = Number(row?.priceSourcePriority);
     return Number.isFinite(priority) ? priority : 99;
@@ -404,6 +504,7 @@
         <td class="warehouse-cell">
           <strong>${escapeHtml(row.stockSource || "-")}</strong>
           <span>${escapeHtml(row.warehouseName || "-")}</span>
+          ${stockAdjustButton(row, "inline")}
         </td>`;
     }
 
@@ -420,6 +521,7 @@
                 <span class="warehouse-chip" title="${escapeHtml(warehouseChipTitle(item))}">
                   <span>${escapeHtml(shortWarehouseName(item))}</span>
                   <strong>${fmtQty.format(item.quantity || 0)}</strong>
+                  ${stockAdjustButton(item, "chip")}
                 </span>
                 `
             )
@@ -451,6 +553,7 @@
                 <strong>${escapeHtml(item.warehouseName || "-")}</strong>
                 <div>${fmtQty.format(item.quantity || 0)} คงเหลือ · ${fmtQty.format(item.available || 0)} พร้อมขาย</div>
                 <small>${fmtBaht.format(item.inventoryValue || 0)} · ${escapeHtml(movementSummary(item))}</small>
+                ${stockAdjustButton(item, "detail")}
               </article>`
           )
           .join("")}
@@ -692,6 +795,7 @@
       </div>
 
       ${stockMovementHistoryTable(row)}
+      ${websiteStockTransactionTable(row)}
 
       <section class="detail-block detail-wide">
         <h3>ชื่อสินค้าจากแหล่งราคา</h3>
@@ -715,6 +819,82 @@
     modal.hidden = true;
     activeDetailRow = null;
     document.body.classList.remove("modal-open");
+  }
+
+  function renderStockAdjustStatus(type, message) {
+    const status = $("stockAdjustStatus");
+    if (!status) return;
+    status.hidden = !message;
+    status.className = `stock-adjust-status ${type || ""}`;
+    status.textContent = message || "";
+  }
+
+  function openStockAdjustModal(row) {
+    if (!isWebsiteStockWarehouse(row)) return;
+    activeStockAdjustRow = row;
+    const modal = $("stockAdjustModal");
+    const form = $("stockAdjustForm");
+    if (!modal || !form) return;
+    $("stockAdjustSku").textContent = row.sku || "-";
+    $("stockAdjustWarehouse").textContent = row.warehouseName || "-";
+    $("stockAdjustCurrent").textContent = `${fmtQty.format(row.quantity || 0)} หน่วย`;
+    $("stockAdjustQuantity").value = Number(row.quantity || 0);
+    $("stockAdjustNote").value = "";
+    renderStockAdjustStatus("", "");
+    modal.hidden = false;
+    document.body.classList.add("modal-open");
+    $("stockAdjustQuantity")?.focus();
+  }
+
+  function closeStockAdjustModal() {
+    const modal = $("stockAdjustModal");
+    if (!modal) return;
+    modal.hidden = true;
+    activeStockAdjustRow = null;
+    renderStockAdjustStatus("", "");
+    const detailOpen = $("productDetailModal") && !$("productDetailModal").hidden;
+    if (!detailOpen) document.body.classList.remove("modal-open");
+  }
+
+  async function submitStockAdjustment(event) {
+    event.preventDefault();
+    const row = activeStockAdjustRow;
+    if (!isWebsiteStockWarehouse(row)) return;
+    const quantityInput = $("stockAdjustQuantity");
+    const noteInput = $("stockAdjustNote");
+    const submitButton = $("stockAdjustSubmit");
+    const nextQuantity = Number(quantityInput?.value);
+    if (!Number.isFinite(nextQuantity) || nextQuantity < 0) {
+      renderStockAdjustStatus("failed", "กรุณาใส่จำนวน stock คงเหลือเป็นตัวเลข 0 ขึ้นไป");
+      return;
+    }
+    if (!ensureRemoteSyncConfig("flowaccount")) {
+      renderStockAdjustStatus("failed", "ยังบันทึกออนไลน์ไม่ได้ เพราะยังไม่มี Sync API URL ของ server");
+      return;
+    }
+    if (submitButton) submitButton.disabled = true;
+    renderStockAdjustStatus("running", "กำลังบันทึก transaction และ publish dashboard...");
+    try {
+      const response = await fetch(
+        expenseApiUrl("/api/github-stock/adjust"),
+        expenseFetchOptions("POST", {
+          sku: row.sku,
+          operation: "set",
+          actor: "Website Stock UI",
+          note: noteInput?.value || "",
+          sourceText: `Manual row adjustment for ${row.sku} at ${row.warehouseName}`,
+          allocations: [{ warehouseId: row.warehouseId, quantity: nextQuantity }],
+        })
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      renderStockAdjustStatus("passed", payload.message || "บันทึก stock สำเร็จ รอหน้าเว็บอัปเดตสักครู่");
+      setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
+    } catch (error) {
+      renderStockAdjustStatus("failed", `บันทึกไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
+    } finally {
+      if (submitButton) submitButton.disabled = false;
+    }
   }
 
   const syncLabels = {
@@ -2862,7 +3042,20 @@
     $("downloadCsv").addEventListener("click", exportCsv);
     $("printReport").addEventListener("click", () => window.print());
     $("closeProductDetail")?.addEventListener("click", closeProductDetail);
+    $("closeStockAdjust")?.addEventListener("click", closeStockAdjustModal);
+    $("stockAdjustForm")?.addEventListener("submit", submitStockAdjustment);
     document.addEventListener("click", (event) => {
+      const stockAdjustTarget = event.target.closest("[data-stock-adjust-id]");
+      if (stockAdjustTarget) {
+        event.preventDefault();
+        event.stopPropagation();
+        openStockAdjustModal(rowByDetailId.get(stockAdjustTarget.dataset.stockAdjustId));
+        return;
+      }
+      if (event.target.closest("[data-close-stock-adjust]")) {
+        closeStockAdjustModal();
+        return;
+      }
       if (event.target.closest("[data-close-detail]")) {
         closeProductDetail();
         return;
@@ -2873,6 +3066,7 @@
     });
     document.addEventListener("keydown", (event) => {
       if (event.key === "Escape") {
+        closeStockAdjustModal();
         closeProductDetail();
         return;
       }

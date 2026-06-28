@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-28T16:30:10.960Z",
+  "generatedAt": "2026-06-28T16:43:38.942Z",
   "type": "seller-payments",
   "ok": true,
   "warning": false,
@@ -9,7 +9,7 @@
     {
       "name": "Sync Seller order payments",
       "code": 0,
-      "output": "  \"ok\": true,\n  \"outputFile\": \"/home/runner/work/packhai-inventory-dashboard/packhai-inventory-dashboard/data/seller_compare/seller_order_payments.json\",\n  \"counts\": {\n    \"targetShopee\": 4430,\n    \"targetLazada\": 2195,\n    \"cachedBefore\": 4067,\n    \"requestedNew\": 1000,\n    \"fetchedNew\": 161,\n    \"totalOrders\": 4228,\n    \"errors\": 839\n  }\n}",
+      "output": "  \"ok\": true,\n  \"outputFile\": \"/home/runner/work/packhai-inventory-dashboard/packhai-inventory-dashboard/data/seller_compare/seller_order_payments.json\",\n  \"counts\": {\n    \"targetShopee\": 4430,\n    \"targetLazada\": 2195,\n    \"cachedBefore\": 4228,\n    \"requestedNew\": 1000,\n    \"fetchedNew\": 0,\n    \"totalOrders\": 4228,\n    \"errors\": 1000\n  }\n}",
       "error": ""
     },
     {

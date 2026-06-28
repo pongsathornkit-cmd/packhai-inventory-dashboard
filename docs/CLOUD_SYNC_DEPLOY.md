@@ -54,7 +54,7 @@ npm run auth:export
 หรือรวม env ทั้งหมดสำหรับ cloud เป็นไฟล์เดียว:
 
 ```bash
-npm run cloud:env -- --public-sync-api-base https://YOUR-SYNC-SERVER
+npm run cloud:env -- --public-sync-api-base https://YOUR-SYNC-SERVER --github-token-from-gh
 ```
 
 คำสั่งนี้จะสร้าง `.tmp/cloud-sync.env` จาก token/session local และไม่แสดงค่าลับบนหน้าจอ

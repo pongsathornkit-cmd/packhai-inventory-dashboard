@@ -18,6 +18,9 @@ test("prepare-cloud-env writes the env keys required by the cloud sync server", 
   assert.match(source, /SHOPEE_STORAGE_STATE_B64/);
   assert.match(source, /LAZADA_STORAGE_STATE_B64/);
   assert.match(source, /FLOWACCOUNT_STORAGE_STATE_B64/);
+  assert.match(source, /--github-token-from-gh/);
+  assert.match(source, /gh",\s*\["auth",\s*"token"\]/);
+  assert.match(source, /githubTokenSource/);
   assert.match(source, /missingRequired/);
   assert.match(source, /\.tmp.*cloud-sync\.env/s);
   assert.equal(packageJson.scripts["cloud:env"], "node scripts/prepare-cloud-env.cjs");

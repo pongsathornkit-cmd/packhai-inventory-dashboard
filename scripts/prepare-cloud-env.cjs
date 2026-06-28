@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { spawnSync } = require("child_process");
 
 const projectRoot = path.resolve(__dirname, "..");
 const defaultOutput = path.join(projectRoot, ".tmp", "cloud-sync.env");
@@ -11,12 +12,14 @@ function parseArgs(argv) {
     output: defaultOutput,
     publicSyncApiBase: "",
     githubToken: "",
+    githubTokenFromGh: false,
   };
   for (let i = 0; i < argv.length; i += 1) {
     const item = argv[i];
     if (item === "--output") args.output = path.resolve(argv[++i] || defaultOutput);
     else if (item === "--public-sync-api-base") args.publicSyncApiBase = argv[++i] || "";
     else if (item === "--github-token") args.githubToken = argv[++i] || "";
+    else if (item === "--github-token-from-gh") args.githubTokenFromGh = true;
   }
   return args;
 }
@@ -46,9 +49,24 @@ function formatEnvValue(value) {
   return String(value || "").replace(/\r?\n/g, "");
 }
 
+function readGithubTokenFromGh() {
+  const result = spawnSync("gh", ["auth", "token"], {
+    cwd: projectRoot,
+    encoding: "utf8",
+    windowsHide: true,
+  });
+  if (result.status !== 0) return "";
+  return String(result.stdout || "").trim();
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const authStateEnv = readEnvFile(authStateEnvFile);
+  const githubToken =
+    args.githubToken ||
+    process.env.GITHUB_TOKEN ||
+    process.env.GH_TOKEN ||
+    (args.githubTokenFromGh ? readGithubTokenFromGh() : "");
   const env = {
     HOST: "0.0.0.0",
     SELLER_HEADLESS: "1",
@@ -60,7 +78,7 @@ function main() {
     SELLER_SESSION_DIR: "/app/storage/browser-profiles/lazada",
     PACKHAI_AUTH_TOKEN: process.env.PACKHAI_AUTH_TOKEN || readSecretFile(packhaiTokenFile),
     PUBLIC_SYNC_API_BASE: args.publicSyncApiBase || process.env.PUBLIC_SYNC_API_BASE || "",
-    GITHUB_TOKEN: args.githubToken || process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "",
+    GITHUB_TOKEN: githubToken,
     SHOPEE_STORAGE_STATE_B64: authStateEnv.SHOPEE_STORAGE_STATE_B64 || process.env.SHOPEE_STORAGE_STATE_B64 || "",
     LAZADA_STORAGE_STATE_B64: authStateEnv.LAZADA_STORAGE_STATE_B64 || process.env.LAZADA_STORAGE_STATE_B64 || "",
     FLOWACCOUNT_STORAGE_STATE_B64:
@@ -95,6 +113,15 @@ function main() {
           required: required.includes(key),
         })),
         missingRequired: required.filter((key) => !String(env[key] || "")),
+        githubTokenSource: githubToken
+          ? args.githubToken
+            ? "argument"
+            : process.env.GITHUB_TOKEN || process.env.GH_TOKEN
+            ? "environment"
+            : args.githubTokenFromGh
+            ? "gh"
+            : ""
+          : "",
       },
       null,
       2

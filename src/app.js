@@ -806,7 +806,7 @@
     syncButtons().forEach((button) => {
       button.classList.toggle("is-static", enabled);
       if (enabled) {
-        button.title = "ดูสถานะ Auto Sync และรีเฟรชข้อมูลล่าสุด";
+        button.title = "ดูสถานะ Auto Sync ล่าสุด ปุ่มนี้ไม่ได้เริ่ม Sync ใหม่ทันที";
         button.setAttribute("aria-label", `${button.textContent.trim()} - Auto Sync status`);
       } else {
         button.title = syncDefaultTitles[button.id] || button.title;
@@ -843,10 +843,16 @@
   }
 
   function bindStaticSyncActions() {
-    $("syncStatus")?.querySelector("[data-sync-run-refresh]")?.addEventListener("click", () => {
+    $("syncStatus")?.querySelector("[data-sync-run-refresh]")?.addEventListener("click", (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "กำลังตรวจสถานะ...";
       loadGitHubSyncStatus(lastStaticSyncType, true);
     });
-    $("syncStatus")?.querySelector("[data-dashboard-refresh]")?.addEventListener("click", () => {
+    $("syncStatus")?.querySelector("[data-dashboard-refresh]")?.addEventListener("click", (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "กำลังโหลดข้อมูล...";
       const freshUrl = `${window.location.pathname}?v=${Date.now()}${window.location.hash || ""}`;
       window.location.href = freshUrl;
     });
@@ -866,11 +872,12 @@
       <div>
         <strong>Auto Sync เปิดใช้งาน · ${escapeHtml(label)}</strong>
         <span>ระบบ Sync ข้อมูลทั้งหมดอัตโนมัติบน Cloud ทุก 2 ชั่วโมงช่วง 09:00-19:00 ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
+        <span>ตอนนี้ปุ่มบน GitHub Pages ใช้ดูสถานะและรีเฟรชข้อมูลล่าสุดเท่านั้น ยังไม่ได้เริ่ม Sync ใหม่ทันทีจาก browser</span>
         <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}${escapeHtml(runMessage)}</small>
       </div>
       <div class="sync-status-actions">
         <button class="sync-status-primary" type="button" data-dashboard-refresh>รีเฟรชข้อมูลล่าสุด</button>
-        <button type="button" data-sync-run-refresh>ตรวจสถานะ Auto Sync</button>
+        <button type="button" data-sync-run-refresh>${githubSyncStatusLoading ? "กำลังตรวจสถานะ..." : "ตรวจสถานะ Auto Sync"}</button>
       </div>`;
     bindStaticSyncActions();
     if (staticReportHost && !githubSyncStatusCache && !githubSyncStatusLoading) {
@@ -924,6 +931,7 @@
   function openStaticSyncStatus(type) {
     renderStaticSyncNotice(type);
     loadGitHubSyncStatus(type, true);
+    $("syncStatus")?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   function renderSyncReadiness(status) {

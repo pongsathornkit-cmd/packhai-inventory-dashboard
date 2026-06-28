@@ -115,6 +115,8 @@ test("online dashboard shows sync setup notice when no public sync API is config
   assert.match(appSource, /Auto Sync/);
   assert.match(appSource, /รีเฟรชข้อมูลล่าสุด/);
   assert.match(appSource, /ตรวจสถานะ Auto Sync/);
+  assert.match(appSource, /ไม่ได้เริ่ม Sync ใหม่ทันที/);
+  assert.match(appSource, /scrollIntoView/);
   assert.doesNotMatch(appSource, /local sync only/);
   assert.doesNotMatch(appSource, /githubSyncWorkflowUrl/);
   assert.doesNotMatch(appSource, /https:\/\/github\.com\/[^"']*actions\/workflows/);

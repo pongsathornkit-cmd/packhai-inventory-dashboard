@@ -58,6 +58,15 @@ test("dashboard exposes a dedicated sync path for platform collection payments",
   assert.match(appSource, /startSync\("seller-payments"\)/);
 });
 
+test("sync server exposes a health endpoint for cloud hosting checks", () => {
+  const serverSource = readRepoFile("scripts/serve-dashboard.cjs");
+  const renderSource = readRepoFile("render.yaml");
+
+  assert.match(serverSource, /url\.pathname\s*===\s*"\/api\/health"/);
+  assert.match(serverSource, /sendJson\(res,\s*200,\s*\{\s*ok:\s*true/);
+  assert.match(renderSource, /healthCheckPath:\s*\/api\/health/);
+});
+
 test("online dashboard clears stale sync API URL when a remote fetch fails", () => {
   const appSource = readRepoFile("src/app.js");
 

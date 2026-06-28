@@ -608,6 +608,16 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/health") {
+    sendJson(res, 200, {
+      ok: true,
+      service: "packhai-inventory-dashboard",
+      syncRunning: syncState.running,
+      checkedAt: new Date().toISOString(),
+    });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/sync/status") {
     if (!syncAuthorized(req, res)) return;
     sendJson(res, 200, publicSyncState());

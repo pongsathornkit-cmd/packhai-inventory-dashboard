@@ -3,6 +3,7 @@ services:
     name: packhai-inventory-dashboard
     runtime: docker
     plan: starter
+    healthCheckPath: /api/health
     disk:
       name: packhai-sync-storage
       mountPath: /app/storage

@@ -5,7 +5,7 @@ const {
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
 } = require("./seller-order-payment-core.cjs");
-const { normalizePublicSyncApiBase } = require("./sync-api-base-core.cjs");
+const { selectPublicSyncApiBase } = require("./sync-api-base-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -60,14 +60,17 @@ function readOptionalJson(file, fallback) {
 }
 
 function readPublicSyncApiBase() {
-  if (process.env.PUBLIC_SYNC_API_BASE) {
-    return normalizePublicSyncApiBase(process.env.PUBLIC_SYNC_API_BASE, { source: "env" });
-  }
+  let localFileSyncApiBase = "";
   try {
-    return normalizePublicSyncApiBase(fs.readFileSync(localSyncApiBaseFile, "utf8"), { source: "local-file" });
+    localFileSyncApiBase = fs.readFileSync(localSyncApiBaseFile, "utf8");
   } catch {
-    return "";
+    localFileSyncApiBase = "";
   }
+  return selectPublicSyncApiBase({
+    publicSyncApiBase: process.env.PUBLIC_SYNC_API_BASE,
+    renderExternalUrl: process.env.RENDER_EXTERNAL_URL,
+    localFileSyncApiBase,
+  });
 }
 
 function numberValue(value) {

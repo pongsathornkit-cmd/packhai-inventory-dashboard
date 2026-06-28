@@ -51,6 +51,15 @@ npm run auth:export
 - `LAZADA_STORAGE_STATE_B64`
 - `FLOWACCOUNT_STORAGE_STATE_B64`
 
+หรือรวม env ทั้งหมดสำหรับ cloud เป็นไฟล์เดียว:
+
+```bash
+npm run cloud:env -- --public-sync-api-base https://YOUR-SYNC-SERVER
+```
+
+คำสั่งนี้จะสร้าง `.tmp/cloud-sync.env` จาก token/session local และไม่แสดงค่าลับบนหน้าจอ
+ไฟล์นี้มี secrets เต็ม ห้าม commit หรือส่งใน chat
+
 ถ้า storage state หมดอายุ งานส่วนนั้นจะขึ้น warning และใช้ข้อมูลล่าสุดที่มีอยู่แทน
 ต้อง export ใหม่เมื่อ session ของ platform หมดอายุ
 

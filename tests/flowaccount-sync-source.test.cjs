@@ -66,6 +66,14 @@ test("online dashboard clears stale sync API URL when a remote fetch fails", () 
   assert.match(appSource, /renderSyncApiBaseFailure\(type,\s*error\)/);
 });
 
+test("online dashboard ignores saved temporary tunnel URLs and does not prompt users for sync setup", () => {
+  const appSource = readRepoFile("src/app.js");
+
+  assert.match(appSource, /function\s+isEphemeralSyncApiBase/);
+  assert.match(appSource, /isEphemeralSyncApiBase\(storedSyncApiBase\)/);
+  assert.doesNotMatch(appSource, /window\.prompt/);
+});
+
 test("online dashboard shows sync setup notice when no public sync API is configured", () => {
   const appSource = readRepoFile("src/app.js");
 

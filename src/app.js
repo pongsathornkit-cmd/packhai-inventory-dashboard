@@ -735,9 +735,13 @@
     syncSeller: "Sync Seller prices",
     syncSellerPayments: "Sync seller platform collection payments",
   };
-  let remoteSyncApiBase = normalizeSyncApiBase(
-    window.__PACKHAI_SYNC_API_BASE__ || localStorage.getItem("packhaiSyncApiBase") || ""
-  );
+  const embeddedSyncApiBase = normalizeSyncApiBase(window.__PACKHAI_SYNC_API_BASE__ || "");
+  const storedSyncApiBase = normalizeSyncApiBase(localStorage.getItem("packhaiSyncApiBase") || "");
+  if (staticReportHost && !embeddedSyncApiBase && isEphemeralSyncApiBase(storedSyncApiBase)) {
+    localStorage.removeItem("packhaiSyncApiBase");
+  }
+  let remoteSyncApiBase =
+    embeddedSyncApiBase || (staticReportHost && isEphemeralSyncApiBase(storedSyncApiBase) ? "" : storedSyncApiBase);
   if (remoteSyncApiBase) {
     localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
   }
@@ -745,6 +749,14 @@
 
   function normalizeSyncApiBase(value) {
     return String(value || "").trim().replace(/\/+$/, "");
+  }
+
+  function isEphemeralSyncApiBase(value) {
+    try {
+      return /\.trycloudflare\.com$/i.test(new URL(value).hostname);
+    } catch {
+      return false;
+    }
   }
 
   function syncApiUrl(path) {
@@ -814,15 +826,9 @@
   function ensureRemoteSyncConfig(type) {
     if (!staticReportHost) return true;
     if (!remoteSyncApiBase) {
-      const base = window.prompt("ใส่ Sync API URL จากเครื่องหลัก เช่น https://xxxx.trycloudflare.com");
-      if (!base) {
-        syncApiUnavailable = true;
-        renderStaticSyncNotice(type);
-        return false;
-      }
-      remoteSyncApiBase = normalizeSyncApiBase(base);
-      localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
-      syncApiUnavailable = false;
+      syncApiUnavailable = true;
+      renderStaticSyncNotice(type);
+      return false;
     }
     setStaticSyncMode(false);
     return true;

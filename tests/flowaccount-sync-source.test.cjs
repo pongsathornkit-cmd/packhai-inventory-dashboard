@@ -65,3 +65,9 @@ test("online dashboard clears stale sync API URL when a remote fetch fails", () 
   assert.match(appSource, /localStorage\.removeItem\("packhaiSyncApiBase"\)/);
   assert.match(appSource, /renderSyncApiBaseFailure\(type,\s*error\)/);
 });
+
+test("online dashboard shows sync setup notice when no public sync API is configured", () => {
+  const appSource = readRepoFile("src/app.js");
+
+  assert.match(appSource, /if\s*\(syncApiUnavailable\)\s*{\s*renderStaticSyncNotice\("seller-payments"\);/);
+});

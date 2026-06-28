@@ -2762,7 +2762,7 @@
   bindExpenseEvents();
   updateRouteState();
   if (syncApiUnavailable) {
-    setStaticSyncMode(true);
+    renderStaticSyncNotice("seller-payments");
   } else {
     getSyncStatus(false);
   }

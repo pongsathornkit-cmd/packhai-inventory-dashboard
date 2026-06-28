@@ -42,6 +42,7 @@ test("GitHub Actions sync workflow decrypts env and runs sync job", () => {
   assert.match(workflow, /run-sync-job\.cjs/);
   assert.match(workflow, /payment_batch_size/);
   assert.match(workflow, /github\.event_name == 'schedule'/);
+  assert.match(workflow, /github\.event_name == 'schedule' && '200'/);
   assert.match(workflow, /SELLER_ORDER_PAYMENT_MAX_NEW:\s*\$\{\{[^}]*inputs\.payment_batch_size[^}]*\}\}/);
   assert.match(workflow, /contents: write/);
   assert.match(workflow, /pages: write/);

@@ -6,7 +6,7 @@ on:
       sync_type:
         description: Sync job to run
         required: true
-        default: seller-payments
+        default: all
         type: choice
         options:
           - all
@@ -17,10 +17,11 @@ on:
       payment_batch_size:
         description: Max new seller payment orders per run. Use 0 for all remaining orders.
         required: true
-        default: "25"
+        default: "200"
         type: string
   schedule:
-    # 09:00, 11:00, 13:00, 15:00, 17:00, 19:00 Thailand time.
+    # Public dashboard users do not run this manually. The schedule syncs all sources
+    # at 09:00, 11:00, 13:00, 15:00, 17:00, 19:00 Thailand time.
     - cron: "0 2-13/2 * * *"
 
 permissions:
@@ -44,7 +45,7 @@ jobs:
       GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       SELLER_HEADLESS: "1"
       SYNC_REQUIRE_KEY: "0"
-      SELLER_ORDER_PAYMENT_MAX_NEW: ${{ github.event_name == 'schedule' && '25' || inputs.payment_batch_size || '25' }}
+      SELLER_ORDER_PAYMENT_MAX_NEW: ${{ github.event_name == 'schedule' && '200' || inputs.payment_batch_size || '200' }}
       PACKHAI_CLOUD_ENV_FILE: ${{ github.workspace }}/.tmp/github-actions-sync.env
     steps:
       - name: Checkout

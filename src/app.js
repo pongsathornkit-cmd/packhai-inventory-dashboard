@@ -728,8 +728,6 @@
   let syncPollTimer = null;
   let syncStartedHere = false;
   const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
-  const githubSyncWorkflowUrl =
-    "https://github.com/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml";
   const githubSyncRunsApiUrl =
     "https://api.github.com/repos/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml/runs?per_page=1";
   let lastStaticSyncType = "all";
@@ -817,17 +815,17 @@
   }
 
   function githubSyncWorkflowHint(type) {
-    if (type === "seller-payments") return "ระบบทยอยอัปเดตยอดเก็บเงิน Platform อัตโนมัติ";
+    if (type === "seller-payments") return "ระบบอัปเดตยอดเก็บเงิน Platform อัตโนมัติ และไล่ย้อนหลังต่อเนื่องจนกว่าจะครบ";
     if (type === "flowaccount") return "ระบบอัปเดตคลัง ซ.เจริญกิจ / สุขสวัสดิ์ อัตโนมัติ";
     if (type === "packhai") return "ระบบอัปเดตคลัง Packhai และ stock movement อัตโนมัติ";
     if (type === "seller") return "ระบบอัปเดตราคาขาย Shopee/Lazada อัตโนมัติ";
-    return "ระบบอัปเดต Packhai, FlowAccount, ราคาขาย และยอดเก็บเงินเป็นรอบ";
+    return "ระบบ Sync ทั้งหมดอัตโนมัติ: Packhai, FlowAccount, ราคาขาย และยอดเก็บเงิน Platform";
   }
 
   function githubRunLabel(run) {
     if (!run) return "ยังไม่ได้อ่านสถานะล่าสุด";
     const timeText = formatSyncTime(run.updated_at || run.run_started_at || run.created_at);
-    if (run.status !== "completed") return `กำลังรันบน GitHub Actions · ${timeText || "กำลังประมวลผล"}`;
+    if (run.status !== "completed") return `กำลังรันบน Cloud · ${timeText || "กำลังประมวลผล"}`;
     if (run.conclusion === "success") return `ล่าสุดสำเร็จ · ${timeText}`;
     if (run.conclusion === "cancelled") return `ล่าสุดถูกยกเลิก · ${timeText}`;
     return `ล่าสุดไม่สำเร็จ · ${timeText}`;
@@ -859,19 +857,16 @@
     el.hidden = false;
     el.className = `sync-status ${githubSyncStatusLoading ? "running" : githubRunClass(run)}`;
     const label = syncLabels[type] || "Sync data";
-    const runStatus = githubSyncStatusLoading ? "กำลังอ่านสถานะ GitHub Actions..." : githubRunLabel(run);
-    const runLink = run?.html_url || githubSyncWorkflowUrl;
+    const runStatus = githubSyncStatusLoading ? "กำลังอ่านสถานะ Auto Sync..." : githubRunLabel(run);
     el.innerHTML = `
       <div>
         <strong>Auto Sync เปิดใช้งาน · ${escapeHtml(label)}</strong>
-        <span>ระบบอัปเดตเองบน GitHub ทุก 2 ชั่วโมงช่วง 09:00-19:00 ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
+        <span>ระบบ Sync ข้อมูลทั้งหมดอัตโนมัติบน Cloud ทุก 2 ชั่วโมงช่วง 09:00-19:00 ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
         <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}</small>
       </div>
       <div class="sync-status-actions">
         <button class="sync-status-primary" type="button" data-dashboard-refresh>รีเฟรชข้อมูลล่าสุด</button>
         <button type="button" data-sync-run-refresh>ตรวจสถานะ Auto Sync</button>
-        <a href="${runLink}" target="_blank" rel="noopener">ดู run ล่าสุด</a>
-        <a href="${githubSyncWorkflowUrl}" target="_blank" rel="noopener">Manual Sync</a>
       </div>`;
     bindStaticSyncActions();
     if (staticReportHost && !githubSyncStatusCache && !githubSyncStatusLoading) {
@@ -896,13 +891,12 @@
         status: "completed",
         conclusion: "failure",
         updated_at: new Date().toISOString(),
-        html_url: githubSyncWorkflowUrl,
       };
       renderStaticSyncNotice(type, githubSyncStatusCache);
     }
   }
 
-  function openGitHubSyncWorkflow(type) {
+  function openStaticSyncStatus(type) {
     renderStaticSyncNotice(type);
     loadGitHubSyncStatus(type, true);
   }
@@ -1074,7 +1068,7 @@
 
   async function startSync(type) {
     if (!ensureRemoteSyncConfig(type)) {
-      if (staticReportHost) openGitHubSyncWorkflow(type);
+      if (staticReportHost) openStaticSyncStatus(type);
       return;
     }
     if (syncApiUnavailable) {

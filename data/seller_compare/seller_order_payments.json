@@ -1,15 +1,15 @@
 {
-  "exportedAt": "2026-06-28T11:25:39.586Z",
+  "exportedAt": "2026-06-28T11:42:26.563Z",
   "source": "Seller platform order payments",
   "rule": "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
   "counts": {
     "targetShopee": 4430,
     "targetLazada": 2195,
-    "cachedBefore": 30,
+    "cachedBefore": 207,
     "requestedNew": 200,
-    "fetchedNew": 177,
-    "totalOrders": 207,
-    "errors": 23
+    "fetchedNew": 151,
+    "totalOrders": 358,
+    "errors": 49
   },
   "errors": [
     "Shopee 260628961KN9A4: payment not found",
@@ -34,9 +34,2120 @@
     "Shopee 260624UVT2XBR8: payment not found",
     "Shopee 260624V2WCCXRH: payment not found",
     "Shopee 260623SC863G60: payment not found",
-    "Shopee 260623SHANJAU3: payment not found"
+    "Shopee 260623SHANJAU3: payment not found",
+    "Shopee 260622R8HM5PQU: payment not found",
+    "Shopee 260621N75RJPU6: payment not found",
+    "Shopee 260621NC108CX9: payment not found",
+    "Shopee 260622PU24NUWW: payment not found",
+    "Shopee 260621NVGQ0KSG: payment not found",
+    "Shopee 260622PTXXKQCC: payment not found",
+    "Shopee 260621NU1USXV8: payment not found",
+    "Shopee 260621NV7H6RPR: payment not found",
+    "Shopee 260621NVCQ5D11: payment not found",
+    "Shopee 260622PYBKXEJR: payment not found",
+    "Shopee 260620K1SC1CVC: payment not found",
+    "Shopee 260621M67TVK4E: payment not found",
+    "Shopee 260620JXQRR6B3: payment not found",
+    "Shopee 260621MQH1UTKJ: payment not found",
+    "Shopee 260620JASV9210: payment not found",
+    "Shopee 260620JJWHN3B8: payment not found",
+    "Shopee 260621M73B3WB1: payment not found",
+    "Shopee 260621KHU0KW5G: payment not found",
+    "Shopee 260620K81C4162: payment not found",
+    "Shopee 260619GP0FB803: payment not found",
+    "Shopee 260619FPHHK4CP: payment not found",
+    "Shopee 260618DC14XKSE: payment not found",
+    "Shopee 260618DAPUMUSU: payment not found",
+    "Shopee 260618D69BK9Q8: payment not found",
+    "Shopee 260617BAD768G3: payment not found",
+    "Shopee 260618CQ2GCC6X: payment not found"
   ],
   "orders": [
+    {
+      "platform": "Shopee",
+      "orderNo": "2606155RFX09AT",
+      "collectedAmount": 7191,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:03.752Z",
+      "orderId": 235198103278938,
+      "items": [
+        {
+          "name": "Prasertsteel SHT-30 พัดลมดูดเป่า 12 นิ้ว ถ่ายเทความร้อน ลดกลิ่นควันได้อย่างมีประสิทธิภาพ ( P231-0070 )",
+          "skuText": "ตัวเลือกสินค้า: เครื่อง+ท่อลม 10เมตร [P231-0070 SHT-30and10M]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AUHAVWDD",
+      "collectedAmount": 94,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:17.125Z",
+      "orderId": 235373170271661,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1620 ) ULTRA ใบเลื่อยตัดเหล็ก 4” (105 MM) X 24T(สินค้าพร้อมจัดส่งทันที) ของแท้ 100% การันตี",
+          "skuText": "[M312-1620 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AUJ2P04W",
+      "collectedAmount": 268,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:09.298Z",
+      "orderId": 235373195210909,
+      "items": [
+        {
+          "name": "Prasertsteel พลั่วหนีบดิน สีดำ (1 ชิ้น)",
+          "skuText": "[21425 ]",
+          "amount": 1
+        },
+        {
+          "name": "INGCO ( (Prosale)CHPTB8702 ) แปรงทาสีด้ามพลาสติก ขนาด 2\" รุ่นงานอุตสาหกรรม",
+          "skuText": "[69484 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AVPBBUD0",
+      "collectedAmount": 89,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:21.918Z",
+      "orderId": 235374412275104,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AVPMUK1B",
+      "collectedAmount": 506,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:11.975Z",
+      "orderId": 235374422228011,
+      "items": [
+        {
+          "name": "มาราธอน รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200 ( M327-2025 )",
+          "skuText": "[M327-2025 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AW1X99J0",
+      "collectedAmount": 297,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:24.139Z",
+      "orderId": 235374801212992,
+      "items": [
+        {
+          "name": "FORCE ( F131-80531MPP ) ข้อต่ออ่อนเครื่องมือชนิดเดือย (3/8 นิ้ว",
+          "skuText": "[F131-80531MPP ]",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AW7A01CK",
+      "collectedAmount": 105,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:18.651Z",
+      "orderId": 235374981264787,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617AYDTCUBC",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:21.198Z",
+      "orderId": 235377347272044,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617B440UJHE",
+      "collectedAmount": 432,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:16.409Z",
+      "orderId": 235382387210798,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1620 ) ULTRA ใบเลื่อยตัดเหล็ก 4” (105 MM) X 24T(สินค้าพร้อมจัดส่งทันที) ของแท้ 100% การันตี",
+          "skuText": "[M312-1620 ]",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617B55952BE",
+      "collectedAmount": 1204,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:10.496Z",
+      "orderId": 235383503206766,
+      "items": [
+        {
+          "name": "มาราธอน รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200 ( M327-2025 )",
+          "skuText": "[M327-2025 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617B6G3MQVK",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:17.860Z",
+      "orderId": 235384940269459,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617B8U7V6BU",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:22.656Z",
+      "orderId": 235387461290363,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617BBMF5YEK",
+      "collectedAmount": 2951,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:25.597Z",
+      "orderId": 235390455295443,
+      "items": [
+        {
+          "name": "MACRO MM491G ขัดกระดาษทรายสายพาน/จาน 4นิ้วX 6นิ้ว สำหรับงานขัดทั่วไป มีแท่นขัดทั้งแบบสายพานและแบบแป้นขัด",
+          "skuText": "[P281-MM491G ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617BC3RBN4A",
+      "collectedAmount": 634,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:19.381Z",
+      "orderId": 235390968235146,
+      "items": [
+        {
+          "name": "MAKITA ( MP5416019001 ) อะไหล่RBC-411#135คาร์บูเรเตอร์(161445-8)",
+          "skuText": "[MP5416019001 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617BE6V261B",
+      "collectedAmount": 118,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:20.441Z",
+      "orderId": 235393220266027,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617BFU4T8XP",
+      "collectedAmount": 578,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:26.347Z",
+      "orderId": 235394974274518,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260617BQYC98U2",
+      "collectedAmount": 624,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:11.246Z",
+      "orderId": 235403706258274,
+      "items": [
+        {
+          "name": "POLO PID138501 สว่านกระแทกไฟฟ้า ขนาดเจาะสูงสุด 13 มม.(1/2 นิ้ว) กำลังไฟ 850 วัตต์ (P651-PID138501)",
+          "skuText": "[P651-PID138501 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618BY9SV41X",
+      "collectedAmount": 568,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:12.721Z",
+      "orderId": 235411572244542,
+      "items": [
+        {
+          "name": "มาราธอน รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200 ( M327-2025 )",
+          "skuText": "[M327-2025 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618C00GJKD2",
+      "collectedAmount": 870,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:13.515Z",
+      "orderId": 235412334247330,
+      "items": [
+        {
+          "name": "POLO อะไหล่ เซ็ตปั๊มพร้อมชุดเกียร์ ใช้กับเครื่องฉีดน้ำแรงดันสูง รุ่น WARRIOR-102L ( P172-W102-SETB )สินค้าพร้อมจัดส่งทัน",
+          "skuText": "[P172-W102-SETB ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618C6QQ182N",
+      "collectedAmount": 75,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:15.676Z",
+      "orderId": 235419555221589,
+      "items": [
+        {
+          "name": "MAKITA มากีต้า MP002705B D-74728 ดอกสว่าน SDS (4ดอก/ชุด) กล่องใส D-74728 SDS PLUS DRILL BIT SET (4PC/SET) Code D-74728",
+          "skuText": "[MP002705B ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618CQA7CU3Y",
+      "collectedAmount": 150,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:24.840Z",
+      "orderId": 235437356227711,
+      "items": [
+        {
+          "name": "ตลับเมตร KDS 5 เมตร รุ่น NEO LOCK",
+          "skuText": "[222 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618CU8XD6P0",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:23.415Z",
+      "orderId": 235441608215232,
+      "items": [
+        {
+          "name": "SRI หัวปากกาอัดไม้ # 3 1 อัน (สินค้าพร้อมจัดส่งทันที) เหล็กแข็งแรง การันตี คุณภาพอย่างดี (MAX60-70/month)",
+          "skuText": "[84502 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618CURF8J1G",
+      "collectedAmount": 521,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:14.238Z",
+      "orderId": 235442129205296,
+      "items": [
+        {
+          "name": "Haitun PC-13A สวิทซ์ควบคุมปั้มน้ำอัตโนมัติแบบมีเกจ มาพร้อมกับเกจวัดแรงดันในตัว (พร้อมจัดส่งทันที) ( LS-3 )",
+          "skuText": "ตัวเลือกสินค้า: สีน้ำเงิน( LS-3 ) [15901_Blue 15901_Blue]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618CV7JUCDP",
+      "collectedAmount": 179,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "ยกเลิกแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:14.937Z",
+      "orderId": 235442636284342,
+      "items": [
+        {
+          "name": "TSK รอกเชือกสีเขียวตะขอ (ล้อเดี่ยว) ขนาด 3 นิ้ว รับน้ำหนักได้ 400 กิโลกรัม ใช้สำหรับร้อยเชือกดึงสิ่งของต่างๆจากที่ต่ำ.",
+          "skuText": "[T571-0005 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618D11P7SR6",
+      "collectedAmount": 799,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:05.996Z",
+      "orderId": 235447807219462,
+      "items": [
+        {
+          "name": "MARATHON ( FD-C2000 ) รอกมือหมุน ความสามารถในการยกหรือลาก : 900 kgs ความยาวของสายสลิง : 10 เมตร",
+          "skuText": "[M327-2010 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618D11P7SR7",
+      "collectedAmount": 2397,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:05.228Z",
+      "orderId": 235447807219463,
+      "items": [
+        {
+          "name": "MARATHON ( FD-C2000 ) รอกมือหมุน ความสามารถในการยกหรือลาก : 900 kgs ความยาวของสายสลิง : 10 เมตร",
+          "skuText": "[M327-2010 ]",
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618D1VWVQAA",
+      "collectedAmount": 2204,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:04.497Z",
+      "orderId": 235448721214794,
+      "items": [
+        {
+          "name": "MARATHON YH-WT006 โต๊ะเครื่องมือช่าง ขนาด 1210X610X1500 MM รับประกันสินค้า 1 ปี ( M325-0020 ) Max100kg พร้อมจัดส่งทันที",
+          "skuText": "[P551-0020 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618D6T6FNN2",
+      "collectedAmount": 563,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:07.465Z",
+      "orderId": 235453998270114,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618D6T99X6U",
+      "collectedAmount": 169,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:08.554Z",
+      "orderId": 235454001227995,
+      "items": [
+        {
+          "name": "🔥ลดเพิ่ม 120 ใส่โค้ด INCL8M3🔥 FORCE ( F131-24406012 ) ลูกบ๊อกเดือยหกเหลี่ยม1/2 เบอร์12",
+          "skuText": "[F131-24406012 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618D8D7671G",
+      "collectedAmount": 116,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:06.736Z",
+      "orderId": 235455710284848,
+      "items": [
+        {
+          "name": "Double Elephant ประเภท: เกรียงหวี (Notched Trowel) เหล็ก SK-5 สไตล์: U.S.A. Style มาตรฐาน: ISO 9001:2000 คุณสมบัติ: ด.",
+          "skuText": "[7930 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DAYUNJ0H",
+      "collectedAmount": 671,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:02.995Z",
+      "orderId": 235458483222545,
+      "items": [
+        {
+          "name": "🔥ลดเพิ่ม 120 ใส่โค้ด INCL8M3🔥 MAKITA ( MP5416019001 ) อะไหล่RBC-411#135คาร์บูเรเตอร์(161445-8)",
+          "skuText": "[MP5416019001 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DBKRPRK1",
+      "collectedAmount": 189,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:59.351Z",
+      "orderId": 235459151204961,
+      "items": [
+        {
+          "name": "FORCE ( F131-81032 ) ที่จับดอกไขควง 3/8 F X 1/4 F (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% การันตี คุณภาพอย่างดี",
+          "skuText": "[F131-81032 ]",
+          "amount": 1
+        },
+        {
+          "name": "FORCE ( F131-80531MPP ) ข้อต่ออ่อนเครื่องมือชนิดเดือย (3/8 นิ้ว",
+          "skuText": "[F131-80531MPP ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DCJF27SX",
+      "collectedAmount": 370,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:56.467Z",
+      "orderId": 235460181282622,
+      "items": [
+        {
+          "name": "FORCE ( F131-4155 ) ชุดลูกบ็อกซ์เดือยหกเหลี่ยม 15 ชิ้น ยาว 75มม.",
+          "skuText": "[F131-4155 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DGMUD1Q0",
+      "collectedAmount": 387,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:54.241Z",
+      "orderId": 235464556295904,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 4 WAY [15896 Haitun1]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DH4KUMWH",
+      "collectedAmount": 520,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:51.319Z",
+      "orderId": 235465085256625,
+      "items": [
+        {
+          "name": "Haitun PC-13A สวิทซ์ควบคุมปั้มน้ำอัตโนมัติแบบมีเกจ มาพร้อมกับเกจวัดแรงดันในตัว (พร้อมจัดส่งทันที) ( LS-3 )",
+          "skuText": "ตัวเลือกสินค้า: สีน้ำเงิน( LS-3 ) [15901_Blue 15901_Blue]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DH6RHW41",
+      "collectedAmount": 2151,
+      "currency": "THB",
+      "paymentMethod": "ยอดเงิน ShopeePay",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:41.794Z",
+      "orderId": 235465157289089,
+      "items": [
+        {
+          "name": "เครื่องเป่าลม-ดูดใบไม้ แบบมือถือ POLO รุ่น PBL260D (P231-PBL260D)",
+          "skuText": "[P231-PBL260D ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DHSJ7YNM",
+      "collectedAmount": 1646,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:50.607Z",
+      "orderId": 235465788206772,
+      "items": [
+        {
+          "name": "HAITUN ข้อต่อ 5 ทาง ทองเหลืองชุบซิงค์ แบบมีเช็ควาล์ว ใช้ได้ทั้งระบบน้ำและลม (ข้อต่อ 1 นิ้ว 3 ทาง - 1/4\" 2 ทาง)",
+          "skuText": "[H161-0020 ]",
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DPKB6N7W",
+      "collectedAmount": 1303,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:41.057Z",
+      "orderId": 235470948205821,
+      "items": [
+        {
+          "name": "POLO ปั๊มจุ่ม 400 วัตต์ (1/2 แรงม้า) รุ่น SP-400DW ปริมาณน้ำ 125 ลิตร/นาที ส่งสูง 5 ม. ขนาดท่อ 1 นิ้ว - 1-1/2 นิ้ว สำหรั",
+          "skuText": "[P041-2610 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DQMW3P3K",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:58.637Z",
+      "orderId": 235472074279027,
+      "items": [
+        {
+          "name": "POLO ( PC-3B) สวิทซ์แรงดัน ทรงกระบอก สำหรับระบบน้ำ สำหรับควบคุมปั้มน้ำ",
+          "skuText": "[15895 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DW18516R",
+      "collectedAmount": 1193,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:25.230Z",
+      "orderId": 235477857219800,
+      "items": [
+        {
+          "name": "POLO เครื่องฉีดน้ำแรงดันสูง 1400 วัตต์ แรงดัน 105 บาร์ รุ่น WARRIOR-102L อัตราการฉีด 300 ลิตร/ชม. สายยาว 10 ม. มอเตอร์แป",
+          "skuText": "[P171-WARRIOR102L ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618DX2S31KU",
+      "collectedAmount": 133,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:01.547Z",
+      "orderId": 235478982276731,
+      "items": [
+        {
+          "name": "Haitun ( PC-7 [4WAY] ) สวิทซ์แรงดัน สำหรับระบบลมควมคุมปั้มลม ( วาล์วเชื่อต่อเป็นแบบ 4 way ) (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15898 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618E2JBUU5G",
+      "collectedAmount": 1500,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:52.792Z",
+      "orderId": 235483800247472,
+      "items": [
+        {
+          "name": "POLO MINI-117 บล็อกลม MINI 1/2 นิ้ว JUMBO HAMMER รับประกันสินค้า 1 ปี ( P341-MINI117 ) สินค้าพร้อมจัดส่งทันที",
+          "skuText": "[P341-MINI117 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618E5DNWW34",
+      "collectedAmount": 745,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:40.318Z",
+      "orderId": 235486864254052,
+      "items": [
+        {
+          "name": "MARATHON ( FD-C2000 ) รอกมือหมุน ความสามารถในการยกหรือลาก : 900 kgs ความยาวของสายสลิง : 10 เมตร",
+          "skuText": "[M327-2010 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618E6W0BFAU",
+      "collectedAmount": 1055,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:42.539Z",
+      "orderId": 235488452242779,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 3 นิ้ว 350W P231-0130 (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[P231-0130 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618EAQGWVWU",
+      "collectedAmount": 179,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:00.808Z",
+      "orderId": 235492563264443,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 4 WAY [15896 Haitun1]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260618EEJTA2DN",
+      "collectedAmount": 677,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:39.596Z",
+      "orderId": 235496700295605,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1860 ) ULTRA ใบเลื่อยตัดเหล็ก 10”(254 MM) X 60T (สินค้าพร้อมจัดส่งทันที) แหวน 20 มม. ใช้ตัดเหล็ก",
+          "skuText": "[M312-1860 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619EVR6HRQB",
+      "collectedAmount": 180,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:54.955Z",
+      "orderId": 235511913288427,
+      "items": [
+        {
+          "name": "Haitun ( PC-2B ) สวิทซ์ควบคุมปั้มน้ำอัตโนมัติ แบบ 3 ทาง สำหรับควบคุมปั้มน้ำแบบ Booster Pump (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15894 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619F795Q7PR",
+      "collectedAmount": 679,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:53.511Z",
+      "orderId": 235523220262616,
+      "items": [
+        {
+          "name": "MARATHON รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200 (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% การันตี คุณภาพอย่างดี",
+          "skuText": "[M327-2025 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FC6G69CN",
+      "collectedAmount": 161,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:00.083Z",
+      "orderId": 235528499287445,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 4 WAY [15896 Haitun1]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FCWJAYWE",
+      "collectedAmount": 276,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:55.680Z",
+      "orderId": 235529273290670,
+      "items": [
+        {
+          "name": "Haitun ( PC-2A ) สวิทซ์แรงดัน สำหรับระบบน้ำ (มีระบบตัดเมื่อน้ำขาด) สำหรับปั๊มสูงสุด 2 HP เกลียว ตัวเมีย 1/4นิ้ว NPT",
+          "skuText": "[315893 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FFBWF0U0",
+      "collectedAmount": 439,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:42:02.273Z",
+      "orderId": 235531902202720,
+      "items": [
+        {
+          "name": "HAITUN ( H161-0020 ) ข้อต่อ 5 ทาง แบบมีเช็ควาล์วในตัว",
+          "skuText": "[H161-0020 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FH9B07F4",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:57.908Z",
+      "orderId": 235533963218404,
+      "items": [
+        {
+          "name": "POLO ( PC-3B) สวิทซ์แรงดัน ทรงกระบอก สำหรับระบบน้ำ สำหรับควบคุมปั้มน้ำ",
+          "skuText": "[15895 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FHFTY1ER",
+      "collectedAmount": 159,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:57.197Z",
+      "orderId": 235534181283288,
+      "items": [
+        {
+          "name": "INGCO ถุงมือช่าง ไมโครไฟเบอร์ ขนาด XL (สินค้าพร้อมจัดส่งทันที) ( HGMG01-XL ) การันตี คุณภาพอย่างดี",
+          "skuText": "[69527 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FKDSKDFG",
+      "collectedAmount": 683,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:49.790Z",
+      "orderId": 235536260228592,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FM6UKUW1",
+      "collectedAmount": 3180,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:38.882Z",
+      "orderId": 235537101201313,
+      "items": [
+        {
+          "name": "มาราธอน รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200 ( M327-2025 )",
+          "skuText": "[M327-2025 ]",
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FM9WV56T",
+      "collectedAmount": 151,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:47.625Z",
+      "orderId": 235537204233434,
+      "items": [
+        {
+          "name": "HAITUN ข้อต่อ 5 ทาง (5-WAY) ทางทองเหลืองใช้ได้ทั้งระบบน้ำและลม (ข้อต่อ 1 นิ้ว 3 ทาง - 1/4 นิ้ว 2 ทาง)",
+          "skuText": "[H161-0010-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FMEHPCGB",
+      "collectedAmount": 1094,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:43.439Z",
+      "orderId": 235537359233547,
+      "items": [
+        {
+          "name": "Prasertsteel #112 เครื่องต๊าปเกลียวมือ 1/2 - 1.1/4 นิ้ว (สินค้าพร้อมจัดส่งทันที) การันตี คุณภาพอย่างดี ( P047-1510 )",
+          "skuText": "[P047-1510 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FMJHGNRU",
+      "collectedAmount": 163,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:46.905Z",
+      "orderId": 235537493264155,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FPA7V4BP",
+      "collectedAmount": 169,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:48.343Z",
+      "orderId": 235539362201974,
+      "items": [
+        {
+          "name": "HAITUN ข้อต่อ 5 ทาง (5-WAY) ทางทองเหลืองใช้ได้ทั้งระบบน้ำและลม (ข้อต่อ 1 นิ้ว 3 ทาง - 1/4 นิ้ว 2 ทาง)",
+          "skuText": "[H161-0010-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FPFMJ0KB",
+      "collectedAmount": 451,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:44.615Z",
+      "orderId": 235539543274091,
+      "items": [
+        {
+          "name": "POLO อะไหล่ ชุดสตาร์ท ใช้กับเครื่องยนต์เบนซิน ขนาด 13.0 HP โปโล รุ่น G390F สินค้าพร้อมจัดส่งทันที (P132-G390F002)",
+          "skuText": "[3913 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FQD8FBYY",
+      "collectedAmount": 699,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:49.066Z",
+      "orderId": 235540537237503,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FRCD2PTQ",
+      "collectedAmount": 59,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:45.439Z",
+      "orderId": 235541582252887,
+      "items": [
+        {
+          "name": "ค้อนหัวกลมด้ามไฟเบอร์สีส้มดำสำหรับงานช่าง",
+          "skuText": "[8914 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FTJJ04KG",
+      "collectedAmount": 463,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:46.151Z",
+      "orderId": 235543936221808,
+      "items": [
+        {
+          "name": "Haitun PC-13A สวิทซ์ควบคุมปั้มน้ำอัตโนมัติแบบมีเกจ มาพร้อมกับเกจวัดแรงดันในตัว (พร้อมจัดส่งทันที) ( LS-3 )",
+          "skuText": "ตัวเลือกสินค้า: สีน้ำเงิน( LS-3 ) [15901_Blue 15901_Blue]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619FVBDKJRU",
+      "collectedAmount": 451,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:35.168Z",
+      "orderId": 235545844218651,
+      "items": [
+        {
+          "name": "Haitun PC-13A สวิทซ์ควบคุมปั้มน้ำอัตโนมัติแบบมีเกจ มาพร้อมกับเกจวัดแรงดันในตัว (พร้อมจัดส่งทันที) ( LS-3 )",
+          "skuText": "ตัวเลือกสินค้า: สีน้ำเงิน( LS-3 ) [15901_Blue 15901_Blue]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619G1HHCFEB",
+      "collectedAmount": 475,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:28.901Z",
+      "orderId": 235551418215883,
+      "items": [
+        {
+          "name": "POLO PID138501 สว่านกระแทกไฟฟ้า ขนาดเจาะสูงสุด 13 มม.(1/2 นิ้ว) กำลังไฟ 850 วัตต์ (P651-PID138501)",
+          "skuText": "[P651-PID138501 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619G5W88Q3E",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:37.364Z",
+      "orderId": 235556106275950,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619G827YUF4",
+      "collectedAmount": 80,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:38.136Z",
+      "orderId": 235558421241316,
+      "items": [
+        {
+          "name": "Haitun ( PC-7 [4WAY] ) สวิทซ์แรงดัน สำหรับระบบลมควมคุมปั้มลม ( วาล์วเชื่อต่อเป็นแบบ 4 way ) (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15898 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619G82U2FEN",
+      "collectedAmount": 174,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:36.640Z",
+      "orderId": 235558441250261,
+      "items": [
+        {
+          "name": "Haitun ( PC-2B ) สวิทซ์ควบคุมปั้มน้ำอัตโนมัติ แบบ 3 ทาง สำหรับควบคุมปั้มน้ำแบบ Booster Pump (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15894 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619GRV5SJGN",
+      "collectedAmount": 620,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:28.164Z",
+      "orderId": 235576471222805,
+      "items": [
+        {
+          "name": "POLO PID138501 สว่านกระแทกไฟฟ้า ขนาดเจาะสูงสุด 13 มม.(1/2 นิ้ว) กำลังไฟ 850 วัตต์ (P651-PID138501)",
+          "skuText": "[P651-PID138501 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619GTHRJF56",
+      "collectedAmount": 736,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:26.728Z",
+      "orderId": 235578269297830,
+      "items": [
+        {
+          "name": "POLO ใบเลื่อยวงเดือนตัดเหล็ก 12 นิ้วx60T ความเร็วรอบ 1,800 รอบ/นาที รูกลาง25.4มม. แหวน20มม. ใช้สำหรับตัดเหล็ก P525-1340",
+          "skuText": "[P525-1340 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619GW71XQDQ",
+      "collectedAmount": 898,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:35.905Z",
+      "orderId": 235581131263415,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1860 ) ULTRA ใบเลื่อยตัดเหล็ก 10”(254 MM) X 60T (สินค้าพร้อมจัดส่งทันที) แหวน 20 มม. ใช้ตัดเหล็ก",
+          "skuText": "[M312-1860 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260619GX6E40GM",
+      "collectedAmount": 736,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:27.450Z",
+      "orderId": 235582184206868,
+      "items": [
+        {
+          "name": "POLO ใบเลื่อยวงเดือนตัดเหล็ก 12 นิ้วx60T ความเร็วรอบ 1,800 รอบ/นาที รูกลาง25.4มม. แหวน20มม. ใช้สำหรับตัดเหล็ก P525-1340",
+          "skuText": "[P525-1340 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620H0CDBJ82",
+      "collectedAmount": 89,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:30.695Z",
+      "orderId": 235584532216066,
+      "items": [
+        {
+          "name": "MAKITA มากีต้า MP002705B D-74728 ดอกสว่าน SDS (4ดอก/ชุด) กล่องใส D-74728 SDS PLUS DRILL BIT SET (4PC/SET) Code D-74728",
+          "skuText": "[MP002705B ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620H0JJTEQ3",
+      "collectedAmount": 1167,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:29.632Z",
+      "orderId": 235584739273443,
+      "items": [
+        {
+          "name": "อะไหล่MT110#46 MAIN FRAME SET (MT111)",
+          "skuText": "[MP183938-5 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620H2FNSRV6",
+      "collectedAmount": 107,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:31.423Z",
+      "orderId": 235586789217158,
+      "items": [
+        {
+          "name": "POLO ใบเพชรอเนกประสงค์ ขนาด 4 นิ้ว หนา 1.8 มม. ฟันสูง 10 มม. สำหรับตัดแห้ง ตัดวัสดุได้ทุกประเภท P523-1010 พร้อมจัดส่ง",
+          "skuText": "[P523-1010 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620H3D32G8V",
+      "collectedAmount": 398,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:25.973Z",
+      "orderId": 235587776213276,
+      "items": [
+        {
+          "name": "VALU มอเตอร์หินไฟ กำลังไฟ 180 วัตต์ ขนาด ขนาด 5 นิ้ว (125 มม.) รุ่น BG5 ความเร็วรอบ 2,950 รอบ/นาที เหมาะสำหรับงาน ขัด เจ",
+          "skuText": "[V144-BG5 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620H65BVPGX",
+      "collectedAmount": 80,
+      "currency": "THB",
+      "paymentMethod": "ยอดเงิน ShopeePay",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:32.149Z",
+      "orderId": 235590738250270,
+      "items": [
+        {
+          "name": "POLO ใบเพชรอเนกประสงค์ ขนาด 4 นิ้ว หนา 1.8 มม. ฟันสูง 10 มม. สำหรับตัดแห้ง ตัดวัสดุได้ทุกประเภท P523-1010 พร้อมจัดส่ง",
+          "skuText": "[P523-1010 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620HU4U5NQS",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "สำเร็จ",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:32.866Z",
+      "orderId": 235613269296889,
+      "items": [
+        {
+          "name": "Prasertsteel (PC-3B) สวิทซ์แรงดัน ทรงกระบอก สำหรับระบบน้ำ สำหรับควบคุมปั้มน้ำ รุ่นพร้อมส่ง PC3B-C40",
+          "skuText": "ตัวเลือกสินค้า: POLO(1 - 1.7 บาร์) [15895 P301-PC3B1017-1]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620J070YGHT",
+      "collectedAmount": 3595,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:09.307Z",
+      "orderId": 235618711204410,
+      "items": [
+        {
+          "name": "POLO MH90-5M ปั๊มน้ำหลายใบพัดแนวนอน รับประกันสินค้า 1 ปี ขนาดมอเตอร์ 1.3 HP โวลต์ 220 V เฟส1 PHASE",
+          "skuText": "[P041-5304 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620J4GYJ82A",
+      "collectedAmount": 4417,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:06.384Z",
+      "orderId": 235623340232778,
+      "items": [
+        {
+          "name": "POLO ท่อลม 12 นิ้ว ยาว 5 เมตร ใช้กับพัดลมอุตฯ ดูดเป่า รุ่น SHT-30 ใช้งานในอุณหภูมิตั้งแต่ -20°F ถึง 185°F (P231-0071)",
+          "skuText": "[P231-0071 ]",
+          "amount": 6
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620J7HU28TC",
+      "collectedAmount": 170,
+      "currency": "THB",
+      "paymentMethod": "ยอดเงิน ShopeePay",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:34.346Z",
+      "orderId": 235626590294860,
+      "items": [
+        {
+          "name": "HAITUN ข้อต่อ 5 ทาง (5-WAY) ทางทองเหลืองใช้ได้ทั้งระบบน้ำและลม (ข้อต่อ 1 นิ้ว 3 ทาง - 1/4 นิ้ว 2 ทาง)",
+          "skuText": "[H161-0010-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JBAN6B4A",
+      "collectedAmount": 89,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:33.604Z",
+      "orderId": 235630644223114,
+      "items": [
+        {
+          "name": "Haitun ( PC-7 [1WAY] ) สวิทซ์แรงดัน สำหรับระบบลมควมคุมปั้มลม ( วาล์วเชื่อต่อเป็นแบบ 1 way )",
+          "skuText": "[15897 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JC2CAW8Y",
+      "collectedAmount": 704,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:17.921Z",
+      "orderId": 235631440241951,
+      "items": [
+        {
+          "name": "MARATHON ( FD-C2000 ) รอกมือหมุน ความสามารถในการยกหรือลาก : 900 kgs ความยาวของสายสลิง : 10 เมตร",
+          "skuText": "[M327-2010 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JDASH0DR",
+      "collectedAmount": 524,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:08.534Z",
+      "orderId": 235632796250552,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JJ94C28W",
+      "collectedAmount": 85,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:24.149Z",
+      "orderId": 235638109223197,
+      "items": [
+        {
+          "name": "Haitun ( PC-7 [4WAY] ) สวิทซ์แรงดัน สำหรับระบบลมควมคุมปั้มลม ( วาล์วเชื่อต่อเป็นแบบ 4 way ) (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15898 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JKY79F5S",
+      "collectedAmount": 278,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:20.093Z",
+      "orderId": 235639924223161,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JP77BBHA",
+      "collectedAmount": 229,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:20.826Z",
+      "orderId": 235642340204074,
+      "items": [
+        {
+          "name": "🔥ลดเพิ่ม 120 ใส่โค้ด INCL8M3🔥 HAITUN PC-2B สวิทซ์แรงดัน ระบบปั๊มน้ำ 3WAY ( H161-PC2B )",
+          "skuText": "[H161-PC2B-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620JQEYHUP3",
+      "collectedAmount": 7830,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:07.817Z",
+      "orderId": 235643674205891,
+      "items": [
+        {
+          "name": "POLO พัดลมอุตฯ ดูดเป่า 24 นิ้ว 1020 วัตต์ รุ่น SHT-60 (P231-0080)",
+          "skuText": "[P231-0080 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620K218SP8E",
+      "collectedAmount": 129,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:21.913Z",
+      "orderId": 235655025297678,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620K5DHFDGR",
+      "collectedAmount": 1360,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:10.399Z",
+      "orderId": 235658658276888,
+      "items": [
+        {
+          "name": "FORCE ชุดประแจแหวนข้างปากตาย (5161) 16 ชิ้น ขนาด 6 - 24 มม. (F",
+          "skuText": "[F131-5161 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620K842XGEV",
+      "collectedAmount": 413,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:18.634Z",
+      "orderId": 235661562278364,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620K8UWVVGU",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:23.384Z",
+      "orderId": 235662362288667,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260620KADMKXVE",
+      "collectedAmount": 439,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:15.734Z",
+      "orderId": 235664030280590,
+      "items": [
+        {
+          "name": "POLO เครื่องวัดระดับเลเซอร์แสงเขียว 5 เส้น และถ่านแบตเตอรี่ Li-ion 2 ก้อน รุ่น WG-508 พร้อมขาตั้ง 1.2 เ (เฉพาะขา1.2เมตร)",
+          "skuText": "[P572-1020 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621KMCPM05S",
+      "collectedAmount": 293,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:16.431Z",
+      "orderId": 235674736242873,
+      "items": [
+        {
+          "name": "POLO ใบเลื่อยวงเดือน 9 นิ้ว x 24T ความเร็วรอบ 7,800 รอบ/นาที รูกลาง 25.4 มม. แหวน 20 มม. ใช้สำหรับตัดไม้  P525-1080",
+          "skuText": "[P525-1080 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621KMPAN5DW",
+      "collectedAmount": 148,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:22.650Z",
+      "orderId": 235675059242429,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MCTEDQPQ",
+      "collectedAmount": 263,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:17.178Z",
+      "orderId": 235700967214807,
+      "items": [
+        {
+          "name": "🔥ลดเพิ่ม 120 ใส่โค้ด INCL8M3🔥 INGCO ( HKISD0608 ) ชุดไขควงด้ามกันไฟฟ้า 6 ชิ้น",
+          "skuText": "[69419 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MGB0ERTB",
+      "collectedAmount": 3836,
+      "currency": "THB",
+      "paymentMethod": "ยอดเงิน ShopeePay",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:05.496Z",
+      "orderId": 235704744219467,
+      "items": [
+        {
+          "name": "VITAL\" PLAIN TROLLEY \"ไวทัล\" รอกวิ่งบนราง I-Beam ชนิดธรรมดา (V041-0340)",
+          "skuText": "[V041-0340 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MN0VHXJV",
+      "collectedAmount": 177,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:13.160Z",
+      "orderId": 235709773294172,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MNRDVVY3",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:14.642Z",
+      "orderId": 235710563230691,
+      "items": [
+        {
+          "name": "SRI หัวปากกาอัดไม้ # 3 1 อัน (สินค้าพร้อมจัดส่งทันที) เหล็กแข็งแรง การันตี คุณภาพอย่างดี (MAX60-70/month)",
+          "skuText": "[84502 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MPJM5XVE",
+      "collectedAmount": 149,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:13.919Z",
+      "orderId": 235711442234254,
+      "items": [
+        {
+          "name": "SRI หัวปากกาอัดไม้ # 3 1 อัน (สินค้าพร้อมจัดส่งทันที) เหล็กแข็งแรง การันตี คุณภาพอย่างดี (MAX60-70/month)",
+          "skuText": "[84502 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MU6QWNBE",
+      "collectedAmount": 687,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:12.367Z",
+      "orderId": 235716412212590,
+      "items": [
+        {
+          "name": "POLO อะไหล่ WARRIOR105I PUMP SET ( P172-W105I-PUMP ) (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[P172-W105I-PUMP ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MUXPR5XX",
+      "collectedAmount": 601,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:07.111Z",
+      "orderId": 235717216290782,
+      "items": [
+        {
+          "name": "MARATHON รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200 (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% การันตี คุณภาพอย่างดี",
+          "skuText": "[M327-2025 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621MWXN9W58",
+      "collectedAmount": 312,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:40.752Z",
+      "orderId": 235719362258088,
+      "items": [
+        {
+          "name": "Prasertsteel พลั่วหนีบดิน สีดำ (1 ชิ้น)",
+          "skuText": "[21425 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621N0844WS3",
+      "collectedAmount": 111,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:02.912Z",
+      "orderId": 235721827297059,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621N0FR73G0",
+      "collectedAmount": 663,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:46.345Z",
+      "orderId": 235722083220992,
+      "items": [
+        {
+          "name": "POLO ( PC-13A ) สวิทซ์ควบคุมปั๊มนํ้า อัตโนมัติ",
+          "skuText": "[PC-13A ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621N606X58C",
+      "collectedAmount": 677,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:55.277Z",
+      "orderId": 235728004236556,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1860 ) ULTRA ใบเลื่อยตัดเหล็ก 10”(254 MM) X 60T (สินค้าพร้อมจัดส่งทันที) แหวน 20 มม. ใช้ตัดเหล็ก",
+          "skuText": "[M312-1860 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621N71XHDRS",
+      "collectedAmount": 811,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "ยกเลิกแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:56.707Z",
+      "orderId": 235729136281369,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1860 ) ULTRA ใบเลื่อยตัดเหล็ก 10”(254 MM) X 60T (สินค้าพร้อมจัดส่งทันที) แหวน 20 มม. ใช้ตัดเหล็ก",
+          "skuText": "[M312-1860 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621N7MV4KFK",
+      "collectedAmount": 955,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:42.259Z",
+      "orderId": 235729771298291,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        },
+        {
+          "name": "POLO แท่นชาร์จแบตเตอรี่ 20 โวลต์ 4.0 แอมป์ รุ่น PVSC-2040 (P651-PVSC-2040)",
+          "skuText": "[P651-PVSC-2040 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NAEQDXA2",
+      "collectedAmount": 1020,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:54.547Z",
+      "orderId": 235732786260290,
+      "items": [
+        {
+          "name": "POLO ใบเลื่อยวงเดือน 9 นิ้ว x 24T ความเร็วรอบ 7,800 รอบ/นาที รูกลาง 25.4 มม. แหวน 20 มม. ใช้สำหรับตัดไม้  P525-1080",
+          "skuText": "[P525-1080 ]",
+          "amount": 5
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621ND1YXH8J",
+      "collectedAmount": 139,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:02.170Z",
+      "orderId": 235735580210450,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NGU0V753",
+      "collectedAmount": 131,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:50.076Z",
+      "orderId": 235739641269411,
+      "items": [
+        {
+          "name": "Ingco HWBSW68 เลื่อยหางหนู 6 นิ้ว ( I121-HWBSW68 ) ผ่านการอบความร้อนสูง คมฟัน 3 มุม",
+          "skuText": "[I121-HWBSW68 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NHX673G9",
+      "collectedAmount": 135,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:53.067Z",
+      "orderId": 235740821274121,
+      "items": [
+        {
+          "name": "MARATHON ( M312-1620 ) ULTRA ใบเลื่อยตัดเหล็ก 4” (105 MM) X 24T(สินค้าพร้อมจัดส่งทันที) ของแท้ 100% การันตี",
+          "skuText": "[M312-1620 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NJ9377CW",
+      "collectedAmount": 2319,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:41.526Z",
+      "orderId": 235741187231133,
+      "items": [
+        {
+          "name": "POLO RP-100A สูบน้ำมันมือหมุน (สินค้าพร้อมจัดส่งทันที) เหมาะสำหรับการถ่ายเทน้ำมันทุกชนิดที่มีความเข้มข้นน้อย(P041-2330)",
+          "skuText": "[P041-2330 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NNRPQGFQ",
+      "collectedAmount": 125,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:01.437Z",
+      "orderId": 235744932229623,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NP9726K5",
+      "collectedAmount": 449,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:43.765Z",
+      "orderId": 235745486228069,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 1
+        }
+      ]
+    },
     {
       "platform": "Shopee",
       "orderNo": "260621NSEU3WGE",
@@ -57,6 +2168,304 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260621NUQJ22AR",
+      "collectedAmount": 480,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:59.231Z",
+      "orderId": 235751336229208,
+      "items": [
+        {
+          "name": "FORCE ( F131-80541MPB ) ข้อต่ออ่อนลมลูกปืน 1/2",
+          "skuText": "[F131-80541MPB ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NVGBH0JQ",
+      "collectedAmount": 334,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:59.974Z",
+      "orderId": 235752168239703,
+      "items": [
+        {
+          "name": "FORCE ( F131-80541MPB ) ข้อต่ออ่อนลมลูกปืน 1/2",
+          "skuText": "[F131-80541MPB ]",
+          "amount": 1
+        },
+        {
+          "name": "FORCE ( F131-80531MPP ) ข้อต่ออ่อนเครื่องมือชนิดเดือย (3/8 นิ้ว",
+          "skuText": "[F131-80531MPP ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NVJ5PEDN",
+      "collectedAmount": 1230,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:43.004Z",
+      "orderId": 235752229235125,
+      "items": [
+        {
+          "name": "Prasertsteel เครื่องเป่าลมหอยโข่ง 2นิ้ว 150W (สินค้าพร้อมจัดส่งทันที) รุ่นนิยม!! ของแท้ 100% คุณภาพอย่างดี (P231-0120)",
+          "skuText": "[69180 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260621NWWM69UJ",
+      "collectedAmount": 159,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:52.311Z",
+      "orderId": 235753687275378,
+      "items": [
+        {
+          "name": "🔥ลดเพิ่ม 120 ใส่โค้ด INCL8M3🔥 KT ใบเพชรเจียร์คาร์ไบด์ 4 นิ้ว สีทอง ( KT-J018-1410 ) (สินค้าพร้อมจัดส่งทันที) ของแท้ 1",
+          "skuText": "[KT-J018-1410 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622P5JKD1T8",
+      "collectedAmount": 842,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:55.997Z",
+      "orderId": 235761907283784,
+      "items": [
+        {
+          "name": "MARATHON ( FD-S2000 ) รอกมือหมุน 900 กก. (สินค้าพร้อมจัดส่งทันที) ความยาวของสายผ้า : 8 ม. ความกว้างของสายผ้า : 50 มม..",
+          "skuText": "[67534 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622PBY6AHKC",
+      "collectedAmount": 139,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:00.712Z",
+      "orderId": 235768772228716,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622PM16A8DX",
+      "collectedAmount": 342,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:47.814Z",
+      "orderId": 235777429262782,
+      "items": [
+        {
+          "name": "กลอนประตูสแตนเลสขนาด 6 นิ้ว พร้อมแผ่นรับ",
+          "skuText": "[5309122615-1724468824858-0 ]",
+          "amount": 1
+        },
+        {
+          "name": "กลอนประตูสแตนเลส 6 นิ้ว",
+          "skuText": "[5409265840-1729672252220-0 ]",
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622PM16A8DY",
+      "collectedAmount": 342,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:47.067Z",
+      "orderId": 235777429262783,
+      "items": [
+        {
+          "name": "กลอนประตูสแตนเลสขนาด 6 นิ้ว พร้อมแผ่นรับ",
+          "skuText": "[5309122615-1724468824858-0 ]",
+          "amount": 4
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622PSGRDXF7",
+      "collectedAmount": 218,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:04.721Z",
+      "orderId": 235783320283623,
+      "items": [
+        {
+          "name": "INGCO ( HGMG02-XL ) ถุงมือช่าง ไมโครไฟเบอร์ เคลือบยางบนฝ่ามือ ขนาด XL เพิ่มความทนทานต่อการเสียดสี",
+          "skuText": "[I121-HGMG02-XL ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622PY3JE0SB",
+      "collectedAmount": 396,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:53.790Z",
+      "orderId": 235789320237867,
+      "items": [
+        {
+          "name": "POLO อะไหล่ SHT-30 ใบพัด 12\" ( P232-0062 ) สินค้าพร้อมจัดส่งทันที",
+          "skuText": "[P232-0062 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622PYNR63EY",
+      "collectedAmount": 95,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:41:03.995Z",
+      "orderId": 235789930249695,
+      "items": [
+        {
+          "name": "Haitun ( PC-7 [4WAY] ) สวิทซ์แรงดัน สำหรับระบบลมควมคุมปั้มลม ( วาล์วเชื่อต่อเป็นแบบ 4 way ) (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15898 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622Q1DHEN03",
+      "collectedAmount": 426,
+      "currency": "THB",
+      "paymentMethod": "Mobile Banking",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:49.351Z",
+      "orderId": 235791802237955,
+      "items": [
+        {
+          "name": "VALU มอเตอร์หินไฟ กำลังไฟ 180 วัตต์ ขนาด ขนาด 5 นิ้ว (125 มม.) รุ่น BG5 ความเร็วรอบ 2,950 รอบ/นาที เหมาะสำหรับงาน ขัด เจ",
+          "skuText": "[V144-BG5 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622Q3N54A5P",
+      "collectedAmount": 191,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:58.506Z",
+      "orderId": 235794205235382,
+      "items": [
+        {
+          "name": "ตลับเมตร KDS 5 เมตร รุ่น NEO LOCK",
+          "skuText": "[222 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622Q5EQM14K",
+      "collectedAmount": 726,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:45.211Z",
+      "orderId": 235796137227411,
+      "items": [
+        {
+          "name": "POLO ใบเลื่อยวงเดือนตัดเหล็ก 12 นิ้วx60T ความเร็วรอบ 1,800 รอบ/นาที รูกลาง25.4มม. แหวน20มม. ใช้สำหรับตัดเหล็ก P525-1340",
+          "skuText": "[P525-1340 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622Q9TUT2WJ",
+      "collectedAmount": 229,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:48.590Z",
+      "orderId": 235800839240626,
+      "items": [
+        {
+          "name": "🔥ลดเพิ่ม 120 ใส่โค้ด INCL8M3🔥 HAITUN PC-2B สวิทซ์แรงดัน ระบบปั๊มน้ำ 3WAY ( H161-PC2B )",
+          "skuText": "[H161-PC2B-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622QC9T3Q64",
+      "collectedAmount": 1971,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:44.491Z",
+      "orderId": 235803488259268,
+      "items": [
+        {
+          "name": "FORCE 6474210J ประแจปอนด์ชนิดมีเสียง ขนาด 1/2 นิ้ว แรงบิด 40-210 นิวตันเมตร ยาว 461 มม. มีใบรับรองการตั้งค่า (พร้องส่ง)",
+          "skuText": "[F131-6474210J ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260622QCDUSMGM",
       "collectedAmount": 391,
       "currency": "THB",
@@ -70,6 +2479,42 @@
           "name": "POLO อะไหล่ SHT-30 ใบพัด 12\" ( P232-0062 ) สินค้าพร้อมจัดส่งทันที",
           "skuText": "[P232-0062 ]",
           "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622QD0V9CUB",
+      "collectedAmount": 107,
+      "currency": "THB",
+      "paymentMethod": "QR พร้อมเพย์",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:30.799Z",
+      "orderId": 235804262294379,
+      "items": [
+        {
+          "name": "POLO PC-8A สวิทช์ลูกลอยไฟฟ้า 220V ( P301-PC8A )",
+          "skuText": "[P301-PC8A-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622QDBS8DX1",
+      "collectedAmount": 168,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:37.080Z",
+      "orderId": 235804628215745,
+      "items": [
+        {
+          "name": "Haitun ( PC-7 [1WAY] ) สวิทซ์แรงดัน สำหรับระบบลมควมคุมปั้มลม ( วาล์วเชื่อต่อเป็นแบบ 1 way )",
+          "skuText": "[15897 ]",
+          "amount": 2
         }
       ]
     },
@@ -121,6 +2566,24 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260622QH11YKGD",
+      "collectedAmount": 179,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:26.376Z",
+      "orderId": 235808563232269,
+      "items": [
+        {
+          "name": "HAITUN ข้อต่อ 5 ทาง (5-WAY) ทางทองเหลืองใช้ได้ทั้งระบบน้ำและลม (ข้อต่อ 1 นิ้ว 3 ทาง - 1/4 นิ้ว 2 ทาง)",
+          "skuText": "[H161-0010-1 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260622QJSVN54C",
       "collectedAmount": 2686,
       "currency": "THB",
@@ -157,6 +2620,24 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260622QQF3Q4B9",
+      "collectedAmount": 203,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:25.500Z",
+      "orderId": 235815477264745,
+      "items": [
+        {
+          "name": "ตลับเมตร KDS 5 เมตร รุ่น NEO LOCK",
+          "skuText": "[222 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260622QT6GU16R",
       "collectedAmount": 1656,
       "currency": "THB",
@@ -170,6 +2651,42 @@
           "name": "POLO MINI-117 บล็อกลม MINI 1/2 นิ้ว JUMBO HAMMER รับประกันสินค้า 1 ปี ( P341-MINI117 ) สินค้าพร้อมจัดส่งทันที",
           "skuText": "[P341-MINI117 ]",
           "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622QTNFH912",
+      "collectedAmount": 85,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:27.859Z",
+      "orderId": 235818912207906,
+      "items": [
+        {
+          "name": "AZUMA วาล์วทองเหลืองด้ามแดงสำหรับงานประปา",
+          "skuText": "[5451679285-1731138005829-0 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260622QVEJTY1S",
+      "collectedAmount": 358,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:32.998Z",
+      "orderId": 235820828273721,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 4 WAY ) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[Haitun1 ]",
+          "amount": 2
         }
       ]
     },
@@ -247,6 +2764,24 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260622R8GHV7JD",
+      "collectedAmount": 179,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:33.737Z",
+      "orderId": 235833779277389,
+      "items": [
+        {
+          "name": "INGCO ถุงมือช่าง ไมโครไฟเบอร์ ขนาด XL (สินค้าพร้อมจัดส่งทันที) ( HGMG01-XL ) การันตี คุณภาพอย่างดี",
+          "skuText": "[69527 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260622RABJ5P90",
       "collectedAmount": 1733,
       "currency": "THB",
@@ -301,6 +2836,57 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260623RHAYT8Y6",
+      "collectedAmount": 194,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:28.583Z",
+      "orderId": 235843256243174,
+      "items": [
+        {
+          "name": "Haitun ( PC-2B ) สวิทซ์ควบคุมปั้มน้ำอัตโนมัติ แบบ 3 ทาง สำหรับควบคุมปั้มน้ำแบบ Booster Pump (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15894 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623RMSNR64P",
+      "collectedAmount": 46,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:31.545Z",
+      "orderId": 235846970230934,
+      "items": [
+        {
+          "name": "กลอนพับเหล็กสำหรับประตูพร้อมรูคล้องกุญแจ",
+          "skuText": "[5464438057-1731560098095-0 ]",
+          "amount": 1
+        },
+        {
+          "name": "KING TONY ไขควงหกเหลี่ยมด้ามตัวที 2.5x100 มม.",
+          "skuText": "[5457846899-1731396946390-0 ]",
+          "amount": 1
+        },
+        {
+          "name": "INGCO แว่นครอบตานิรภัย แบบรู เพื่อระบายอากาศ ทนต่อแรงกระแทกสูง มีความโปร่งใส และสวมใส่สบาย (I121-HSG02) สินค้าพร้อมจัดส่",
+          "skuText": "[I121-HSG02 ]",
+          "amount": 1
+        },
+        {
+          "name": "Star เกรียงแหลมสแตนเลส 6 นิ้ว ด้ามยาง",
+          "skuText": "[5443329175-1730880582096-0 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260623RMSNR64Q",
       "collectedAmount": 84,
       "currency": "THB",
@@ -318,6 +2904,93 @@
         {
           "name": "เกรียงโป๊วปูน INGCO (5915)",
           "skuText": "[5915 ]",
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623RMSNR64R",
+      "collectedAmount": 161,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:30.053Z",
+      "orderId": 235846970230936,
+      "items": [
+        {
+          "name": "วาล์วทองเหลืองสามทางพร้อมหัวต่อสายยาง",
+          "skuText": "[5409627029-1729676355789-0 ]",
+          "amount": 1
+        },
+        {
+          "name": "ลูกบ๊อกซ์เดือยหกเหลี่ยม 1/2 นิ้ว",
+          "skuText": "[5457024383-1731311981029-0 ]",
+          "amount": 1
+        },
+        {
+          "name": "INGCO ไฟฉายคาดหัว Headlamp รุ่น HHL013AAA2",
+          "skuText": "[5451618558-1731139213275-0 ]",
+          "amount": 1
+        },
+        {
+          "name": "ไขควงด้ามน้ำเงินสำหรับงานช่าง",
+          "skuText": "[5457031274-1731311959021-0 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623RN5EFMAN",
+      "collectedAmount": 175,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:34.820Z",
+      "orderId": 235847365263701,
+      "items": [
+        {
+          "name": "เซ็ตดอกไขควง จำนวน 10 ชิ้น ใช้กับไขควงไฟฟ้าหรือไขควงมือสำหรับขันและคลายสกรู สเตนเลสสตีลหรือเหล็กคุณภาพสูง",
+          "skuText": "[5900 ]",
+          "amount": 3
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623RNCBNW8E",
+      "collectedAmount": 1476,
+      "currency": "THB",
+      "paymentMethod": "SPayLater",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:40.006Z",
+      "orderId": 235847597204750,
+      "items": [
+        {
+          "name": "POLO เครื่องวัดระดับเลเซอร์แสงเขียว 5 เส้น และถ่านแบตเตอรี่ Li-ion 2 ก้อน รุ่น WG-508 พร้อมขาตั้ง 1. (เครื่อง+ขา1.2เมตร)",
+          "skuText": "[P571-3010[SET] ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623RPKC47QT",
+      "collectedAmount": 73,
+      "currency": "THB",
+      "paymentMethod": "บัตรเครดิต/บัตรเดบิต",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:27.131Z",
+      "orderId": 235848906297082,
+      "items": [
+        {
+          "name": "KEIBA ดายกลม 1 นิ้ว x 3/8 W16",
+          "skuText": "[5457996485-1731396721115-0 ]",
           "amount": 3
         }
       ]
@@ -342,6 +3015,24 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260623RS94QVT6",
+      "collectedAmount": 154,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:35.537Z",
+      "orderId": 235851784233798,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 4 WAY [15896 Haitun1]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260623S3TFC6JX",
       "collectedAmount": 2699,
       "currency": "THB",
@@ -360,6 +3051,60 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260623SBUCYYXP",
+      "collectedAmount": 204,
+      "currency": "THB",
+      "paymentMethod": "ShopeePay - ตัดบัญชีธนาคาร",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:29.319Z",
+      "orderId": 235871724220374,
+      "items": [
+        {
+          "name": "Haitun ( PC-2B ) สวิทซ์ควบคุมปั้มน้ำอัตโนมัติ แบบ 3 ทาง สำหรับควบคุมปั้มน้ำแบบ Booster Pump (สินค้าพร้อมจัดส่งทันที)",
+          "skuText": "[15894 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623SC1WWA89",
+      "collectedAmount": 139,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:36.337Z",
+      "orderId": 235871943285001,
+      "items": [
+        {
+          "name": "Haitun ( PC-6 1 WAY) สวิทซ์แรงดัน สำหรับระบบลม สำหรับควบคุมปั้มลม (สินค้าพร้อมจัดส่งทันที) ( PC-6 4 WAY)",
+          "skuText": "ตัวเลือกสินค้า: 1 WAY [15896 15896]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623SC3CKFSF",
+      "collectedAmount": 280,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:32.271Z",
+      "orderId": 235871992246063,
+      "items": [
+        {
+          "name": "Haitun ( PC-2A ) สวิทซ์แรงดัน สำหรับระบบน้ำ (มีระบบตัดเมื่อน้ำขาด) สำหรับปั๊มสูงสุด 2 HP เกลียว ตัวเมีย 1/4นิ้ว NPT",
+          "skuText": "[315893 ]",
+          "amount": 2
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260623SEXX9TPM",
       "collectedAmount": 2246,
       "currency": "THB",
@@ -372,6 +3117,24 @@
         {
           "name": "POLO JETST-130 ปั๊มหอยโข่งล่อน้ำ 1HP,1 ( P041-0820 ) รับประกันสินค้า 1 ปี กำลังมอเตอร์-new2 1 HP  โวลต์/เฟส 220 V แรง.",
           "skuText": "[JETST-130 ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623SN04XX2K",
+      "collectedAmount": 211,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:38.527Z",
+      "orderId": 235881547245651,
+      "items": [
+        {
+          "name": "FORCE ( F131-80541MPB ) ข้อต่ออ่อนลมลูกปืน 1/2",
+          "skuText": "[F131-80541MPB ]",
           "amount": 1
         }
       ]
@@ -396,6 +3159,24 @@
     },
     {
       "platform": "Shopee",
+      "orderNo": "260623SR12B5G7",
+      "collectedAmount": 158,
+      "currency": "THB",
+      "paymentMethod": "ยอดเงิน ShopeePay",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:37.819Z",
+      "orderId": 235884799280647,
+      "items": [
+        {
+          "name": "Excel กุญแจลิ้นชัก ปลอกดอกพลาสติก #559 สีเงิน",
+          "skuText": "[16593 ]",
+          "amount": 6
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
       "orderNo": "260623SSP3TQ7T",
       "collectedAmount": 316,
       "currency": "THB",
@@ -408,6 +3189,24 @@
         {
           "name": "MARATHON ULTRA ใบเลื่อยตัดเหล็ก 7นิ้ว 36T/10นิ้ว 60T (สินค้าพร้อมจัดส่งทันที) การันตี คุณภาพอย่างดี (M312-1736/M312-1.",
           "skuText": "[M312-1736NEW ]",
+          "amount": 1
+        }
+      ]
+    },
+    {
+      "platform": "Shopee",
+      "orderNo": "260623SUQYF28H",
+      "collectedAmount": 162,
+      "currency": "THB",
+      "paymentMethod": "เก็บเงินปลายทาง",
+      "status": "จัดส่งสำเร็จแล้ว",
+      "source": "Shopee Seller Center",
+      "capturedAt": "2026-06-28T11:40:39.266Z",
+      "orderId": 235888789240081,
+      "items": [
+        {
+          "name": "FORCE ( F131-24406012 ) ลูกบ๊อกเดือยหกเหลี่ยม1/2 No.12 (สินค้าพร้อมจัดส่งทันที) ของแท้ 100% การันตี คุณภาพอย่างดี",
+          "skuText": "[F131-24406012 ]",
           "amount": 1
         }
       ]

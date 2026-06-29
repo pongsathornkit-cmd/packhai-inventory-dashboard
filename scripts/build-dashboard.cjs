@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const {
+  buildUncollectedStockDeductionReport,
   buildPlatformPaymentOrders,
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
@@ -844,15 +845,18 @@ function build() {
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   const platformPaymentOrders = buildPlatformPaymentOrders(stockMovements);
   const platformPaymentSummary = buildPlatformPaymentSummary(stockMovements);
+  const uncollectedStockDeductions = buildUncollectedStockDeductionReport(stockMovements, rows);
 
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
     websiteStockTransactions,
     platformPaymentOrders,
+    uncollectedStockDeductions,
   };
   dashboard.summary.platformPayment = platformPaymentSummary;
   dashboard.platformPaymentSummary = platformPaymentSummary;
+  dashboard.summary.uncollectedStockDeductions = uncollectedStockDeductions.summary;
 
   const template = fs.readFileSync(path.join(srcDir, "index.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "styles.css"), "utf8");

@@ -6,6 +6,7 @@ const {
   stockSummaryRowsFromMovementSnapshot,
 } = require("../scripts/packhai-stock-movement-core.cjs");
 const {
+  buildUncollectedStockDeductionReport,
   buildPlatformPaymentOrders,
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
@@ -262,4 +263,89 @@ test("platform payment summary counts unique platform sale orders and matched se
   assert.equal(summary.byPlatform.Lazada.matchedOrderCount, 1);
   assert.equal(summary.byPlatform.Lazada.missingOrderCount, 0);
   assert.equal(summary.byPlatform.Lazada.collectedAmount, 300);
+});
+
+test("uncollected stock deduction report uses SKU value and excludes collected orders", () => {
+  const movements = [
+    {
+      stockShopId: 1,
+      sku: "A-1",
+      productName: "Product A",
+      createdAt: "2026-06-28T10:00:00.000Z",
+      channelName: "Shopee",
+      platformOrderNo: "SP-MISSING",
+      referenceNo: "PA1",
+      removeQuantity: 2,
+      platformPaymentStatus: "missing-seller-data",
+    },
+    {
+      stockShopId: 2,
+      sku: "B-2",
+      productName: "Product B",
+      createdAt: "2026-06-28T09:00:00.000Z",
+      channelName: "Shopee",
+      platformOrderNo: "SP-MULTI",
+      referenceNo: "PA2",
+      removeQuantity: 1,
+      platformPaymentStatus: "matched-item-amount-missing",
+      platformPaymentOrderAmount: 900,
+    },
+    {
+      stockShopId: 3,
+      sku: "C-3",
+      productName: "Product C",
+      createdAt: "2026-06-28T08:00:00.000Z",
+      channelName: "Lazada",
+      platformOrderNo: "LZ-SKU-MISMATCH",
+      referenceNo: "PA3",
+      removeQuantity: 1,
+      platformPaymentStatus: "matched-item-not-found",
+      platformPaymentOrderAmount: 400,
+    },
+    {
+      stockShopId: 4,
+      sku: "D-4",
+      productName: "Product D",
+      createdAt: "2026-06-28T07:00:00.000Z",
+      channelName: "Shopee",
+      platformOrderNo: "SP-PAID",
+      referenceNo: "PA4",
+      removeQuantity: 1,
+      platformPaymentStatus: "matched",
+      platformPaymentAmount: 220,
+    },
+    {
+      stockShopId: 5,
+      sku: "E-5",
+      productName: "Manual Sale",
+      createdAt: "2026-06-28T06:00:00.000Z",
+      channelName: "Manual",
+      platformOrderNo: "M-1",
+      referenceNo: "PA5",
+      removeQuantity: 1,
+      platformPaymentStatus: "non-platform",
+    },
+  ];
+  const report = buildUncollectedStockDeductionReport(movements, [
+    { stockShopId: 1, sku: "A-1", price: 100, priceSource: "Shopee" },
+    { stockShopId: 2, sku: "B-2", price: 150, priceSource: "Shopee" },
+    { stockShopId: 3, sku: "C-3", price: 50, priceSource: "Lazada" },
+    { stockShopId: 4, sku: "D-4", price: 220, priceSource: "Shopee" },
+  ]);
+
+  assert.equal(report.summary.rowCount, 3);
+  assert.equal(report.summary.orderCount, 3);
+  assert.equal(report.summary.totalQuantity, 4);
+  assert.equal(report.summary.estimatedAmount, 400);
+  assert.equal(report.summary.byPlatform.Shopee.rowCount, 2);
+  assert.equal(report.summary.byPlatform.Lazada.rowCount, 1);
+  assert.equal(report.summary.byReason["missing-seller-data"].rowCount, 1);
+  assert.equal(report.summary.byReason["matched-item-amount-missing"].rowCount, 1);
+  assert.equal(report.summary.byReason["matched-item-not-found"].rowCount, 1);
+
+  const multiSku = report.rows.find((row) => row.platformOrderNo === "SP-MULTI");
+  assert.equal(multiSku.estimatedAmount, 150);
+  assert.equal(multiSku.sellerOrderAmount, 900);
+  assert.equal(multiSku.reason, "matched-item-amount-missing");
+  assert.ok(!report.rows.some((row) => row.platformOrderNo === "SP-PAID"));
 });

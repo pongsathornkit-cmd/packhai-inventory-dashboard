@@ -15,6 +15,8 @@
   --teal: #e91e76;
   --teal-dark: #b7155e;
   --teal-soft: #ffdfed;
+  --pink: #e91e76;
+  --pink-soft: #fff0f6;
   --amber: #5e6ec7;
   --amber-soft: #eef1ff;
   --red: #d92d6f;
@@ -36,6 +38,7 @@
 
 body {
   margin: 0;
+  overflow-x: hidden;
   background:
     linear-gradient(180deg, #edf0fb 0, #f6f8ff 342px, #ffffff 343px),
     var(--bg);
@@ -139,24 +142,32 @@ select {
   order: 1;
 }
 
+.sidebar-nav a[href="#uncollected-stock"] {
+  order: 2;
+}
+
 .sidebar-nav a[href="#ai-command"] {
   order: 0;
 }
 
 .sidebar-nav a[href="#warehouses"] {
-  order: 2;
-}
-
-.sidebar-nav a[href="#executive"] {
   order: 3;
 }
 
-.sidebar-nav a[href="#valuation"] {
+.sidebar-nav a[href="#executive"] {
   order: 4;
 }
 
-.sidebar-nav a[href="#methodology"] {
+.sidebar-nav a[href="#valuation"] {
   order: 5;
+}
+
+.sidebar-nav a[href="#expenses"] {
+  order: 6;
+}
+
+.sidebar-nav a[href="#methodology"] {
+  order: 7;
 }
 
 .sidebar-nav a.active,
@@ -271,40 +282,48 @@ main {
   order: 0;
 }
 
-#kpiGrid {
+#paymentCollectionReport {
   order: 1;
 }
 
-#inventory-detail {
+#uncollected-stock {
   order: 2;
 }
 
-#warehouses {
+#inventory-detail {
   order: 3;
 }
 
-#executive {
+#warehouses {
   order: 4;
 }
 
-#ownerAnalyticsGrid {
+#executive {
   order: 5;
 }
 
-#valuation {
+#ownerAnalyticsGrid {
   order: 6;
 }
 
-main > .insight-layout {
+#valuation {
   order: 7;
 }
 
-main > .panel {
+main > .insight-layout {
   order: 8;
 }
 
-#methodology {
+main > .panel {
   order: 9;
+}
+
+#expenses {
+  order: 10;
+}
+
+#methodology {
+  order: 11;
 }
 
 .report-header {
@@ -651,7 +670,8 @@ svg {
   }
 }
 
-.payment-collection-report {
+.payment-collection-report,
+.uncollected-stock-dashboard {
   display: grid;
   gap: 14px;
   margin-bottom: 18px;
@@ -660,6 +680,13 @@ svg {
   border-radius: var(--radius);
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 248, 255, 0.94));
   box-shadow: var(--shadow-soft);
+}
+
+.uncollected-stock-dashboard {
+  border-left: 4px solid var(--teal);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(255, 240, 246, 0.72)),
+    var(--surface);
 }
 
 .payment-heading {
@@ -717,6 +744,53 @@ svg {
   font-size: 12px;
 }
 
+.uncollected-kpis .payment-report-card:first-child {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--sidebar-2) 100%);
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.uncollected-kpis .payment-report-card:first-child span,
+.uncollected-kpis .payment-report-card:first-child small {
+  color: rgba(255, 255, 255, 0.76);
+}
+
+.uncollected-kpis .payment-report-card:first-child strong {
+  color: #ffffff;
+}
+
+.uncollected-breakdown {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.uncollected-breakdown article {
+  min-height: 78px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.uncollected-breakdown strong,
+.uncollected-breakdown span {
+  display: block;
+  line-height: 1.35;
+}
+
+.uncollected-breakdown strong {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 860;
+}
+
+.uncollected-breakdown span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
 .payment-platform-list {
   display: grid;
   gap: 8px;
@@ -768,6 +842,7 @@ svg {
 }
 
 .payment-orders-panel {
+  min-width: 0;
   display: grid;
   gap: 12px;
   padding: 14px;
@@ -777,10 +852,16 @@ svg {
 }
 
 .payment-orders-toolbar {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(240px, 1fr) minmax(420px, 1.35fr);
   gap: 14px;
   align-items: end;
+}
+
+.uncollected-toolbar {
+  grid-template-columns: 1fr;
+  align-items: stretch;
 }
 
 .payment-orders-toolbar h3 {
@@ -798,14 +879,20 @@ svg {
 }
 
 .payment-orders-actions {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(180px, 1fr) 132px 150px 148px;
   gap: 8px;
 }
 
+.uncollected-actions {
+  grid-template-columns: minmax(180px, 1fr) 124px minmax(178px, 0.82fr) 142px 154px;
+}
+
 .payment-orders-actions input,
 .payment-orders-actions select,
 .payment-orders-actions button {
+  min-width: 0;
   min-height: 40px;
   border: 1px solid var(--strong-border);
   border-radius: 12px;
@@ -835,6 +922,9 @@ svg {
 }
 
 .payment-orders-table-wrap {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
   max-height: 540px;
   overflow: auto;
   border: 1px solid var(--border);
@@ -846,6 +936,10 @@ svg {
   min-width: 980px;
   border-collapse: separate;
   border-spacing: 0;
+}
+
+.uncollected-table {
+  min-width: 1120px;
 }
 
 .payment-orders-table th {
@@ -3090,6 +3184,16 @@ tbody tr:hover {
   color: var(--muted);
 }
 
+.payment-badge.warning {
+  background: #fff7df;
+  color: #9a5b00;
+}
+
+.payment-badge.danger {
+  background: var(--red-soft);
+  color: #a2224d;
+}
+
 @media (max-width: 1180px) {
   .dashboard-shell {
     grid-template-columns: 238px minmax(0, 1fr);
@@ -3212,6 +3316,7 @@ tbody tr:hover {
   .freshness-band,
   .kpi-grid,
   .payment-report-grid,
+  .uncollected-breakdown,
   .expense-kpis,
   .prefix-grid,
   .warehouse-product-grid,
@@ -3272,6 +3377,7 @@ tbody tr:hover {
   .freshness-band,
   .kpi-grid,
   .payment-report-grid,
+  .uncollected-breakdown,
   .expense-kpis,
   .prefix-grid,
   .warehouse-product-grid,

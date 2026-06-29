@@ -451,7 +451,187 @@ function buildPlatformPaymentSummary(movements) {
   return { ...summary, byPlatform };
 }
 
+function buildInventoryValueIndex(inventoryRows = []) {
+  const byStockShopId = new Map();
+  const bySku = new Map();
+  const byCompactSku = new Map();
+
+  for (const row of inventoryRows || []) {
+    const sku = normalizeSku(row?.sku || row?.productCode || row?.productSKU || row?.productName);
+    const compact = compactSku(sku);
+    const price = roundMoney(numberValue(row?.price || row?.salePrice || row?.unitPrice || row?.sellingPrice));
+    const entry = {
+      sku,
+      compactSku: compact,
+      productName: String(row?.name || row?.productName || row?.sourceTitle || "").trim(),
+      price,
+      priceSource: row?.priceSource || row?.sourceName || "",
+      imageUrl: row?.imageUrl || "",
+    };
+    const stockShopId = String(row?.stockShopId || row?.stockShopID || row?.stock_shop_id || "").trim();
+    if (stockShopId && (price > 0 || !byStockShopId.has(stockShopId))) byStockShopId.set(stockShopId, entry);
+    if (sku && (price > 0 || !bySku.has(sku))) bySku.set(sku, entry);
+    if (compact && (price > 0 || !byCompactSku.has(compact))) byCompactSku.set(compact, entry);
+  }
+
+  return { byStockShopId, bySku, byCompactSku };
+}
+
+function movementValueCandidate(movement, inventoryIndex) {
+  const stockShopId = String(movement?.stockShopId || movement?.stockShopID || movement?.stock_shop_id || "").trim();
+  const sku = normalizeSku(movement?.sku || movement?.productCode || movement?.productSKU || movement?.productName);
+  const compact = compactSku(sku);
+  const byStockShopId = stockShopId ? inventoryIndex.byStockShopId.get(stockShopId) : null;
+  const bySku = sku ? inventoryIndex.bySku.get(sku) : null;
+  const byCompact = compact ? inventoryIndex.byCompactSku.get(compact) : null;
+  const fallbackPrice = roundMoney(numberValue(movement?.price || movement?.salePrice || movement?.unitPrice || movement?.sellingPrice));
+  const fallback = {
+    sku,
+    compactSku: compact,
+    productName: String(movement?.productName || movement?.name || "").trim(),
+    price: fallbackPrice,
+    priceSource: "",
+    imageUrl: "",
+  };
+  return [byStockShopId, bySku, byCompact, fallback].find((item) => item && numberValue(item.price) > 0) || byStockShopId || bySku || byCompact || fallback;
+}
+
+function uncollectedReason(movement) {
+  if (Number(movement?.removeQuantity || 0) <= 0) return "";
+  const platform = movementPlatform(movement);
+  if (!["Shopee", "Lazada"].includes(platform)) return "";
+  const status = String(movement?.platformPaymentStatus || "").trim();
+  if (status === "matched" && numberValue(movement?.platformPaymentAmount) > 0) return "";
+  if (status === "matched") return "matched-zero-amount";
+  if (
+    [
+      "missing-seller-data",
+      "missing-platform-order-no",
+      "matched-item-amount-missing",
+      "matched-item-not-found",
+    ].includes(status)
+  ) {
+    return status;
+  }
+  return status || "missing-seller-data";
+}
+
+function emptyUncollectedBucket(key = "") {
+  return {
+    key,
+    rowCount: 0,
+    orderCount: 0,
+    totalQuantity: 0,
+    estimatedAmount: 0,
+    latestStockOutAt: "",
+  };
+}
+
+function updateUncollectedBucket(bucket, row, orderKeys) {
+  bucket.rowCount += 1;
+  bucket.totalQuantity += numberValue(row.quantity);
+  bucket.estimatedAmount += numberValue(row.estimatedAmount);
+  if (!bucket.latestStockOutAt || movementDateValue(row.stockOutAt) > movementDateValue(bucket.latestStockOutAt)) {
+    bucket.latestStockOutAt = row.stockOutAt || "";
+  }
+  orderKeys.add(row.orderKey);
+}
+
+function finalizeUncollectedBucket(bucket, orderKeys) {
+  bucket.orderCount = orderKeys.size;
+  bucket.totalQuantity = roundMoney(bucket.totalQuantity);
+  bucket.estimatedAmount = roundMoney(bucket.estimatedAmount);
+  return bucket;
+}
+
+function buildUncollectedStockDeductionReport(movements = [], inventoryRows = []) {
+  const inventoryIndex = buildInventoryValueIndex(inventoryRows);
+  const rows = [];
+  const summary = emptyUncollectedBucket("All");
+  const summaryOrderKeys = new Set();
+  const byPlatform = {
+    Shopee: emptyUncollectedBucket("Shopee"),
+    Lazada: emptyUncollectedBucket("Lazada"),
+  };
+  const platformOrderKeys = {
+    Shopee: new Set(),
+    Lazada: new Set(),
+  };
+  const byReason = {};
+  const reasonOrderKeys = {};
+
+  for (const movement of movements || []) {
+    const reason = uncollectedReason(movement);
+    if (!reason) continue;
+    const platform = movementPlatform(movement);
+    const platformOrderNo = movementOrderNo(movement);
+    const quantity = roundMoney(numberValue(movement?.removeQuantity));
+    const valueCandidate = movementValueCandidate(movement, inventoryIndex);
+    const price = roundMoney(numberValue(valueCandidate.price));
+    const stockOutAt = movement?.createdAt || movement?.created || "";
+    const fallbackKey = [
+      movement?.stockShopId || "",
+      stockOutAt,
+      movement?.referenceNo || "",
+      movement?.sku || "",
+      quantity,
+    ].join("|");
+    const orderKey = platformOrderNo ? `${platform}|${platformOrderNo}` : `${platform}|missing|${fallbackKey}`;
+    const row = {
+      key: `${orderKey}|${movement?.stockShopId || ""}|${movement?.referenceNo || ""}|${stockOutAt}|${movement?.sku || ""}`,
+      orderKey,
+      stockShopId: movement?.stockShopId || movement?.stockShopID || "",
+      sku: normalizeSku(movement?.sku || movement?.productCode || valueCandidate.sku),
+      productName: String(movement?.productName || movement?.name || valueCandidate.productName || "").trim(),
+      platform,
+      platformOrderNo,
+      packhaiOrderNo: movement?.referenceNo || "",
+      stockOutAt,
+      quantity,
+      price,
+      priceSource: valueCandidate.priceSource || "",
+      estimatedAmount: roundMoney(quantity * price),
+      sellerOrderAmount: roundMoney(numberValue(movement?.platformPaymentOrderAmount)),
+      paymentStatus: movement?.platformPaymentStatus || "",
+      reason,
+      allocationMethod: movement?.platformPaymentAllocationMethod || "",
+      matchedSku: movement?.platformPaymentMatchedSku || "",
+      imageUrl: valueCandidate.imageUrl || "",
+    };
+    rows.push(row);
+
+    updateUncollectedBucket(summary, row, summaryOrderKeys);
+    if (byPlatform[platform]) updateUncollectedBucket(byPlatform[platform], row, platformOrderKeys[platform]);
+    if (!byReason[reason]) {
+      byReason[reason] = emptyUncollectedBucket(reason);
+      reasonOrderKeys[reason] = new Set();
+    }
+    updateUncollectedBucket(byReason[reason], row, reasonOrderKeys[reason]);
+  }
+
+  finalizeUncollectedBucket(summary, summaryOrderKeys);
+  Object.keys(byPlatform).forEach((platform) => finalizeUncollectedBucket(byPlatform[platform], platformOrderKeys[platform]));
+  Object.keys(byReason).forEach((reason) => finalizeUncollectedBucket(byReason[reason], reasonOrderKeys[reason]));
+
+  rows.sort(
+    (a, b) =>
+      numberValue(b.estimatedAmount) - numberValue(a.estimatedAmount) ||
+      movementDateValue(b.stockOutAt) - movementDateValue(a.stockOutAt) ||
+      `${a.platform}|${a.platformOrderNo}|${a.sku}`.localeCompare(`${b.platform}|${b.platformOrderNo}|${b.sku}`)
+  );
+
+  return {
+    summary: {
+      ...summary,
+      byPlatform,
+      byReason,
+    },
+    rows,
+  };
+}
+
 module.exports = {
+  buildUncollectedStockDeductionReport,
   buildPlatformPaymentOrders,
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,

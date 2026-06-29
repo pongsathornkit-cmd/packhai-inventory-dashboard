@@ -49,6 +49,14 @@
     status: "All",
     page: 1,
   };
+  const uncollectedPageSize = 60;
+  const uncollectedState = {
+    query: "",
+    platform: "All",
+    reason: "All",
+    sort: "riskDesc",
+    page: 1,
+  };
 
   const sourceColors = {
     Shopee: "Shopee",
@@ -116,6 +124,10 @@
 
   function normalizeSkuValue(value) {
     return String(value || "").trim().replace(/^'+/, "").replace(/\.0$/, "").toUpperCase();
+  }
+
+  function compactSkuValue(value) {
+    return normalizeSkuValue(value).replace(/[\s\-_/.[\](){}]+/g, "");
   }
 
   function numberValue(value) {
@@ -607,6 +619,7 @@
     renderFreshness();
     renderSidebarStatus();
     renderPaymentCollectionReport();
+    renderUncollectedStockDashboard();
     renderMethodology();
   }
 
@@ -623,6 +636,7 @@
     renderWarehouseFilters();
     renderFilters();
     renderTable();
+    renderUncollectedStockDashboard();
   }
 
   async function loadLiveWebsiteStockFromSupabase() {
@@ -3147,6 +3161,219 @@
     return Array.isArray(data.platformPaymentOrders) ? data.platformPaymentOrders : [];
   }
 
+  function buildInventoryValueIndex(inventoryRows = []) {
+    const byStockShopId = new Map();
+    const bySku = new Map();
+    const byCompactSku = new Map();
+    (inventoryRows || []).forEach((row) => {
+      const sku = normalizeSkuValue(row?.sku || row?.productCode || row?.productSKU || row?.name);
+      const compact = compactSkuValue(sku);
+      const price = moneyValue(numberValue(row?.price || row?.salePrice || row?.unitPrice || row?.sellingPrice));
+      const entry = {
+        sku,
+        compactSku: compact,
+        productName: row?.name || row?.productName || row?.sourceTitle || "",
+        price,
+        priceSource: row?.priceSource || row?.sourceName || "",
+        imageUrl: row?.imageUrl || "",
+      };
+      const stockShopId = String(row?.stockShopId || row?.stockShopID || row?.stock_shop_id || "").trim();
+      if (stockShopId && (price > 0 || !byStockShopId.has(stockShopId))) byStockShopId.set(stockShopId, entry);
+      if (sku && (price > 0 || !bySku.has(sku))) bySku.set(sku, entry);
+      if (compact && (price > 0 || !byCompactSku.has(compact))) byCompactSku.set(compact, entry);
+    });
+    return { byStockShopId, bySku, byCompactSku };
+  }
+
+  function movementValueCandidate(movement, inventoryIndex) {
+    const stockShopId = String(movement?.stockShopId || movement?.stockShopID || movement?.stock_shop_id || "").trim();
+    const sku = normalizeSkuValue(movement?.sku || movement?.productCode || movement?.productSKU || movement?.productName);
+    const compact = compactSkuValue(sku);
+    const fallback = {
+      sku,
+      compactSku: compact,
+      productName: movement?.productName || movement?.name || "",
+      price: moneyValue(numberValue(movement?.price || movement?.salePrice || movement?.unitPrice || movement?.sellingPrice)),
+      priceSource: "",
+      imageUrl: "",
+    };
+    const candidates = [
+      stockShopId ? inventoryIndex.byStockShopId.get(stockShopId) : null,
+      sku ? inventoryIndex.bySku.get(sku) : null,
+      compact ? inventoryIndex.byCompactSku.get(compact) : null,
+      fallback,
+    ];
+    return candidates.find((item) => item && numberValue(item.price) > 0) || candidates.find(Boolean) || fallback;
+  }
+
+  function uncollectedReason(movement) {
+    if (numberValue(movement?.removeQuantity) <= 0) return "";
+    const platform = normalizePlatformValue(movement?.platform || movement?.channelName);
+    if (!["Shopee", "Lazada"].includes(platform)) return "";
+    const status = String(movement?.platformPaymentStatus || "").trim();
+    if (status === "matched" && numberValue(movement?.platformPaymentAmount) > 0) return "";
+    if (status === "matched") return "matched-zero-amount";
+    if (
+      [
+        "missing-seller-data",
+        "missing-platform-order-no",
+        "matched-item-amount-missing",
+        "matched-item-not-found",
+      ].includes(status)
+    ) {
+      return status;
+    }
+    return status || "missing-seller-data";
+  }
+
+  function emptyUncollectedBucket(key = "") {
+    return { key, rowCount: 0, orderCount: 0, totalQuantity: 0, estimatedAmount: 0, latestStockOutAt: "" };
+  }
+
+  function updateUncollectedBucket(bucket, row, orderKeys) {
+    bucket.rowCount += 1;
+    bucket.totalQuantity += numberValue(row.quantity);
+    bucket.estimatedAmount += numberValue(row.estimatedAmount);
+    if (!bucket.latestStockOutAt || dateTimeValue(row.stockOutAt) > dateTimeValue(bucket.latestStockOutAt)) {
+      bucket.latestStockOutAt = row.stockOutAt || "";
+    }
+    orderKeys.add(row.orderKey);
+  }
+
+  function finalizeUncollectedBucket(bucket, orderKeys) {
+    bucket.orderCount = orderKeys.size;
+    bucket.totalQuantity = moneyValue(bucket.totalQuantity);
+    bucket.estimatedAmount = moneyValue(bucket.estimatedAmount);
+    return bucket;
+  }
+
+  function buildUncollectedStockDeductionsFromMovements(movements = [], inventoryRows = []) {
+    const inventoryIndex = buildInventoryValueIndex(inventoryRows);
+    const reportRows = [];
+    const summary = emptyUncollectedBucket("All");
+    const summaryOrderKeys = new Set();
+    const byPlatform = {
+      Shopee: emptyUncollectedBucket("Shopee"),
+      Lazada: emptyUncollectedBucket("Lazada"),
+    };
+    const platformOrderKeys = { Shopee: new Set(), Lazada: new Set() };
+    const byReason = {};
+    const reasonOrderKeys = {};
+
+    (movements || []).forEach((movement) => {
+      const reason = uncollectedReason(movement);
+      if (!reason) return;
+      const platform = normalizePlatformValue(movement.platform || movement.channelName);
+      const platformOrderNo = normalizeOrderNoValue(movement.platformOrderNo || movement.referenceNo2 || movement.orderNo);
+      const quantity = moneyValue(numberValue(movement.removeQuantity));
+      const valueCandidate = movementValueCandidate(movement, inventoryIndex);
+      const price = moneyValue(numberValue(valueCandidate.price));
+      const stockOutAt = movement.createdAt || movement.created || "";
+      const fallbackKey = [
+        movement.stockShopId || "",
+        stockOutAt,
+        movement.referenceNo || "",
+        movement.sku || "",
+        quantity,
+      ].join("|");
+      const orderKey = platformOrderNo ? `${platform}|${platformOrderNo}` : `${platform}|missing|${fallbackKey}`;
+      const row = {
+        key: `${orderKey}|${movement.stockShopId || ""}|${movement.referenceNo || ""}|${stockOutAt}|${movement.sku || ""}`,
+        orderKey,
+        stockShopId: movement.stockShopId || movement.stockShopID || "",
+        sku: normalizeSkuValue(movement.sku || movement.productCode || valueCandidate.sku),
+        productName: movement.productName || movement.name || valueCandidate.productName || "",
+        platform,
+        platformOrderNo,
+        packhaiOrderNo: movement.referenceNo || "",
+        stockOutAt,
+        quantity,
+        price,
+        priceSource: valueCandidate.priceSource || "",
+        estimatedAmount: moneyValue(quantity * price),
+        sellerOrderAmount: moneyValue(numberValue(movement.platformPaymentOrderAmount)),
+        paymentStatus: movement.platformPaymentStatus || "",
+        reason,
+        allocationMethod: movement.platformPaymentAllocationMethod || "",
+        matchedSku: movement.platformPaymentMatchedSku || "",
+        imageUrl: valueCandidate.imageUrl || "",
+      };
+      reportRows.push(row);
+      updateUncollectedBucket(summary, row, summaryOrderKeys);
+      if (byPlatform[platform]) updateUncollectedBucket(byPlatform[platform], row, platformOrderKeys[platform]);
+      if (!byReason[reason]) {
+        byReason[reason] = emptyUncollectedBucket(reason);
+        reasonOrderKeys[reason] = new Set();
+      }
+      updateUncollectedBucket(byReason[reason], row, reasonOrderKeys[reason]);
+    });
+
+    finalizeUncollectedBucket(summary, summaryOrderKeys);
+    Object.keys(byPlatform).forEach((platform) => finalizeUncollectedBucket(byPlatform[platform], platformOrderKeys[platform]));
+    Object.keys(byReason).forEach((reason) => finalizeUncollectedBucket(byReason[reason], reasonOrderKeys[reason]));
+    reportRows.sort(
+      (a, b) =>
+        numberValue(b.estimatedAmount) - numberValue(a.estimatedAmount) ||
+        dateTimeValue(b.stockOutAt) - dateTimeValue(a.stockOutAt) ||
+        `${a.platform}|${a.platformOrderNo}|${a.sku}`.localeCompare(`${b.platform}|${b.platformOrderNo}|${b.sku}`)
+    );
+    return { summary: { ...summary, byPlatform, byReason }, rows: reportRows };
+  }
+
+  function getUncollectedStockDeductions() {
+    if (Array.isArray(stockMovementRows) && stockMovementRows.length) {
+      data.uncollectedStockDeductions = buildUncollectedStockDeductionsFromMovements(stockMovementRows, rows);
+    }
+    if (data.uncollectedStockDeductions?.summary && Array.isArray(data.uncollectedStockDeductions?.rows)) {
+      return data.uncollectedStockDeductions;
+    }
+    return buildUncollectedStockDeductionsFromMovements([], rows);
+  }
+
+  function uncollectedReasonLabel(reason) {
+    if (reason === "missing-seller-data") return "ยังไม่พบยอดจาก Seller";
+    if (reason === "missing-platform-order-no") return "ไม่มีเลขออเดอร์ Platform";
+    if (reason === "matched-item-amount-missing") return "มีออเดอร์ แต่ยังไม่มียอดแยก SKU";
+    if (reason === "matched-item-not-found") return "SKU ไม่ตรงกับ Seller";
+    if (reason === "matched-zero-amount") return "ยอดเก็บเงินเป็น 0";
+    return reason || "ยังเก็บเงินไม่ได้";
+  }
+
+  function uncollectedReasonClass(reason) {
+    if (reason === "matched-item-amount-missing") return "warning";
+    if (reason === "matched-item-not-found" || reason === "matched-zero-amount") return "danger";
+    if (reason === "missing-platform-order-no") return "neutral";
+    return "missing";
+  }
+
+  function uncollectedRowMatchesQuery(row, query) {
+    const text = compactText(
+      [
+        row.platform,
+        row.platformOrderNo,
+        row.packhaiOrderNo,
+        row.sku,
+        row.productName,
+        row.reason,
+        uncollectedReasonLabel(row.reason),
+      ].join(" ")
+    );
+    return text.includes(compactText(query));
+  }
+
+  function filteredUncollectedStockRows() {
+    let list = [...(getUncollectedStockDeductions().rows || [])];
+    if (uncollectedState.platform !== "All") list = list.filter((row) => row.platform === uncollectedState.platform);
+    if (uncollectedState.reason !== "All") list = list.filter((row) => row.reason === uncollectedState.reason);
+    if (uncollectedState.query) list = list.filter((row) => uncollectedRowMatchesQuery(row, uncollectedState.query));
+    list.sort((a, b) => {
+      if (uncollectedState.sort === "dateDesc") return dateTimeValue(b.stockOutAt) - dateTimeValue(a.stockOutAt);
+      if (uncollectedState.sort === "qtyDesc") return numberValue(b.quantity) - numberValue(a.quantity);
+      return numberValue(b.estimatedAmount) - numberValue(a.estimatedAmount) || dateTimeValue(b.stockOutAt) - dateTimeValue(a.stockOutAt);
+    });
+    return list;
+  }
+
   function paymentStatusLabel(status) {
     if (status === "matched") return "พบยอดเก็บเงิน";
     if (status === "missing-platform-order-no") return "ไม่มีเลขออเดอร์ Platform";
@@ -3444,6 +3671,276 @@
       </div>`;
     renderPlatformPaymentOrderRows();
     bindPaymentCollectionEvents();
+  }
+
+  function renderUncollectedStockRows() {
+    const body = $("uncollectedStockTableBody");
+    if (!body) return;
+    const allRows = filteredUncollectedStockRows();
+    const maxPage = Math.max(1, Math.ceil(allRows.length / uncollectedPageSize));
+    uncollectedState.page = Math.min(Math.max(1, uncollectedState.page), maxPage);
+    const start = (uncollectedState.page - 1) * uncollectedPageSize;
+    const pageRows = allRows.slice(start, start + uncollectedPageSize);
+
+    body.innerHTML = pageRows.length
+      ? pageRows
+          .map((row) => {
+            const hasPrice = numberValue(row.price) > 0;
+            const sellerOrderContext =
+              numberValue(row.sellerOrderAmount) > 0
+                ? `<span>ยอดรวมออเดอร์ Seller ${escapeHtml(fmtBaht2.format(row.sellerOrderAmount))} ใช้เป็นข้อมูลประกอบ ไม่ปนในยอด SKU</span>`
+                : `<span>${hasPrice ? row.priceSource || "ราคาขาย SKU" : "ยังไม่มีราคาสำหรับประเมินมูลค่า"}</span>`;
+            return `
+          <tr>
+            <td>
+              <strong>${escapeHtml(formatDateTime(row.stockOutAt) || "-")}</strong>
+              <span>${escapeHtml(row.platform || "-")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.platformOrderNo || "-")}</strong>
+              <span>Packhai ${escapeHtml(row.packhaiOrderNo || "-")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.sku || "-")}</strong>
+              <span>${escapeHtml(row.productName || "-")}</span>
+            </td>
+            <td class="num">
+              <strong>${fmtQty.format(row.quantity || 0)}</strong>
+              <span>ตัด stock ออก</span>
+            </td>
+            <td class="num">
+              <strong>${escapeHtml(fmtBaht2.format(row.estimatedAmount || 0))}</strong>
+              <span>${hasPrice ? `${escapeHtml(fmtBaht2.format(row.price || 0))} / หน่วย` : "ไม่มีราคา"}</span>
+            </td>
+            <td>
+              <span class="payment-badge ${uncollectedReasonClass(row.reason)}">${escapeHtml(uncollectedReasonLabel(row.reason))}</span>
+              ${sellerOrderContext}
+            </td>
+          </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="6" class="empty-cell">ไม่พบรายการที่ตัด stock แล้วแต่ยังเก็บเงินไม่ได้ตามตัวกรอง</td></tr>`;
+
+    const status = $("uncollectedStockTableStatus");
+    if (status) {
+      const first = allRows.length ? start + 1 : 0;
+      const last = Math.min(start + pageRows.length, allRows.length);
+      status.textContent = `แสดง ${fmtInt.format(first)}-${fmtInt.format(last)} จาก ${fmtInt.format(allRows.length)} รายการ`;
+    }
+    const prev = $("prevUncollectedStock");
+    const next = $("nextUncollectedStock");
+    if (prev) prev.disabled = uncollectedState.page <= 1;
+    if (next) next.disabled = uncollectedState.page >= maxPage;
+  }
+
+  function exportUncollectedStockCsv() {
+    const headers = [
+      "Stock Out At",
+      "Platform",
+      "Platform Order",
+      "Packhai Order",
+      "SKU",
+      "Product Name",
+      "Quantity Deducted",
+      "SKU Unit Price",
+      "Estimated SKU Amount",
+      "Seller Order Amount Context",
+      "Reason",
+      "Payment Status",
+    ];
+    const lines = [
+      headers.join(","),
+      ...filteredUncollectedStockRows().map((row) =>
+        [
+          row.stockOutAt,
+          row.platform,
+          row.platformOrderNo,
+          row.packhaiOrderNo,
+          row.sku,
+          row.productName,
+          row.quantity,
+          row.price,
+          row.estimatedAmount,
+          row.sellerOrderAmount,
+          uncollectedReasonLabel(row.reason),
+          row.paymentStatus,
+        ]
+          .map(csvEscape)
+          .join(",")
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "uncollected-stock-deductions.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function bindUncollectedStockEvents() {
+    $("uncollectedStockSearch")?.addEventListener("input", (event) => {
+      uncollectedState.query = event.target.value;
+      uncollectedState.page = 1;
+      renderUncollectedStockRows();
+    });
+    $("uncollectedPlatformFilter")?.addEventListener("change", (event) => {
+      uncollectedState.platform = event.target.value;
+      uncollectedState.page = 1;
+      renderUncollectedStockRows();
+    });
+    $("uncollectedReasonFilter")?.addEventListener("change", (event) => {
+      uncollectedState.reason = event.target.value;
+      uncollectedState.page = 1;
+      renderUncollectedStockRows();
+    });
+    $("uncollectedSort")?.addEventListener("change", (event) => {
+      uncollectedState.sort = event.target.value;
+      uncollectedState.page = 1;
+      renderUncollectedStockRows();
+    });
+    $("prevUncollectedStock")?.addEventListener("click", () => {
+      uncollectedState.page -= 1;
+      renderUncollectedStockRows();
+    });
+    $("nextUncollectedStock")?.addEventListener("click", () => {
+      uncollectedState.page += 1;
+      renderUncollectedStockRows();
+    });
+    $("exportUncollectedStockCsv")?.addEventListener("click", exportUncollectedStockCsv);
+  }
+
+  function renderUncollectedStockDashboard() {
+    const el = $("uncollected-stock");
+    if (!el) return;
+    const report = getUncollectedStockDeductions();
+    const summary = report.summary || emptyUncollectedBucket("All");
+    const byPlatform = summary.byPlatform || {};
+    const byReason = summary.byReason || {};
+    const reasonOptions = Object.keys(byReason).sort();
+    const source = data.metadata?.sources?.sellerPayments || {};
+    const cards = [
+      {
+        label: "ออเดอร์ตัด stock แต่ยังเก็บเงินไม่ได้",
+        value: fmtInt.format(summary.orderCount || 0),
+        sub: "นับเฉพาะ Shopee/Lazada ที่มีการนำ stock ออกจาก Packhai",
+      },
+      {
+        label: "รายการสินค้าเสี่ยง",
+        value: fmtInt.format(summary.rowCount || 0),
+        sub: "ระดับ SKU/movement ไม่ใช่ยอดรวมออเดอร์",
+      },
+      {
+        label: "มูลค่าเสี่ยงประมาณการ",
+        value: fmtBaht.format(summary.estimatedAmount || 0),
+        sub: "คำนวณจากราคาขาย SKU x จำนวนที่ตัด stock",
+      },
+      {
+        label: "จำนวนที่ตัด stock",
+        value: fmtQty.format(summary.totalQuantity || 0),
+        sub: "ยังไม่มีเงินที่ยืนยันได้ในระดับ SKU",
+      },
+    ];
+
+    el.innerHTML = `
+      <div class="section-heading payment-heading">
+        <div>
+          <h2>Dashboard สินค้าตัด stock แล้วแต่ยังเก็บเงินไม่ได้</h2>
+          <p>รายงานนี้ใช้ตรวจรายการขายออกจาก Packhai ที่ยังไม่พบยอดเก็บเงินจริงจาก Shopee/Lazada Seller หรือยังแยกยอดถึงระดับ SKU ไม่ได้ โดยมูลค่าเสี่ยงไม่ใช้ยอดรวมทั้งออเดอร์มาปนกับสินค้าอื่น</p>
+        </div>
+        <span>ข้อมูลเก็บเงิน ${escapeHtml(source.exportedAtLabel || "-")} · ${fmtInt.format(source.rowCount || 0)} รายการ</span>
+      </div>
+      <div class="payment-report-grid uncollected-kpis">
+        ${cards
+          .map(
+            (card) => `
+          <article class="payment-report-card">
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(card.value)}</strong>
+            <small>${escapeHtml(card.sub)}</small>
+          </article>`
+          )
+          .join("")}
+      </div>
+      <div class="uncollected-breakdown">
+        <article>
+          <strong>Shopee</strong>
+          <span>${fmtInt.format(byPlatform.Shopee?.rowCount || 0)} รายการ · ${fmtBaht.format(byPlatform.Shopee?.estimatedAmount || 0)}</span>
+        </article>
+        <article>
+          <strong>Lazada</strong>
+          <span>${fmtInt.format(byPlatform.Lazada?.rowCount || 0)} รายการ · ${fmtBaht.format(byPlatform.Lazada?.estimatedAmount || 0)}</span>
+        </article>
+        ${reasonOptions
+          .slice(0, 4)
+          .map(
+            (reason) => `
+        <article>
+          <strong>${escapeHtml(uncollectedReasonLabel(reason))}</strong>
+          <span>${fmtInt.format(byReason[reason]?.rowCount || 0)} รายการ · ${fmtBaht.format(byReason[reason]?.estimatedAmount || 0)}</span>
+        </article>`
+          )
+          .join("")}
+      </div>
+      <div class="payment-orders-panel uncollected-panel">
+        <div class="payment-orders-toolbar uncollected-toolbar">
+          <div>
+            <h3>รายการที่ต้องตรวจ/ตามยอดเก็บเงิน</h3>
+            <p>ใช้ราคาขายของ SKU เป็นมูลค่าเสี่ยง ถ้าออเดอร์มีหลายสินค้า จะไม่เอายอดรวมออเดอร์มาใส่ซ้ำใน row นี้</p>
+          </div>
+          <div class="payment-orders-actions uncollected-actions">
+            <input id="uncollectedStockSearch" type="search" value="${escapeHtml(uncollectedState.query)}" placeholder="ค้นหา order / SKU / Packhai" />
+            <select id="uncollectedPlatformFilter" aria-label="Platform">
+              <option value="All"${uncollectedState.platform === "All" ? " selected" : ""}>ทุก Platform</option>
+              <option value="Shopee"${uncollectedState.platform === "Shopee" ? " selected" : ""}>Shopee</option>
+              <option value="Lazada"${uncollectedState.platform === "Lazada" ? " selected" : ""}>Lazada</option>
+            </select>
+            <select id="uncollectedReasonFilter" aria-label="สาเหตุ">
+              <option value="All"${uncollectedState.reason === "All" ? " selected" : ""}>ทุกสาเหตุ</option>
+              ${reasonOptions
+                .map(
+                  (reason) =>
+                    `<option value="${escapeHtml(reason)}"${uncollectedState.reason === reason ? " selected" : ""}>${escapeHtml(
+                      uncollectedReasonLabel(reason)
+                    )}</option>`
+                )
+                .join("")}
+            </select>
+            <select id="uncollectedSort" aria-label="เรียงลำดับ">
+              <option value="riskDesc"${uncollectedState.sort === "riskDesc" ? " selected" : ""}>มูลค่าเสี่ยงสูงสุด</option>
+              <option value="dateDesc"${uncollectedState.sort === "dateDesc" ? " selected" : ""}>ตัด stock ล่าสุด</option>
+              <option value="qtyDesc"${uncollectedState.sort === "qtyDesc" ? " selected" : ""}>จำนวนมากสุด</option>
+            </select>
+            <button id="exportUncollectedStockCsv" type="button">Export รายการเสี่ยง</button>
+          </div>
+        </div>
+        <div class="payment-orders-table-wrap uncollected-table-wrap">
+          <table class="payment-orders-table uncollected-table">
+            <thead>
+              <tr>
+                <th>วันที่ตัด stock</th>
+                <th>Order</th>
+                <th>SKU / สินค้า</th>
+                <th class="num">จำนวน</th>
+                <th class="num">มูลค่าเสี่ยง SKU</th>
+                <th>สาเหตุ</th>
+              </tr>
+            </thead>
+            <tbody id="uncollectedStockTableBody"></tbody>
+          </table>
+        </div>
+        <div class="payment-orders-footer">
+          <span id="uncollectedStockTableStatus"></span>
+          <div>
+            <button id="prevUncollectedStock" type="button">ก่อนหน้า</button>
+            <button id="nextUncollectedStock" type="button">ถัดไป</button>
+          </div>
+        </div>
+      </div>`;
+    renderUncollectedStockRows();
+    bindUncollectedStockEvents();
   }
 
   function renderSidebarStatus() {
@@ -4050,6 +4547,7 @@
   renderSidebarStatus();
   renderKpis();
   renderPaymentCollectionReport();
+  renderUncollectedStockDashboard();
   renderOwnerCommand();
   renderOwnerAnalytics();
   renderDecisionSignals();

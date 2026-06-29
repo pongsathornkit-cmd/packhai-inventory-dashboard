@@ -982,6 +982,52 @@ function resolveRequestPath(urlPath) {
   return filePath;
 }
 
+function authStateAdminKey() {
+  return String(process.env.AUTH_STATE_UPLOAD_KEY || supabaseWriteKey()).trim();
+}
+
+function authStateUploadAuthorized(req, res) {
+  const expected = authStateAdminKey();
+  if (!expected) {
+    sendJson(res, 503, { ok: false, message: "Auth state upload key is not configured." });
+    return false;
+  }
+  const provided = String(req.headers["x-admin-key"] || "").trim();
+  if (provided !== expected) {
+    sendJson(res, 401, { ok: false, message: "Unauthorized admin key" });
+    return false;
+  }
+  return true;
+}
+
+function parseStorageStatePayload(body) {
+  const kind = String(body.kind || "").trim().toLowerCase();
+  if (!["shopee", "lazada", "flowaccount"].includes(kind)) {
+    throw new Error("kind must be shopee, lazada, or flowaccount.");
+  }
+
+  let state = body.storageState || body.state || null;
+  if (!state && body.storageStateJson) state = JSON.parse(String(body.storageStateJson));
+  if (!state && body.storageStateB64) {
+    state = JSON.parse(Buffer.from(String(body.storageStateB64), "base64").toString("utf8"));
+  }
+  if (!state || typeof state !== "object" || !Array.isArray(state.cookies)) {
+    throw new Error("storageState must be a Playwright storage state with a cookies array.");
+  }
+  return { kind, state };
+}
+
+function writeStorageStateFile(kind, state) {
+  fs.mkdirSync(authStateDir, { recursive: true });
+  const file = path.resolve(authStateDir, `${kind}.json`);
+  if (!file.startsWith(path.resolve(authStateDir))) throw new Error("Invalid auth state path.");
+  const payload = JSON.stringify(state);
+  const tmpFile = `${file}.${Date.now()}.tmp`;
+  fs.writeFileSync(tmpFile, payload, "utf8");
+  fs.renameSync(tmpFile, file);
+  return { file, bytes: Buffer.byteLength(payload), cookies: state.cookies.length };
+}
+
 const server = http.createServer((req, res) => {
   applyCors(req, res);
   const url = new URL(req.url || "/", `http://${host}:${port}`);
@@ -1018,6 +1064,29 @@ const server = http.createServer((req, res) => {
       return;
     }
     startSync(type, res);
+    return;
+  }
+
+  if (url.pathname === "/api/admin/auth-state" && req.method === "POST") {
+    if (!authStateUploadAuthorized(req, res)) return;
+    readJsonBody(req, 5 * 1024 * 1024)
+      .then(parseStorageStatePayload)
+      .then(({ kind, state }) => {
+        const written = writeStorageStateFile(kind, state);
+        sendJson(res, 200, {
+          ok: true,
+          kind,
+          bytes: written.bytes,
+          cookies: written.cookies,
+          message: "Auth state stored on persistent disk.",
+        });
+      })
+      .catch((error) =>
+        sendJson(res, /kind|storageState|JSON|cookies/i.test(error.message) ? 400 : 500, {
+          ok: false,
+          message: error.message,
+        })
+      );
     return;
   }
 

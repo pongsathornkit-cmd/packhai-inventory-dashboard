@@ -57,6 +57,9 @@ test("seller price export scripts prefer direct API before browser fallback", ()
   assert.doesNotMatch(lazada, /raw:\s*(row|sku)/);
   assert.match(shopee, /models:\s*Array\.isArray\(product\.model_list\)/);
   assert.match(lazada, /specialPrice:\s*firstPositive/);
+  assert.match(shopee, /warnings:\s*output\.warnings/);
+  assert.match(shopeeDirectApiSource(), /isRetryableSellerError/);
+  assert.match(shopeeDirectApiSource(), /complete:\s*false/);
   assert.ok(
     shopee.indexOf("fetchShopeeSellerData") < shopee.indexOf("openAuthContext"),
     "Shopee direct API should be attempted before opening Chromium"
@@ -66,3 +69,7 @@ test("seller price export scripts prefer direct API before browser fallback", ()
     "Lazada direct API should be attempted before opening Chromium"
   );
 });
+
+function shopeeDirectApiSource() {
+  return fs.readFileSync(path.join(projectRoot, "scripts", "seller-direct-api.cjs"), "utf8");
+}

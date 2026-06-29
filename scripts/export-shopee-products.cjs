@@ -206,7 +206,9 @@ async function main() {
   }
 
   const combined = [];
+  const fetchErrors = [];
   for (const group of ["all", "liveAll", "delisted", "draft", "deboosted", "reviewing"]) {
+    if (data[group]?.error) fetchErrors.push(data[group].error);
     for (const product of data[group].products || []) {
       combined.push({
         source_group: group,
@@ -222,6 +224,9 @@ async function main() {
         models: Array.isArray(product.model_list) ? product.model_list.map((model) => compactModel(model, product)) : [],
       });
     }
+  }
+  if (!combined.length) {
+    throw new Error(`Shopee Seller direct API returned no products${fetchErrors.length ? `: ${fetchErrors.join(" | ")}` : ""}`);
   }
 
   const parentSkus = [...new Set(combined.map((product) => product.normalized_parent_sku).filter(Boolean))].sort();
@@ -243,13 +248,14 @@ async function main() {
       combined: combined.length,
       uniqueParentSku: parentSkus.length,
     },
+    warnings: fetchErrors,
     products: combined,
     parentSkus,
   };
 
   const outputFile = path.join(outputDir, "shopee_products_export.json");
   fs.writeFileSync(outputFile, JSON.stringify(output), "utf8");
-  console.log(JSON.stringify({ ok: true, counts: output.counts, outputFile }, null, 2));
+  console.log(JSON.stringify({ ok: true, counts: output.counts, warnings: output.warnings, outputFile }, null, 2));
 }
 
 main().catch((error) => {

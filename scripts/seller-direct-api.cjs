@@ -67,6 +67,16 @@ async function parseJsonResponse(response, label) {
   return json;
 }
 
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function isRetryableSellerError(error) {
+  return /ErrorCode:10000|code["']?:10000|spex client error|fetch failed|ECONNRESET|ETIMEDOUT/i.test(
+    error?.message || String(error)
+  );
+}
+
 function createShopeeUrl(endpoint, params, spcToken) {
   const url = new URL(endpoint, `https://${SHOPEE_HOST}`);
   for (const [key, value] of Object.entries({ SPC_CDS: spcToken, SPC_CDS_VER: "2", ...params })) {
@@ -84,27 +94,39 @@ async function fetchShopeeSellerData(options = {}) {
 
   async function fetchJson(endpoint, params) {
     const url = createShopeeUrl(endpoint, params, spcToken);
-    const json = await parseJsonResponse(
-      await fetchImpl(url, {
-        headers: {
-          accept: "application/json",
-          cookie: cookieHeaderForHost(state, SHOPEE_HOST, endpoint),
-          referer: "https://seller.shopee.co.th/portal/product/list/live/all?operationSortBy=recommend_v2",
-          "user-agent": "Mozilla/5.0",
-        },
-      }),
-      endpoint
-    );
-    if (json.code !== 0) {
-      throw new Error(
-        `${endpoint} ${JSON.stringify({
-          code: json.code,
-          message: json.message,
-          user_message: json.user_message,
-        })}`
-      );
+    let lastError = null;
+    for (let attempt = 1; attempt <= 4; attempt += 1) {
+      try {
+        const json = await parseJsonResponse(
+          await fetchImpl(url, {
+            headers: {
+              accept: "application/json",
+              "accept-language": "th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7",
+              cookie: cookieHeaderForHost(state, SHOPEE_HOST, endpoint),
+              referer: "https://seller.shopee.co.th/portal/product/list/live/all?operationSortBy=recommend_v2",
+              "user-agent": "Mozilla/5.0",
+              "x-requested-with": "XMLHttpRequest",
+            },
+          }),
+          endpoint
+        );
+        if (json.code !== 0) {
+          throw new Error(
+            `${endpoint} ${JSON.stringify({
+              code: json.code,
+              message: json.message,
+              user_message: json.user_message,
+            })}`
+          );
+        }
+        return json.data || {};
+      } catch (error) {
+        lastError = error;
+        if (attempt >= 4 || !isRetryableSellerError(error)) break;
+        await sleep(750 * attempt);
+      }
     }
-    return json.data || {};
+    throw lastError;
   }
 
   async function fetchCursorList(listType) {
@@ -112,54 +134,65 @@ async function fetchShopeeSellerData(options = {}) {
     let cursor = "";
     let total = null;
 
-    for (let pageNo = 1; pageNo <= 200; pageNo += 1) {
-      const params = {
-        page_size: "48",
-        list_type: listType,
-        request_attribute: "",
-        operation_sort_by: "recommend_v4",
-        need_ads: "false",
-      };
-      if (cursor) params.cursor = cursor;
+    try {
+      for (let pageNo = 1; pageNo <= 200; pageNo += 1) {
+        const params = {
+          page_size: "48",
+          list_type: listType,
+          request_attribute: "",
+          operation_sort_by: "recommend_v4",
+          need_ads: "false",
+        };
+        if (cursor) params.cursor = cursor;
 
-      const pageData = await fetchJson("/api/v3/opt/mpsku/list/v2/search_product_list", params);
-      const list = pageData.products || [];
-      total = pageData.page_info?.total ?? total;
-      products.push(...list);
+        const pageData = await fetchJson("/api/v3/opt/mpsku/list/v2/search_product_list", params);
+        const list = pageData.products || [];
+        total = pageData.page_info?.total ?? total;
+        products.push(...list);
 
-      const next = pageData.page_info?.cursor || "";
-      if (!next || next === cursor || !list.length || products.length >= Number(total || Infinity)) break;
-      cursor = next;
+        const next = pageData.page_info?.cursor || "";
+        if (!next || next === cursor || !list.length || products.length >= Number(total || Infinity)) break;
+        cursor = next;
+      }
+      return { listType, total, products, complete: true };
+    } catch (error) {
+      return { listType, total, products, complete: false, error: `${listType}: ${error.message || error}` };
     }
-
-    return { listType, total, products };
   }
 
   async function fetchDraft() {
     const products = [];
     let total = null;
 
-    for (let pageNumber = 1; pageNumber <= 50; pageNumber += 1) {
-      const pageData = await fetchJson("/api/v3/mpsku/list/v2/get_draft_product_list", {
-        page_number: String(pageNumber),
-        page_size: "48",
-      });
-      const list = pageData.products || [];
-      total = pageData.page_info?.total ?? total;
-      products.push(...list);
-      if (!list.length || products.length >= Number(total || Infinity)) break;
+    try {
+      for (let pageNumber = 1; pageNumber <= 50; pageNumber += 1) {
+        const pageData = await fetchJson("/api/v3/mpsku/list/v2/get_draft_product_list", {
+          page_number: String(pageNumber),
+          page_size: "48",
+        });
+        const list = pageData.products || [];
+        total = pageData.page_info?.total ?? total;
+        products.push(...list);
+        if (!list.length || products.length >= Number(total || Infinity)) break;
+      }
+      return { listType: "draft", total, products, complete: true };
+    } catch (error) {
+      return { listType: "draft", total, products, complete: false, error: `draft: ${error.message || error}` };
     }
-
-    return { listType: "draft", total, products };
   }
 
   async function fetchSimple(endpoint, params = {}) {
-    const pageData = await fetchJson(endpoint, { page_size: "48", ...params });
-    return {
-      endpoint,
-      total: pageData.page_info?.total,
-      products: pageData.products || [],
-    };
+    try {
+      const pageData = await fetchJson(endpoint, { page_size: "48", ...params });
+      return {
+        endpoint,
+        total: pageData.page_info?.total,
+        products: pageData.products || [],
+        complete: true,
+      };
+    } catch (error) {
+      return { endpoint, total: null, products: [], complete: false, error: `${endpoint}: ${error.message || error}` };
+    }
   }
 
   return {

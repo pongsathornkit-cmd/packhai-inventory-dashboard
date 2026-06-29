@@ -54,14 +54,22 @@ test("dashboard labels selected warehouse rows as Website Stock, not FlowAccount
 test("dashboard exposes a dedicated sync path for platform collection payments", () => {
   const serverSource = readRepoFile("scripts/serve-dashboard.cjs");
   const appSource = readRepoFile("src/app.js");
-  const templateSource = readRepoFile("src/index.template.html");
 
   assert.match(serverSource, /type\s*===\s*"seller-payments"/);
   assert.match(serverSource, /pushStep\(runSellerPayments\(\)\)/);
   assert.match(serverSource, /\["packhai",\s*"flowaccount",\s*"seller",\s*"seller-payments",\s*"all"\]/);
-  assert.match(templateSource, /id="syncSellerPayments"/);
   assert.match(appSource, /syncSellerPayments/);
   assert.match(appSource, /startSync\("seller-payments"\)/);
+});
+
+test("sidebar does not show platform collection payments as a sync menu item", () => {
+  const templateSource = readRepoFile("src/index.template.html");
+  const sidebarSync = templateSource.match(/<div class="sidebar-sync"[\s\S]*?<\/div>\s*<div class="sidebar-status">/)?.[0] || "";
+
+  assert.ok(sidebarSync.includes('id="syncPackhai"'));
+  assert.ok(sidebarSync.includes('id="syncSeller"'));
+  assert.doesNotMatch(sidebarSync, /id="syncSellerPayments"/);
+  assert.doesNotMatch(sidebarSync, /ยอดเก็บเงิน Platform/);
 });
 
 test("sync server exposes a health endpoint for cloud hosting checks", () => {

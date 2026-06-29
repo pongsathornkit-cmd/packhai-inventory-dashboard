@@ -46,10 +46,19 @@ function candidateSealedEnvFiles() {
   return [...new Set(files)];
 }
 
-function applyEnvValues(values, { file, sealed = false, override = false } = {}) {
+function isBrowserStorageStateKey(key) {
+  return /^(SHOPEE|LAZADA|FLOWACCOUNT)_STORAGE_STATE_(B64|JSON|FILE)$/.test(String(key || ""));
+}
+
+function shouldOverrideFromPlainCloudFile(key, value) {
+  return isBrowserStorageStateKey(key) && String(value || "").trim().length > 0;
+}
+
+function applyEnvValues(values, { file, sealed = false, override = false, overridePredicate = null } = {}) {
   const keys = [];
   for (const [key, value] of Object.entries(values)) {
-    if (!override && process.env[key]) continue;
+    const shouldOverride = override || (typeof overridePredicate === "function" && overridePredicate(key, value));
+    if (!shouldOverride && process.env[key]) continue;
     process.env[key] = value;
     keys.push(key);
   }
@@ -61,7 +70,7 @@ function loadCloudEnv() {
   for (const file of candidateEnvFiles()) {
     if (!fs.existsSync(file)) continue;
     const values = parseEnvFile(fs.readFileSync(file, "utf8"));
-    const applied = applyEnvValues(values, { file });
+    const applied = applyEnvValues(values, { file, overridePredicate: shouldOverrideFromPlainCloudFile });
     if (applied) loaded.push(applied);
   }
 
@@ -80,6 +89,7 @@ function loadCloudEnv() {
 module.exports = {
   candidateEnvFiles,
   candidateSealedEnvFiles,
+  isBrowserStorageStateKey,
   loadCloudEnv,
   parseEnvFile,
 };

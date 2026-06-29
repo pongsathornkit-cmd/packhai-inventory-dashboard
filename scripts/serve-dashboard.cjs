@@ -2,7 +2,6 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const { spawn } = require("child_process");
-const { chromium, chromiumOptions } = require("./playwright-runtime.cjs");
 const {
   appendExpense,
   cancelExpense,
@@ -46,6 +45,10 @@ const extraAllowedOrigins = String(process.env.SYNC_ALLOWED_ORIGINS || "")
   .split(",")
   .map((item) => item.trim().replace(/\/+$/, ""))
   .filter(Boolean);
+
+function loadPlaywrightRuntime() {
+  return require("./playwright-runtime.cjs");
+}
 
 const syncState = {
   running: false,
@@ -334,6 +337,7 @@ function publicExpenseState(options = {}) {
 }
 
 async function renderPdf(html) {
+  const { chromium, chromiumOptions } = loadPlaywrightRuntime();
   const browser = await chromium.launch({
     ...chromiumOptions(),
     headless: true,

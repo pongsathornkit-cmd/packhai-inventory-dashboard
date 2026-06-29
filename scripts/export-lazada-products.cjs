@@ -3,7 +3,6 @@ const path = require("path");
 const http = require("http");
 const { fetchLazadaSellerData } = require("./seller-direct-api.cjs");
 const { openAuthContext } = require("./browser-auth-state.cjs");
-const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -39,8 +38,27 @@ function numberValue(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function firstPositive(...values) {
+  for (const value of values) {
+    const parsed = numberValue(value);
+    if (parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function boolEnv(name, fallback = false) {
+  const value = process.env[name];
+  if (value == null || value === "") return fallback;
+  return /^(1|true|yes|on)$/i.test(value);
+}
+
+function loadPlaywrightRuntime() {
+  return require("./playwright-runtime.cjs");
+}
+
 function normalizeRow(row) {
   const skuRows = Array.isArray(row.subDataSource) ? row.subDataSource : [];
+  const productPrice = row.price || {};
   return {
     productId: row.productId,
     draftId: row.draftId,
@@ -50,26 +68,28 @@ function normalizeRow(row) {
     pdpLink: row.itemDesc?.pdpLink || "",
     statusMark: row.statusMark || "",
     stock: numberValue(row.stock?.text),
-    price:
-      row.price?.priceEndValue ??
-      row.price?.priceStartValue ??
-      numberValue(row.price?.price),
+    price: productPrice.priceEndValue ?? productPrice.priceStartValue ?? numberValue(productPrice.price),
+    specialPrice: firstPositive(
+      productPrice.specialPriceEndValue,
+      productPrice.specialPriceStartValue,
+      productPrice.specialPrice
+    ),
     skuRows: skuRows.map((sku) => ({
       skuId: sku.skuId || sku.itemDesc?.skuId || sku.activeStatus?.skuId || "",
       sellerSku: sku.itemDesc?.sellerSku || sku.itemIndex?.copyText || sku.itemIndex?.text || "",
       normalizedSellerSku: normSku(sku.itemDesc?.sellerSku || sku.itemIndex?.copyText || sku.itemIndex?.text),
       stock: numberValue(sku.stock?.text),
       stockStatus: sku.stock?.status || "",
-      price:
-        sku.price?.priceEndValue ??
-        sku.price?.priceStartValue ??
-        numberValue(sku.price?.price),
+      price: sku.price?.priceEndValue ?? sku.price?.priceStartValue ?? numberValue(sku.price?.price),
+      specialPrice: firstPositive(
+        sku.price?.specialPriceEndValue,
+        sku.price?.specialPriceStartValue,
+        sku.price?.specialPrice
+      ),
       imageUrl: sku.itemDesc?.skuImg || "",
       variation: sku.variation || "",
       active: sku.activeStatus?.active ?? null,
-      raw: sku,
     })),
-    raw: row,
   };
 }
 
@@ -101,6 +121,7 @@ function getJson(url, timeoutMs = 1200) {
 async function openCdpSession() {
   if (!cdpEndpoint) return null;
   try {
+    const { chromium } = loadPlaywrightRuntime();
     await getJson(endpointJsonUrl(cdpEndpoint));
     const browser = await chromium.connectOverCDP(cdpEndpoint);
     const context =
@@ -322,7 +343,7 @@ async function main() {
     })),
   };
 
-  fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
+  fs.writeFileSync(outputFile, JSON.stringify(output), "utf8");
   console.log(JSON.stringify({ ok: true, counts: output.counts, sessionMode: output.sessionMode, outputFile }, null, 2));
 }
 

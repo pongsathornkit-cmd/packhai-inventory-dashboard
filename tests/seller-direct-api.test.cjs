@@ -46,9 +46,17 @@ test("seller direct API helpers sign Lazada mtop URLs", () => {
 test("seller price export scripts prefer direct API before browser fallback", () => {
   const shopee = fs.readFileSync(path.join(projectRoot, "scripts", "export-shopee-products.cjs"), "utf8");
   const lazada = fs.readFileSync(path.join(projectRoot, "scripts", "export-lazada-products.cjs"), "utf8");
+  const server = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
 
   assert.match(shopee, /fetchShopeeSellerData/);
   assert.match(lazada, /fetchLazadaSellerData/);
+  assert.doesNotMatch(shopee, /require\("\.\/playwright-runtime\.cjs"\)/);
+  assert.doesNotMatch(lazada, /const\s+\{[^}]*chromium[^}]*\}\s*=\s*require\("\.\/playwright-runtime\.cjs"\)/);
+  assert.doesNotMatch(server, /const\s+\{[^}]*chromium[^}]*\}\s*=\s*require\("\.\/playwright-runtime\.cjs"\)/);
+  assert.doesNotMatch(shopee, /raw:\s*product/);
+  assert.doesNotMatch(lazada, /raw:\s*(row|sku)/);
+  assert.match(shopee, /models:\s*Array\.isArray\(product\.model_list\)/);
+  assert.match(lazada, /specialPrice:\s*firstPositive/);
   assert.ok(
     shopee.indexOf("fetchShopeeSellerData") < shopee.indexOf("openAuthContext"),
     "Shopee direct API should be attempted before opening Chromium"

@@ -47,6 +47,14 @@ test("auth state can be loaded from explicit file", () => {
   assert.equal(loaded.state.cookies[0].name, "x");
 });
 
+test("auth state helpers load Playwright only when a browser context is opened", () => {
+  const source = readRepoFile("scripts/browser-auth-state.cjs");
+
+  assert.doesNotMatch(source, /const\s+\{[^}]*chromium[^}]*\}\s*=\s*require\("\.\/playwright-runtime\.cjs"\)/);
+  assert.match(source, /function\s+loadPlaywrightRuntime\(\)/);
+  assert.match(source, /async function openAuthContext[\s\S]*loadPlaywrightRuntime\(\)/);
+});
+
 test("cloud auth states materialize to files before spawning sync scripts", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "packhai-materialized-auth-"));
   const state = { cookies: [{ name: "SPC", value: "1" }], origins: [] };

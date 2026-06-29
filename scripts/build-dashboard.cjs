@@ -295,6 +295,8 @@ function shopeePrice(product, model) {
   const modelPrice = model?.price_detail || {};
   return (
     firstPositive(
+      model?.price,
+      product.price,
       modelPrice.promotion_price,
       modelPrice.origin_price,
       productPrice.selling_price_min,
@@ -350,6 +352,7 @@ function buildShopeeIndex(shopee) {
 
   for (const product of shopee.products || []) {
     const raw = product.raw || {};
+    const models = Array.isArray(product.models) ? product.models : raw.model_list || [];
     const base = {
       sourceLabel: "Shopee Seller Center",
       sourceGroup: product.source_group,
@@ -359,7 +362,7 @@ function buildShopeeIndex(shopee) {
       title: product.name || raw.name || "",
       productId: product.id || raw.id || "",
       sourceCapturedAt: shopee.exportedAt,
-      imageUrl: shopeeImageUrl(raw.cover_image),
+      imageUrl: shopeeImageUrl(product.cover_image, raw.cover_image),
       imageSource: "Shopee",
     };
     addCandidate(index, product.parent_sku, {
@@ -368,15 +371,15 @@ function buildShopeeIndex(shopee) {
       price: shopeePrice(product),
     });
 
-    for (const model of raw.model_list || []) {
+    for (const model of models) {
       const modelSku = model.sku || (model.is_default ? product.parent_sku : "");
       addCandidate(index, modelSku, {
         ...base,
         sourceSku: modelSku || product.parent_sku,
         price: shopeePrice(product, model),
-        stock: numberValue(model.stock_detail?.total_available_stock ?? product.stock),
+        stock: numberValue(model.stock ?? model.stock_detail?.total_available_stock ?? product.stock),
         modelId: model.id || "",
-        imageUrl: shopeeImageUrl(model.image, raw.cover_image),
+        imageUrl: shopeeImageUrl(model.image, product.cover_image, raw.cover_image),
         imageSource: "Shopee",
       });
     }
@@ -388,6 +391,8 @@ function lazadaFinalPrice(product, skuRow) {
   const skuPrice = skuRow?.raw?.price || {};
   const productPrice = product?.raw?.price || {};
   return firstPositive(
+    skuRow.specialPrice,
+    product.specialPrice,
     skuPrice.specialPriceEndValue,
     skuPrice.specialPriceStartValue,
     skuPrice.specialPrice,

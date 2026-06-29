@@ -2,7 +2,6 @@ const fs = require("fs");
 const path = require("path");
 const { fetchShopeeSellerData } = require("./seller-direct-api.cjs");
 const { openAuthContext } = require("./browser-auth-state.cjs");
-const { boolEnv } = require("./playwright-runtime.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -17,12 +16,61 @@ const outputDir = process.env.SELLER_COMPARE_DIR
   : path.join(projectRoot, "data", "seller_compare");
 const headless = boolEnv("SELLER_HEADLESS", false);
 
+function boolEnv(name, fallback = false) {
+  const value = process.env[name];
+  if (value == null || value === "") return fallback;
+  return /^(1|true|yes|on)$/i.test(value);
+}
+
 function normSku(value) {
   return String(value ?? "")
     .trim()
     .replace(/\.0$/, "")
     .replace(/^'+/, "")
     .toUpperCase();
+}
+
+function numberValue(value) {
+  if (typeof value === "number") return value;
+  const text = String(value ?? "").replace(/,/g, "").trim();
+  if (!text) return 0;
+  const parsed = Number(text);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function firstPositive(...values) {
+  for (const value of values) {
+    const parsed = numberValue(value);
+    if (parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function productPrice(product) {
+  const price = product.price_detail || {};
+  return firstPositive(price.selling_price_min, price.price_min, price.selling_price_max, price.price_max);
+}
+
+function modelPrice(model, product) {
+  const price = model?.price_detail || {};
+  return firstPositive(price.promotion_price, price.origin_price, productPrice(product));
+}
+
+function productStock(product) {
+  return product.stock_detail?.total_available_stock ?? product.stock_detail?.total_seller_stock ?? null;
+}
+
+function compactModel(model, product) {
+  const sku = model.sku || (model.is_default ? product.parent_sku : "");
+  return {
+    id: model.id || "",
+    sku,
+    normalized_sku: normSku(sku),
+    stock: numberValue(model.stock_detail?.total_available_stock ?? productStock(product)),
+    price: modelPrice(model, product),
+    image: model.image || "",
+    is_default: Boolean(model.is_default),
+  };
 }
 
 async function main() {
@@ -168,11 +216,10 @@ async function main() {
         normalized_parent_sku: normSku(product.parent_sku),
         status: product.status,
         state: product.state,
-        stock:
-          product.stock_detail?.total_available_stock ??
-          product.stock_detail?.total_seller_stock ??
-          null,
-        raw: product,
+        stock: productStock(product),
+        price: productPrice(product),
+        cover_image: product.cover_image || "",
+        models: Array.isArray(product.model_list) ? product.model_list.map((model) => compactModel(model, product)) : [],
       });
     }
   }
@@ -201,7 +248,7 @@ async function main() {
   };
 
   const outputFile = path.join(outputDir, "shopee_products_export.json");
-  fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
+  fs.writeFileSync(outputFile, JSON.stringify(output), "utf8");
   console.log(JSON.stringify({ ok: true, counts: output.counts, outputFile }, null, 2));
 }
 

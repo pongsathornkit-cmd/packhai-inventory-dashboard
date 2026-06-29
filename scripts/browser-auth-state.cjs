@@ -1,12 +1,14 @@
 const fs = require("fs");
 const path = require("path");
 
-const { chromium, chromiumOptions } = require("./playwright-runtime.cjs");
-
 const projectRoot = path.resolve(__dirname, "..");
 const authStateDir = process.env.PACKHAI_AUTH_STATE_DIR
   ? path.resolve(process.env.PACKHAI_AUTH_STATE_DIR)
   : path.join(projectRoot, "storage-states");
+
+function loadPlaywrightRuntime() {
+  return require("./playwright-runtime.cjs");
+}
 
 function envName(kind, suffix) {
   return `${String(kind || "").trim().toUpperCase()}_STORAGE_STATE_${suffix}`;
@@ -41,6 +43,7 @@ function loadStorageState(kind, explicitFile) {
 }
 
 async function openAuthContext(options) {
+  const { chromium, chromiumOptions } = loadPlaywrightRuntime();
   const {
     kind,
     persistentDir,

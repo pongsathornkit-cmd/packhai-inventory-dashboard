@@ -45,6 +45,8 @@ services:
         value: "5400000"
       - key: PACKHAI_CLOUD_ENV_FILE
         value: /etc/secrets/cloud-sync.env
+      - key: PACKHAI_SYNC_ENV_PASSPHRASE
+        sync: false
       - key: PACKHAI_DATA_DIR
         value: /app/storage/data
       - key: PACKHAI_AUTH_STATE_DIR

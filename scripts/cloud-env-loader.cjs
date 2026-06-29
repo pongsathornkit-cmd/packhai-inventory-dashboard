@@ -1,8 +1,12 @@
 const fs = require("fs");
 const path = require("path");
 
+const { readSealedFile } = require("./sealed-env-core.cjs");
+
 const projectRoot = path.resolve(__dirname, "..");
 const defaultRenderSecretFile = "/etc/secrets/cloud-sync.env";
+const defaultRenderSealedSecretFile = "/etc/secrets/cloud-sync.env.enc";
+const defaultRepositorySealedEnvFile = path.join(projectRoot, "sync-secrets", "cloud-sync.env.enc");
 
 function parseEnvFile(text) {
   const values = {};
@@ -34,24 +38,48 @@ function candidateEnvFiles() {
   return [...new Set(files)];
 }
 
+function candidateSealedEnvFiles() {
+  if (process.env.PACKHAI_SEALED_ENV_FILE) return [path.resolve(process.env.PACKHAI_SEALED_ENV_FILE)];
+  const files = [];
+  files.push(defaultRenderSealedSecretFile);
+  files.push(defaultRepositorySealedEnvFile);
+  return [...new Set(files)];
+}
+
+function applyEnvValues(values, { file, sealed = false, override = false } = {}) {
+  const keys = [];
+  for (const [key, value] of Object.entries(values)) {
+    if (!override && process.env[key]) continue;
+    process.env[key] = value;
+    keys.push(key);
+  }
+  return keys.length ? { file, keys, sealed } : null;
+}
+
 function loadCloudEnv() {
   const loaded = [];
   for (const file of candidateEnvFiles()) {
     if (!fs.existsSync(file)) continue;
     const values = parseEnvFile(fs.readFileSync(file, "utf8"));
-    const keys = [];
-    for (const [key, value] of Object.entries(values)) {
-      if (process.env[key]) continue;
-      process.env[key] = value;
-      keys.push(key);
+    const applied = applyEnvValues(values, { file });
+    if (applied) loaded.push(applied);
+  }
+
+  const passphrase = String(process.env.PACKHAI_SYNC_ENV_PASSPHRASE || "").trim();
+  if (passphrase) {
+    for (const file of candidateSealedEnvFiles()) {
+      if (!fs.existsSync(file)) continue;
+      const values = parseEnvFile(readSealedFile(file, passphrase));
+      const applied = applyEnvValues(values, { file, sealed: true, override: true });
+      if (applied) loaded.push(applied);
     }
-    loaded.push({ file, keys });
   }
   return loaded;
 }
 
 module.exports = {
   candidateEnvFiles,
+  candidateSealedEnvFiles,
   loadCloudEnv,
   parseEnvFile,
 };

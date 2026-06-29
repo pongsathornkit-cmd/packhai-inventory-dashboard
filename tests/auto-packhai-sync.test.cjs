@@ -1,0 +1,85 @@
+const test = require("node:test");
+const assert = require("node:assert/strict");
+const fs = require("fs");
+const path = require("path");
+
+const {
+  createAutoSyncSettings,
+  publicAutoSyncState,
+} = require("../scripts/auto-sync-core.cjs");
+
+const projectRoot = path.resolve(__dirname, "..");
+
+test("auto Packhai sync settings enable scheduled packhai-only sync with a safe minimum interval", () => {
+  const settings = createAutoSyncSettings({
+    PACKHAI_AUTO_SYNC: "1",
+    PACKHAI_AUTO_SYNC_INTERVAL_MINUTES: "1",
+    PACKHAI_AUTO_SYNC_START_DELAY_SECONDS: "0",
+  });
+
+  assert.equal(settings.enabled, true);
+  assert.equal(settings.type, "packhai");
+  assert.equal(settings.intervalMs, 5 * 60 * 1000);
+  assert.equal(settings.startDelayMs, 0);
+});
+
+test("auto Packhai sync is disabled by default unless explicitly enabled", () => {
+  const settings = createAutoSyncSettings({});
+
+  assert.equal(settings.enabled, false);
+  assert.equal(settings.type, "packhai");
+  assert.equal(settings.intervalMs, 15 * 60 * 1000);
+});
+
+test("public auto sync state hides timer handles and exposes next run metadata", () => {
+  const settings = createAutoSyncSettings({
+    PACKHAI_AUTO_SYNC: "1",
+    PACKHAI_AUTO_SYNC_INTERVAL_MINUTES: "20",
+  });
+  const state = {
+    timer: { internal: true },
+    nextRunAt: "2026-06-29T09:00:00.000Z",
+    lastRunAt: "2026-06-29T08:45:00.000Z",
+    lastOk: true,
+  };
+
+  assert.deepEqual(publicAutoSyncState(settings, state), {
+    enabled: true,
+    type: "packhai",
+    intervalMs: 20 * 60 * 1000,
+    intervalMinutes: 20,
+    nextRunAt: "2026-06-29T09:00:00.000Z",
+    lastRunAt: "2026-06-29T08:45:00.000Z",
+    lastFinishedAt: null,
+    lastSkippedAt: null,
+    lastSkipReason: "",
+    lastOk: true,
+  });
+});
+
+test("Render enables Packhai auto sync for the cloud service", () => {
+  const renderSource = fs.readFileSync(path.join(projectRoot, "render.yaml"), "utf8");
+
+  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
+});
+
+test("sync server schedules Packhai auto sync and exposes its status", () => {
+  const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
+
+  assert.match(serverSource, /createAutoSyncSettings/);
+  assert.match(serverSource, /publicAutoSyncState/);
+  assert.match(serverSource, /function\s+scheduleNextAutoSync/);
+  assert.match(serverSource, /function\s+runAutoSync/);
+  assert.match(serverSource, /runSync\(autoSyncSettings\.type\)/);
+  assert.match(serverSource, /autoSync:\s*publicAutoSyncState\(autoSyncSettings,\s*autoSyncState\)/);
+  assert.match(serverSource, /scheduleNextAutoSync\(autoSyncSettings\.startDelayMs\)/);
+});
+
+test("dashboard renders Packhai auto sync status from the sync API response", () => {
+  const appSource = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");
+
+  assert.match(appSource, /function\s+autoSyncStatusText/);
+  assert.match(appSource, /status\.autoSync/);
+  assert.match(appSource, /Auto Sync Packhai/);
+});

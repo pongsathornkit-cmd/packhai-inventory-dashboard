@@ -1750,6 +1750,15 @@
     }).format(new Date(value));
   }
 
+  function autoSyncStatusText(autoSync) {
+    if (!autoSync?.enabled) return "";
+    const interval = autoSync.intervalMinutes ? `ทุก ${fmtInt.format(autoSync.intervalMinutes)} นาที` : "เปิดอยู่";
+    const next = autoSync.nextRunAt ? `รอบถัดไป ${formatSyncTime(autoSync.nextRunAt)}` : "";
+    const last = autoSync.lastFinishedAt ? `รอบล่าสุด ${formatSyncTime(autoSync.lastFinishedAt)}` : "";
+    const status = autoSync.lastSkipReason ? `ข้ามล่าสุด: ${autoSync.lastSkipReason}` : next || last;
+    return ["Auto Sync Packhai", interval, status].filter(Boolean).join(" · ");
+  }
+
   function syncButtons() {
     return [$("syncAll"), $("syncPackhai"), $("syncFlowaccount"), $("syncSeller"), $("syncSellerPayments")].filter(Boolean);
   }
@@ -1798,6 +1807,7 @@
           .map((step) => `${step.name}: ${step.skipped ? "Skipped" : step.code === 0 ? "OK" : "Error"}`)
           .join(" · ")
       : "รอเริ่มประมวลผล";
+    const autoSyncText = autoSyncStatusText(status.autoSync);
     const timeText = status.finishedAt
       ? `เสร็จ ${formatSyncTime(status.finishedAt)}`
       : status.startedAt
@@ -1808,6 +1818,7 @@
       <div>
         <strong>${escapeHtml(title)} · ${escapeHtml(label)}</strong>
         <span>${escapeHtml(status.message || "")}</span>
+        ${autoSyncText ? `<small class="sync-auto-status">${escapeHtml(autoSyncText)}</small>` : ""}
         <small>${escapeHtml(stepText)}</small>
       </div>
       <code>${escapeHtml(timeText)}</code>`;

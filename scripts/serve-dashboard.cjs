@@ -20,6 +20,7 @@ const {
   runRuleAssistant,
 } = require("./assistant-core.cjs");
 const { applyGithubStockUpdate, sanitizeStockUpdatePayload } = require("./github-stock-core.cjs");
+const { createAutoSyncSettings, publicAutoSyncState } = require("./auto-sync-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
@@ -50,6 +51,16 @@ const syncState = {
   warning: false,
   message: "พร้อม Sync",
   steps: [],
+};
+const autoSyncSettings = createAutoSyncSettings(process.env);
+const autoSyncState = {
+  timer: null,
+  nextRunAt: null,
+  lastRunAt: null,
+  lastFinishedAt: null,
+  lastSkippedAt: null,
+  lastSkipReason: "",
+  lastOk: null,
 };
 
 const contentTypes = {
@@ -242,6 +253,7 @@ function publicSyncState(extra = {}) {
     },
     ready: readiness.ready,
     missingConfig: readiness.missing,
+    autoSync: publicAutoSyncState(autoSyncSettings, autoSyncState),
   };
 }
 
@@ -763,6 +775,48 @@ function startSync(type, res) {
   sendJson(res, 202, publicSyncState());
 }
 
+function scheduleNextAutoSync(delayMs = autoSyncSettings.intervalMs) {
+  if (!autoSyncSettings.enabled) return;
+  if (autoSyncState.timer) clearTimeout(autoSyncState.timer);
+  const safeDelayMs = Math.max(0, Number(delayMs || 0));
+  autoSyncState.nextRunAt = new Date(Date.now() + safeDelayMs).toISOString();
+  autoSyncState.timer = setTimeout(runAutoSync, safeDelayMs);
+  if (typeof autoSyncState.timer.unref === "function") autoSyncState.timer.unref();
+}
+
+function skipAutoSync(reason) {
+  autoSyncState.lastSkippedAt = new Date().toISOString();
+  autoSyncState.lastSkipReason = reason;
+  autoSyncState.lastOk = null;
+  console.warn(`Packhai auto sync skipped: ${reason}`);
+}
+
+async function runAutoSync() {
+  autoSyncState.timer = null;
+  autoSyncState.nextRunAt = null;
+  autoSyncState.lastRunAt = new Date().toISOString();
+
+  if (!autoSyncSettings.enabled) return;
+  if (!packhaiConfigured()) {
+    skipAutoSync("PACKHAI_AUTH_TOKEN is not configured.");
+    scheduleNextAutoSync(autoSyncSettings.intervalMs);
+    return;
+  }
+  if (syncState.running) {
+    skipAutoSync("Another sync is already running.");
+    scheduleNextAutoSync(autoSyncSettings.intervalMs);
+    return;
+  }
+
+  try {
+    await runSync(autoSyncSettings.type);
+    autoSyncState.lastFinishedAt = syncState.finishedAt || new Date().toISOString();
+    autoSyncState.lastOk = Boolean(syncState.ok);
+  } finally {
+    scheduleNextAutoSync(autoSyncSettings.intervalMs);
+  }
+}
+
 function resolveRequestPath(urlPath) {
   const pathname = decodeURIComponent(new URL(urlPath, `http://${host}:${port}`).pathname);
   const requested = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
@@ -914,4 +968,8 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, host, () => {
   console.log(`Packhai dashboard website: http://${host}:${port}/`);
+  scheduleNextAutoSync(autoSyncSettings.startDelayMs);
+  if (autoSyncSettings.enabled) {
+    console.log(`Packhai auto sync enabled every ${autoSyncSettings.intervalMinutes} minutes.`);
+  }
 });

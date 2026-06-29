@@ -89,9 +89,27 @@ test("sync job publishes rebuilt app snapshots to Supabase instead of GitHub Pag
   assert.match(serverSource, /function\s+runPublishSupabase/);
   assert.match(serverSource, /publish-supabase-app\.cjs/);
   assert.match(publishSource, /packhai_stock_movements/);
+  assert.match(publishSource, /function\s+dashboardRowSnapshotRows/);
+  assert.match(publishSource, /dashboard_rows_index/);
+  assert.match(publishSource, /dashboard_rows_/);
+  assert.match(publishSource, /rowsMeta/);
+  assert.match(publishSource, /function\s+uncollectedStockSnapshotRows/);
+  assert.match(publishSource, /uncollected_stock_rows_index/);
+  assert.match(publishSource, /uncollectedStockRowsMeta/);
   assert.match(publishSource, /function\s+sellerPaymentsSnapshotPayload/);
   assert.match(publishSource, /ordersMeta/);
   assert.match(publishSource, /omittedFromSupabaseSnapshot/);
   assert.match(publishSource, /sellerPaymentsSnapshotPayload\(sellerPayments\)/);
   assert.doesNotMatch(syncJobSource, /publish-github-pages\.cjs/);
+});
+
+test("frontend hydrates large Supabase dashboard row chunks", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+
+  assert.match(appSource, /function\s+supabaseRestUrl/);
+  assert.match(appSource, /function\s+fetchSupabaseAppSnapshot/);
+  assert.match(appSource, /async function\s+hydrateSupabaseDashboardRows/);
+  assert.match(appSource, /dashboard_rows_index/);
+  assert.match(appSource, /uncollected_stock_rows_index/);
+  assert.match(appSource, /hydrateSupabaseDashboardRows\(payload\)/);
 });

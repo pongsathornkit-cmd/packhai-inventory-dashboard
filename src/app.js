@@ -441,6 +441,10 @@
     return `${String(supabaseConfig.url || "").replace(/\/+$/, "")}/rest/v1/rpc/${functionName}`;
   }
 
+  function supabaseRestUrl(path, query = "") {
+    return `${String(supabaseConfig.url || "").replace(/\/+$/, "")}/rest/v1/${path}${query}`;
+  }
+
   async function callSupabaseRpc(functionName, body) {
     const key = String(supabaseConfig.anonKey || "").trim();
     const response = await fetch(supabaseRpcUrl(functionName), {
@@ -458,6 +462,65 @@
       throw new Error(payload.message || payload.hint || payload.details || `Supabase status ${response.status}`);
     }
     return payload;
+  }
+
+  async function fetchSupabaseAppSnapshot(snapshotKey) {
+    const key = String(supabaseConfig.anonKey || "").trim();
+    const encodedKey = encodeURIComponent(String(snapshotKey || ""));
+    const response = await fetch(supabaseRestUrl("app_snapshots", `?key=eq.${encodedKey}&select=key,payload,updated_at`), {
+      method: "GET",
+      cache: "no-store",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        Accept: "application/json",
+      },
+    });
+    const payload = await response.json().catch(() => []);
+    if (!response.ok) {
+      const message = Array.isArray(payload) ? "" : payload?.message || payload?.hint || payload?.details;
+      throw new Error(message || `Supabase status ${response.status}`);
+    }
+    return Array.isArray(payload) ? payload[0]?.payload || null : null;
+  }
+
+  async function fetchRowsFromSupabaseSnapshotIndex(indexKey) {
+    const index = await fetchSupabaseAppSnapshot(indexKey);
+    const keys = Array.isArray(index?.keys) ? index.keys.filter(Boolean) : [];
+    if (!keys.length) return [];
+    const chunks = await Promise.all(keys.map((key) => fetchSupabaseAppSnapshot(key)));
+    return chunks
+      .filter((chunk) => chunk && Array.isArray(chunk.rows))
+      .sort((a, b) => Number(a.index || 0) - Number(b.index || 0))
+      .flatMap((chunk) => chunk.rows);
+  }
+
+  async function hydrateSupabaseDashboardRows(payload) {
+    const dashboard = payload?.dashboard;
+    if (!dashboard || typeof dashboard !== "object") return;
+
+    if (!Array.isArray(dashboard.rows) && dashboard.rowsMeta?.omittedFromSupabaseSnapshot) {
+      const hydratedRows = await fetchRowsFromSupabaseSnapshotIndex(dashboard.rowsMeta.indexKey || "dashboard_rows_index");
+      if (hydratedRows.length || Number(dashboard.rowsMeta.rowCount || 0) === 0) {
+        dashboard.rows = hydratedRows;
+      }
+    }
+
+    const uncollected = dashboard.uncollectedStockDeductions;
+    const uncollectedMeta = dashboard.uncollectedStockRowsMeta || uncollected?.rowsMeta;
+    if (
+      uncollected &&
+      typeof uncollected === "object" &&
+      !Array.isArray(uncollected.rows) &&
+      uncollectedMeta?.omittedFromSupabaseSnapshot
+    ) {
+      const hydratedRows = await fetchRowsFromSupabaseSnapshotIndex(
+        uncollectedMeta.indexKey || "uncollected_stock_rows_index"
+      );
+      if (hydratedRows.length || Number(uncollectedMeta.rowCount || 0) === 0) {
+        dashboard.uncollectedStockDeductions = { ...uncollected, rows: hydratedRows };
+      }
+    }
   }
 
   function websiteStockKey(sku, warehouseId) {
@@ -653,6 +716,7 @@
   async function loadSupabaseDashboardState(showStatus = false) {
     if (!supabaseAppHubConfigured()) return false;
     const payload = await callSupabaseRpc("dashboard_state", {});
+    await hydrateSupabaseDashboardRows(payload);
     mergeSupabaseDashboardState(payload);
     if (showStatus) {
       renderSyncStatus(

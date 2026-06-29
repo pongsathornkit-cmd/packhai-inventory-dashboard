@@ -69,9 +69,116 @@ function stockMovementSummary(stockMovements) {
   };
 }
 
-function dashboardSnapshotPayload(dashboard) {
+function boundedChunkSize(value, fallback) {
+  const parsed = Number(value || fallback);
+  if (!Number.isFinite(parsed) || parsed <= 0) return fallback;
+  return Math.min(Math.max(Math.floor(parsed), 25), 1000);
+}
+
+function snapshotChunkRows({ rows, prefix, indexKey, chunkSize, generatedAt }) {
+  const items = Array.isArray(rows) ? rows : [];
+  const totalChunks = Math.ceil(items.length / chunkSize);
+  const keys = [];
+  const snapshots = [];
+  for (let index = 0; index < totalChunks; index += 1) {
+    const key = `${prefix}_${String(index).padStart(4, "0")}`;
+    keys.push(key);
+    snapshots.push({
+      key,
+      payload: {
+        storage: "app_snapshots",
+        rows: items.slice(index * chunkSize, (index + 1) * chunkSize),
+        index,
+        totalChunks,
+        rowCount: items.length,
+        generatedAt,
+      },
+    });
+  }
+  snapshots.push({
+    key: indexKey,
+    payload: {
+      storage: "app_snapshots",
+      keys,
+      totalChunks,
+      rowCount: items.length,
+      chunkSize,
+      generatedAt,
+    },
+  });
+  return snapshots;
+}
+
+function dashboardRowsMeta(rows, chunkSize, generatedAt) {
+  return {
+    omittedFromSupabaseSnapshot: true,
+    indexKey: "dashboard_rows_index",
+    snapshotPrefix: "dashboard_rows_",
+    rowCount: Array.isArray(rows) ? rows.length : 0,
+    chunkSize,
+    generatedAt,
+  };
+}
+
+function uncollectedRowsMeta(rows, chunkSize, generatedAt) {
+  return {
+    omittedFromSupabaseSnapshot: true,
+    indexKey: "uncollected_stock_rows_index",
+    snapshotPrefix: "uncollected_stock_rows_",
+    rowCount: Array.isArray(rows) ? rows.length : 0,
+    chunkSize,
+    generatedAt,
+  };
+}
+
+function dashboardRowSnapshotRows(dashboard, generatedAt = new Date().toISOString()) {
+  const rows = Array.isArray(dashboard?.rows) ? dashboard.rows : [];
+  const chunkSize = boundedChunkSize(process.env.SUPABASE_DASHBOARD_ROWS_CHUNK_SIZE, 250);
+  return snapshotChunkRows({
+    rows,
+    prefix: "dashboard_rows",
+    indexKey: "dashboard_rows_index",
+    chunkSize,
+    generatedAt,
+  });
+}
+
+function uncollectedStockSnapshotRows(dashboard, generatedAt = new Date().toISOString()) {
+  const rows = Array.isArray(dashboard?.uncollectedStockDeductions?.rows)
+    ? dashboard.uncollectedStockDeductions.rows
+    : [];
+  const chunkSize = boundedChunkSize(process.env.SUPABASE_UNCOLLECTED_ROWS_CHUNK_SIZE, 250);
+  return snapshotChunkRows({
+    rows,
+    prefix: "uncollected_stock_rows",
+    indexKey: "uncollected_stock_rows_index",
+    chunkSize,
+    generatedAt,
+  });
+}
+
+function dashboardSnapshotPayload(dashboard, generatedAt = new Date().toISOString()) {
   if (!dashboard || typeof dashboard !== "object") return {};
   const payload = { ...dashboard };
+  const dashboardRows = Array.isArray(payload.rows) ? payload.rows : [];
+  if (dashboardRows.length) {
+    const chunkSize = boundedChunkSize(process.env.SUPABASE_DASHBOARD_ROWS_CHUNK_SIZE, 250);
+    delete payload.rows;
+    payload.rowsMeta = dashboardRowsMeta(dashboardRows, chunkSize, generatedAt);
+  }
+
+  const uncollectedRows = Array.isArray(payload.uncollectedStockDeductions?.rows)
+    ? payload.uncollectedStockDeductions.rows
+    : [];
+  if (uncollectedRows.length) {
+    const chunkSize = boundedChunkSize(process.env.SUPABASE_UNCOLLECTED_ROWS_CHUNK_SIZE, 250);
+    const meta = uncollectedRowsMeta(uncollectedRows, chunkSize, generatedAt);
+    payload.uncollectedStockDeductions = { ...payload.uncollectedStockDeductions };
+    delete payload.uncollectedStockDeductions.rows;
+    payload.uncollectedStockDeductions.rowsMeta = meta;
+    payload.uncollectedStockRowsMeta = meta;
+  }
+
   const platformPaymentOrders = Array.isArray(payload.platformPaymentOrders) ? payload.platformPaymentOrders : [];
   if (platformPaymentOrders.length) {
     delete payload.platformPaymentOrders;
@@ -111,8 +218,11 @@ function snapshotRows() {
   const dashboard = readJson(path.join(distDir, "inventory-valuation-data.json"), {});
   const stockMovements = readJson(path.join(distDir, "stock-movements.json"), { rows: [] });
   const sellerPayments = readJson(path.join(dataDir, "seller_compare", "seller_order_payments.json"), {});
+  const generatedAt = new Date().toISOString();
   return [
-    { key: "dashboard_current", payload: dashboardSnapshotPayload(dashboard) },
+    ...dashboardRowSnapshotRows(dashboard, generatedAt),
+    ...uncollectedStockSnapshotRows(dashboard, generatedAt),
+    { key: "dashboard_current", payload: dashboardSnapshotPayload(dashboard, generatedAt) },
     { key: "stock_movements_current", payload: stockMovementSummary(stockMovements) },
     { key: "seller_payments_current", payload: sellerPaymentsSnapshotPayload(sellerPayments) },
     { key: "source_files_current", payload: compactSourceFiles() },

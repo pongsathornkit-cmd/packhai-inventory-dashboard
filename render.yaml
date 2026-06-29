@@ -23,6 +23,14 @@ services:
         value: "15"
       - key: PACKHAI_AUTO_SYNC_START_DELAY_SECONDS
         value: "60"
+      - key: SELLER_PAYMENTS_AUTO_SYNC
+        value: "1"
+      - key: SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES
+        value: "15"
+      - key: SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS
+        value: "240"
+      - key: SELLER_ORDER_PAYMENT_MAX_NEW
+        value: "0"
       - key: PACKHAI_CLOUD_ENV_FILE
         value: /etc/secrets/cloud-sync.env
       - key: PACKHAI_DATA_DIR

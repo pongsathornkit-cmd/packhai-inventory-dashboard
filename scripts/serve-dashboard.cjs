@@ -20,7 +20,11 @@ const {
   runRuleAssistant,
 } = require("./assistant-core.cjs");
 const { applyGithubStockUpdate, sanitizeStockUpdatePayload } = require("./github-stock-core.cjs");
-const { createAutoSyncSettings, publicAutoSyncState } = require("./auto-sync-core.cjs");
+const {
+  createAutoSyncSettings,
+  createSellerPaymentsAutoSyncSettings,
+  publicAutoSyncState,
+} = require("./auto-sync-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
@@ -54,6 +58,16 @@ const syncState = {
 };
 const autoSyncSettings = createAutoSyncSettings(process.env);
 const autoSyncState = {
+  timer: null,
+  nextRunAt: null,
+  lastRunAt: null,
+  lastFinishedAt: null,
+  lastSkippedAt: null,
+  lastSkipReason: "",
+  lastOk: null,
+};
+const sellerPaymentsAutoSyncSettings = createSellerPaymentsAutoSyncSettings(process.env);
+const sellerPaymentsAutoSyncState = {
   timer: null,
   nextRunAt: null,
   lastRunAt: null,
@@ -214,6 +228,10 @@ function lazadaAuthConfigured() {
   return storageStateConfigured("lazada") || Boolean(process.env.SELLER_SESSION_DIR);
 }
 
+function sellerPaymentsConfigured() {
+  return shopeeAuthConfigured() || lazadaAuthConfigured();
+}
+
 function syncReadiness() {
   const config = {
     packhaiConfigured: packhaiConfigured(),
@@ -254,6 +272,10 @@ function publicSyncState(extra = {}) {
     ready: readiness.ready,
     missingConfig: readiness.missing,
     autoSync: publicAutoSyncState(autoSyncSettings, autoSyncState),
+    autoSyncJobs: {
+      packhai: publicAutoSyncState(autoSyncSettings, autoSyncState),
+      sellerPayments: publicAutoSyncState(sellerPaymentsAutoSyncSettings, sellerPaymentsAutoSyncState),
+    },
   };
 }
 
@@ -775,45 +797,66 @@ function startSync(type, res) {
   sendJson(res, 202, publicSyncState());
 }
 
-function scheduleNextAutoSync(delayMs = autoSyncSettings.intervalMs) {
-  if (!autoSyncSettings.enabled) return;
-  if (autoSyncState.timer) clearTimeout(autoSyncState.timer);
+function autoSyncJobDefinitions() {
+  return [
+    {
+      key: "packhai",
+      label: "Packhai",
+      settings: autoSyncSettings,
+      state: autoSyncState,
+      configured: packhaiConfigured,
+      missingReason: "PACKHAI_AUTH_TOKEN is not configured.",
+    },
+    {
+      key: "sellerPayments",
+      label: "Platform payments",
+      settings: sellerPaymentsAutoSyncSettings,
+      state: sellerPaymentsAutoSyncState,
+      configured: sellerPaymentsConfigured,
+      missingReason: "Shopee/Lazada Seller sessions are not configured.",
+    },
+  ];
+}
+
+function scheduleNextAutoSync(job, delayMs = job.settings.intervalMs) {
+  if (!job.settings.enabled) return;
+  if (job.state.timer) clearTimeout(job.state.timer);
   const safeDelayMs = Math.max(0, Number(delayMs || 0));
-  autoSyncState.nextRunAt = new Date(Date.now() + safeDelayMs).toISOString();
-  autoSyncState.timer = setTimeout(runAutoSync, safeDelayMs);
-  if (typeof autoSyncState.timer.unref === "function") autoSyncState.timer.unref();
+  job.state.nextRunAt = new Date(Date.now() + safeDelayMs).toISOString();
+  job.state.timer = setTimeout(() => runAutoSync(job), safeDelayMs);
+  if (typeof job.state.timer.unref === "function") job.state.timer.unref();
 }
 
-function skipAutoSync(reason) {
-  autoSyncState.lastSkippedAt = new Date().toISOString();
-  autoSyncState.lastSkipReason = reason;
-  autoSyncState.lastOk = null;
-  console.warn(`Packhai auto sync skipped: ${reason}`);
+function skipAutoSync(job, reason) {
+  job.state.lastSkippedAt = new Date().toISOString();
+  job.state.lastSkipReason = reason;
+  job.state.lastOk = null;
+  console.warn(`${job.label} auto sync skipped: ${reason}`);
 }
 
-async function runAutoSync() {
-  autoSyncState.timer = null;
-  autoSyncState.nextRunAt = null;
-  autoSyncState.lastRunAt = new Date().toISOString();
+async function runAutoSync(job) {
+  job.state.timer = null;
+  job.state.nextRunAt = null;
+  job.state.lastRunAt = new Date().toISOString();
 
-  if (!autoSyncSettings.enabled) return;
-  if (!packhaiConfigured()) {
-    skipAutoSync("PACKHAI_AUTH_TOKEN is not configured.");
-    scheduleNextAutoSync(autoSyncSettings.intervalMs);
+  if (!job.settings.enabled) return;
+  if (!job.configured()) {
+    skipAutoSync(job, job.missingReason);
+    scheduleNextAutoSync(job, job.settings.intervalMs);
     return;
   }
   if (syncState.running) {
-    skipAutoSync("Another sync is already running.");
-    scheduleNextAutoSync(autoSyncSettings.intervalMs);
+    skipAutoSync(job, "Another sync is already running.");
+    scheduleNextAutoSync(job, job.settings.intervalMs);
     return;
   }
 
   try {
-    await runSync(autoSyncSettings.type);
-    autoSyncState.lastFinishedAt = syncState.finishedAt || new Date().toISOString();
-    autoSyncState.lastOk = Boolean(syncState.ok);
+    await runSync(job.settings.type);
+    job.state.lastFinishedAt = syncState.finishedAt || new Date().toISOString();
+    job.state.lastOk = Boolean(syncState.ok);
   } finally {
-    scheduleNextAutoSync(autoSyncSettings.intervalMs);
+    scheduleNextAutoSync(job, job.settings.intervalMs);
   }
 }
 
@@ -968,8 +1011,10 @@ const server = http.createServer((req, res) => {
 
 server.listen(port, host, () => {
   console.log(`Packhai dashboard website: http://${host}:${port}/`);
-  scheduleNextAutoSync(autoSyncSettings.startDelayMs);
-  if (autoSyncSettings.enabled) {
-    console.log(`Packhai auto sync enabled every ${autoSyncSettings.intervalMinutes} minutes.`);
+  for (const job of autoSyncJobDefinitions()) {
+    scheduleNextAutoSync(job, job.settings.startDelayMs);
+    if (job.settings.enabled) {
+      console.log(`${job.label} auto sync enabled every ${job.settings.intervalMinutes} minutes.`);
+    }
   }
 });

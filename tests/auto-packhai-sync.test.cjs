@@ -5,6 +5,7 @@ const path = require("path");
 
 const {
   createAutoSyncSettings,
+  createSellerPaymentsAutoSyncSettings,
   publicAutoSyncState,
 } = require("../scripts/auto-sync-core.cjs");
 
@@ -29,6 +30,19 @@ test("auto Packhai sync is disabled by default unless explicitly enabled", () =>
   assert.equal(settings.enabled, false);
   assert.equal(settings.type, "packhai");
   assert.equal(settings.intervalMs, 15 * 60 * 1000);
+});
+
+test("auto seller platform payment sync imports every missing platform order continuously", () => {
+  const settings = createSellerPaymentsAutoSyncSettings({
+    SELLER_PAYMENTS_AUTO_SYNC: "1",
+    SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES: "1",
+    SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS: "30",
+  });
+
+  assert.equal(settings.enabled, true);
+  assert.equal(settings.type, "seller-payments");
+  assert.equal(settings.intervalMs, 5 * 60 * 1000);
+  assert.equal(settings.startDelayMs, 30 * 1000);
 });
 
 test("public auto sync state hides timer handles and exposes next run metadata", () => {
@@ -62,24 +76,32 @@ test("Render enables Packhai auto sync for the cloud service", () => {
 
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC\s*\n\s*value:\s*"1"/);
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
+  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
+  assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
 });
 
-test("sync server schedules Packhai auto sync and exposes its status", () => {
+test("sync server schedules Packhai and platform payment auto sync and exposes their status", () => {
   const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
 
   assert.match(serverSource, /createAutoSyncSettings/);
+  assert.match(serverSource, /createSellerPaymentsAutoSyncSettings/);
   assert.match(serverSource, /publicAutoSyncState/);
   assert.match(serverSource, /function\s+scheduleNextAutoSync/);
   assert.match(serverSource, /function\s+runAutoSync/);
-  assert.match(serverSource, /runSync\(autoSyncSettings\.type\)/);
+  assert.match(serverSource, /runSync\(job\.settings\.type\)/);
   assert.match(serverSource, /autoSync:\s*publicAutoSyncState\(autoSyncSettings,\s*autoSyncState\)/);
-  assert.match(serverSource, /scheduleNextAutoSync\(autoSyncSettings\.startDelayMs\)/);
+  assert.match(serverSource, /autoSyncJobs:\s*\{/);
+  assert.match(serverSource, /sellerPayments:\s*publicAutoSyncState\(sellerPaymentsAutoSyncSettings,\s*sellerPaymentsAutoSyncState\)/);
+  assert.match(serverSource, /scheduleNextAutoSync\(job,\s*job\.settings\.startDelayMs\)/);
 });
 
-test("dashboard renders Packhai auto sync status from the sync API response", () => {
+test("dashboard renders Packhai and platform payment auto sync status from the sync API response", () => {
   const appSource = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");
 
   assert.match(appSource, /function\s+autoSyncStatusText/);
   assert.match(appSource, /status\.autoSync/);
+  assert.match(appSource, /status\.autoSyncJobs/);
   assert.match(appSource, /Auto Sync Packhai/);
+  assert.match(appSource, /Auto Sync ยอดเก็บเงิน Platform/);
 });

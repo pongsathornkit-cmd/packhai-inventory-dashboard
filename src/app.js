@@ -1750,13 +1750,22 @@
     }).format(new Date(value));
   }
 
-  function autoSyncStatusText(autoSync) {
+  function autoSyncStatusText(autoSync, label = "Auto Sync Packhai") {
     if (!autoSync?.enabled) return "";
     const interval = autoSync.intervalMinutes ? `ทุก ${fmtInt.format(autoSync.intervalMinutes)} นาที` : "เปิดอยู่";
     const next = autoSync.nextRunAt ? `รอบถัดไป ${formatSyncTime(autoSync.nextRunAt)}` : "";
     const last = autoSync.lastFinishedAt ? `รอบล่าสุด ${formatSyncTime(autoSync.lastFinishedAt)}` : "";
     const status = autoSync.lastSkipReason ? `ข้ามล่าสุด: ${autoSync.lastSkipReason}` : next || last;
-    return ["Auto Sync Packhai", interval, status].filter(Boolean).join(" · ");
+    return [label, interval, status].filter(Boolean).join(" · ");
+  }
+
+  function autoSyncStatusTexts(status) {
+    if (!status) return [];
+    const jobs = status.autoSyncJobs || {};
+    return [
+      autoSyncStatusText(jobs.packhai || status.autoSync, "Auto Sync Packhai"),
+      autoSyncStatusText(jobs.sellerPayments, "Auto Sync ยอดเก็บเงิน Platform"),
+    ].filter(Boolean);
   }
 
   function syncButtons() {
@@ -1807,7 +1816,7 @@
           .map((step) => `${step.name}: ${step.skipped ? "Skipped" : step.code === 0 ? "OK" : "Error"}`)
           .join(" · ")
       : "รอเริ่มประมวลผล";
-    const autoSyncText = autoSyncStatusText(status.autoSync);
+    const autoSyncTexts = autoSyncStatusTexts(status);
     const timeText = status.finishedAt
       ? `เสร็จ ${formatSyncTime(status.finishedAt)}`
       : status.startedAt
@@ -1818,7 +1827,7 @@
       <div>
         <strong>${escapeHtml(title)} · ${escapeHtml(label)}</strong>
         <span>${escapeHtml(status.message || "")}</span>
-        ${autoSyncText ? `<small class="sync-auto-status">${escapeHtml(autoSyncText)}</small>` : ""}
+        ${autoSyncTexts.map((text) => `<small class="sync-auto-status">${escapeHtml(text)}</small>`).join("")}
         <small>${escapeHtml(stepText)}</small>
       </div>
       <code>${escapeHtml(timeText)}</code>`;

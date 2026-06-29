@@ -7,6 +7,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
 const localWriteKeyFile = path.join(projectRoot, ".sync-key.local");
+const stockMovementsFile = path.join(distDir, "stock-movements.json");
 
 if (!process.env.LOAD_LOCAL_CLOUD_ENV && fs.existsSync(path.join(projectRoot, ".tmp", "cloud-sync.env"))) {
   process.env.LOAD_LOCAL_CLOUD_ENV = "1";
@@ -18,6 +19,14 @@ function readJson(file, fallback = {}) {
     return JSON.parse(fs.readFileSync(file, "utf8").replace(/^\uFEFF/, ""));
   } catch {
     return fallback;
+  }
+}
+
+function fileSha1(file) {
+  try {
+    return crypto.createHash("sha1").update(fs.readFileSync(file)).digest("hex");
+  } catch {
+    return "";
   }
 }
 
@@ -65,6 +74,7 @@ function stockMovementSummary(stockMovements) {
   return {
     storage: "packhai_stock_movements",
     rowCount: rows.length,
+    contentHash: fileSha1(stockMovementsFile),
     generatedAt: stockMovements.generatedAt || new Date().toISOString(),
   };
 }
@@ -216,7 +226,7 @@ function sellerPaymentsSnapshotPayload(sellerPayments) {
 
 function snapshotRows() {
   const dashboard = readJson(path.join(distDir, "inventory-valuation-data.json"), {});
-  const stockMovements = readJson(path.join(distDir, "stock-movements.json"), { rows: [] });
+  const stockMovements = readJson(stockMovementsFile, { rows: [] });
   const sellerPayments = readJson(path.join(dataDir, "seller_compare", "seller_order_payments.json"), {});
   const generatedAt = new Date().toISOString();
   return [
@@ -247,7 +257,7 @@ function movementKey(item) {
 }
 
 function movementRows() {
-  const stockMovements = readJson(path.join(distDir, "stock-movements.json"), { rows: [] });
+  const stockMovements = readJson(stockMovementsFile, { rows: [] });
   return (stockMovements.rows || [])
     .filter((item) => Number(item.stockShopId || 0))
     .map((item) => ({
@@ -289,6 +299,41 @@ async function supabaseRpc(functionName, body) {
   return payload;
 }
 
+async function fetchSupabaseAppSnapshot(key) {
+  const baseUrl = supabaseBaseUrl();
+  const apiKey = supabaseApiKey();
+  if (!baseUrl || !apiKey) return null;
+  const response = await fetch(
+    `${baseUrl}/rest/v1/app_snapshots?key=eq.${encodeURIComponent(key)}&select=key,payload,updated_at`,
+    {
+      method: "GET",
+      headers: {
+        apikey: apiKey,
+        Authorization: `Bearer ${apiKey}`,
+        Accept: "application/json",
+      },
+    }
+  );
+  const text = await response.text();
+  if (!response.ok) return null;
+  try {
+    const rows = text ? JSON.parse(text) : [];
+    return Array.isArray(rows) ? rows[0]?.payload || null : null;
+  } catch {
+    return null;
+  }
+}
+
+async function movementUploadNeeded(nextSummary) {
+  if (!nextSummary?.contentHash) return true;
+  const currentSummary = await fetchSupabaseAppSnapshot("stock_movements_current");
+  if (!currentSummary?.contentHash) return true;
+  return (
+    String(currentSummary.contentHash) !== String(nextSummary.contentHash) ||
+    Number(currentSummary.rowCount || 0) !== Number(nextSummary.rowCount || 0)
+  );
+}
+
 async function publishChunk({ snapshots = [], movements = [] }) {
   return supabaseRpc("sync_publish_app", {
     p_snapshots: snapshots,
@@ -323,14 +368,30 @@ async function upsertMovements(rows, chunkSize = 500) {
 async function main() {
   const snapshots = snapshotRows();
   const movementItems = movementRows();
+  const movementSummary = snapshots.find((row) => row.key === "stock_movements_current")?.payload || {};
+  const shouldUploadMovements = await movementUploadNeeded(movementSummary);
+  let uploadedMovements = 0;
+  if (shouldUploadMovements) {
+    uploadedMovements = await upsertMovements(movementItems, 100);
+  } else {
+    console.log(
+      JSON.stringify({
+        step: "packhai_stock_movements",
+        skipped: true,
+        reason: "contentHash unchanged",
+        total: movementItems.length,
+        contentHash: movementSummary.contentHash || "",
+      })
+    );
+  }
   const snapshotStats = await upsertSnapshots(snapshots);
-  const uploadedMovements = await upsertMovements(movementItems);
   console.log(
     JSON.stringify(
       {
         ok: true,
         appSnapshots: snapshotStats,
         packhaiStockMovements: uploadedMovements,
+        packhaiStockMovementsSkipped: !shouldUploadMovements,
         dashboardUrl: process.env.PUBLIC_DASHBOARD_URL || process.env.RENDER_EXTERNAL_URL || "",
       },
       null,

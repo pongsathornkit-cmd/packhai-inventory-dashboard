@@ -97,6 +97,10 @@ test("sync job publishes rebuilt app snapshots to Supabase instead of GitHub Pag
   assert.match(publishSource, /uncollected_stock_rows_index/);
   assert.match(publishSource, /uncollectedStockRowsMeta/);
   assert.match(publishSource, /function\s+sellerPaymentsSnapshotPayload/);
+  assert.match(publishSource, /contentHash/);
+  assert.match(publishSource, /function\s+fetchSupabaseAppSnapshot/);
+  assert.match(publishSource, /function\s+movementUploadNeeded/);
+  assert.match(publishSource, /upsertMovements\(movementItems,\s*100\)/);
   assert.match(publishSource, /ordersMeta/);
   assert.match(publishSource, /omittedFromSupabaseSnapshot/);
   assert.match(publishSource, /sellerPaymentsSnapshotPayload\(sellerPayments\)/);

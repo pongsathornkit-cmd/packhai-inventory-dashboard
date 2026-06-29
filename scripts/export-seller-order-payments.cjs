@@ -83,9 +83,21 @@ function numberValue(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function firstNumberOrNull(...values) {
+  for (const value of values) {
+    if (value == null || value === "") continue;
+    return numberValue(value);
+  }
+  return null;
+}
+
+function roundMoney(value) {
+  return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
 function shopeeMoney(value) {
   const amount = numberValue(value);
-  return amount > 100000 ? amount / 100000 : amount;
+  return roundMoney(Math.abs(amount) >= 100000 ? amount / 100000 : amount);
 }
 
 function firstPositive(...values) {
@@ -129,6 +141,108 @@ function shopeeItemLineAmount(item) {
   return unitPrice > 0 ? unitPrice * quantity : 0;
 }
 
+function shopeeMoneyOrNull(value) {
+  if (value == null || value === "") return null;
+  const amount = shopeeMoney(value);
+  return Number.isFinite(amount) ? amount : null;
+}
+
+function flattenShopeeBreakdown(rows, parent = null) {
+  const output = [];
+  for (const row of rows || []) {
+    const entry = {
+      fieldId: row.field_id ?? row.fieldId ?? "",
+      fieldName: String(row.field_name || row.fieldName || "").trim(),
+      displayName: String(row.display_name || row.displayName || "").trim(),
+      amount: shopeeMoney(row.amount),
+      parentFieldName: parent?.fieldName || "",
+      parentDisplayName: parent?.displayName || "",
+    };
+    output.push(entry);
+    output.push(...flattenShopeeBreakdown(row.sub_breakdown || row.subBreakdown || [], entry));
+  }
+  return output;
+}
+
+function findShopeeBreakdownAmount(rows, fieldNames, displayNames = []) {
+  const fieldSet = new Set(fieldNames.map((item) => String(item).toUpperCase()));
+  const displaySet = new Set(displayNames.map((item) => String(item).trim()));
+  const row = (rows || []).find(
+    (item) =>
+      (item.fieldName && fieldSet.has(item.fieldName.toUpperCase())) ||
+      (item.displayName && displaySet.has(item.displayName))
+  );
+  return row ? row.amount : null;
+}
+
+function shopeePaymentDetailFromIncomeComponents(data) {
+  const sellerRows = flattenShopeeBreakdown(data?.seller_income_breakdown?.breakdown);
+  const buyerRows = flattenShopeeBreakdown(data?.buyer_payment_breakdown?.breakdown);
+  const paymentBreakdown = {
+    merchandiseSubtotal: findShopeeBreakdownAmount(sellerRows, ["MERCHANDISE_SUBTOTAL"], ["รวมค่าสินค้า"]),
+    productRevenue: findShopeeBreakdownAmount(sellerRows, ["PRODUCT_PRICE"], ["รายรับค่าสินค้า"]),
+    shippingSubtotal: findShopeeBreakdownAmount(sellerRows, ["SHIPPING_SUBTOTAL"], ["ค่าจัดส่งทั้งหมด"]),
+    shippingFeePaidByBuyer: findShopeeBreakdownAmount(sellerRows, ["SHIPPING_FEE_PAID_BY_BUYER"], [
+      "ค่าจัดส่งที่ชำระโดยผู้ซื้อ",
+    ]),
+    actualShippingFee: findShopeeBreakdownAmount(sellerRows, ["ACTUAL_SHIPPING_FEE"], [
+      "ค่าจัดส่งตามจริง คิดโดยผู้ให้บริการขนส่ง",
+    ]),
+    feesAndCharges: findShopeeBreakdownAmount(sellerRows, ["FEES_AND_CHARGES"], ["ค่าธรรมเนียม"]),
+    commissionFee: findShopeeBreakdownAmount(sellerRows, ["COMMISSION_FEE"], ["ค่าคอมมิชชั่น"]),
+    serviceFee: findShopeeBreakdownAmount(sellerRows, ["SERVICE_FEE"], ["ค่าบริการ"]),
+    platformInfrastructureFee: findShopeeBreakdownAmount(sellerRows, ["SELLER_ORDER_PROCESSING_FEE"], [
+      "ค่าธรรมเนียมโครงสร้างพื้นฐานแพลตฟอร์ม",
+    ]),
+    transactionFee: findShopeeBreakdownAmount(sellerRows, ["TRANSACTION_FEE"], ["ค่าธุรกรรมการชำระเงิน"]),
+    escrowTopUpAdsFee: findShopeeBreakdownAmount(sellerRows, ["ESCROW_ADS_CREDIT_TOP_UP"], [
+      "ค่าธรรมเนียมเติมเงินโฆษณาจากเงิน Escrow",
+    ]),
+    valueAddedServicesSubtotal: findShopeeBreakdownAmount(sellerRows, ["VALUE_ADDED_SERVICES_SUBTOTAL"], [
+      "ยอดรวมบริการเสริมเพิ่มมูลค่าสำหรับผู้ซื้อ",
+    ]),
+    escrowAmount: findShopeeBreakdownAmount(sellerRows, ["ESCROW_AMOUNT"], ["รายรับจากคำสั่งซื้อ"]),
+    buyerPaidAmount: findShopeeBreakdownAmount(buyerRows, ["BUYER_PAID_AMOUNT"], ["การชำระเงินทั้งหมดของผู้ซื้อ"]),
+    buyerMerchandiseSubtotal: findShopeeBreakdownAmount(buyerRows, ["MERCHANDISE_SUBTOTAL"], ["รวมค่าสินค้า"]),
+    buyerShippingFee: findShopeeBreakdownAmount(buyerRows, ["SHIPPING_FEE"], ["ค่าจัดส่ง"]),
+    buyerShopeeVoucherDiscount: findShopeeBreakdownAmount(buyerRows, ["SHOPEE_VOUCHER_DISCOUNT"], ["Shopee Voucher"]),
+    buyerSellerVoucherDiscount: findShopeeBreakdownAmount(buyerRows, ["SELLER_VOUCHER_DISCOUNT"], ["Seller Voucher"]),
+    sellerIncomeBreakdown: sellerRows,
+    buyerPaymentBreakdown: buyerRows,
+  };
+  const adjustedAmount = shopeeMoneyOrNull(data?.adjustment_info?.amount_after_adjustment);
+  const orderIncomeAmount =
+    paymentBreakdown.escrowAmount != null ? paymentBreakdown.escrowAmount : adjustedAmount != null ? adjustedAmount : null;
+
+  return {
+    orderIncomeAmount,
+    buyerPaidAmount: paymentBreakdown.buyerPaidAmount,
+    paymentBreakdown,
+    items: shopeeItemsFromIncomeComponents(data),
+  };
+}
+
+function shopeeItemsFromIncomeComponents(data) {
+  return (data?.order_item_list?.order_items || []).map((item) => {
+    const quantity = firstPositive(item.amount, item.quantity, item.qty) || 1;
+    const unitPrice = shopeeMoney(firstPositive(item.price, item.unit_price, item.unitPrice));
+    const lineAmount = shopeeMoney(firstPositive(item.subtotal, item.net_sales_amount, item.netSalesAmount, item.total_price));
+    const skuText = String(item.model_sku || item.product_sku || item.sku || "").trim();
+    return {
+      name: item.product_name || item.name || "",
+      skuText,
+      amount: quantity,
+      unitPrice,
+      lineAmount,
+      netSalesAmount: lineAmount,
+      itemId: item.item_id || "",
+      modelId: item.model_id || "",
+      lineItemId: item.line_item_id || "",
+      image: item.product_image || "",
+    };
+  });
+}
+
 function lazadaItemLineAmount(sku) {
   const quantity = firstPositive(sku.quantity, sku.amount, sku.qty) || 1;
   const lineAmount = firstPositive(
@@ -160,19 +274,28 @@ function mergeByOrder(records) {
     const platform = record.platform === "Lazada" ? "Lazada" : record.platform === "Shopee" ? "Shopee" : "";
     const orderNo = normalizeOrderNo(record.orderNo || record.orderSn || record.orderId || record.platformOrderNo);
     if (!platform || !orderNo) continue;
+    const paymentBreakdown = record.paymentBreakdown || record.payment_breakdown || {};
+    const orderIncomeAmount = firstNumberOrNull(
+      record.orderIncomeAmount,
+      record.orderIncome,
+      paymentBreakdown.escrowAmount,
+      paymentBreakdown.orderIncomeAmount
+    );
     map.set(`${platform}|${orderNo}`, {
       ...record,
       platform,
       orderNo,
-      collectedAmount: numberValue(
-        record.collectedAmount ?? record.collected ?? record.netAmount ?? record.payoutAmount ?? record.totalAmount
-      ),
+      collectedAmount:
+        platform === "Shopee" && orderIncomeAmount != null
+          ? orderIncomeAmount
+          : numberValue(record.collectedAmount ?? record.collected ?? record.netAmount ?? record.payoutAmount ?? record.totalAmount),
     });
   }
   return map;
 }
 
 function recordNeedsItemAmountRefresh(record) {
+  if (record?.platform === "Shopee" && !record.incomeDetailCaptured) return true;
   const items = Array.isArray(record?.items) ? record.items : [];
   if (!items.length) return true;
   const skuKeys = new Set(
@@ -384,6 +507,53 @@ async function fetchShopeePayment(page, spc, shopId, orderSn) {
   );
 }
 
+async function fetchShopeeIncomeComponents(page, spc, shopId, orderId, orderSn) {
+  if (!orderId) return null;
+  return page.evaluate(
+    async ({ spcToken, shopIdValue, orderIdValue, orderSnValue }) => {
+      async function fetchJson(endpoint, params, options = {}) {
+        const qs = new URLSearchParams({
+          SPC_CDS: spcToken,
+          SPC_CDS_VER: "2",
+          ...params,
+        });
+        const response = await fetch(`${endpoint}?${qs.toString()}`, {
+          credentials: "include",
+          ...options,
+        });
+        const text = await response.text();
+        let json;
+        try {
+          json = JSON.parse(text);
+        } catch {
+          throw new Error(`${endpoint} returned ${response.status}: ${text.slice(0, 200)}`);
+        }
+        if (json.code !== 0) {
+          throw new Error(`${endpoint} ${JSON.stringify({ code: json.code, message: json.message, user_message: json.user_message })}`);
+        }
+        return json.data || {};
+      }
+
+      const body = {
+        order_id: Number(orderIdValue),
+        order_sn: orderSnValue,
+        components: [2, 3, 4, 5, 6],
+      };
+      if (Number(shopIdValue)) body.shop_id = Number(shopIdValue);
+      return fetchJson(
+        "/api/v4/accounting/pc/seller_income/income_detail/get_order_income_components",
+        {},
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify(body),
+        }
+      );
+    },
+    { spcToken: spc, shopIdValue: shopId, orderIdValue: orderId, orderSnValue: orderSn }
+  );
+}
+
 async function exportShopeePayments(orderNos, existingMap, errors) {
   if (!orderNos.length) return [];
   const session = await openShopeePage();
@@ -399,17 +569,34 @@ async function exportShopeePayments(orderNos, existingMap, errors) {
         if (!card || !payment) {
           errors.push(`Shopee ${orderNo}: payment not found`);
         } else {
+          const orderId = card.order_ext_info?.order_id || "";
+          let incomeComponents = null;
+          let incomeDetail = { items: [], orderIncomeAmount: null, buyerPaidAmount: null, paymentBreakdown: {} };
+          try {
+            incomeComponents = await fetchShopeeIncomeComponents(session.page, session.spc, session.shopId, orderId, orderNo);
+            incomeDetail = shopeePaymentDetailFromIncomeComponents(incomeComponents);
+          } catch (error) {
+            errors.push(`Shopee ${orderNo}: income detail unavailable (${error.message || error})`);
+          }
+          const fallbackCollectedAmount = shopeeMoney(payment.total_price);
+          const collectedAmount =
+            incomeDetail.orderIncomeAmount != null ? incomeDetail.orderIncomeAmount : fallbackCollectedAmount;
+          const items = incomeDetail.items.length ? incomeDetail.items : shopeeItemsFromCard(card);
           records.push({
             platform: "Shopee",
             orderNo,
-            collectedAmount: shopeeMoney(payment.total_price),
+            collectedAmount,
+            orderIncomeAmount: incomeDetail.orderIncomeAmount,
+            buyerPaidAmount: incomeDetail.buyerPaidAmount != null ? incomeDetail.buyerPaidAmount : fallbackCollectedAmount,
+            paymentBreakdown: incomeDetail.paymentBreakdown,
             currency: "THB",
             paymentMethod: payment.payment_method || "",
             status: card.status_info?.status || "",
             source: "Shopee Seller Center",
             capturedAt: new Date().toISOString(),
-            orderId: card.order_ext_info?.order_id || "",
-            items: shopeeItemsFromCard(card),
+            orderId,
+            incomeDetailCaptured: Boolean(incomeComponents),
+            items,
           });
         }
       } catch (error) {

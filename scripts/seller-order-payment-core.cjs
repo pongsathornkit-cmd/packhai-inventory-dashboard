@@ -11,6 +11,14 @@ function numberValue(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function firstNumberOrNull(...values) {
+  for (const value of values) {
+    if (value == null || value === "") continue;
+    return numberValue(value);
+  }
+  return null;
+}
+
 function normalizeOrderNo(value) {
   return String(value ?? "").trim().toUpperCase();
 }
@@ -45,7 +53,7 @@ function platformSource(platform) {
 
 function shopeeMinorMoney(value) {
   const parsed = numberValue(value);
-  if (parsed > 100000) return roundMoney(parsed / 100000);
+  if (Math.abs(parsed) >= 100000) return roundMoney(parsed / 100000);
   return roundMoney(parsed);
 }
 
@@ -81,6 +89,12 @@ function normalizePaymentItem(item) {
   const lineAmount =
     firstPositive(
       item.lineAmount,
+      item.netSalesAmount,
+      item.itemNetSalesAmount,
+      item.shopeeNetSalesAmount,
+      item.sellerNetSalesAmount,
+      item.grossSalesAmount,
+      item.salesAmount,
       item.itemAmount,
       item.totalLineAmount,
       item.totalAmount,
@@ -128,16 +142,29 @@ function normalizePaymentRecord(record) {
   if (!platform || !orderNo) return null;
 
   const rawPayment = record.payment_info || record.paymentInfo || {};
+  const paymentBreakdown = record.paymentBreakdown || record.payment_breakdown || {};
   const shopeeTotal = rawPayment.total_price ? shopeeMinorMoney(rawPayment.total_price) : 0;
-  const amount = firstPositive(
-    record.collectedAmount,
-    record.collected,
-    record.netAmount,
-    record.payoutAmount,
-    record.totalAmount,
-    record.amount,
-    shopeeTotal
+  const orderIncomeAmount = firstNumberOrNull(
+    record.orderIncomeAmount,
+    record.orderIncome,
+    record.shopeeOrderIncomeAmount,
+    paymentBreakdown.escrowAmount,
+    paymentBreakdown.orderIncomeAmount,
+    paymentBreakdown.orderIncome
   );
+  const amount =
+    platform === "Shopee" && orderIncomeAmount != null
+      ? orderIncomeAmount
+      : firstPositive(
+          record.collectedAmount,
+          platform === "Shopee" ? 0 : orderIncomeAmount,
+          record.collected,
+          record.netAmount,
+          record.payoutAmount,
+          record.totalAmount,
+          record.amount,
+          shopeeTotal
+      );
 
   return {
     platform,

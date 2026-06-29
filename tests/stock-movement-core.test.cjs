@@ -207,6 +207,68 @@ test("seller platform payment is allocated by matched SKU line, not copied from 
   assert.equal(order.collectedAmount, 386);
 });
 
+test("Shopee payment uses order income after fees for single SKU orders", () => {
+  const paymentIndex = buildSellerPaymentIndex({
+    orders: [
+      {
+        platform: "Shopee",
+        orderNo: "SP-INCOME-ONE",
+        totalAmount: 1699,
+        orderIncomeAmount: 1225,
+        paymentBreakdown: {
+          merchandiseSubtotal: 1699,
+          feesAndCharges: -474,
+          escrowAmount: 1225,
+        },
+        items: [{ skuText: "F131-5161", amount: 1, netSalesAmount: 1699 }],
+      },
+    ],
+  });
+
+  const movement = enrichMovementWithSellerPayment(
+    { channelName: "Shopee", platformOrderNo: "SP-INCOME-ONE", sku: "F131-5161", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(movement.platformPaymentStatus, "matched");
+  assert.equal(movement.platformPaymentAmount, 1225);
+  assert.equal(movement.platformPaymentOrderAmount, 1225);
+  assert.equal(movement.platformPaymentAllocationMethod, "sku-line-amount");
+});
+
+test("Shopee payment allocates order income by each SKU net sales amount", () => {
+  const paymentIndex = buildSellerPaymentIndex({
+    orders: [
+      {
+        platform: "Shopee",
+        orderNo: "SP-INCOME-MULTI",
+        totalAmount: 2000,
+        orderIncomeAmount: 1225,
+        items: [
+          { skuText: "SKU-A", amount: 1, netSalesAmount: 1699 },
+          { skuText: "SKU-B", amount: 1, netSalesAmount: 301 },
+        ],
+      },
+    ],
+  });
+
+  const skuA = enrichMovementWithSellerPayment(
+    { channelName: "Shopee", platformOrderNo: "SP-INCOME-MULTI", sku: "SKU-A", removeQuantity: 1 },
+    paymentIndex
+  );
+  const skuB = enrichMovementWithSellerPayment(
+    { channelName: "Shopee", platformOrderNo: "SP-INCOME-MULTI", sku: "SKU-B", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(skuA.platformPaymentStatus, "matched");
+  assert.equal(skuA.platformPaymentAmount, 1040.64);
+  assert.equal(skuA.platformPaymentOrderAmount, 1225);
+  assert.equal(skuB.platformPaymentStatus, "matched");
+  assert.equal(skuB.platformPaymentAmount, 184.36);
+  assert.equal(skuB.platformPaymentOrderAmount, 1225);
+});
+
 test("seller platform payment is not assigned to a SKU when multi-item order has no item amounts", () => {
   const paymentIndex = buildSellerPaymentIndex({
     orders: [

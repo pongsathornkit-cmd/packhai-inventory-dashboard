@@ -44,7 +44,7 @@ services:
       - key: SELLER_ORDER_PAYMENT_PROGRESS_EVERY
         value: "25"
       - key: SELLER_PAYMENTS_TIMEOUT_MS
-        value: "5400000"
+        value: "21600000"
       - key: PACKHAI_CLOUD_ENV_FILE
         value: /etc/secrets/cloud-sync.env
       - key: PACKHAI_SYNC_ENV_PASSPHRASE

@@ -609,7 +609,7 @@ function commandTimeoutMs(name) {
       : /shopee|lazada/i.test(name)
       ? process.env.SELLER_SYNC_TIMEOUT_MS
       : "";
-  const defaultMs = /seller order payments/i.test(name) ? 90 * 60 * 1000 : 10 * 60 * 1000;
+  const defaultMs = /seller order payments/i.test(name) ? 6 * 60 * 60 * 1000 : 10 * 60 * 1000;
   const parsed = Number(specific || process.env.SYNC_COMMAND_TIMEOUT_MS || defaultMs);
   return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
 }

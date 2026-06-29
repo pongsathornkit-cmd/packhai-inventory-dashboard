@@ -144,7 +144,7 @@ test("platform payment sync uses long-running live progress and process tree tim
   const paymentsSource = fs.readFileSync(path.join(projectRoot, "scripts", "export-seller-order-payments.cjs"), "utf8");
 
   assert.match(serverSource, /SELLER_PAYMENTS_TIMEOUT_MS/);
-  assert.match(serverSource, /90\s*\*\s*60\s*\*\s*1000/);
+  assert.match(serverSource, /6\s*\*\s*60\s*\*\s*60\s*\*\s*1000/);
   assert.match(serverSource, /function\s+killChildTree/);
   assert.match(serverSource, /process\.kill\(-child\.pid/);
   assert.match(serverSource, /trackLiveStep/);
@@ -152,6 +152,8 @@ test("platform payment sync uses long-running live progress and process tree tim
   assert.match(paymentsSource, /SELLER_ORDER_PAYMENT_PROGRESS_EVERY/);
   assert.match(paymentsSource, /seller-payment-progress/);
   assert.match(paymentsSource, /seller-payment-targets/);
+  assert.match(paymentsSource, /seller-payment-checkpoint/);
+  assert.match(paymentsSource, /writePaymentOutput/);
 });
 
 test("platform payment export preserves item-level amounts for SKU allocation", () => {

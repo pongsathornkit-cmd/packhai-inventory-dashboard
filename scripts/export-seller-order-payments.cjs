@@ -74,6 +74,45 @@ function readJsonSafe(file, fallback) {
   }
 }
 
+function sortedOrdersFromMap(existingMap) {
+  return [...existingMap.values()].sort((a, b) =>
+    `${a.platform}|${a.orderNo}`.localeCompare(`${b.platform}|${b.orderNo}`)
+  );
+}
+
+function writeJsonAtomic(file, value) {
+  const tmpFile = `${file}.tmp`;
+  fs.writeFileSync(tmpFile, JSON.stringify(value, null, 2), "utf8");
+  fs.renameSync(tmpFile, file);
+}
+
+function buildPaymentOutput({ existingMap, targets, cachedBefore, requestedNew, fetchedNew, errors, partial = false }) {
+  const orders = sortedOrdersFromMap(existingMap);
+  return {
+    exportedAt: new Date().toISOString(),
+    source: "Seller platform order payments",
+    rule: "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
+    partial,
+    counts: {
+      targetShopee: targets.Shopee.length,
+      targetLazada: targets.Lazada.length,
+      cachedBefore,
+      requestedNew,
+      fetchedNew,
+      totalOrders: orders.length,
+      errors: errors.length,
+    },
+    errors: errors.slice(0, 100),
+    orders,
+  };
+}
+
+function writePaymentOutput(state) {
+  const output = buildPaymentOutput(state);
+  writeJsonAtomic(outputFile, output);
+  return output;
+}
+
 function normalizeOrderNo(value) {
   return String(value || "").trim();
 }
@@ -708,7 +747,7 @@ async function fetchShopeeDirectOrderPayment(context, orderNo) {
   };
 }
 
-async function exportShopeePaymentsDirect(orderNos, existingMap, errors) {
+async function exportShopeePaymentsDirect(orderNos, existingMap, errors, onRecord) {
   if (!orderNos.length) return [];
   const context = shopeeDirectContext();
   const records = [];
@@ -716,7 +755,9 @@ async function exportShopeePaymentsDirect(orderNos, existingMap, errors) {
   let current = 0;
   for (const orderNo of orderNos) {
     try {
-      records.push(await fetchShopeeDirectOrderPayment(context, orderNo));
+      const record = await fetchShopeeDirectOrderPayment(context, orderNo);
+      records.push(record);
+      if (onRecord) onRecord(record, { platform: "Shopee", current: current + 1, total: orderNos.length });
     } catch (error) {
       errors.push(`Shopee ${orderNo}: ${error.message || error}`);
     }
@@ -727,7 +768,7 @@ async function exportShopeePaymentsDirect(orderNos, existingMap, errors) {
   return records;
 }
 
-async function exportShopeePaymentsBrowser(orderNos, existingMap, errors) {
+async function exportShopeePaymentsBrowser(orderNos, existingMap, errors, onRecord) {
   if (!orderNos.length) return [];
   const session = await openShopeePage();
   const records = [];
@@ -755,7 +796,7 @@ async function exportShopeePaymentsBrowser(orderNos, existingMap, errors) {
           const collectedAmount =
             incomeDetail.orderIncomeAmount != null ? incomeDetail.orderIncomeAmount : fallbackCollectedAmount;
           const items = incomeDetail.items.length ? incomeDetail.items : shopeeItemsFromCard(card);
-          records.push({
+          const record = {
             platform: "Shopee",
             orderNo,
             collectedAmount,
@@ -770,7 +811,9 @@ async function exportShopeePaymentsBrowser(orderNos, existingMap, errors) {
             orderId,
             incomeDetailCaptured: Boolean(incomeComponents),
             items,
-          });
+          };
+          records.push(record);
+          if (onRecord) onRecord(record, { platform: "Shopee", current: current + 1, total: orderNos.length });
         }
       } catch (error) {
         errors.push(`Shopee ${orderNo}: ${error.message || error}`);
@@ -785,14 +828,14 @@ async function exportShopeePaymentsBrowser(orderNos, existingMap, errors) {
   return records;
 }
 
-async function exportShopeePayments(orderNos, existingMap, errors) {
+async function exportShopeePayments(orderNos, existingMap, errors, onRecord) {
   if (!orderNos.length) return [];
   try {
-    return await exportShopeePaymentsDirect(orderNos, existingMap, errors);
+    return await exportShopeePaymentsDirect(orderNos, existingMap, errors, onRecord);
   } catch (error) {
     if (!shopeeBrowserFallback) throw error;
     errors.push(`Shopee direct API failed, falling back to browser: ${error.message || error}`);
-    return exportShopeePaymentsBrowser(orderNos, existingMap, errors);
+    return exportShopeePaymentsBrowser(orderNos, existingMap, errors, onRecord);
   }
 }
 
@@ -946,7 +989,7 @@ function lazadaItemsFromOrder(row) {
   return items;
 }
 
-async function exportLazadaPayments(orderNos, existingMap, errors) {
+async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
   if (!orderNos.length) return [];
   const session = await openLazadaPage();
   const records = [];
@@ -959,7 +1002,7 @@ async function exportLazadaPayments(orderNos, existingMap, errors) {
         if (!row) {
           errors.push(`Lazada ${orderNo}: order not found`);
         } else {
-          records.push({
+          const record = {
             platform: "Lazada",
             orderNo,
             collectedAmount: numberValue(row.totalUnitPrice || row.totalRetailPrice),
@@ -970,7 +1013,9 @@ async function exportLazadaPayments(orderNos, existingMap, errors) {
             capturedAt: new Date().toISOString(),
             orderId: row.orderNumber || "",
             items: lazadaItemsFromOrder(row),
-          });
+          };
+          records.push(record);
+          if (onRecord) onRecord(record, { platform: "Lazada", current: current + 1, total: orderNos.length });
         }
       } catch (error) {
         errors.push(`Lazada ${orderNo}: ${error.message || error}`);
@@ -1004,58 +1049,72 @@ async function main() {
     }
   }
   if (maxNew > 0) todo = todo.slice(0, maxNew);
+  const cachedBefore = existingMap.size;
 
   logProgress({
     event: "seller-payment-targets",
     platforms,
     targetShopee: targets.Shopee.length,
     targetLazada: targets.Lazada.length,
-    cachedBefore: existingMap.size,
+    cachedBefore,
     requestedNew: todo.length,
     maxNew: maxNew > 0 ? maxNew : "all",
   });
 
   const errors = [];
-  const newRecords = [];
+  let fetchedNew = 0;
+  let checkpointCount = 0;
+  const checkpoint = (record, meta = {}) => {
+    existingMap.set(`${record.platform}|${record.orderNo}`, record);
+    fetchedNew += 1;
+    if (fetchedNew === 1 || fetchedNew % progressEvery === 0) {
+      checkpointCount += 1;
+      const output = writePaymentOutput({
+        existingMap,
+        targets,
+        cachedBefore,
+        requestedNew: todo.length,
+        fetchedNew,
+        errors,
+        partial: true,
+      });
+      logProgress({
+        event: "seller-payment-checkpoint",
+        platform: meta.platform || record.platform,
+        fetchedNew,
+        totalOrders: output.counts.totalOrders,
+        errors: output.counts.errors,
+        checkpoint: checkpointCount,
+      });
+    }
+  };
   const shopeeOrders = todo.filter((item) => item.platform === "Shopee").map((item) => item.orderNo);
   const lazadaOrders = todo.filter((item) => item.platform === "Lazada").map((item) => item.orderNo);
 
   try {
-    newRecords.push(...(await exportShopeePayments(shopeeOrders, existingMap, errors)));
+    await exportShopeePayments(shopeeOrders, existingMap, errors, checkpoint);
   } catch (error) {
     errors.push(error.message || String(error));
+  }
+  if (fetchedNew > 0) {
+    writePaymentOutput({ existingMap, targets, cachedBefore, requestedNew: todo.length, fetchedNew, errors, partial: true });
   }
   try {
-    newRecords.push(...(await exportLazadaPayments(lazadaOrders, existingMap, errors)));
+    await exportLazadaPayments(lazadaOrders, existingMap, errors, checkpoint);
   } catch (error) {
     errors.push(error.message || String(error));
   }
 
-  for (const record of newRecords) {
-    existingMap.set(`${record.platform}|${record.orderNo}`, record);
-  }
+  const output = writePaymentOutput({
+    existingMap,
+    targets,
+    cachedBefore,
+    requestedNew: todo.length,
+    fetchedNew,
+    errors,
+    partial: false,
+  });
 
-  const orders = [...existingMap.values()].sort((a, b) =>
-    `${a.platform}|${a.orderNo}`.localeCompare(`${b.platform}|${b.orderNo}`)
-  );
-  const output = {
-    exportedAt: new Date().toISOString(),
-    source: "Seller platform order payments",
-    rule: "Amounts must come from Shopee Seller Center or Lazada Seller Center only. Do not use Packhai order amounts.",
-    counts: {
-      targetShopee: targets.Shopee.length,
-      targetLazada: targets.Lazada.length,
-      cachedBefore: existingMap.size - newRecords.length,
-      requestedNew: todo.length,
-      fetchedNew: newRecords.length,
-      totalOrders: orders.length,
-      errors: errors.length,
-    },
-    errors: errors.slice(0, 100),
-    orders,
-  };
-
-  fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
   console.log(JSON.stringify({ ok: true, outputFile, counts: output.counts }, null, 2));
 }
 

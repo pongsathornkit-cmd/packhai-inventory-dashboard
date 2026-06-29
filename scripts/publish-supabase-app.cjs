@@ -69,12 +69,28 @@ function stockMovementSummary(stockMovements) {
   };
 }
 
+function dashboardSnapshotPayload(dashboard) {
+  if (!dashboard || typeof dashboard !== "object") return {};
+  const payload = { ...dashboard };
+  const platformPaymentOrders = Array.isArray(payload.platformPaymentOrders) ? payload.platformPaymentOrders : [];
+  if (platformPaymentOrders.length) {
+    delete payload.platformPaymentOrders;
+    payload.platformPaymentOrdersMeta = {
+      omittedFromSupabaseSnapshot: true,
+      reason: "Use the Render-built inline dashboard payload for the full platform order table.",
+      rowCount: platformPaymentOrders.length,
+      generatedAt: new Date().toISOString(),
+    };
+  }
+  return payload;
+}
+
 function snapshotRows() {
   const dashboard = readJson(path.join(distDir, "inventory-valuation-data.json"), {});
   const stockMovements = readJson(path.join(distDir, "stock-movements.json"), { rows: [] });
   const sellerPayments = readJson(path.join(dataDir, "seller_compare", "seller_order_payments.json"), {});
   return [
-    { key: "dashboard_current", payload: dashboard },
+    { key: "dashboard_current", payload: dashboardSnapshotPayload(dashboard) },
     { key: "stock_movements_current", payload: stockMovementSummary(stockMovements) },
     { key: "seller_payments_current", payload: sellerPayments },
     { key: "source_files_current", payload: compactSourceFiles() },

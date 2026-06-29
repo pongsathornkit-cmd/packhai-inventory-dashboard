@@ -61,6 +61,54 @@ test("cloud env loader uses explicit secret file and does not overwrite existing
   }
 });
 
+test("cloud env loader lets plain secret files refresh browser storage states", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "packhai-cloud-env-auth-"));
+  const file = path.join(dir, "cloud-sync.env");
+  fs.writeFileSync(
+    file,
+    [
+      "PACKHAI_AUTH_TOKEN=from-file",
+      "SHOPEE_STORAGE_STATE_B64=fresh-shopee",
+      "LAZADA_STORAGE_STATE_B64=fresh-lazada",
+      "FLOWACCOUNT_STORAGE_STATE_B64=fresh-flowaccount",
+      "",
+    ].join("\n"),
+    "utf8"
+  );
+
+  const previousFile = process.env.PACKHAI_CLOUD_ENV_FILE;
+  const previousToken = process.env.PACKHAI_AUTH_TOKEN;
+  const previousShopee = process.env.SHOPEE_STORAGE_STATE_B64;
+  const previousLazada = process.env.LAZADA_STORAGE_STATE_B64;
+  const previousFlowaccount = process.env.FLOWACCOUNT_STORAGE_STATE_B64;
+  try {
+    process.env.PACKHAI_CLOUD_ENV_FILE = file;
+    process.env.PACKHAI_AUTH_TOKEN = "already-set";
+    process.env.SHOPEE_STORAGE_STATE_B64 = "old-shopee";
+    process.env.LAZADA_STORAGE_STATE_B64 = "old-lazada";
+    process.env.FLOWACCOUNT_STORAGE_STATE_B64 = "old-flowaccount";
+
+    const loaded = loadCloudEnv();
+    assert.equal(process.env.PACKHAI_AUTH_TOKEN, "already-set");
+    assert.equal(process.env.SHOPEE_STORAGE_STATE_B64, "fresh-shopee");
+    assert.equal(process.env.LAZADA_STORAGE_STATE_B64, "fresh-lazada");
+    assert.equal(process.env.FLOWACCOUNT_STORAGE_STATE_B64, "fresh-flowaccount");
+    assert.ok(loaded.some((item) => item.file === file && item.keys.includes("LAZADA_STORAGE_STATE_B64")));
+  } finally {
+    if (previousFile == null) delete process.env.PACKHAI_CLOUD_ENV_FILE;
+    else process.env.PACKHAI_CLOUD_ENV_FILE = previousFile;
+    if (previousToken == null) delete process.env.PACKHAI_AUTH_TOKEN;
+    else process.env.PACKHAI_AUTH_TOKEN = previousToken;
+    if (previousShopee == null) delete process.env.SHOPEE_STORAGE_STATE_B64;
+    else process.env.SHOPEE_STORAGE_STATE_B64 = previousShopee;
+    if (previousLazada == null) delete process.env.LAZADA_STORAGE_STATE_B64;
+    else process.env.LAZADA_STORAGE_STATE_B64 = previousLazada;
+    if (previousFlowaccount == null) delete process.env.FLOWACCOUNT_STORAGE_STATE_B64;
+    else process.env.FLOWACCOUNT_STORAGE_STATE_B64 = previousFlowaccount;
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("cloud env loader can override stale seller auth from a sealed env file", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "packhai-cloud-env-sealed-"));
   const plainFile = path.join(dir, "cloud-sync.env");

@@ -88,7 +88,7 @@ function writeSyncStatusFile(type, steps, warnings) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  const validTypes = new Set(["all", "packhai", "flowaccount", "seller", "seller-payments"]);
+  const validTypes = new Set(["all", "packhai", "flowaccount", "seller", "seller-prices", "seller-payments"]);
   if (!validTypes.has(args.type)) throw new Error(`Unknown sync type: ${args.type}`);
 
   loadCloudEnv();
@@ -110,9 +110,11 @@ function main() {
   if (args.type === "all" || args.type === "flowaccount") {
     steps.push(runStep("Use Website stock snapshot", "use-website-stock-snapshot.cjs"));
   }
-  if (args.type === "all" || args.type === "seller") {
+  if (args.type === "all" || args.type === "seller" || args.type === "seller-prices") {
     steps.push(sellerOptional("Sync Shopee Seller", "export-shopee-products.cjs", warnings));
     steps.push(sellerOptional("Sync Lazada Seller", "export-lazada-products.cjs", warnings));
+  }
+  if (args.type === "all" || args.type === "seller") {
     steps.push(sellerOptional("Sync Seller order payments", "export-seller-order-payments.cjs", warnings));
   }
   if (args.type === "seller-payments") {

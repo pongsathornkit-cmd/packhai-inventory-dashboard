@@ -57,7 +57,7 @@ test("dashboard exposes a dedicated sync path for platform collection payments",
 
   assert.match(serverSource, /type\s*===\s*"seller-payments"/);
   assert.match(serverSource, /pushStep\(runSellerPayments\(\)\)/);
-  assert.match(serverSource, /\["packhai",\s*"flowaccount",\s*"seller",\s*"seller-payments",\s*"all"\]/);
+  assert.match(serverSource, /\["packhai",\s*"flowaccount",\s*"seller",\s*"seller-prices",\s*"seller-payments",\s*"all"\]/);
   assert.match(appSource, /syncSellerPayments/);
   assert.match(appSource, /startSync\("seller-payments"\)/);
 });

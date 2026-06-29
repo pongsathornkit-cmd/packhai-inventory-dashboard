@@ -22,6 +22,7 @@ const {
 const { applyGithubStockUpdate, sanitizeStockUpdatePayload } = require("./github-stock-core.cjs");
 const {
   createAutoSyncSettings,
+  createSellerPriceAutoSyncSettings,
   createSellerPaymentsAutoSyncSettings,
   publicAutoSyncState,
 } = require("./auto-sync-core.cjs");
@@ -59,6 +60,16 @@ const syncState = {
 const autoSyncSettings = createAutoSyncSettings(process.env);
 const autoSyncBusyRetryMs = Math.max(30, Number(process.env.AUTO_SYNC_BUSY_RETRY_SECONDS || 120)) * 1000;
 const autoSyncState = {
+  timer: null,
+  nextRunAt: null,
+  lastRunAt: null,
+  lastFinishedAt: null,
+  lastSkippedAt: null,
+  lastSkipReason: "",
+  lastOk: null,
+};
+const sellerPriceAutoSyncSettings = createSellerPriceAutoSyncSettings(process.env);
+const sellerPriceAutoSyncState = {
   timer: null,
   nextRunAt: null,
   lastRunAt: null,
@@ -233,6 +244,10 @@ function sellerPaymentsConfigured() {
   return shopeeAuthConfigured() || lazadaAuthConfigured();
 }
 
+function sellerPricesConfigured() {
+  return shopeeAuthConfigured() || lazadaAuthConfigured();
+}
+
 function syncReadiness() {
   const config = {
     packhaiConfigured: packhaiConfigured(),
@@ -275,6 +290,7 @@ function publicSyncState(extra = {}) {
     autoSync: publicAutoSyncState(autoSyncSettings, autoSyncState),
     autoSyncJobs: {
       packhai: publicAutoSyncState(autoSyncSettings, autoSyncState),
+      sellerPrices: publicAutoSyncState(sellerPriceAutoSyncSettings, sellerPriceAutoSyncState),
       sellerPayments: publicAutoSyncState(sellerPaymentsAutoSyncSettings, sellerPaymentsAutoSyncState),
     },
   };
@@ -804,6 +820,12 @@ async function runSync(type) {
       await pushStep(runPackhai());
     } else if (type === "flowaccount") {
       await pushStep(runWebsiteStock());
+    } else if (type === "seller-prices") {
+      const shopeeStep = await pushWarningStep(runShopee(), warnings);
+      const lazadaStep = await pushWarningStep(runLazada(), warnings);
+      if (!shopeeStep && !lazadaStep) {
+        throw new Error("Sync ราคาขาย Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
+      }
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
@@ -854,6 +876,14 @@ function autoSyncJobDefinitions() {
       state: autoSyncState,
       configured: packhaiConfigured,
       missingReason: "PACKHAI_AUTH_TOKEN is not configured.",
+    },
+    {
+      key: "sellerPrices",
+      label: "Seller prices",
+      settings: sellerPriceAutoSyncSettings,
+      state: sellerPriceAutoSyncState,
+      configured: sellerPricesConfigured,
+      missingReason: "Shopee/Lazada Seller sessions are not configured.",
     },
     {
       key: "sellerPayments",
@@ -947,7 +977,7 @@ const server = http.createServer((req, res) => {
   if (req.method === "POST" && url.pathname.startsWith("/api/sync/")) {
     if (!syncAuthorized(req, res)) return;
     const type = url.pathname.split("/").pop();
-    if (!["packhai", "flowaccount", "seller", "seller-payments", "all"].includes(type)) {
+    if (!["packhai", "flowaccount", "seller", "seller-prices", "seller-payments", "all"].includes(type)) {
       sendJson(res, 404, { ok: false, message: "Unknown sync type" });
       return;
     }

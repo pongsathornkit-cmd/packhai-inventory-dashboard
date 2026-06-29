@@ -5,6 +5,7 @@ const path = require("path");
 
 const {
   createAutoSyncSettings,
+  createSellerPriceAutoSyncSettings,
   createSellerPaymentsAutoSyncSettings,
   publicAutoSyncState,
 } = require("../scripts/auto-sync-core.cjs");
@@ -45,6 +46,19 @@ test("auto seller platform payment sync imports every missing platform order con
   assert.equal(settings.startDelayMs, 30 * 1000);
 });
 
+test("auto seller price sync refreshes Shopee and Lazada product prices continuously", () => {
+  const settings = createSellerPriceAutoSyncSettings({
+    SELLER_PRICES_AUTO_SYNC: "1",
+    SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES: "1",
+    SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS: "45",
+  });
+
+  assert.equal(settings.enabled, true);
+  assert.equal(settings.type, "seller-prices");
+  assert.equal(settings.intervalMs, 5 * 60 * 1000);
+  assert.equal(settings.startDelayMs, 45 * 1000);
+});
+
 test("public auto sync state hides timer handles and exposes next run metadata", () => {
   const settings = createAutoSyncSettings({
     PACKHAI_AUTO_SYNC: "1",
@@ -80,6 +94,9 @@ test("Render enables Packhai auto sync for the cloud service", () => {
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC\s*\n\s*value:\s*"1"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
+  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
+  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*AUTO_SYNC_BUSY_RETRY_SECONDS\s*\n\s*value:\s*"120"/);
 });
@@ -88,6 +105,7 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
 
   assert.match(serverSource, /createAutoSyncSettings/);
+  assert.match(serverSource, /createSellerPriceAutoSyncSettings/);
   assert.match(serverSource, /createSellerPaymentsAutoSyncSettings/);
   assert.match(serverSource, /publicAutoSyncState/);
   assert.match(serverSource, /function\s+scheduleNextAutoSync/);
@@ -95,10 +113,23 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   assert.match(serverSource, /runSync\(job\.settings\.type\)/);
   assert.match(serverSource, /autoSync:\s*publicAutoSyncState\(autoSyncSettings,\s*autoSyncState\)/);
   assert.match(serverSource, /autoSyncJobs:\s*\{/);
+  assert.match(serverSource, /sellerPrices:\s*publicAutoSyncState\(sellerPriceAutoSyncSettings,\s*sellerPriceAutoSyncState\)/);
   assert.match(serverSource, /sellerPayments:\s*publicAutoSyncState\(sellerPaymentsAutoSyncSettings,\s*sellerPaymentsAutoSyncState\)/);
+  assert.match(serverSource, /type\s*===\s*"seller-prices"/);
+  assert.match(serverSource, /\["packhai",\s*"flowaccount",\s*"seller",\s*"seller-prices",\s*"seller-payments",\s*"all"\]/);
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*job\.settings\.startDelayMs\)/);
   assert.match(serverSource, /AUTO_SYNC_BUSY_RETRY_SECONDS/);
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*autoSyncBusyRetryMs\)/);
+});
+
+test("auto seller price sync does not run platform payment collection import", () => {
+  const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
+  const branch = serverSource.match(/else if \(type === "seller-prices"\) \{([\s\S]*?)\n    \} else if \(type === "seller"\)/);
+
+  assert.ok(branch, "seller-prices branch should be separate from manual seller sync");
+  assert.match(branch[1], /runShopee\(\)/);
+  assert.match(branch[1], /runLazada\(\)/);
+  assert.doesNotMatch(branch[1], /runSellerPayments\(\)/);
 });
 
 test("platform payment sync uses long-running live progress and process tree timeout handling", () => {
@@ -123,5 +154,6 @@ test("dashboard renders Packhai and platform payment auto sync status from the s
   assert.match(appSource, /status\.autoSync/);
   assert.match(appSource, /status\.autoSyncJobs/);
   assert.match(appSource, /Auto Sync Packhai/);
+  assert.match(appSource, /autoSyncStatusText\(jobs\.sellerPrices,\s*"Auto Sync/);
   assert.match(appSource, /Auto Sync ยอดเก็บเงิน Platform/);
 });

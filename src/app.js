@@ -1476,6 +1476,7 @@
     seller: "ราคาขาย Seller",
     expenses: "ระบบค่าใช้จ่าย",
   };
+  syncLabels["seller-prices"] = "ราคาขาย Seller";
   syncLabels["seller-payments"] = "ยอดเก็บเงิน Platform";
   let syncPollTimer = null;
   let syncStartedHere = false;
@@ -1764,6 +1765,7 @@
     const jobs = status.autoSyncJobs || {};
     return [
       autoSyncStatusText(jobs.packhai || status.autoSync, "Auto Sync Packhai"),
+      autoSyncStatusText(jobs.sellerPrices, "Auto Sync ราคาขาย Seller"),
       autoSyncStatusText(jobs.sellerPayments, "Auto Sync ยอดเก็บเงิน Platform"),
     ].filter(Boolean);
   }
@@ -1782,7 +1784,7 @@
           ((status.type === "all" && button.id === "syncAll") ||
             (status.type === "packhai" && button.id === "syncPackhai") ||
             (status.type === "flowaccount" && button.id === "syncFlowaccount") ||
-            (status.type === "seller" && button.id === "syncSeller") ||
+            ((status.type === "seller" || status.type === "seller-prices") && button.id === "syncSeller") ||
             (status.type === "seller-payments" && button.id === "syncSellerPayments"))
       );
     });

@@ -1,6 +1,6 @@
 const { normalizePublicSyncApiBase } = require("./sync-api-base-core.cjs");
 
-const allowedSyncTypes = new Set(["all", "packhai", "flowaccount", "seller", "seller-payments"]);
+const allowedSyncTypes = new Set(["all", "packhai", "flowaccount", "seller", "seller-prices", "seller-payments"]);
 
 function parseArgs(argv) {
   const args = {

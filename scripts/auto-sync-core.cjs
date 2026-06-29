@@ -1,4 +1,5 @@
 const DEFAULT_INTERVAL_MINUTES = 15;
+const DEFAULT_SELLER_PRICES_START_DELAY_SECONDS = 60;
 const DEFAULT_SELLER_PAYMENTS_START_DELAY_SECONDS = 240;
 const MIN_INTERVAL_MINUTES = 5;
 
@@ -34,6 +35,16 @@ function createAutoSyncSettings(env = process.env) {
   return createTypedAutoSyncSettings(env, { type: "packhai" });
 }
 
+function createSellerPriceAutoSyncSettings(env = process.env) {
+  return createTypedAutoSyncSettings(env, {
+    type: "seller-prices",
+    enabledKey: "SELLER_PRICES_AUTO_SYNC",
+    intervalKey: "SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES",
+    startDelayKey: "SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS",
+    defaultStartDelaySeconds: DEFAULT_SELLER_PRICES_START_DELAY_SECONDS,
+  });
+}
+
 function createSellerPaymentsAutoSyncSettings(env = process.env) {
   return createTypedAutoSyncSettings(env, {
     type: "seller-payments",
@@ -61,6 +72,7 @@ function publicAutoSyncState(settings, state = {}) {
 
 module.exports = {
   createAutoSyncSettings,
+  createSellerPriceAutoSyncSettings,
   createSellerPaymentsAutoSyncSettings,
   publicAutoSyncState,
 };

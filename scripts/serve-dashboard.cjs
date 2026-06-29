@@ -306,6 +306,8 @@ function publicSyncState(extra = {}) {
     config: {
       ...readiness.config,
       flowaccountSource: "website-stock",
+      sellerPaymentsTimeoutMs: commandTimeoutMs("Sync Seller order payments"),
+      appCommit: process.env.RENDER_GIT_COMMIT || process.env.RENDER_GIT_COMMIT_SHA || "",
     },
     ready: readiness.ready,
     missingConfig: readiness.missing,
@@ -603,15 +605,17 @@ function summarizeOutput(text) {
 }
 
 function commandTimeoutMs(name) {
+  const sellerPayments = /seller order payments/i.test(name);
   const specific =
-    /seller order payments/i.test(name)
+    sellerPayments
       ? process.env.SELLER_PAYMENTS_TIMEOUT_MS
       : /shopee|lazada/i.test(name)
       ? process.env.SELLER_SYNC_TIMEOUT_MS
       : "";
-  const defaultMs = /seller order payments/i.test(name) ? 6 * 60 * 60 * 1000 : 10 * 60 * 1000;
+  const defaultMs = sellerPayments ? 6 * 60 * 60 * 1000 : 10 * 60 * 1000;
   const parsed = Number(specific || process.env.SYNC_COMMAND_TIMEOUT_MS || defaultMs);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
+  const resolved = Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
+  return sellerPayments ? Math.max(resolved, defaultMs) : resolved;
 }
 
 function appendStepOutput(step, field, chunk) {

@@ -145,6 +145,9 @@ test("platform payment sync uses long-running live progress and process tree tim
 
   assert.match(serverSource, /SELLER_PAYMENTS_TIMEOUT_MS/);
   assert.match(serverSource, /6\s*\*\s*60\s*\*\s*60\s*\*\s*1000/);
+  assert.match(serverSource, /Math\.max\(resolved,\s*defaultMs\)/);
+  assert.match(serverSource, /sellerPaymentsTimeoutMs:\s*commandTimeoutMs\("Sync Seller order payments"\)/);
+  assert.match(serverSource, /appCommit:\s*process\.env\.RENDER_GIT_COMMIT/);
   assert.match(serverSource, /function\s+killChildTree/);
   assert.match(serverSource, /process\.kill\(-child\.pid/);
   assert.match(serverSource, /trackLiveStep/);

@@ -154,6 +154,16 @@ test("platform payment sync uses long-running live progress and process tree tim
   assert.match(paymentsSource, /seller-payment-targets/);
 });
 
+test("platform payment export preserves item-level amounts for SKU allocation", () => {
+  const paymentsSource = fs.readFileSync(path.join(projectRoot, "scripts", "export-seller-order-payments.cjs"), "utf8");
+
+  assert.match(paymentsSource, /lineAmount/);
+  assert.match(paymentsSource, /shopeeItemLineAmount/);
+  assert.match(paymentsSource, /lazadaItemLineAmount/);
+  assert.match(paymentsSource, /recordNeedsItemAmountRefresh/);
+  assert.match(paymentsSource, /needsItemAmountRefresh/);
+});
+
 test("dashboard renders Packhai and platform payment auto sync status from the sync API response", () => {
   const appSource = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");
 

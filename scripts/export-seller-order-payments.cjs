@@ -88,6 +88,72 @@ function shopeeMoney(value) {
   return amount > 100000 ? amount / 100000 : amount;
 }
 
+function firstPositive(...values) {
+  for (const value of values) {
+    const parsed = numberValue(value);
+    if (parsed > 0) return parsed;
+  }
+  return 0;
+}
+
+function shopeeItemLineAmount(item) {
+  const quantity = firstPositive(item.amount, item.quantity, item.qty) || 1;
+  const lineAmount = shopeeMoney(
+    firstPositive(
+      item.line_amount,
+      item.lineAmount,
+      item.total_amount,
+      item.totalAmount,
+      item.total_price,
+      item.totalPrice,
+      item.paid_amount,
+      item.paidAmount,
+      item.actual_amount,
+      item.actualAmount
+    )
+  );
+  if (lineAmount > 0) return lineAmount;
+  const unitPrice = shopeeMoney(
+    firstPositive(
+      item.price,
+      item.item_price,
+      item.itemPrice,
+      item.order_price,
+      item.orderPrice,
+      item.model_discounted_price,
+      item.modelDiscountedPrice,
+      item.discounted_price,
+      item.discountedPrice
+    )
+  );
+  return unitPrice > 0 ? unitPrice * quantity : 0;
+}
+
+function lazadaItemLineAmount(sku) {
+  const quantity = firstPositive(sku.quantity, sku.amount, sku.qty) || 1;
+  const lineAmount = firstPositive(
+    sku.lineAmount,
+    sku.totalAmount,
+    sku.totalPrice,
+    sku.totalUnitPrice,
+    sku.totalRetailPrice,
+    sku.paidAmount,
+    sku.paidPriceTotal,
+    sku.itemTotalPrice,
+    sku.actualAmount
+  );
+  if (lineAmount > 0) return lineAmount;
+  const unitPrice = firstPositive(
+    sku.unitPrice,
+    sku.itemPrice,
+    sku.paidPrice,
+    sku.actualPrice,
+    sku.retailPrice,
+    sku.price
+  );
+  return unitPrice > 0 ? unitPrice * quantity : 0;
+}
+
 function mergeByOrder(records) {
   const map = new Map();
   for (const record of records || []) {
@@ -104,6 +170,18 @@ function mergeByOrder(records) {
     });
   }
   return map;
+}
+
+function recordNeedsItemAmountRefresh(record) {
+  const items = Array.isArray(record?.items) ? record.items : [];
+  if (!items.length) return true;
+  const skuKeys = new Set(
+    items
+      .map((item) => String(item.skuText || item.sku || item.sellerSku || item.shopSku || item.name || "").trim().toUpperCase())
+      .filter(Boolean)
+  );
+  const hasItemLineAmount = items.some((item) => numberValue(item.lineAmount) > 0);
+  return skuKeys.size > 1 && !hasItemLineAmount;
 }
 
 function collectTargets() {
@@ -176,6 +254,20 @@ function shopeeItemsFromCard(card) {
           name: item.name || "",
           skuText: item.description || "",
           amount: numberValue(item.amount),
+          unitPrice: shopeeMoney(
+            firstPositive(
+              item.price,
+              item.item_price,
+              item.itemPrice,
+              item.order_price,
+              item.orderPrice,
+              item.model_discounted_price,
+              item.modelDiscountedPrice,
+              item.discounted_price,
+              item.discountedPrice
+            )
+          ),
+          lineAmount: shopeeItemLineAmount(item),
         });
       }
     }
@@ -468,6 +560,15 @@ function lazadaItemsFromOrder(row) {
         name: sku.productName || sku.productTitle || "",
         skuText: sku.sellerSku || sku.shopSku || "",
         amount: numberValue(sku.quantity),
+        unitPrice: firstPositive(
+          sku.unitPrice,
+          sku.itemPrice,
+          sku.paidPrice,
+          sku.actualPrice,
+          sku.retailPrice,
+          sku.price
+        ),
+        lineAmount: lazadaItemLineAmount(sku),
       });
     }
   }
@@ -526,7 +627,9 @@ async function main() {
   let todo = [];
   for (const platform of platforms) {
     for (const orderNo of targets[platform] || []) {
-      if (!existingMap.has(`${platform}|${orderNo}`)) todo.push({ platform, orderNo });
+      const existingRecord = existingMap.get(`${platform}|${orderNo}`);
+      const needsItemAmountRefresh = existingRecord && recordNeedsItemAmountRefresh(existingRecord);
+      if (!existingRecord || needsItemAmountRefresh) todo.push({ platform, orderNo, needsItemAmountRefresh });
     }
   }
   if (maxNew > 0) todo = todo.slice(0, maxNew);

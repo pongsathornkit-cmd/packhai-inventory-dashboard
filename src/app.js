@@ -189,9 +189,12 @@
       if (movement.productName) row.productNames.add(String(movement.productName).trim());
       if (dateTimeValue(createdAt) < dateTimeValue(row.firstSaleAt)) row.firstSaleAt = createdAt;
       if (dateTimeValue(createdAt) > dateTimeValue(row.latestSaleAt)) row.latestSaleAt = createdAt;
-      if (movement.platformPaymentStatus === "matched") {
+      if (movement.platformPaymentStatus === "matched" || moneyValue(movement.platformPaymentOrderAmount) > 0) {
         row.paymentStatus = "matched";
-        row.collectedAmount = moneyValue(movement.platformPaymentAmount);
+        row.collectedAmount = Math.max(
+          row.collectedAmount,
+          moneyValue(movement.platformPaymentOrderAmount || movement.platformPaymentAmount)
+        );
         row.currency = movement.platformPaymentCurrency || "THB";
         row.paymentSource = movement.platformPaymentSource || `${platform} Seller Center`;
         row.paymentCapturedAt = movement.platformPaymentCapturedAt || "";
@@ -1195,6 +1198,12 @@
     if (movement.platformPaymentStatus === "matched") {
       return `<span class="payment-badge matched">${escapeHtml(fmtBaht2.format(movement.platformPaymentAmount || 0))}</span>`;
     }
+    if (movement.platformPaymentStatus === "matched-item-amount-missing") {
+      return `<span class="payment-badge missing">มี order แต่ยังไม่มียอดแยก SKU</span>`;
+    }
+    if (movement.platformPaymentStatus === "matched-item-not-found") {
+      return `<span class="payment-badge missing">SKU ไม่ตรงกับ Seller</span>`;
+    }
     return `<span class="payment-badge missing">ยังไม่มีข้อมูล Seller</span>`;
   }
 
@@ -1202,7 +1211,14 @@
     if (movement.platformPaymentStatus === "matched") {
       const source = movement.platformPaymentSource || `${movement.platform} Seller Center`;
       const captured = movement.platformPaymentCapturedAt ? ` · ${formatDateTime(movement.platformPaymentCapturedAt)}` : "";
-      return `${source}${captured}`;
+      const allocation = movement.platformPaymentAllocationMethod === "sku-line-amount" ? " · ยอดเฉพาะ SKU นี้" : "";
+      return `${source}${captured}${allocation}`;
+    }
+    if (movement.platformPaymentStatus === "matched-item-amount-missing") {
+      return "พบ order ใน Seller แล้ว แต่ order นี้มีหลาย SKU และยังไม่มียอดเงินแยกรายการ จึงไม่ใส่ยอดรวมทั้ง order ให้ SKU นี้";
+    }
+    if (movement.platformPaymentStatus === "matched-item-not-found") {
+      return "พบ order ใน Seller แล้ว แต่ไม่พบ SKU นี้ในรายการสินค้าของ order";
     }
     if (Number(movement.removeQuantity || 0) > 0 && ["Shopee", "Lazada"].includes(movement.platform || "")) {
       return "รอข้อมูลยอดเงินจาก Seller platform เท่านั้น";

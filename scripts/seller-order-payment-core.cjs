@@ -22,6 +22,21 @@ function normalizePlatform(value) {
   return "";
 }
 
+function normalizeSku(value) {
+  return String(value ?? "")
+    .trim()
+    .replace(/^'+/, "")
+    .replace(/\.0$/, "")
+    .replace(/^[\[\(\{]+/, "")
+    .replace(/[\]\)\}]+$/, "")
+    .trim()
+    .toUpperCase();
+}
+
+function compactSku(value) {
+  return normalizeSku(value).replace(/[\s\-_/.[\](){}]+/g, "");
+}
+
 function platformSource(platform) {
   if (platform === "Shopee") return "Shopee Seller Center";
   if (platform === "Lazada") return "Lazada Seller Center";
@@ -40,6 +55,69 @@ function firstPositive(...values) {
     if (parsed > 0) return parsed;
   }
   return 0;
+}
+
+function normalizePaymentItem(item) {
+  const skuText = firstText(
+    item.sku,
+    item.skuText,
+    item.sellerSku,
+    item.shopSku,
+    item.itemSku,
+    item.modelSku,
+    item.productCode
+  );
+  const quantity = firstPositive(item.quantity, item.amount, item.qty, item.itemQuantity) || 1;
+  const unitPrice = firstPositive(
+    item.unitPrice,
+    item.price,
+    item.itemPrice,
+    item.paidPrice,
+    item.actualPrice,
+    item.sellingPrice,
+    item.discountedPrice,
+    item.modelDiscountedPrice
+  );
+  const lineAmount =
+    firstPositive(
+      item.lineAmount,
+      item.itemAmount,
+      item.totalLineAmount,
+      item.totalAmount,
+      item.totalPrice,
+      item.totalPaidPrice,
+      item.paidAmount,
+      item.actualAmount,
+      item.subtotal
+    ) || (unitPrice > 0 ? unitPrice * quantity : 0);
+  return {
+    skuText,
+    sku: normalizeSku(skuText),
+    compactSku: compactSku(skuText),
+    name: String(item.name || item.productName || item.title || "").trim(),
+    quantity: roundMoney(quantity),
+    unitPrice: roundMoney(unitPrice),
+    lineAmount: roundMoney(lineAmount),
+  };
+}
+
+function firstText(...values) {
+  for (const value of values) {
+    const text = String(value ?? "").trim();
+    if (text) return text;
+  }
+  return "";
+}
+
+function normalizePaymentItems(record) {
+  const rawItems = Array.isArray(record.items)
+    ? record.items
+    : Array.isArray(record.orderItems)
+    ? record.orderItems
+    : Array.isArray(record.lines)
+    ? record.lines
+    : [];
+  return rawItems.map(normalizePaymentItem).filter((item) => item.sku || item.name || item.quantity || item.lineAmount);
 }
 
 function normalizePaymentRecord(record) {
@@ -70,6 +148,7 @@ function normalizePaymentRecord(record) {
     capturedAt: record.capturedAt || record.exportedAt || record.updatedAt || "",
     source: record.source || platformSource(platform),
     rawId: record.id || record.orderId || "",
+    items: normalizePaymentItems(record),
   };
 }
 
@@ -100,6 +179,88 @@ function buildSellerPaymentIndex(data) {
   };
 }
 
+function paymentItemGroups(payment) {
+  const groups = new Map();
+  for (const item of payment?.items || []) {
+    const key = item.compactSku || compactSku(item.sku);
+    if (!key) continue;
+    const current = groups.get(key) || {
+      sku: item.sku,
+      compactSku: key,
+      quantity: 0,
+      lineAmount: 0,
+      names: new Set(),
+    };
+    current.quantity += numberValue(item.quantity);
+    current.lineAmount += numberValue(item.lineAmount);
+    if (item.name) current.names.add(item.name);
+    groups.set(key, current);
+  }
+  return [...groups.values()].map((item) => ({
+    ...item,
+    quantity: roundMoney(item.quantity),
+    lineAmount: roundMoney(item.lineAmount),
+    names: [...item.names],
+  }));
+}
+
+function allocatePaymentToMovement(payment, movement) {
+  const orderAmount = roundMoney(payment?.collectedAmount || 0);
+  const movementSku = compactSku(movement.sku || movement.productCode || movement.productSKU || movement.productName);
+  const quantity = firstPositive(movement.removeQuantity, movement.quantity, 1) || 1;
+  const groups = paymentItemGroups(payment);
+  const totalLineAmount = groups.reduce((sum, item) => sum + numberValue(item.lineAmount), 0);
+  const matched = groups.find((item) => item.compactSku && item.compactSku === movementSku);
+
+  if (!groups.length) {
+    return {
+      amount: orderAmount,
+      orderAmount,
+      status: "matched",
+      method: "order-total-no-item-lines",
+      itemSku: "",
+    };
+  }
+  if (!matched) {
+    return {
+      amount: 0,
+      orderAmount,
+      status: "matched-item-not-found",
+      method: "no-matching-sku-line",
+      itemSku: "",
+    };
+  }
+
+  const uniqueSkuCount = new Set(groups.map((item) => item.compactSku).filter(Boolean)).size;
+  const itemQuantity = Math.max(1, numberValue(matched.quantity));
+  if (numberValue(matched.lineAmount) > 0 && totalLineAmount > 0) {
+    const itemOrderShare = orderAmount > 0 ? orderAmount * (numberValue(matched.lineAmount) / totalLineAmount) : matched.lineAmount;
+    return {
+      amount: roundMoney(itemOrderShare * (quantity / itemQuantity)),
+      orderAmount,
+      status: "matched",
+      method: "sku-line-amount",
+      itemSku: matched.sku,
+    };
+  }
+  if (uniqueSkuCount === 1) {
+    return {
+      amount: roundMoney(orderAmount * (quantity / itemQuantity)),
+      orderAmount,
+      status: "matched",
+      method: "single-sku-order-total",
+      itemSku: matched.sku,
+    };
+  }
+  return {
+    amount: 0,
+    orderAmount,
+    status: "matched-item-amount-missing",
+    method: "multi-sku-line-amount-missing",
+    itemSku: matched.sku,
+  };
+}
+
 function enrichMovementWithSellerPayment(movement, paymentIndex) {
   const platform = normalizePlatform(movement.channelName || movement.platform);
   const platformOrderNo = normalizeOrderNo(movement.platformOrderNo || movement.referenceNo2);
@@ -110,10 +271,13 @@ function enrichMovementWithSellerPayment(movement, paymentIndex) {
     platformOrderNo,
     platformPaymentAmount: 0,
     platformPaymentCurrency: "THB",
+    platformPaymentOrderAmount: 0,
     platformPaymentSource: "",
     platformPaymentCapturedAt: "",
     platformPaymentOrderStatus: "",
     platformPaymentStatus: isSaleOut ? "missing-seller-data" : "not-sale-out",
+    platformPaymentAllocationMethod: "",
+    platformPaymentMatchedSku: "",
   };
 
   if (!isSaleOut) return base;
@@ -126,14 +290,18 @@ function enrichMovementWithSellerPayment(movement, paymentIndex) {
 
   const payment = paymentIndex?.byPlatformOrderNo?.get(`${platform}|${platformOrderNo}`);
   if (!payment) return base;
+  const allocation = allocatePaymentToMovement(payment, movement);
   return {
     ...base,
-    platformPaymentAmount: payment.collectedAmount,
+    platformPaymentAmount: allocation.amount,
+    platformPaymentOrderAmount: allocation.orderAmount,
     platformPaymentCurrency: payment.currency || "THB",
     platformPaymentSource: payment.source || platformSource(platform),
     platformPaymentCapturedAt: payment.capturedAt || "",
     platformPaymentOrderStatus: payment.status || "",
-    platformPaymentStatus: "matched",
+    platformPaymentStatus: allocation.status,
+    platformPaymentAllocationMethod: allocation.method,
+    platformPaymentMatchedSku: allocation.itemSku,
   };
 }
 
@@ -211,9 +379,12 @@ function buildPlatformPaymentOrders(movements) {
     if (movementDateValue(createdAt) < movementDateValue(row.firstSaleAt)) row.firstSaleAt = createdAt;
     if (movementDateValue(createdAt) > movementDateValue(row.latestSaleAt)) row.latestSaleAt = createdAt;
 
-    if (movement.platformPaymentStatus === "matched") {
+    if (movement.platformPaymentStatus === "matched" || numberValue(movement.platformPaymentOrderAmount) > 0) {
       row.paymentStatus = "matched";
-      row.collectedAmount = roundMoney(movement.platformPaymentAmount);
+      row.collectedAmount = Math.max(
+        row.collectedAmount,
+        roundMoney(movement.platformPaymentOrderAmount || movement.platformPaymentAmount)
+      );
       row.currency = movement.platformPaymentCurrency || "THB";
       row.paymentSource = movement.platformPaymentSource || platformSource(platform);
       row.paymentCapturedAt = movement.platformPaymentCapturedAt || "";

@@ -6,6 +6,7 @@ const {
   stockSummaryRowsFromMovementSnapshot,
 } = require("../scripts/packhai-stock-movement-core.cjs");
 const {
+  buildPlatformPaymentOrders,
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
@@ -167,6 +168,67 @@ test("seller platform payment is joined only from seller platform order data", (
   assert.equal(missing.platformPaymentStatus, "missing-seller-data");
   assert.equal(missing.platformPaymentAmount, 0);
   assert.equal(missing.platformPaymentSource, "");
+});
+
+test("seller platform payment is allocated by matched SKU line, not copied from the whole order", () => {
+  const paymentIndex = buildSellerPaymentIndex({
+    orders: [
+      {
+        platform: "Shopee",
+        orderNo: "SP-MULTI",
+        collectedAmount: 386,
+        status: "paid",
+        items: [
+          { skuText: "[47143 ]", amount: 1, lineAmount: 100 },
+          { skuText: "[H161-PC2B-1 ]", amount: 1, lineAmount: 286 },
+        ],
+      },
+    ],
+  });
+
+  const handle = enrichMovementWithSellerPayment(
+    { channelName: "Shopee", platformOrderNo: "SP-MULTI", sku: "47143", removeQuantity: 1 },
+    paymentIndex
+  );
+  const pressureSwitch = enrichMovementWithSellerPayment(
+    { channelName: "Shopee", platformOrderNo: "SP-MULTI", sku: "H161-PC2B-1", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(handle.platformPaymentStatus, "matched");
+  assert.equal(handle.platformPaymentAmount, 100);
+  assert.equal(handle.platformPaymentOrderAmount, 386);
+  assert.equal(handle.platformPaymentAllocationMethod, "sku-line-amount");
+  assert.equal(pressureSwitch.platformPaymentStatus, "matched");
+  assert.equal(pressureSwitch.platformPaymentAmount, 286);
+
+  const [order] = buildPlatformPaymentOrders([handle, pressureSwitch]);
+  assert.equal(order.collectedAmount, 386);
+});
+
+test("seller platform payment is not assigned to a SKU when multi-item order has no item amounts", () => {
+  const paymentIndex = buildSellerPaymentIndex({
+    orders: [
+      {
+        platform: "Shopee",
+        orderNo: "SP-NO-LINES",
+        collectedAmount: 386,
+        items: [
+          { skuText: "[47143 ]", amount: 1 },
+          { skuText: "[H161-PC2B-1 ]", amount: 1 },
+        ],
+      },
+    ],
+  });
+
+  const movement = enrichMovementWithSellerPayment(
+    { channelName: "Shopee", platformOrderNo: "SP-NO-LINES", sku: "47143", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(movement.platformPaymentStatus, "matched-item-amount-missing");
+  assert.equal(movement.platformPaymentAmount, 0);
+  assert.equal(movement.platformPaymentOrderAmount, 386);
 });
 
 test("platform payment summary counts unique platform sale orders and matched seller collections", () => {

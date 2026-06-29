@@ -524,9 +524,22 @@ function summarizeOutput(text) {
   return [lines[0], "...", ...lines.slice(-8)].join("\n").slice(0, 1200);
 }
 
+function commandTimeoutMs(name) {
+  const specific =
+    /seller order payments/i.test(name)
+      ? process.env.SELLER_PAYMENTS_TIMEOUT_MS
+      : /shopee|lazada/i.test(name)
+      ? process.env.SELLER_SYNC_TIMEOUT_MS
+      : "";
+  const parsed = Number(specific || process.env.SYNC_COMMAND_TIMEOUT_MS || 10 * 60 * 1000);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10 * 60 * 1000;
+}
+
 function runCommand(name, command, args, cwd) {
   return new Promise((resolve, reject) => {
     const startedAt = new Date().toISOString();
+    const timeoutMs = commandTimeoutMs(name);
+    let timedOut = false;
     const child = spawn(command, args, {
       cwd,
       env: process.env,
@@ -534,6 +547,11 @@ function runCommand(name, command, args, cwd) {
     });
     let stdout = "";
     let stderr = "";
+    const timeout = setTimeout(() => {
+      timedOut = true;
+      stderr += `\n${name} timed out after ${Math.round(timeoutMs / 1000)} seconds.`;
+      child.kill();
+    }, timeoutMs);
 
     child.stdout.on("data", (chunk) => {
       stdout += chunk.toString();
@@ -541,18 +559,22 @@ function runCommand(name, command, args, cwd) {
     child.stderr.on("data", (chunk) => {
       stderr += chunk.toString();
     });
-    child.on("error", reject);
+    child.on("error", (error) => {
+      clearTimeout(timeout);
+      reject(error);
+    });
     child.on("close", (code) => {
+      clearTimeout(timeout);
       const step = {
         name,
-        code,
+        code: timedOut ? 124 : code,
         startedAt,
         finishedAt: new Date().toISOString(),
         output: summarizeOutput(stdout),
         error: summarizeOutput(stderr),
       };
-      if (code === 0) resolve(step);
-      else reject(Object.assign(new Error(`${name} failed with exit code ${code}`), { step }));
+      if (!timedOut && code === 0) resolve(step);
+      else reject(Object.assign(new Error(timedOut ? `${name} timed out` : `${name} failed with exit code ${code}`), { step }));
     });
   });
 }
@@ -673,7 +695,11 @@ async function runSync(type) {
       await pushOptionalStep(runWebsiteStock(), errors);
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
-      await pushWarningStep(runSellerPayments(), warnings);
+      if (shopeeStep || lazadaStep) {
+        await pushWarningStep(runSellerPayments(), warnings);
+      } else {
+        warnings.push("Skip Seller order payments because Shopee/Lazada sessions are not usable.");
+      }
       if (!shopeeStep && !lazadaStep) {
         warnings.push("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada ใช้ราคาล่าสุดที่มีอยู่ใน dashboard แทน");
       }
@@ -699,7 +725,9 @@ async function runSync(type) {
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
-      await pushWarningStep(runSellerPayments(), warnings);
+      if (shopeeStep || lazadaStep) {
+        await pushWarningStep(runSellerPayments(), warnings);
+      }
       if (!shopeeStep && !lazadaStep) {
         throw new Error("Sync ราคา Seller ไม่สำเร็จทั้ง Shopee และ Lazada");
       }

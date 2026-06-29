@@ -42,6 +42,13 @@
     sort: "valueDesc",
     page: 1,
   };
+  const paymentOrderPageSize = 80;
+  const paymentOrderState = {
+    query: "",
+    platform: "All",
+    status: "All",
+    page: 1,
+  };
 
   const sourceColors = {
     Shopee: "Shopee",
@@ -118,6 +125,137 @@
 
   function moneyValue(value) {
     return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+  }
+
+  function normalizePlatformValue(value) {
+    const text = String(value || "").trim().toLowerCase();
+    if (text.includes("shopee")) return "Shopee";
+    if (text.includes("lazada")) return "Lazada";
+    return "";
+  }
+
+  function normalizeOrderNoValue(value) {
+    return String(value ?? "").trim().toUpperCase();
+  }
+
+  function dateTimeValue(value) {
+    const time = new Date(value || 0).getTime();
+    return Number.isFinite(time) ? time : 0;
+  }
+
+  function buildPlatformPaymentOrdersFromMovements(movements) {
+    const byOrder = new Map();
+    (movements || []).forEach((movement) => {
+      if (Number(movement?.removeQuantity || 0) <= 0) return;
+      const platform = normalizePlatformValue(movement.platform || movement.channelName);
+      if (!["Shopee", "Lazada"].includes(platform)) return;
+      const orderNo = normalizeOrderNoValue(movement.platformOrderNo || movement.referenceNo2 || movement.orderNo);
+      const fallbackKey = [
+        movement.stockShopId || "",
+        movement.createdAt || "",
+        movement.referenceNo || "",
+        movement.sku || "",
+        movement.removeQuantity || 0,
+      ].join("|");
+      const key = orderNo ? `${platform}|${orderNo}` : `${platform}|missing|${fallbackKey}`;
+      const createdAt = movement.createdAt || "";
+      if (!byOrder.has(key)) {
+        byOrder.set(key, {
+          key,
+          platform,
+          orderNo,
+          platformOrderNo: orderNo,
+          packhaiOrderNos: new Set(),
+          skus: new Set(),
+          productNames: new Set(),
+          firstSaleAt: createdAt,
+          latestSaleAt: createdAt,
+          movementCount: 0,
+          totalQuantity: 0,
+          collectedAmount: 0,
+          currency: "THB",
+          paymentSource: "",
+          paymentCapturedAt: "",
+          orderStatus: "",
+          paymentStatus: orderNo ? "missing-seller-data" : "missing-platform-order-no",
+        });
+      }
+
+      const row = byOrder.get(key);
+      row.movementCount += 1;
+      row.totalQuantity += Number(movement.removeQuantity || 0);
+      if (movement.referenceNo) row.packhaiOrderNos.add(String(movement.referenceNo));
+      if (movement.sku) row.skus.add(String(movement.sku).trim().toUpperCase());
+      if (movement.productName) row.productNames.add(String(movement.productName).trim());
+      if (dateTimeValue(createdAt) < dateTimeValue(row.firstSaleAt)) row.firstSaleAt = createdAt;
+      if (dateTimeValue(createdAt) > dateTimeValue(row.latestSaleAt)) row.latestSaleAt = createdAt;
+      if (movement.platformPaymentStatus === "matched") {
+        row.paymentStatus = "matched";
+        row.collectedAmount = moneyValue(movement.platformPaymentAmount);
+        row.currency = movement.platformPaymentCurrency || "THB";
+        row.paymentSource = movement.platformPaymentSource || `${platform} Seller Center`;
+        row.paymentCapturedAt = movement.platformPaymentCapturedAt || "";
+        row.orderStatus = movement.platformPaymentOrderStatus || "";
+      }
+    });
+
+    return [...byOrder.values()]
+      .map((row) => {
+        const skus = [...row.skus].filter(Boolean);
+        const productNames = [...row.productNames].filter(Boolean);
+        const packhaiOrderNos = [...row.packhaiOrderNos].filter(Boolean);
+        return {
+          ...row,
+          packhaiOrderNos,
+          skus,
+          productNames,
+          skuSummary: skus.slice(0, 4).join(", ") + (skus.length > 4 ? ` +${skus.length - 4}` : ""),
+          productSummary: productNames.slice(0, 2).join(" / ") + (productNames.length > 2 ? ` +${productNames.length - 2}` : ""),
+          packhaiOrderSummary:
+            packhaiOrderNos.slice(0, 3).join(", ") + (packhaiOrderNos.length > 3 ? ` +${packhaiOrderNos.length - 3}` : ""),
+          totalQuantity: moneyValue(row.totalQuantity),
+        };
+      })
+      .sort(
+        (a, b) =>
+          dateTimeValue(b.latestSaleAt) - dateTimeValue(a.latestSaleAt) ||
+          `${a.platform}|${a.orderNo}`.localeCompare(`${b.platform}|${b.orderNo}`)
+      );
+  }
+
+  function buildPlatformPaymentSummaryFromOrders(orders) {
+    const makeSummary = (platform) => ({
+      platform,
+      targetOrderCount: 0,
+      matchedOrderCount: 0,
+      missingOrderCount: 0,
+      collectedAmount: 0,
+      coverage: 0,
+    });
+    const summary = makeSummary("All");
+    const byPlatform = {
+      Shopee: makeSummary("Shopee"),
+      Lazada: makeSummary("Lazada"),
+    };
+    (orders || []).forEach((order) => {
+      if (!order.orderNo || !byPlatform[order.platform]) return;
+      const target = byPlatform[order.platform];
+      summary.targetOrderCount += 1;
+      target.targetOrderCount += 1;
+      if (order.paymentStatus === "matched") {
+        const amount = moneyValue(order.collectedAmount);
+        summary.matchedOrderCount += 1;
+        target.matchedOrderCount += 1;
+        summary.collectedAmount += amount;
+        target.collectedAmount += amount;
+      }
+    });
+    [summary, byPlatform.Shopee, byPlatform.Lazada].forEach((item) => {
+      item.missingOrderCount = Math.max(0, item.targetOrderCount - item.matchedOrderCount);
+      item.collectedAmount = moneyValue(item.collectedAmount);
+      item.coverage = item.targetOrderCount ? item.matchedOrderCount / item.targetOrderCount : 0;
+    });
+    return { ...summary, byPlatform };
   }
 
   function rowInventoryValue(row) {
@@ -418,6 +556,7 @@
 
   function mergeSupabaseDashboardState(payload) {
     const dashboard = payload?.dashboard || {};
+    const dashboardHasPlatformPaymentOrders = Array.isArray(dashboard.platformPaymentOrders);
     if (dashboard && typeof dashboard === "object") {
       Object.assign(data, dashboard);
       if (Array.isArray(dashboard.rows)) {
@@ -441,6 +580,15 @@
       stockMovementRows.forEach((movement) => {
         if (movement.stockShopId) loadedStockMovementIds.add(String(movement.stockShopId));
       });
+      if (!dashboardHasPlatformPaymentOrders) {
+        data.platformPaymentOrders = buildPlatformPaymentOrdersFromMovements(stockMovementRows);
+      }
+    }
+    if (!dashboardHasPlatformPaymentOrders && Array.isArray(data.platformPaymentOrders)) {
+      const paymentSummary = buildPlatformPaymentSummaryFromOrders(data.platformPaymentOrders);
+      data.summary = data.summary || {};
+      data.summary.platformPayment = paymentSummary;
+      data.platformPaymentSummary = paymentSummary;
     }
 
     if (payload?.sellerPayments && typeof payload.sellerPayments === "object") {
@@ -2954,6 +3102,195 @@
     };
   }
 
+  function getPlatformPaymentOrders() {
+    if (!Array.isArray(data.platformPaymentOrders) && Array.isArray(stockMovementRows) && stockMovementRows.length) {
+      data.platformPaymentOrders = buildPlatformPaymentOrdersFromMovements(stockMovementRows);
+    }
+    return Array.isArray(data.platformPaymentOrders) ? data.platformPaymentOrders : [];
+  }
+
+  function paymentStatusLabel(status) {
+    if (status === "matched") return "พบยอดเก็บเงิน";
+    if (status === "missing-platform-order-no") return "ไม่มีเลขออเดอร์ Platform";
+    return "รอข้อมูล Seller";
+  }
+
+  function paymentStatusClass(status) {
+    if (status === "matched") return "matched";
+    if (status === "missing-platform-order-no") return "neutral";
+    return "missing";
+  }
+
+  function paymentOrderMatchesQuery(order, query) {
+    const text = compactText(
+      [
+        order.platform,
+        order.orderNo,
+        order.platformOrderNo,
+        order.packhaiOrderSummary,
+        (order.packhaiOrderNos || []).join(" "),
+        order.skuSummary,
+        (order.skus || []).join(" "),
+        order.productSummary,
+        (order.productNames || []).join(" "),
+        order.orderStatus,
+      ].join(" ")
+    );
+    return text.includes(compactText(query));
+  }
+
+  function filteredPlatformPaymentOrders() {
+    let orders = getPlatformPaymentOrders();
+    if (paymentOrderState.platform !== "All") {
+      orders = orders.filter((order) => order.platform === paymentOrderState.platform);
+    }
+    if (paymentOrderState.status !== "All") {
+      orders = orders.filter((order) => order.paymentStatus === paymentOrderState.status);
+    }
+    if (paymentOrderState.query) {
+      orders = orders.filter((order) => paymentOrderMatchesQuery(order, paymentOrderState.query));
+    }
+    return orders;
+  }
+
+  function renderPlatformPaymentOrderRows() {
+    const body = $("paymentOrderTableBody");
+    if (!body) return;
+    const orders = filteredPlatformPaymentOrders();
+    const maxPage = Math.max(1, Math.ceil(orders.length / paymentOrderPageSize));
+    paymentOrderState.page = Math.min(Math.max(1, paymentOrderState.page), maxPage);
+    const start = (paymentOrderState.page - 1) * paymentOrderPageSize;
+    const pageRows = orders.slice(start, start + paymentOrderPageSize);
+
+    body.innerHTML = pageRows.length
+      ? pageRows
+          .map(
+            (order) => `
+          <tr>
+            <td>
+              <strong>${escapeHtml(formatDateTime(order.latestSaleAt) || "-")}</strong>
+              <span>${escapeHtml(order.platform || "-")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(order.orderNo || "-")}</strong>
+              <span>Packhai ${escapeHtml(order.packhaiOrderSummary || "-")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(order.skuSummary || "-")}</strong>
+              <span>${escapeHtml(order.productSummary || "-")}</span>
+            </td>
+            <td class="num">
+              <strong>${fmtQty.format(order.totalQuantity || 0)}</strong>
+              <span>${fmtInt.format(order.movementCount || 0)} movement</span>
+            </td>
+            <td>
+              <span class="payment-badge ${paymentStatusClass(order.paymentStatus)}">${escapeHtml(paymentStatusLabel(order.paymentStatus))}</span>
+              <span>${escapeHtml(order.orderStatus || order.paymentSource || "-")}</span>
+            </td>
+            <td class="num">
+              <strong>${order.paymentStatus === "matched" ? escapeHtml(fmtBaht2.format(order.collectedAmount || 0)) : "-"}</strong>
+              <span>${escapeHtml(order.paymentCapturedAt ? formatDateTime(order.paymentCapturedAt) : "")}</span>
+            </td>
+          </tr>`
+          )
+          .join("")
+      : `<tr><td colspan="6" class="empty-cell">ไม่พบออเดอร์ตามตัวกรอง</td></tr>`;
+
+    const status = $("paymentOrderTableStatus");
+    if (status) {
+      const first = orders.length ? start + 1 : 0;
+      const last = Math.min(start + pageRows.length, orders.length);
+      status.textContent = `แสดง ${fmtInt.format(first)}-${fmtInt.format(last)} จาก ${fmtInt.format(orders.length)} ออเดอร์`;
+    }
+    const subtitle = $("paymentOrderFilterSummary");
+    if (subtitle) {
+      const allOrders = getPlatformPaymentOrders();
+      subtitle.textContent = `นำเข้ารายการสถานะทั้งหมด ${fmtInt.format(allOrders.length)} ออเดอร์จาก Packhai แล้ว เติมยอดเงินจริงเมื่อพบใน Shopee/Lazada Seller`;
+    }
+    const prev = $("prevPaymentOrders");
+    const next = $("nextPaymentOrders");
+    if (prev) prev.disabled = paymentOrderState.page <= 1;
+    if (next) next.disabled = paymentOrderState.page >= maxPage;
+  }
+
+  function exportPlatformPaymentOrdersCsv() {
+    const headers = [
+      "Platform",
+      "Platform Order",
+      "Packhai Orders",
+      "Latest Sale At",
+      "SKUs",
+      "Products",
+      "Quantity",
+      "Movement Count",
+      "Payment Status",
+      "Collected Amount",
+      "Currency",
+      "Seller Order Status",
+      "Payment Source",
+      "Payment Captured At",
+    ];
+    const lines = [
+      headers.join(","),
+      ...getPlatformPaymentOrders().map((order) =>
+        [
+          order.platform,
+          order.orderNo,
+          (order.packhaiOrderNos || []).join(" | "),
+          order.latestSaleAt,
+          (order.skus || []).join(" | "),
+          (order.productNames || []).join(" | "),
+          order.totalQuantity,
+          order.movementCount,
+          paymentStatusLabel(order.paymentStatus),
+          order.paymentStatus === "matched" ? order.collectedAmount : "",
+          order.currency || "THB",
+          order.orderStatus || "",
+          order.paymentSource || "",
+          order.paymentCapturedAt || "",
+        ]
+          .map(csvEscape)
+          .join(",")
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "platform-payment-orders-all.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function bindPaymentCollectionEvents() {
+    $("paymentOrderSearch")?.addEventListener("input", (event) => {
+      paymentOrderState.query = event.target.value;
+      paymentOrderState.page = 1;
+      renderPlatformPaymentOrderRows();
+    });
+    $("paymentPlatformFilter")?.addEventListener("change", (event) => {
+      paymentOrderState.platform = event.target.value;
+      paymentOrderState.page = 1;
+      renderPlatformPaymentOrderRows();
+    });
+    $("paymentStatusFilter")?.addEventListener("change", (event) => {
+      paymentOrderState.status = event.target.value;
+      paymentOrderState.page = 1;
+      renderPlatformPaymentOrderRows();
+    });
+    $("prevPaymentOrders")?.addEventListener("click", () => {
+      paymentOrderState.page -= 1;
+      renderPlatformPaymentOrderRows();
+    });
+    $("nextPaymentOrders")?.addEventListener("click", () => {
+      paymentOrderState.page += 1;
+      renderPlatformPaymentOrderRows();
+    });
+    $("exportPaymentOrdersCsv")?.addEventListener("click", exportPlatformPaymentOrdersCsv);
+  }
+
   function renderPaymentCollectionReport() {
     const el = $("paymentCollectionReport");
     if (!el) return;
@@ -3021,7 +3358,54 @@
             </article>`;
           })
           .join("")}
+      </div>
+      <div class="payment-orders-panel">
+        <div class="payment-orders-toolbar">
+          <div>
+            <h3>ตารางสถานะทุกออเดอร์จาก Platform</h3>
+            <p id="paymentOrderFilterSummary"></p>
+          </div>
+          <div class="payment-orders-actions">
+            <input id="paymentOrderSearch" type="search" value="${escapeHtml(paymentOrderState.query)}" placeholder="ค้นหา order / SKU / Packhai" />
+            <select id="paymentPlatformFilter" aria-label="Platform">
+              <option value="All"${paymentOrderState.platform === "All" ? " selected" : ""}>ทุก Platform</option>
+              <option value="Shopee"${paymentOrderState.platform === "Shopee" ? " selected" : ""}>Shopee</option>
+              <option value="Lazada"${paymentOrderState.platform === "Lazada" ? " selected" : ""}>Lazada</option>
+            </select>
+            <select id="paymentStatusFilter" aria-label="สถานะ">
+              <option value="All"${paymentOrderState.status === "All" ? " selected" : ""}>ทุกสถานะ</option>
+              <option value="matched"${paymentOrderState.status === "matched" ? " selected" : ""}>พบยอดเก็บเงิน</option>
+              <option value="missing-seller-data"${paymentOrderState.status === "missing-seller-data" ? " selected" : ""}>รอข้อมูล Seller</option>
+              <option value="missing-platform-order-no"${paymentOrderState.status === "missing-platform-order-no" ? " selected" : ""}>ไม่มีเลขออเดอร์</option>
+            </select>
+            <button id="exportPaymentOrdersCsv" type="button">Export ทุกออเดอร์</button>
+          </div>
+        </div>
+        <div class="payment-orders-table-wrap">
+          <table class="payment-orders-table">
+            <thead>
+              <tr>
+                <th>วันที่ขาย</th>
+                <th>Order</th>
+                <th>SKU / สินค้า</th>
+                <th>จำนวน</th>
+                <th>สถานะเก็บเงิน</th>
+                <th>ยอดจาก Seller</th>
+              </tr>
+            </thead>
+            <tbody id="paymentOrderTableBody"></tbody>
+          </table>
+        </div>
+        <div class="payment-orders-footer">
+          <span id="paymentOrderTableStatus"></span>
+          <div>
+            <button id="prevPaymentOrders" type="button">ก่อนหน้า</button>
+            <button id="nextPaymentOrders" type="button">ถัดไป</button>
+          </div>
+        </div>
       </div>`;
+    renderPlatformPaymentOrderRows();
+    bindPaymentCollectionEvents();
   }
 
   function renderSidebarStatus() {

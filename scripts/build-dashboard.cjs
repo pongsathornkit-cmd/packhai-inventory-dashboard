@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const {
+  buildPlatformPaymentOrders,
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
@@ -836,12 +837,14 @@ function build() {
       deltaQuantity: numberValue(item.deltaQuantity),
     }))
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  const platformPaymentOrders = buildPlatformPaymentOrders(stockMovements);
   const platformPaymentSummary = buildPlatformPaymentSummary(stockMovements);
 
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
     websiteStockTransactions,
+    platformPaymentOrders,
   };
   dashboard.summary.platformPayment = platformPaymentSummary;
   dashboard.platformPaymentSummary = platformPaymentSummary;

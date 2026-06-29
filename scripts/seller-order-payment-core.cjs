@@ -148,6 +148,103 @@ function emptyPlatformSummary(platform = "") {
   };
 }
 
+function movementPlatform(movement) {
+  return normalizePlatform(movement?.platform || movement?.channelName);
+}
+
+function movementOrderNo(movement) {
+  return normalizeOrderNo(movement?.platformOrderNo || movement?.referenceNo2 || movement?.orderNo);
+}
+
+function movementDateValue(value) {
+  const time = new Date(value || 0).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+
+function buildPlatformPaymentOrders(movements) {
+  const byOrder = new Map();
+
+  for (const movement of movements || []) {
+    if (Number(movement?.removeQuantity || 0) <= 0) continue;
+    const platform = movementPlatform(movement);
+    if (!["Shopee", "Lazada"].includes(platform)) continue;
+
+    const orderNo = movementOrderNo(movement);
+    const fallbackKey = [
+      movement.stockShopId || "",
+      movement.createdAt || "",
+      movement.referenceNo || "",
+      movement.sku || "",
+      movement.removeQuantity || 0,
+    ].join("|");
+    const key = orderNo ? `${platform}|${orderNo}` : `${platform}|missing|${fallbackKey}`;
+    const createdAt = movement.createdAt || "";
+
+    if (!byOrder.has(key)) {
+      byOrder.set(key, {
+        key,
+        platform,
+        orderNo,
+        platformOrderNo: orderNo,
+        packhaiOrderNos: new Set(),
+        skus: new Set(),
+        productNames: new Set(),
+        firstSaleAt: createdAt,
+        latestSaleAt: createdAt,
+        movementCount: 0,
+        totalQuantity: 0,
+        collectedAmount: 0,
+        currency: "THB",
+        paymentSource: "",
+        paymentCapturedAt: "",
+        orderStatus: "",
+        paymentStatus: orderNo ? "missing-seller-data" : "missing-platform-order-no",
+      });
+    }
+
+    const row = byOrder.get(key);
+    row.movementCount += 1;
+    row.totalQuantity += Number(movement.removeQuantity || 0);
+    if (movement.referenceNo) row.packhaiOrderNos.add(String(movement.referenceNo));
+    if (movement.sku) row.skus.add(String(movement.sku).trim().toUpperCase());
+    if (movement.productName) row.productNames.add(String(movement.productName).trim());
+    if (movementDateValue(createdAt) < movementDateValue(row.firstSaleAt)) row.firstSaleAt = createdAt;
+    if (movementDateValue(createdAt) > movementDateValue(row.latestSaleAt)) row.latestSaleAt = createdAt;
+
+    if (movement.platformPaymentStatus === "matched") {
+      row.paymentStatus = "matched";
+      row.collectedAmount = roundMoney(movement.platformPaymentAmount);
+      row.currency = movement.platformPaymentCurrency || "THB";
+      row.paymentSource = movement.platformPaymentSource || platformSource(platform);
+      row.paymentCapturedAt = movement.platformPaymentCapturedAt || "";
+      row.orderStatus = movement.platformPaymentOrderStatus || "";
+    }
+  }
+
+  return [...byOrder.values()]
+    .map((row) => {
+      const skus = [...row.skus].filter(Boolean);
+      const productNames = [...row.productNames].filter(Boolean);
+      const packhaiOrderNos = [...row.packhaiOrderNos].filter(Boolean);
+      return {
+        ...row,
+        packhaiOrderNos,
+        skus,
+        productNames,
+        skuSummary: skus.slice(0, 4).join(", ") + (skus.length > 4 ? ` +${skus.length - 4}` : ""),
+        productSummary: productNames.slice(0, 2).join(" / ") + (productNames.length > 2 ? ` +${productNames.length - 2}` : ""),
+        packhaiOrderSummary:
+          packhaiOrderNos.slice(0, 3).join(", ") + (packhaiOrderNos.length > 3 ? ` +${packhaiOrderNos.length - 3}` : ""),
+        totalQuantity: roundMoney(row.totalQuantity),
+      };
+    })
+    .sort(
+      (a, b) =>
+        movementDateValue(b.latestSaleAt) - movementDateValue(a.latestSaleAt) ||
+        `${a.platform}|${a.orderNo}`.localeCompare(`${b.platform}|${b.orderNo}`)
+    );
+}
+
 function finalizePlatformSummary(summary) {
   summary.missingOrderCount = Math.max(0, summary.targetOrderCount - summary.matchedOrderCount);
   summary.collectedAmount = roundMoney(summary.collectedAmount);
@@ -161,24 +258,16 @@ function buildPlatformPaymentSummary(movements) {
     Shopee: emptyPlatformSummary("Shopee"),
     Lazada: emptyPlatformSummary("Lazada"),
   };
-  const seenOrders = new Set();
 
-  for (const movement of movements || []) {
-    if (Number(movement?.removeQuantity || 0) <= 0) continue;
-    const platform = normalizePlatform(movement.platform || movement.channelName);
-    if (!["Shopee", "Lazada"].includes(platform)) continue;
-    const orderNo = normalizeOrderNo(movement.platformOrderNo || movement.referenceNo2 || movement.orderNo);
-    if (!orderNo) continue;
-    const key = `${platform}|${orderNo}`;
-    if (seenOrders.has(key)) continue;
-    seenOrders.add(key);
-
-    const target = byPlatform[platform];
+  for (const order of buildPlatformPaymentOrders(movements)) {
+    if (!order.orderNo) continue;
+    const target = byPlatform[order.platform];
+    if (!target) continue;
     summary.targetOrderCount += 1;
     target.targetOrderCount += 1;
 
-    if (movement.platformPaymentStatus === "matched") {
-      const amount = roundMoney(movement.platformPaymentAmount);
+    if (order.paymentStatus === "matched") {
+      const amount = roundMoney(order.collectedAmount);
       summary.matchedOrderCount += 1;
       target.matchedOrderCount += 1;
       summary.collectedAmount += amount;
@@ -192,6 +281,7 @@ function buildPlatformPaymentSummary(movements) {
 }
 
 module.exports = {
+  buildPlatformPaymentOrders,
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,

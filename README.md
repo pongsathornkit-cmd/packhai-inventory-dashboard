@@ -1,6 +1,6 @@
 # Packhai Inventory Valuation Dashboard
 
-Static executive dashboard for Packhai warehouse stock valuation.
+Executive dashboard for Packhai warehouse stock valuation.
 
 ## Build
 
@@ -33,8 +33,14 @@ The generated website is `dist\index.html` and can be opened directly in a brows
 
 ## Online Website
 
-Use GitHub Pages to publish the dashboard online from the `dist` folder.
+Use Supabase as the data/API hub and deploy `scripts/serve-dashboard.cjs` on a normal web host such as Render or a VPS.
 
-See `DEPLOY_GITHUB_PAGES.md` for setup steps.
+Required cloud environment:
 
-Important: the GitHub Pages version is a read-only report snapshot. Sync must still run on the main local machine because Packhai, FlowAccount, Shopee Seller, and Lazada Seller sync need private tokens and logged-in browser sessions.
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `PUBLIC_SUPABASE_URL`
+- `PUBLIC_SUPABASE_ANON_KEY`
+- `PACKHAI_AUTH_TOKEN` and seller browser sessions when cloud sync should fetch Packhai/Shopee/Lazada directly
+
+The server rebuilds the dashboard and publishes app snapshots plus Packhai movement history to Supabase with `scripts/publish-supabase-app.cjs`. GitHub Pages and GitHub Actions are no longer part of the production runtime.

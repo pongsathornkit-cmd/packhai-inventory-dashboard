@@ -76,7 +76,7 @@ async function main() {
     PUBLIC_SYNC_API_BASE: base,
   });
   if (args.publish) {
-    run(nodePath, [path.join(projectRoot, "scripts", "publish-github-pages.cjs")], {
+    run(nodePath, [path.join(projectRoot, "scripts", "publish-supabase-app.cjs")], {
       ...process.env,
       PUBLIC_SYNC_API_BASE: base,
     });

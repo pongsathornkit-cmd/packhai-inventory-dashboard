@@ -20,6 +20,6 @@ test("configure-public-sync-api wires a live backend URL into the static dashboa
   assert.match(source, /Missing:/);
   assert.match(source, /\.sync-api-base\.local/);
   assert.match(source, /build-dashboard\.cjs/);
-  assert.match(source, /publish-github-pages\.cjs/);
+  assert.match(source, /publish-supabase-app\.cjs/);
   assert.equal(packageJson.scripts["sync:configure-api"], "node scripts/configure-public-sync-api.cjs");
 });

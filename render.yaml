@@ -15,6 +15,8 @@ services:
         value: "1"
       - key: SYNC_REQUIRE_KEY
         value: "0"
+      - key: SYNC_PUBLISH_SUPABASE
+        value: "1"
       - key: PACKHAI_CLOUD_ENV_FILE
         value: /etc/secrets/cloud-sync.env
       - key: PACKHAI_DATA_DIR
@@ -30,16 +32,14 @@ services:
       - key: PACKHAI_AUTH_TOKEN
         sync: false
       - key: SUPABASE_URL
-        sync: false
+        value: https://fabfhzcsppniuwtdwvfg.supabase.co
       - key: SUPABASE_SERVICE_ROLE_KEY
         sync: false
       - key: PUBLIC_SUPABASE_URL
-        sync: false
+        value: https://fabfhzcsppniuwtdwvfg.supabase.co
       - key: PUBLIC_SUPABASE_ANON_KEY
-        sync: false
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhYmZoemNzcHBuaXV3dGR3dmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2Njk3NjQsImV4cCI6MjA5ODI0NTc2NH0.2w3Wr8Bov2Jc-1PQw1KyVa99_B9jMFez8YXonZx8WGk
       - key: PUBLIC_SYNC_API_BASE
-        sync: false
-      - key: GITHUB_TOKEN
         sync: false
       - key: SHOPEE_STORAGE_STATE_B64
         sync: false

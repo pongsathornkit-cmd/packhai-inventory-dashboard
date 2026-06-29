@@ -121,7 +121,7 @@ function main() {
 
   steps.push(runStep("Build dashboard", "build-dashboard.cjs"));
   const statusFile = writeSyncStatusFile(args.type, steps, warnings);
-  steps.push(runStep("Publish dashboard", "publish-github-pages.cjs"));
+  steps.push(runStep("Publish Supabase app", "publish-supabase-app.cjs"));
 
   console.log(
     JSON.stringify(

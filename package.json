@@ -15,7 +15,8 @@
     "cloud:env": "node scripts/prepare-cloud-env.cjs",
     "sync:configure-api": "node scripts/configure-public-sync-api.cjs",
     "sync:smoke": "node scripts/smoke-sync-server.cjs",
-    "sync:seal-env": "node scripts/seal-sync-env.cjs"
+    "sync:seal-env": "node scripts/seal-sync-env.cjs",
+    "publish:supabase": "node scripts/publish-supabase-app.cjs"
   },
   "dependencies": {
     "playwright": "^1.54.2"

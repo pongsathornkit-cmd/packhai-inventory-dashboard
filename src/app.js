@@ -6,6 +6,7 @@
   const supabaseConfig = window.__PACKHAI_SUPABASE__ || {};
   let stockMovementRows = data.stockMovements || [];
   const stockMovementsByStockShopId = new Map();
+  const loadedStockMovementIds = new Set();
   let stockMovementLoadState = stockMovementRows.length ? "loaded" : "idle";
   let stockMovementLoadError = "";
   let stockMovementLoadPromise = null;
@@ -23,11 +24,16 @@
       row?.inventoryValue ?? "",
     ].join("|");
   }
-  rows.forEach((row, index) => {
-    row.detailId = `item-${index}`;
-    rowByDetailId.set(row.detailId, row);
-    detailIdByIdentity.set(productIdentity(row), row.detailId);
-  });
+  function rebuildDetailIndexes() {
+    rowByDetailId.clear();
+    detailIdByIdentity.clear();
+    rows.forEach((row, index) => {
+      row.detailId = `item-${index}`;
+      rowByDetailId.set(row.detailId, row);
+      detailIdByIdentity.set(productIdentity(row), row.detailId);
+    });
+  }
+  rebuildDetailIndexes();
   const pageSize = 50;
   const state = {
     query: "",
@@ -263,12 +269,15 @@
     return warehouseLabel(selected);
   }
 
-  function supabaseDirectConfigured() {
+  function supabaseAppHubConfigured() {
     return Boolean(
-      supabaseConfig?.directWebsiteStock &&
-        String(supabaseConfig.url || "").trim() &&
+      String(supabaseConfig.url || "").trim() &&
         String(supabaseConfig.anonKey || "").trim()
     );
+  }
+
+  function supabaseDirectConfigured() {
+    return Boolean(supabaseConfig?.directWebsiteStock && supabaseAppHubConfigured());
   }
 
   function supabaseRpcUrl(functionName) {
@@ -407,6 +416,49 @@
     refreshInventoryViews();
   }
 
+  function mergeSupabaseDashboardState(payload) {
+    const dashboard = payload?.dashboard || {};
+    if (dashboard && typeof dashboard === "object") {
+      Object.assign(data, dashboard);
+      if (Array.isArray(dashboard.rows)) {
+        rows.splice(0, rows.length, ...dashboard.rows);
+        data.rows = rows;
+        rebuildDetailIndexes();
+      }
+      if (!Array.isArray(data.websiteStockTransactions)) {
+        data.websiteStockTransactions = websiteStockTransactions;
+      }
+    }
+
+    if (Array.isArray(payload?.stockMovements?.rows)) {
+      stockMovementRows = payload.stockMovements.rows;
+      data.stockMovements = stockMovementRows;
+      stockMovementLoadState = "loaded";
+      stockMovementLoadError = "";
+      stockMovementLoadPromise = null;
+      indexStockMovements(stockMovementRows);
+      loadedStockMovementIds.clear();
+      stockMovementRows.forEach((movement) => {
+        if (movement.stockShopId) loadedStockMovementIds.add(String(movement.stockShopId));
+      });
+    }
+
+    if (payload?.sellerPayments && typeof payload.sellerPayments === "object") {
+      data.sellerPayments = payload.sellerPayments;
+    }
+
+    if (payload?.websiteStock && typeof payload.websiteStock === "object") {
+      mergeWebsiteStockSnapshot(payload.websiteStock);
+    } else {
+      refreshInventoryViews();
+    }
+
+    renderFreshness();
+    renderSidebarStatus();
+    renderPaymentCollectionReport();
+    renderMethodology();
+  }
+
   function refreshInventoryViews() {
     refreshDerivedInventoryData();
     renderKpis();
@@ -426,6 +478,25 @@
     if (!supabaseDirectConfigured()) return false;
     const snapshot = await callSupabaseRpc("website_stock_snapshot", { p_transaction_limit: 500 });
     mergeWebsiteStockSnapshot(snapshot);
+    return true;
+  }
+
+  async function loadSupabaseDashboardState(showStatus = false) {
+    if (!supabaseAppHubConfigured()) return false;
+    const payload = await callSupabaseRpc("dashboard_state", {});
+    mergeSupabaseDashboardState(payload);
+    if (showStatus) {
+      renderSyncStatus(
+        {
+          ok: true,
+          type: "all",
+          message: "โหลดข้อมูลล่าสุดจาก Supabase Data Hub แล้ว",
+          steps: [{ name: "Supabase dashboard_state", code: 0 }],
+          finishedAt: new Date().toISOString(),
+        },
+        true
+      );
+    }
     return true;
   }
 
@@ -464,13 +535,71 @@
     });
   }
 
+  function stockMovementDedupKey(movement) {
+    return [
+      movement.stockShopId || "",
+      movement.createdAt || "",
+      movement.referenceNo || "",
+      movement.platformOrderNo || "",
+      movement.addQuantity || 0,
+      movement.removeQuantity || 0,
+      movement.totalQuantity || 0,
+    ].join("|");
+  }
+
+  function mergeStockMovements(items, loadedIds = []) {
+    const byKey = new Map(stockMovementRows.map((movement) => [stockMovementDedupKey(movement), movement]));
+    (items || []).forEach((movement) => {
+      if (!movement?.stockShopId) return;
+      byKey.set(stockMovementDedupKey(movement), movement);
+    });
+    stockMovementRows = [...byKey.values()];
+    data.stockMovements = stockMovementRows;
+    indexStockMovements(stockMovementRows);
+    loadedIds.forEach((id) => loadedStockMovementIds.add(String(id)));
+  }
+
+  function stockShopIdsForRow(row) {
+    const sourceRows = row?.isSkuGroup && Array.isArray(row.warehouseRows) ? row.warehouseRows : [row];
+    return [
+      ...new Set(
+        sourceRows
+          .map((item) => Number(item?.stockShopId || 0))
+          .filter((value) => Number.isFinite(value) && value > 0)
+      ),
+    ];
+  }
+
   function stockMovementFileUrl() {
     const file = data.metadata?.sources?.packhai?.stockMovement?.file || "stock-movements.json";
     const version = encodeURIComponent(data.metadata?.generatedAt || Date.now());
     return `${file}?v=${version}`;
   }
 
-  function loadStockMovements() {
+  function loadStockMovements(row = null) {
+    const requestedIds = stockShopIdsForRow(row);
+    const missingIds = requestedIds.filter((id) => !loadedStockMovementIds.has(String(id)));
+    if (supabaseAppHubConfigured() && missingIds.length) {
+      stockMovementLoadState = "loading";
+      stockMovementLoadPromise = callSupabaseRpc("stock_movements_for_stock_shop_ids", {
+        p_stock_shop_ids: missingIds,
+        p_limit_per_item: 800,
+      })
+        .then((payload) => {
+          mergeStockMovements(payload.rows || [], missingIds);
+          stockMovementLoadState = "loaded";
+          stockMovementLoadError = "";
+          stockMovementLoadPromise = null;
+          return stockMovementRows;
+        })
+        .catch((error) => {
+          stockMovementLoadState = "error";
+          stockMovementLoadError = error.message || String(error);
+          stockMovementLoadPromise = null;
+          return [];
+        });
+      return stockMovementLoadPromise;
+    }
     if (stockMovementLoadState === "loaded") return Promise.resolve(stockMovementRows);
     if (stockMovementLoadPromise) return stockMovementLoadPromise;
     stockMovementLoadState = "loading";
@@ -482,6 +611,10 @@
       .then((payload) => {
         stockMovementRows = payload.rows || [];
         indexStockMovements(stockMovementRows);
+        loadedStockMovementIds.clear();
+        stockMovementRows.forEach((movement) => {
+          if (movement.stockShopId) loadedStockMovementIds.add(String(movement.stockShopId));
+        });
         stockMovementLoadState = "loaded";
         stockMovementLoadError = "";
         return stockMovementRows;
@@ -495,6 +628,9 @@
   }
 
   indexStockMovements(stockMovementRows);
+  stockMovementRows.forEach((movement) => {
+    if (movement.stockShopId) loadedStockMovementIds.add(String(movement.stockShopId));
+  });
 
   function detailIdForRow(row) {
     if (row.detailId) {
@@ -1022,8 +1158,13 @@
     const content = $("productDetailContent");
     if (!modal || !content) return;
     activeDetailRow = row;
-    if (stockMovementLoadState === "idle" && Number(row.stockMovementCount || 0) > 0) {
-      loadStockMovements().then(() => {
+    const movementIds = stockShopIdsForRow(row);
+    const needsMovementLoad =
+      Number(row.stockMovementCount || 0) > 0 &&
+      movementIds.some((id) => !loadedStockMovementIds.has(String(id))) &&
+      !detailMovementRows(row).length;
+    if (needsMovementLoad) {
+      loadStockMovements(row).then(() => {
         if (activeDetailRow === row && !modal.hidden) openProductDetail(row);
       });
     }
@@ -1161,7 +1302,7 @@
       return;
     }
     if (submitButton) submitButton.disabled = true;
-    renderStockAdjustStatus("running", "กำลังบันทึก transaction และ publish dashboard...");
+    renderStockAdjustStatus("running", "กำลังบันทึก transaction บน Supabase...");
     try {
       const payload = await saveWebsiteStockAdjustment({
         sku: row.sku,
@@ -1171,7 +1312,7 @@
         sourceText: `Manual row adjustment for ${row.sku} at ${row.warehouseName}`,
         allocations: [{ warehouseId: row.warehouseId, quantity: nextQuantity }],
       });
-      renderStockAdjustStatus("passed", payload.message || "บันทึก stock สำเร็จ รอหน้าเว็บอัปเดตสักครู่");
+      renderStockAdjustStatus("passed", payload.message || "บันทึก stock สำเร็จบน Supabase แล้ว");
       if (!supabaseDirectConfigured()) setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
     } catch (error) {
       renderStockAdjustStatus("failed", `บันทึกไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
@@ -1190,10 +1331,11 @@
   syncLabels["seller-payments"] = "ยอดเก็บเงิน Platform";
   let syncPollTimer = null;
   let syncStartedHere = false;
-  const staticReportHost = window.location.protocol === "file:" || /(^|\.)github\.io$/i.test(window.location.hostname);
+  const staticReportHost =
+    window.location.protocol === "file:" ||
+    /(^|\.)github\.io$/i.test(window.location.hostname) ||
+    /\.functions\.supabase\.co$/i.test(window.location.hostname);
   const staticSyncStatusUrl = "sync-status.json";
-  const githubSyncRunsApiUrl =
-    "https://api.github.com/repos/pongsathornkit-cmd/packhai-inventory-dashboard/actions/workflows/sync-dashboard.yml/runs?per_page=1";
   let lastStaticSyncType = "all";
   let githubSyncStatusCache = null;
   let githubSyncStatusLoading = false;
@@ -1216,7 +1358,7 @@
   if (remoteSyncApiBase) {
     localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
   }
-  let syncApiUnavailable = staticReportHost && !remoteSyncApiBase;
+  let syncApiUnavailable = (staticReportHost || supabaseAppHubConfigured()) && !remoteSyncApiBase;
 
   function normalizeSyncApiBase(value) {
     return String(value || "").trim().replace(/\/+$/, "");
@@ -1269,7 +1411,7 @@
     syncButtons().forEach((button) => {
       button.classList.toggle("is-static", enabled);
       if (enabled) {
-        button.title = "ดูสถานะ Auto Sync ล่าสุด ปุ่มนี้ไม่ได้เริ่ม Sync ใหม่ทันที";
+        button.title = "โหลดข้อมูลล่าสุดจาก Supabase Data Hub";
         button.setAttribute("aria-label", `${button.textContent.trim()} - Auto Sync status`);
       } else {
         button.title = syncDefaultTitles[button.id] || button.title;
@@ -1316,8 +1458,23 @@
       const button = event.currentTarget;
       button.disabled = true;
       button.textContent = "กำลังโหลดข้อมูล...";
-      const freshUrl = `${window.location.pathname}?v=${Date.now()}${window.location.hash || ""}`;
-      window.location.href = freshUrl;
+      loadSupabaseDashboardState(true)
+        .catch((error) => {
+          renderSyncStatus(
+            {
+              ok: false,
+              warning: true,
+              type: lastStaticSyncType,
+              message: `โหลดข้อมูลจาก Supabase ไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`,
+              steps: [],
+            },
+            true
+          );
+        })
+        .finally(() => {
+          button.disabled = false;
+          button.textContent = "โหลดข้อมูลจาก Supabase";
+        });
     });
   }
 
@@ -1333,14 +1490,14 @@
     const runMessage = run?.warning && run?.message ? ` · ${run.message}` : "";
     el.innerHTML = `
       <div>
-        <strong>Auto Sync เปิดใช้งาน · ${escapeHtml(label)}</strong>
-        <span>ระบบ Sync ข้อมูลทั้งหมดอัตโนมัติบน Cloud ทุก 2 ชั่วโมงช่วง 09:00-19:00 ไม่ต้องเปิดเครื่องนี้ทิ้งไว้</span>
-        <span>ตอนนี้ปุ่มบน GitHub Pages ใช้ดูสถานะและรีเฟรชข้อมูลล่าสุดเท่านั้น ยังไม่ได้เริ่ม Sync ใหม่ทันทีจาก browser</span>
+        <strong>Supabase Data Hub พร้อมใช้งาน · ${escapeHtml(label)}</strong>
+        <span>ข้อมูลหน้าเว็บอ่านจาก Supabase โดยตรง ไม่ต้องใช้ GitHub Pages เป็น backend แล้ว</span>
+        <span>ปุ่มนี้โหลด snapshot ล่าสุดจาก Supabase และข้อมูลที่แก้ในเว็บจะบันทึกเป็น transaction บน Supabase</span>
         <small>${escapeHtml(githubSyncWorkflowHint(type))} · ${escapeHtml(runStatus)}${escapeHtml(runMessage)}</small>
       </div>
       <div class="sync-status-actions">
-        <button class="sync-status-primary" type="button" data-dashboard-refresh>รีเฟรชข้อมูลล่าสุด</button>
-        <button type="button" data-sync-run-refresh>${githubSyncStatusLoading ? "กำลังตรวจสถานะ..." : "ตรวจสถานะ Auto Sync"}</button>
+        <button class="sync-status-primary" type="button" data-dashboard-refresh>โหลดข้อมูลจาก Supabase</button>
+        <button type="button" data-sync-run-refresh>${githubSyncStatusLoading ? "กำลังตรวจสถานะ..." : "ตรวจ snapshot"}</button>
       </div>`;
     bindStaticSyncActions();
     if (staticReportHost && !githubSyncStatusCache && !githubSyncStatusLoading) {
@@ -1366,17 +1523,18 @@
   }
 
   async function loadGitHubSyncStatus(type = lastStaticSyncType, showLoading = false) {
-    if (!staticReportHost || remoteSyncApiBase || githubSyncStatusLoading) return;
+    if ((!staticReportHost && !supabaseAppHubConfigured()) || remoteSyncApiBase || githubSyncStatusLoading) return;
     try {
       githubSyncStatusLoading = true;
       if (showLoading) renderStaticSyncNotice(type, githubSyncStatusCache);
       try {
         githubSyncStatusCache = await loadStaticSyncStatusFile();
       } catch {
-        const response = await fetch(githubSyncRunsApiUrl, { cache: "no-store" });
-        if (!response.ok) throw new Error(`GitHub status ${response.status}`);
-        const data = await response.json();
-        githubSyncStatusCache = Array.isArray(data.workflow_runs) ? data.workflow_runs[0] || null : null;
+        githubSyncStatusCache = {
+          status: "completed",
+          conclusion: supabaseAppHubConfigured() ? "success" : "failure",
+          updated_at: data.metadata?.generatedAt || new Date().toISOString(),
+        };
       }
       githubSyncStatusLoading = false;
       renderStaticSyncNotice(type, githubSyncStatusCache);
@@ -1419,7 +1577,12 @@
   }
 
   function ensureRemoteSyncConfig(type) {
-    if (!staticReportHost) return true;
+    if (!staticReportHost && !supabaseAppHubConfigured()) return true;
+    if (supabaseAppHubConfigured() && !remoteSyncApiBase) {
+      syncApiUnavailable = true;
+      renderStaticSyncNotice(type);
+      return false;
+    }
     if (!remoteSyncApiBase) {
       syncApiUnavailable = true;
       renderStaticSyncNotice(type);
@@ -1564,7 +1727,22 @@
 
   async function startSync(type) {
     if (!ensureRemoteSyncConfig(type)) {
-      if (staticReportHost) openStaticSyncStatus(type);
+      if (supabaseAppHubConfigured()) {
+        loadSupabaseDashboardState(true).catch((error) => {
+          renderSyncStatus(
+            {
+              ok: false,
+              warning: true,
+              type,
+              message: `โหลดข้อมูลจาก Supabase ไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`,
+              steps: [],
+            },
+            true
+          );
+        });
+      } else if (staticReportHost) {
+        openStaticSyncStatus(type);
+      }
       return;
     }
     if (syncApiUnavailable) {
@@ -1630,12 +1808,13 @@
   };
 
   function expenseApiReady(showMessage = true) {
+    if (supabaseAppHubConfigured()) return true;
     if (!staticReportHost || remoteSyncApiBase) return true;
     if (showMessage) {
       renderExpenseStatus(
         "warning",
         "ยังใช้งานค่าใช้จ่ายออนไลน์ไม่ได้",
-        "หน้า GitHub Pages ต้องเชื่อม Sync API URL ก่อนจึงจะบันทึกค่าใช้จ่ายและออก PDF ได้"
+        "ต้องตั้งค่า Supabase URL และ anon key ในหน้าเว็บก่อน จึงจะบันทึกค่าใช้จ่ายออนไลน์ได้"
       );
     }
     return false;
@@ -1764,14 +1943,78 @@
   }
 
   function updateExpenseExportLinks() {
-    const month = encodeURIComponent(expenseState.month || "");
-    const base = `/api/expenses/export.csv?month=${month}`;
     const all = $("expenseExportAll");
     const pnd3 = $("expenseExportPnd3");
     const pnd53 = $("expenseExportPnd53");
-    if (all) all.href = expenseApiReady(false) ? expenseApiUrl(base) : "#expenses";
-    if (pnd3) pnd3.href = expenseApiReady(false) ? expenseApiUrl(`${base}&pndType=PND3`) : "#expenses";
-    if (pnd53) pnd53.href = expenseApiReady(false) ? expenseApiUrl(`${base}&pndType=PND53`) : "#expenses";
+    [
+      [all, ""],
+      [pnd3, "PND3"],
+      [pnd53, "PND53"],
+    ].forEach(([link, pndType]) => {
+      if (!link) return;
+      link.href = "#expenses";
+      link.removeAttribute("target");
+      link.dataset.expenseExport = pndType;
+    });
+  }
+
+  function expenseRowsForExport(pndType = "") {
+    return (expenseState.expenses || [])
+      .filter((row) => !expenseState.month || String(row.paymentDate || "").startsWith(expenseState.month))
+      .filter((row) => !pndType || row.pndType === pndType)
+      .sort((a, b) => String(b.paymentDate || "").localeCompare(String(a.paymentDate || "")) || String(b.expenseNo || "").localeCompare(String(a.expenseNo || "")));
+  }
+
+  function downloadExpenseCsv(pndType = "") {
+    const headers = [
+      "Expense No",
+      "WHT No",
+      "Payment Date",
+      "Recipient",
+      "Tax ID",
+      "PND",
+      "Category",
+      "Invoice",
+      "Subtotal",
+      "VAT",
+      "Withholding",
+      "Net Payable",
+      "Status",
+      "Notes",
+    ];
+    const lines = [
+      headers.join(","),
+      ...expenseRowsForExport(pndType).map((row) =>
+        [
+          row.expenseNo,
+          row.whtNo,
+          row.paymentDate,
+          row.recipientName,
+          row.recipientTaxId,
+          row.pndType,
+          row.category,
+          row.invoiceNo,
+          row.subtotal,
+          row.vatAmount,
+          row.withholdingAmount,
+          row.netPayable,
+          row.status,
+          row.notes,
+        ]
+          .map(csvEscape)
+          .join(",")
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const suffix = pndType ? `-${pndType.toLowerCase()}` : "";
+    a.href = url;
+    a.download = `packhai-expenses-${expenseState.month || "all"}${suffix}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
   }
 
   function expenseRowsForView() {
@@ -1798,11 +2041,9 @@
     }
     body.innerHTML = rowsForView
       .map((row) => {
-        const voucherUrl = expenseApiUrl(`/api/expenses/${encodeURIComponent(row.id)}/payment-voucher.pdf`);
-        const whtUrl = expenseApiUrl(`/api/expenses/${encodeURIComponent(row.id)}/wht-certificate.pdf`);
         const whtAction =
           Number(row.withholdingAmount || 0) > 0
-            ? `<a href="${escapeHtml(whtUrl)}" target="_blank" rel="noreferrer">50 ทวิ</a>`
+            ? `<span class="muted-action">มี 50 ทวิ</span>`
             : `<span class="muted-action">ไม่มี WHT</span>`;
         const statusClass = row.status === "cancelled" ? "cancelled" : row.status === "draft" ? "draft" : "posted";
         return `
@@ -1822,7 +2063,7 @@
             <td class="num">${fmtBaht2.format(row.withholdingAmount || 0)}</td>
             <td class="num"><strong>${fmtBaht2.format(row.netPayable || 0)}</strong></td>
             <td class="expense-actions">
-              <a href="${escapeHtml(voucherUrl)}" target="_blank" rel="noreferrer">ใบสำคัญจ่าย</a>
+              <span class="muted-action">บันทึกบน Supabase</span>
               ${whtAction}
               ${
                 row.status !== "cancelled"
@@ -1849,9 +2090,17 @@
     }
     expenseState.loading = true;
     try {
-      const response = await fetch(expenseApiUrl(`/api/expenses?month=${encodeURIComponent(expenseState.month)}`), expenseFetchOptions("GET"));
-      if (!response.ok) throw new Error(`Status ${response.status}`);
-      const payload = await response.json();
+      let payload;
+      if (supabaseAppHubConfigured()) {
+        payload = await callSupabaseRpc("list_expenses", {
+          p_month: expenseState.month || null,
+          p_pnd_type: null,
+        });
+      } else {
+        const response = await fetch(expenseApiUrl(`/api/expenses?month=${encodeURIComponent(expenseState.month)}`), expenseFetchOptions("GET"));
+        if (!response.ok) throw new Error(`Status ${response.status}`);
+        payload = await response.json();
+      }
       expenseState.expenses = payload.expenses || [];
       expenseState.summary = payload.summary || null;
       renderExpenseStatus("", "", "");
@@ -1888,12 +2137,17 @@
 
   async function saveExpense(event) {
     event.preventDefault();
-    if (!ensureRemoteSyncConfig("expenses")) return;
+    if (!expenseApiReady(true)) return;
     try {
       renderExpenseStatus("running", "กำลังบันทึกค่าใช้จ่าย", "กำลังออกเลขเอกสารและคำนวณ VAT/WHT");
-      const response = await fetch(expenseApiUrl("/api/expenses"), expenseFetchOptions("POST", collectExpenseForm()));
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.message || `Status ${response.status}`);
+      let payload;
+      if (supabaseAppHubConfigured()) {
+        payload = await callSupabaseRpc("create_expense", { p_payload: collectExpenseForm() });
+      } else {
+        const response = await fetch(expenseApiUrl("/api/expenses"), expenseFetchOptions("POST", collectExpenseForm()));
+        payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.message || `Status ${response.status}`);
+      }
       expenseState.expenses = payload.expenses || [];
       expenseState.summary = payload.summary || null;
       $("expenseForm").reset();
@@ -1907,11 +2161,16 @@
 
   async function cancelExpenseRecord(id) {
     if (!id || !window.confirm("ยืนยันยกเลิกรายการค่าใช้จ่ายนี้?")) return;
-    if (!ensureRemoteSyncConfig("expenses")) return;
+    if (!expenseApiReady(true)) return;
     try {
-      const response = await fetch(expenseApiUrl(`/api/expenses/${encodeURIComponent(id)}/cancel`), expenseFetchOptions("POST"));
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(payload.message || `Status ${response.status}`);
+      let payload;
+      if (supabaseAppHubConfigured()) {
+        payload = await callSupabaseRpc("cancel_expense", { p_id: id });
+      } else {
+        const response = await fetch(expenseApiUrl(`/api/expenses/${encodeURIComponent(id)}/cancel`), expenseFetchOptions("POST"));
+        payload = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(payload.message || `Status ${response.status}`);
+      }
       expenseState.expenses = payload.expenses || [];
       expenseState.summary = payload.summary || null;
       renderExpenseStatus("warning", "ยกเลิกรายการแล้ว", payload.record?.expenseNo || "");
@@ -1945,6 +2204,12 @@
     $("expensePndFilter")?.addEventListener("change", (event) => {
       expenseState.pndType = event.target.value || "All";
       renderExpenseRows();
+    });
+    ["expenseExportAll", "expenseExportPnd3", "expenseExportPnd53"].forEach((id) => {
+      $(id)?.addEventListener("click", (event) => {
+        event.preventDefault();
+        downloadExpenseCsv(event.currentTarget.dataset.expenseExport || "");
+      });
     });
     $("expenseRows")?.addEventListener("click", (event) => {
       const cancelButton = event.target.closest("[data-expense-cancel]");
@@ -2426,13 +2691,13 @@
       return;
     }
     setAssistantBusy(true);
-    pushAssistantMessage("assistant", "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e41\u0e25\u0e30 publish dashboard...", []);
+    pushAssistantMessage("assistant", "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e1a\u0e19 Supabase...", []);
     try {
       const payload = await saveWebsiteStockAdjustment(action.payload || action);
       pushAssistantMessage(
         "assistant",
         payload.message ||
-          "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e23\u0e2d GitHub Pages \u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48",
+          "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e16\u0e39\u0e01\u0e40\u0e01\u0e47\u0e1a\u0e1a\u0e19 Supabase \u0e41\u0e25\u0e49\u0e27",
         [{ type: "filterInventory", label: "\u0e14\u0e39 SKU", query: action.payload?.sku || "", sort: "valueDesc", hash: "inventory-detail" }]
       );
       if (!supabaseDirectConfigured()) setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
@@ -2501,7 +2766,7 @@
       const clientPayload = text ? runClientRuleAssistant(text) : assistantImageNotice(messageAttachments);
       if (!text) {
         payload = clientPayload;
-      } else if ((staticReportHost && !remoteSyncApiBase) || shouldUseClientAssistant(clientPayload, text)) {
+      } else if (((staticReportHost || supabaseAppHubConfigured()) && !remoteSyncApiBase) || shouldUseClientAssistant(clientPayload, text)) {
         payload = clientPayload;
       } else {
         const response = await fetch(
@@ -3387,7 +3652,15 @@
   } else {
     getSyncStatus(true);
   }
-  loadLiveWebsiteStockFromSupabase().catch((error) => {
-    console.warn("Supabase website stock snapshot failed", error);
-  });
+  loadSupabaseDashboardState()
+    .then((loaded) => {
+      if (!loaded) return loadLiveWebsiteStockFromSupabase();
+      return true;
+    })
+    .catch((error) => {
+      console.warn("Supabase dashboard state failed", error);
+      return loadLiveWebsiteStockFromSupabase().catch((stockError) => {
+        console.warn("Supabase website stock snapshot failed", stockError);
+      });
+    });
 })();

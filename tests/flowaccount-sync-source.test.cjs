@@ -109,19 +109,18 @@ test("online dashboard shows sync setup notice when no public sync API is config
   const appSource = readRepoFile("src/app.js");
 
   assert.match(appSource, /if\s*\(syncApiUnavailable\)\s*{\s*renderStaticSyncNotice\("seller-payments"\);/);
-  assert.match(appSource, /githubSyncRunsApiUrl/);
+  assert.match(appSource, /supabaseAppHubConfigured/);
   assert.match(appSource, /staticSyncStatusUrl/);
   assert.match(appSource, /sync-status\.json/);
   assert.match(appSource, /loadStaticSyncStatusFile/);
-  assert.match(appSource, /api\.github\.com\/repos/);
   assert.match(appSource, /openStaticSyncStatus\(type\)/);
   assert.match(appSource, /loadGitHubSyncStatus\(type,\s*true\)/);
   assert.match(appSource, /data-sync-run-refresh/);
   assert.match(appSource, /data-dashboard-refresh/);
-  assert.match(appSource, /Auto Sync/);
-  assert.match(appSource, /รีเฟรชข้อมูลล่าสุด/);
-  assert.match(appSource, /ตรวจสถานะ Auto Sync/);
-  assert.match(appSource, /ไม่ได้เริ่ม Sync ใหม่ทันที/);
+  assert.match(appSource, /Supabase Data Hub/);
+  assert.match(appSource, /โหลดข้อมูลจาก Supabase/);
+  assert.match(appSource, /ตรวจ snapshot/);
+  assert.match(appSource, /loadSupabaseDashboardState/);
   assert.match(appSource, /scrollIntoView/);
   assert.doesNotMatch(appSource, /local sync only/);
   assert.doesNotMatch(appSource, /githubSyncWorkflowUrl/);

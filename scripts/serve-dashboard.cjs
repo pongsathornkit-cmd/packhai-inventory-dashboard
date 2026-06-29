@@ -35,7 +35,7 @@ const localSyncKeyFile = path.join(projectRoot, ".sync-key.local");
 const authStateDir = process.env.PACKHAI_AUTH_STATE_DIR
   ? path.resolve(process.env.PACKHAI_AUTH_STATE_DIR)
   : path.join(projectRoot, "storage-states");
-const publishGithub = process.env.SYNC_PUBLISH_GITHUB !== "0";
+const publishSupabase = process.env.SYNC_PUBLISH_SUPABASE !== "0";
 const extraAllowedOrigins = String(process.env.SYNC_ALLOWED_ORIGINS || "")
   .split(",")
   .map((item) => item.trim().replace(/\/+$/, ""))
@@ -119,6 +119,7 @@ function applyCors(req, res) {
   const origin = req.headers.origin || "";
   const allowed =
     /^https:\/\/pongsathornkit-cmd\.github\.io$/i.test(origin) ||
+    /^https:\/\/fabfhzcsppniuwtdwvfg\.functions\.supabase\.co$/i.test(origin) ||
     /^http:\/\/(127\.0\.0\.1|localhost)(:\d+)?$/i.test(origin) ||
     extraAllowedOrigins.includes(origin.replace(/\/+$/, ""));
   if (allowed) {
@@ -196,7 +197,7 @@ function syncReadiness() {
     shopeeAuthConfigured: shopeeAuthConfigured(),
     lazadaAuthConfigured: lazadaAuthConfigured(),
     supabaseConfigured: supabaseConfigured(),
-    githubPublishConfigured: Boolean(String(process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim()),
+    supabasePublishConfigured: supabaseConfigured(),
     syncKeyRequired: syncKeyRequired(),
   };
   const missing = [];
@@ -205,7 +206,9 @@ function syncReadiness() {
   if (!config.shopeeAuthConfigured) missing.push("SHOPEE_STORAGE_STATE_B64");
   if (!config.lazadaAuthConfigured) missing.push("LAZADA_STORAGE_STATE_B64");
   if (!config.supabaseConfigured) missing.push("SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY");
-  if (!config.githubPublishConfigured && publishGithub) missing.push("GITHUB_TOKEN");
+  if (config.supabaseConfigured && !config.supabasePublishConfigured && publishSupabase) {
+    missing.push("SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY");
+  }
   if (config.syncKeyRequired) missing.push("SYNC_REQUIRE_KEY=0");
   return {
     ready: missing.length === 0,
@@ -422,7 +425,7 @@ function stockUpdateResultMessage(result, publishStep) {
         ).toLocaleString("th-TH")} \u0e2b\u0e19\u0e48\u0e27\u0e22`
     )
     .join("\n");
-  const published = publishStep?.code === 0 ? "\u0e2a\u0e48\u0e07\u0e02\u0e36\u0e49\u0e19 GitHub Pages \u0e41\u0e25\u0e49\u0e27" : "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e43\u0e19 server \u0e41\u0e25\u0e49\u0e27";
+  const published = publishStep?.code === 0 ? "\u0e2a\u0e48\u0e07\u0e02\u0e36\u0e49\u0e19 Supabase \u0e41\u0e25\u0e49\u0e27" : "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01\u0e43\u0e19 server \u0e41\u0e25\u0e49\u0e27";
   return `\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock SKU ${result.sku} \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08\n${lines}\n${published} \u0e23\u0e2d\u0e2b\u0e19\u0e49\u0e32\u0e40\u0e27\u0e47\u0e1a\u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48\u0e41\u0e25\u0e49\u0e27 refresh`;
 }
 
@@ -430,7 +433,7 @@ async function saveGithubStockUpdate(body) {
   const payload = sanitizeStockUpdatePayload(body.payload || body);
   const result = applyGithubStockUpdate(flowaccountSnapshotFile, payload);
   const buildStep = await runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot);
-  const publishStep = await runPublishGithub();
+  const publishStep = await runPublishSupabase();
   return {
     ok: true,
     result,
@@ -486,7 +489,7 @@ async function saveSupabaseStockUpdate(body) {
     mirrorResult = { ok: false, message: `Local dashboard mirror failed: ${error.message}` };
   }
   const buildStep = await runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot);
-  const publishStep = await runPublishGithub();
+  const publishStep = await runPublishSupabase();
   return {
     ok: true,
     storage: "supabase",
@@ -585,20 +588,20 @@ async function runBuild() {
   return pushStep(runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot));
 }
 
-async function runPublishGithub() {
-  if (!publishGithub) {
+async function runPublishSupabase() {
+  if (!publishSupabase) {
     syncState.steps.push({
-      name: "Publish GitHub Pages",
+      name: "Publish Supabase app",
       code: null,
       skipped: true,
       startedAt: new Date().toISOString(),
       finishedAt: new Date().toISOString(),
       output: "",
-      error: "SYNC_PUBLISH_GITHUB=0",
+      error: "SYNC_PUBLISH_SUPABASE=0",
     });
     return null;
   }
-  return runCommand("Publish GitHub Pages", nodePath, [path.join(projectRoot, "scripts", "publish-github-pages.cjs")], projectRoot);
+  return runCommand("Publish Supabase app", nodePath, [path.join(projectRoot, "scripts", "publish-supabase-app.cjs")], projectRoot);
 }
 
 async function runSync(type) {
@@ -691,7 +694,7 @@ async function runSync(type) {
     }
 
     await runBuild();
-    await pushOptionalStep(runPublishGithub(), errors);
+    await pushOptionalStep(runPublishSupabase(), errors);
     syncState.warning = warnings.length > 0 && errors.length === 0;
     syncState.ok = errors.length === 0;
     syncState.message = errors.length

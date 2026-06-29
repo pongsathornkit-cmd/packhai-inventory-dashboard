@@ -870,20 +870,20 @@ function startSync(type, res) {
 function autoSyncJobDefinitions() {
   return [
     {
-      key: "packhai",
-      label: "Packhai",
-      settings: autoSyncSettings,
-      state: autoSyncState,
-      configured: packhaiConfigured,
-      missingReason: "PACKHAI_AUTH_TOKEN is not configured.",
-    },
-    {
       key: "sellerPrices",
       label: "Seller prices",
       settings: sellerPriceAutoSyncSettings,
       state: sellerPriceAutoSyncState,
       configured: sellerPricesConfigured,
       missingReason: "Shopee/Lazada Seller sessions are not configured.",
+    },
+    {
+      key: "packhai",
+      label: "Packhai",
+      settings: autoSyncSettings,
+      state: autoSyncState,
+      configured: packhaiConfigured,
+      missingReason: "PACKHAI_AUTH_TOKEN is not configured.",
     },
     {
       key: "sellerPayments",

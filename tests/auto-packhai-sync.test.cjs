@@ -115,6 +115,10 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   assert.match(serverSource, /autoSyncJobs:\s*\{/);
   assert.match(serverSource, /sellerPrices:\s*publicAutoSyncState\(sellerPriceAutoSyncSettings,\s*sellerPriceAutoSyncState\)/);
   assert.match(serverSource, /sellerPayments:\s*publicAutoSyncState\(sellerPaymentsAutoSyncSettings,\s*sellerPaymentsAutoSyncState\)/);
+  assert.ok(
+    serverSource.indexOf('key: "sellerPrices"') < serverSource.indexOf('key: "packhai"'),
+    "seller price refresh must get startup priority when auto-sync timers overlap"
+  );
   assert.match(serverSource, /type\s*===\s*"seller-prices"/);
   assert.match(serverSource, /\["packhai",\s*"flowaccount",\s*"seller",\s*"seller-prices",\s*"seller-payments",\s*"all"\]/);
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*job\.settings\.startDelayMs\)/);

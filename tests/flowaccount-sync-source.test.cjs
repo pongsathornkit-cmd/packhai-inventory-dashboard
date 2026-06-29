@@ -25,7 +25,7 @@ test("sync server uses website stock snapshot instead of FlowAccount export", ()
 test("sync server does not append null steps when publish is skipped", () => {
   const source = readRepoFile("scripts/serve-dashboard.cjs");
 
-  assert.match(source, /if\s*\(step\)\s*syncState\.steps\.push\(step\)/);
+  assert.match(source, /if\s*\(step\s*&&\s*!syncState\.steps\.includes\(step\)\)\s*syncState\.steps\.push\(step\)/);
 });
 
 test("sync all keeps stock sync usable when seller sessions fail", () => {

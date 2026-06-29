@@ -96,6 +96,21 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*job\.settings\.startDelayMs\)/);
 });
 
+test("platform payment sync uses long-running live progress and process tree timeout handling", () => {
+  const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
+  const paymentsSource = fs.readFileSync(path.join(projectRoot, "scripts", "export-seller-order-payments.cjs"), "utf8");
+
+  assert.match(serverSource, /SELLER_PAYMENTS_TIMEOUT_MS/);
+  assert.match(serverSource, /90\s*\*\s*60\s*\*\s*1000/);
+  assert.match(serverSource, /function\s+killChildTree/);
+  assert.match(serverSource, /process\.kill\(-child\.pid/);
+  assert.match(serverSource, /trackLiveStep/);
+  assert.match(serverSource, /syncState\.steps\.includes\(step\)/);
+  assert.match(paymentsSource, /SELLER_ORDER_PAYMENT_PROGRESS_EVERY/);
+  assert.match(paymentsSource, /seller-payment-progress/);
+  assert.match(paymentsSource, /seller-payment-targets/);
+});
+
 test("dashboard renders Packhai and platform payment auto sync status from the sync API response", () => {
   const appSource = fs.readFileSync(path.join(projectRoot, "src", "app.js"), "utf8");
 

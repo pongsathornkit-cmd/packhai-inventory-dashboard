@@ -565,8 +565,41 @@ function commandTimeoutMs(name) {
       : /shopee|lazada/i.test(name)
       ? process.env.SELLER_SYNC_TIMEOUT_MS
       : "";
-  const parsed = Number(specific || process.env.SYNC_COMMAND_TIMEOUT_MS || 10 * 60 * 1000);
-  return Number.isFinite(parsed) && parsed > 0 ? parsed : 10 * 60 * 1000;
+  const defaultMs = /seller order payments/i.test(name) ? 90 * 60 * 1000 : 10 * 60 * 1000;
+  const parsed = Number(specific || process.env.SYNC_COMMAND_TIMEOUT_MS || defaultMs);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
+}
+
+function appendStepOutput(step, field, chunk) {
+  const text = chunk.toString();
+  step[field] = summarizeOutput(`${step[field] || ""}\n${text}`);
+  return text;
+}
+
+function trackLiveStep(step) {
+  if (syncState.running && !syncState.steps.includes(step)) {
+    syncState.steps.push(step);
+  }
+}
+
+function killChildTree(child) {
+  if (!child.pid) return;
+  if (process.platform === "win32") {
+    spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true });
+    return;
+  }
+  try {
+    process.kill(-child.pid, "SIGTERM");
+  } catch {
+    child.kill("SIGTERM");
+  }
+  setTimeout(() => {
+    try {
+      process.kill(-child.pid, "SIGKILL");
+    } catch {
+      child.kill("SIGKILL");
+    }
+  }, 5000).unref();
 }
 
 function runCommand(name, command, args, cwd) {
@@ -574,9 +607,20 @@ function runCommand(name, command, args, cwd) {
     const startedAt = new Date().toISOString();
     const timeoutMs = commandTimeoutMs(name);
     let timedOut = false;
+    const step = {
+      name,
+      code: null,
+      running: true,
+      startedAt,
+      finishedAt: null,
+      output: "",
+      error: "",
+    };
+    trackLiveStep(step);
     const child = spawn(command, args, {
       cwd,
       env: process.env,
+      detached: process.platform !== "win32",
       windowsHide: true,
     });
     let stdout = "";
@@ -584,29 +628,32 @@ function runCommand(name, command, args, cwd) {
     const timeout = setTimeout(() => {
       timedOut = true;
       stderr += `\n${name} timed out after ${Math.round(timeoutMs / 1000)} seconds.`;
-      child.kill();
+      step.error = summarizeOutput(stderr);
+      killChildTree(child);
     }, timeoutMs);
 
     child.stdout.on("data", (chunk) => {
-      stdout += chunk.toString();
+      stdout += appendStepOutput(step, "output", chunk);
+      if (String(chunk).trim()) console.log(`[${name}] ${String(chunk).trimEnd()}`);
     });
     child.stderr.on("data", (chunk) => {
-      stderr += chunk.toString();
+      stderr += appendStepOutput(step, "error", chunk);
+      if (String(chunk).trim()) console.warn(`[${name}] ${String(chunk).trimEnd()}`);
     });
     child.on("error", (error) => {
       clearTimeout(timeout);
+      step.running = false;
+      step.finishedAt = new Date().toISOString();
+      step.error = summarizeOutput(error.stack || error.message || String(error));
       reject(error);
     });
     child.on("close", (code) => {
       clearTimeout(timeout);
-      const step = {
-        name,
-        code: timedOut ? 124 : code,
-        startedAt,
-        finishedAt: new Date().toISOString(),
-        output: summarizeOutput(stdout),
-        error: summarizeOutput(stderr),
-      };
+      step.code = timedOut ? 124 : code;
+      step.running = false;
+      step.finishedAt = new Date().toISOString();
+      step.output = summarizeOutput(stdout);
+      step.error = summarizeOutput(stderr);
       if (!timedOut && code === 0) resolve(step);
       else reject(Object.assign(new Error(timedOut ? `${name} timed out` : `${name} failed with exit code ${code}`), { step }));
     });
@@ -616,10 +663,10 @@ function runCommand(name, command, args, cwd) {
 async function pushStep(promise) {
   try {
     const step = await promise;
-    if (step) syncState.steps.push(step);
+    if (step && !syncState.steps.includes(step)) syncState.steps.push(step);
     return step;
   } catch (error) {
-    if (error.step) syncState.steps.push(error.step);
+    if (error.step && !syncState.steps.includes(error.step)) syncState.steps.push(error.step);
     throw error;
   }
 }

@@ -31,6 +31,10 @@ services:
         value: "240"
       - key: SELLER_ORDER_PAYMENT_MAX_NEW
         value: "0"
+      - key: SELLER_ORDER_PAYMENT_PROGRESS_EVERY
+        value: "25"
+      - key: SELLER_PAYMENTS_TIMEOUT_MS
+        value: "5400000"
       - key: PACKHAI_CLOUD_ENV_FILE
         value: /etc/secrets/cloud-sync.env
       - key: PACKHAI_DATA_DIR

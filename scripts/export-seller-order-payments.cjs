@@ -19,6 +19,7 @@ const headless = boolEnv("SELLER_HEADLESS", false);
 const maxNew = Math.max(0, Number(process.env.SELLER_ORDER_PAYMENT_MAX_NEW || 0));
 const shopeeDelayMs = Math.max(0, Number(process.env.SHOPEE_ORDER_PAYMENT_DELAY_MS || 120));
 const lazadaDelayMs = Math.max(0, Number(process.env.LAZADA_ORDER_PAYMENT_DELAY_MS || 120));
+const progressEvery = Math.max(1, Number(process.env.SELLER_ORDER_PAYMENT_PROGRESS_EVERY || 25));
 
 const shopeeLegacySessionDir = path.join(workspaceRoot, ".codex-seller-browser-session");
 const shopeeSessionDir = process.env.SHOPEE_SESSION_DIR
@@ -40,6 +41,25 @@ const lazadaCdpEndpoint =
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+function logProgress(event) {
+  console.log(JSON.stringify(event));
+}
+
+function logPaymentProgress(platform, current, total, orderNo, fetched, errorCount) {
+  if (!total) return;
+  if (current === 1 || current === total || current % progressEvery === 0) {
+    logProgress({
+      event: "seller-payment-progress",
+      platform,
+      current,
+      total,
+      orderNo,
+      fetched,
+      errors: errorCount,
+    });
+  }
 }
 
 function readJsonSafe(file, fallback) {
@@ -277,6 +297,8 @@ async function exportShopeePayments(orderNos, existingMap, errors) {
   const session = await openShopeePage();
   const records = [];
   try {
+    logProgress({ event: "seller-payment-platform-start", platform: "Shopee", total: orderNos.length });
+    let current = 0;
     for (const orderNo of orderNos) {
       try {
         const raw = await fetchShopeePayment(session.page, session.spc, session.shopId, orderNo);
@@ -301,6 +323,8 @@ async function exportShopeePayments(orderNos, existingMap, errors) {
       } catch (error) {
         errors.push(`Shopee ${orderNo}: ${error.message || error}`);
       }
+      current += 1;
+      logPaymentProgress("Shopee", current, orderNos.length, orderNo, records.length, errors.length);
       await sleep(shopeeDelayMs);
     }
   } finally {
@@ -455,6 +479,8 @@ async function exportLazadaPayments(orderNos, existingMap, errors) {
   const session = await openLazadaPage();
   const records = [];
   try {
+    logProgress({ event: "seller-payment-platform-start", platform: "Lazada", total: orderNos.length });
+    let current = 0;
     for (const orderNo of orderNos) {
       try {
         const row = await fetchLazadaPayment(session.page, orderNo);
@@ -477,6 +503,8 @@ async function exportLazadaPayments(orderNos, existingMap, errors) {
       } catch (error) {
         errors.push(`Lazada ${orderNo}: ${error.message || error}`);
       }
+      current += 1;
+      logPaymentProgress("Lazada", current, orderNos.length, orderNo, records.length, errors.length);
       await sleep(lazadaDelayMs);
     }
   } finally {
@@ -502,6 +530,16 @@ async function main() {
     }
   }
   if (maxNew > 0) todo = todo.slice(0, maxNew);
+
+  logProgress({
+    event: "seller-payment-targets",
+    platforms,
+    targetShopee: targets.Shopee.length,
+    targetLazada: targets.Lazada.length,
+    cachedBefore: existingMap.size,
+    requestedNew: todo.length,
+    maxNew: maxNew > 0 ? maxNew : "all",
+  });
 
   const errors = [];
   const newRecords = [];

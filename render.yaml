@@ -33,14 +33,14 @@ services:
         sync: false
       - key: SUPABASE_URL
         value: https://fabfhzcsppniuwtdwvfg.supabase.co
-      - key: SUPABASE_SERVICE_ROLE_KEY
+      - key: SUPABASE_ANON_KEY
+        value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhYmZoemNzcHBuaXV3dGR3dmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2Njk3NjQsImV4cCI6MjA5ODI0NTc2NH0.2w3Wr8Bov2Jc-1PQw1KyVa99_B9jMFez8YXonZx8WGk
+      - key: SUPABASE_WRITE_KEY
         sync: false
       - key: PUBLIC_SUPABASE_URL
         value: https://fabfhzcsppniuwtdwvfg.supabase.co
       - key: PUBLIC_SUPABASE_ANON_KEY
         value: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhYmZoemNzcHBuaXV3dGR3dmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2Njk3NjQsImV4cCI6MjA5ODI0NTc2NH0.2w3Wr8Bov2Jc-1PQw1KyVa99_B9jMFez8YXonZx8WGk
-      - key: PUBLIC_SYNC_API_BASE
-        sync: false
       - key: SHOPEE_STORAGE_STATE_B64
         sync: false
       - key: LAZADA_STORAGE_STATE_B64

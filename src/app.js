@@ -1358,7 +1358,7 @@
   if (remoteSyncApiBase) {
     localStorage.setItem("packhaiSyncApiBase", remoteSyncApiBase);
   }
-  let syncApiUnavailable = (staticReportHost || supabaseAppHubConfigured()) && !remoteSyncApiBase;
+  let syncApiUnavailable = staticReportHost && !remoteSyncApiBase;
 
   function normalizeSyncApiBase(value) {
     return String(value || "").trim().replace(/\/+$/, "");
@@ -1577,11 +1577,10 @@
   }
 
   function ensureRemoteSyncConfig(type) {
-    if (!staticReportHost && !supabaseAppHubConfigured()) return true;
-    if (supabaseAppHubConfigured() && !remoteSyncApiBase) {
-      syncApiUnavailable = true;
-      renderStaticSyncNotice(type);
-      return false;
+    if (!staticReportHost) {
+      syncApiUnavailable = false;
+      setStaticSyncMode(false);
+      return true;
     }
     if (!remoteSyncApiBase) {
       syncApiUnavailable = true;

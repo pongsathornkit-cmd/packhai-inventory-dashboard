@@ -7,6 +7,7 @@ const projectRoot = path.resolve(__dirname, "..");
 const defaultOutput = path.join(projectRoot, ".tmp", "cloud-sync.env");
 const authStateEnvFile = path.join(projectRoot, ".tmp", "render-auth-state.env");
 const packhaiTokenFile = path.join(projectRoot, ".packhai-token.local");
+const supabaseWriteKeyFile = path.join(projectRoot, ".sync-key.local");
 
 function parseArgs(argv) {
   const args = {
@@ -90,7 +91,8 @@ function main() {
     SELLER_SESSION_DIR: "/app/storage/browser-profiles/lazada",
     PACKHAI_AUTH_TOKEN: process.env.PACKHAI_AUTH_TOKEN || readSecretFile(packhaiTokenFile),
     SUPABASE_URL: supabaseUrl,
-    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    SUPABASE_WRITE_KEY: process.env.SUPABASE_WRITE_KEY || process.env.SYNC_DB_WRITE_KEY || readSecretFile(supabaseWriteKeyFile),
+    SUPABASE_ANON_KEY: process.env.SUPABASE_ANON_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY || "",
     PUBLIC_SUPABASE_URL: process.env.PUBLIC_SUPABASE_URL || supabaseUrl,
     PUBLIC_SUPABASE_ANON_KEY: process.env.PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "",
     PUBLIC_SYNC_API_BASE: publicSyncApiBase,
@@ -113,7 +115,8 @@ function main() {
   const required = [
     "PACKHAI_AUTH_TOKEN",
     "SUPABASE_URL",
-    "SUPABASE_SERVICE_ROLE_KEY",
+    "SUPABASE_WRITE_KEY",
+    "SUPABASE_ANON_KEY",
     "GITHUB_TOKEN",
     "SHOPEE_STORAGE_STATE_B64",
     "LAZADA_STORAGE_STATE_B64",

@@ -28,7 +28,8 @@ test("stock adjustment server exposes Supabase endpoint without leaking service 
   const templateSource = readRepoFile("src/index.template.html");
 
   assert.match(serverSource, /\/api\/supabase-stock\/adjust/);
-  assert.match(serverSource, /SUPABASE_SERVICE_ROLE_KEY|SUPABASE_ANON_KEY/);
+  assert.match(serverSource, /SUPABASE_ANON_KEY/);
+  assert.match(serverSource, /SUPABASE_WRITE_KEY/);
   assert.doesNotMatch(appSource, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
   assert.doesNotMatch(templateSource, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
 });

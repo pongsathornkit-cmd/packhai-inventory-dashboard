@@ -164,11 +164,25 @@ function supabaseBaseUrl() {
 }
 
 function supabaseApiKey() {
-  return String(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
+  return String(process.env.SUPABASE_ANON_KEY || process.env.PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "").trim();
+}
+
+function supabaseWriteKey() {
+  if (process.env.SUPABASE_WRITE_KEY) return process.env.SUPABASE_WRITE_KEY.trim();
+  if (process.env.SYNC_DB_WRITE_KEY) return process.env.SYNC_DB_WRITE_KEY.trim();
+  try {
+    return fs.readFileSync(localSyncKeyFile, "utf8").trim();
+  } catch {
+    return "";
+  }
 }
 
 function supabaseConfigured() {
   return Boolean(supabaseBaseUrl() && supabaseApiKey());
+}
+
+function supabasePublishConfigured() {
+  return Boolean(supabaseConfigured() && supabaseWriteKey());
 }
 
 function storageStateConfigured(kind) {
@@ -197,7 +211,7 @@ function syncReadiness() {
     shopeeAuthConfigured: shopeeAuthConfigured(),
     lazadaAuthConfigured: lazadaAuthConfigured(),
     supabaseConfigured: supabaseConfigured(),
-    supabasePublishConfigured: supabaseConfigured(),
+    supabasePublishConfigured: supabasePublishConfigured(),
     syncKeyRequired: syncKeyRequired(),
   };
   const missing = [];
@@ -205,9 +219,9 @@ function syncReadiness() {
   if (!config.websiteStockConfigured) missing.push("WEBSITE_STOCK_SNAPSHOT");
   if (!config.shopeeAuthConfigured) missing.push("SHOPEE_STORAGE_STATE_B64");
   if (!config.lazadaAuthConfigured) missing.push("LAZADA_STORAGE_STATE_B64");
-  if (!config.supabaseConfigured) missing.push("SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY");
+  if (!config.supabaseConfigured) missing.push("SUPABASE_URL + SUPABASE_ANON_KEY");
   if (config.supabaseConfigured && !config.supabasePublishConfigured && publishSupabase) {
-    missing.push("SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY");
+    missing.push("SUPABASE_WRITE_KEY");
   }
   if (config.syncKeyRequired) missing.push("SYNC_REQUIRE_KEY=0");
   return {
@@ -447,7 +461,7 @@ async function callSupabaseStockAdjustment(payload) {
   const baseUrl = supabaseBaseUrl();
   const apiKey = supabaseApiKey();
   if (!baseUrl || !apiKey) {
-    throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the sync server.");
+    throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_ANON_KEY on the sync server.");
   }
   const createdAt = new Date().toISOString();
   const response = await fetch(`${baseUrl}/rest/v1/rpc/adjust_website_stock`, {

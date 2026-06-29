@@ -6,6 +6,7 @@ const { loadCloudEnv } = require("./cloud-env-loader.cjs");
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
+const localWriteKeyFile = path.join(projectRoot, ".sync-key.local");
 
 if (!process.env.LOAD_LOCAL_CLOUD_ENV && fs.existsSync(path.join(projectRoot, ".tmp", "cloud-sync.env"))) {
   process.env.LOAD_LOCAL_CLOUD_ENV = "1";
@@ -29,11 +30,23 @@ function supabaseBaseUrl() {
 
 function supabaseApiKey() {
   return String(
-    process.env.SUPABASE_SERVICE_ROLE_KEY ||
-      process.env.SUPABASE_ANON_KEY ||
+    process.env.SUPABASE_ANON_KEY ||
       process.env.PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_SERVICE_ROLE_KEY ||
       "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhYmZoemNzcHBuaXV3dGR3dmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2Njk3NjQsImV4cCI6MjA5ODI0NTc2NH0.2w3Wr8Bov2Jc-1PQw1KyVa99_B9jMFez8YXonZx8WGk"
   ).trim();
+}
+
+function readLocalWriteKey() {
+  try {
+    return fs.readFileSync(localWriteKeyFile, "utf8").trim();
+  } catch {
+    return "";
+  }
+}
+
+function supabaseWriteKey() {
+  return String(process.env.SUPABASE_WRITE_KEY || process.env.SYNC_DB_WRITE_KEY || readLocalWriteKey()).trim();
 }
 
 function compactSourceFiles() {
@@ -60,13 +73,11 @@ function snapshotRows() {
   const dashboard = readJson(path.join(distDir, "inventory-valuation-data.json"), {});
   const stockMovements = readJson(path.join(distDir, "stock-movements.json"), { rows: [] });
   const sellerPayments = readJson(path.join(dataDir, "seller_compare", "seller_order_payments.json"), {});
-  const indexHtml = fs.existsSync(path.join(distDir, "index.html")) ? fs.readFileSync(path.join(distDir, "index.html"), "utf8") : "";
   return [
     { key: "dashboard_current", payload: dashboard },
     { key: "stock_movements_current", payload: stockMovementSummary(stockMovements) },
     { key: "seller_payments_current", payload: sellerPayments },
     { key: "source_files_current", payload: compactSourceFiles() },
-    { key: "index_html", payload: { html: indexHtml } },
   ];
 }
 
@@ -101,20 +112,21 @@ function movementRows() {
     }));
 }
 
-async function supabaseFetch(pathname, options = {}) {
+async function supabaseRpc(functionName, body) {
   const baseUrl = supabaseBaseUrl();
   const apiKey = supabaseApiKey();
-  if (!baseUrl || !apiKey) {
-    throw new Error("Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY before publishing to Supabase.");
+  const writeKey = supabaseWriteKey();
+  if (!baseUrl || !apiKey || !writeKey) {
+    throw new Error("Set SUPABASE_URL, SUPABASE_ANON_KEY, and SUPABASE_WRITE_KEY before publishing to Supabase.");
   }
-  const response = await fetch(`${baseUrl}/rest/v1/${pathname}`, {
-    ...options,
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/${functionName}`, {
+    method: "POST",
     headers: {
       apikey: apiKey,
       Authorization: `Bearer ${apiKey}`,
       "Content-Type": "application/json",
-      ...(options.headers || {}),
     },
+    body: JSON.stringify({ p_write_key: writeKey, ...(body || {}) }),
   });
   const text = await response.text();
   let payload = null;
@@ -129,13 +141,18 @@ async function supabaseFetch(pathname, options = {}) {
   return payload;
 }
 
+async function publishChunk({ snapshots = [], movements = [] }) {
+  return supabaseRpc("sync_publish_app", {
+    p_snapshots: snapshots,
+    p_movements: movements,
+  });
+}
+
 async function upsertSnapshots(rows) {
   const stats = [];
   for (const row of rows) {
-    await supabaseFetch("app_snapshots?on_conflict=key", {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify([{ ...row, updated_at: new Date().toISOString() }]),
+    await publishChunk({
+      snapshots: [{ ...row, updated_at: new Date().toISOString() }],
     });
     stats.push({ key: row.key, bytes: Buffer.byteLength(JSON.stringify(row.payload)) });
   }
@@ -146,11 +163,7 @@ async function upsertMovements(rows, chunkSize = 500) {
   let uploaded = 0;
   for (let index = 0; index < rows.length; index += chunkSize) {
     const chunk = rows.slice(index, index + chunkSize);
-    await supabaseFetch("packhai_stock_movements?on_conflict=movement_key", {
-      method: "POST",
-      headers: { Prefer: "resolution=merge-duplicates" },
-      body: JSON.stringify(chunk),
-    });
+    await publishChunk({ movements: chunk });
     uploaded += chunk.length;
     if (uploaded % 5000 === 0 || uploaded === rows.length) {
       console.log(JSON.stringify({ step: "packhai_stock_movements", uploaded, total: rows.length }));
@@ -170,7 +183,7 @@ async function main() {
         ok: true,
         appSnapshots: snapshotStats,
         packhaiStockMovements: uploadedMovements,
-        dashboardUrl: "https://fabfhzcsppniuwtdwvfg.functions.supabase.co/packhai-dashboard",
+        dashboardUrl: process.env.PUBLIC_DASHBOARD_URL || process.env.RENDER_EXTERNAL_URL || "",
       },
       null,
       2

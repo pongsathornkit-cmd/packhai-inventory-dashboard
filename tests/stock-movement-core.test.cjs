@@ -1,7 +1,10 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildStockMovementSnapshot } = require("../scripts/packhai-stock-movement-core.cjs");
+const {
+  buildStockMovementSnapshot,
+  stockSummaryRowsFromMovementSnapshot,
+} = require("../scripts/packhai-stock-movement-core.cjs");
 const {
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
@@ -59,6 +62,70 @@ test("Packhai stock movement snapshot keeps every order row and picks latest by 
     snapshot.rowsByStockShopId.get(10).map((row) => row.platformOrderNo),
     ["260626XYZ", "260625ABC"]
   );
+});
+
+test("Packhai stock movement snapshot can be used as stock summary fallback", () => {
+  const snapshot = buildStockMovementSnapshot(
+    [
+      {
+        stockID: 10,
+        sku: " a-1 ",
+        name: "Old movement name",
+        created: "2026-06-25 10:00:00",
+        addQuantity: 5,
+        removeQuantity: 0,
+        totalQuantity: 15,
+      },
+      {
+        stockID: 10,
+        sku: "A-1",
+        productName: "Product A",
+        created: "2026-06-26 12:00:00",
+        addQuantity: 0,
+        removeQuantity: 1,
+        totalQuantity: 14,
+      },
+      {
+        stockID: 11,
+        productCode: "b-2",
+        productName: "Product B",
+        created: "2026-06-24 09:30:00",
+        addQuantity: 20,
+        removeQuantity: 0,
+        totalQuantity: 20,
+      },
+    ],
+    { startDate: "2026-06-01", endDate: "2026-06-27" }
+  );
+
+  const rows = stockSummaryRowsFromMovementSnapshot(snapshot);
+
+  assert.deepEqual(rows, [
+    {
+      stockShopID: 10,
+      sku: "A-1",
+      name: "Product A",
+      quantityRemain: 14,
+      quantityAvailable: 14,
+      quantityOrder: 0,
+      quantityImport: 0,
+      quantityExport: 0,
+      warehouseName: "",
+      isNoMovement: false,
+    },
+    {
+      stockShopID: 11,
+      sku: "B-2",
+      name: "Product B",
+      quantityRemain: 20,
+      quantityAvailable: 20,
+      quantityOrder: 0,
+      quantityImport: 0,
+      quantityExport: 0,
+      warehouseName: "",
+      isNoMovement: false,
+    },
+  ]);
 });
 
 test("seller platform payment is joined only from seller platform order data", () => {

@@ -105,6 +105,33 @@ function buildStockMovementSnapshot(items, options = {}) {
   };
 }
 
+function stockSummaryRowsFromMovementSnapshot(snapshot) {
+  const rowsByStockShopId = snapshot?.rowsByStockShopId;
+  if (!(rowsByStockShopId instanceof Map)) return [];
+
+  return [...rowsByStockShopId.entries()]
+    .map(([stockShopId, movements]) => {
+      const latest = (movements || [])[0];
+      const sku = normalizeSku(latest?.sku);
+      if (!stockShopId || !sku) return null;
+      const quantity = numberValue(latest.totalQuantity);
+      return {
+        stockShopID: numberValue(stockShopId),
+        sku,
+        name: String(latest.productName || sku).trim(),
+        quantityRemain: quantity,
+        quantityAvailable: quantity,
+        quantityOrder: 0,
+        quantityImport: 0,
+        quantityExport: 0,
+        warehouseName: "",
+        isNoMovement: false,
+      };
+    })
+    .filter(Boolean)
+    .sort((a, b) => a.stockShopID - b.stockShopID);
+}
+
 module.exports = {
   buildStockMovementSnapshot,
   latestMovementFields,
@@ -113,4 +140,5 @@ module.exports = {
   normalizePackhaiDateTime,
   normalizeSku,
   numberValue,
+  stockSummaryRowsFromMovementSnapshot,
 };

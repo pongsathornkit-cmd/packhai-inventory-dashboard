@@ -4,6 +4,7 @@ const {
   buildStockMovementSnapshot,
   normalizeSku,
   numberValue,
+  stockSummaryRowsFromMovementSnapshot,
 } = require("./packhai-stock-movement-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -88,11 +89,12 @@ async function postStock(pathname, body, attempt = 1) {
   return data;
 }
 
-async function fetchStockSummary(date) {
+async function fetchStockSummary(date, options = {}) {
   const take = 500;
   const rows = [];
   let skip = 0;
   let total = null;
+  const includeNonMovementStock = options.includeNonMovementStock !== false;
 
   while (total == null || skip < total) {
     const data = await postStock("Stock/get-summarize-stock-balance-by-date-v2", {
@@ -101,7 +103,7 @@ async function fetchStockSummary(date) {
       warehouseID: config.warehouseId,
       startDate: date,
       endDate: date,
-      isIncludeNonMovementStock: true,
+      isIncludeNonMovementStock: includeNonMovementStock,
       skip,
       take,
     });
@@ -111,6 +113,40 @@ async function fetchStockSummary(date) {
   }
 
   return rows;
+}
+
+async function fetchStockSummaryWithFallback(date, movement) {
+  const attempts = [
+    { includeNonMovementStock: true, label: "include non-movement stock" },
+    { includeNonMovementStock: false, label: "movement stock only" },
+  ];
+  const errors = [];
+
+  for (const attempt of attempts) {
+    try {
+      return {
+        rows: await fetchStockSummary(date, attempt),
+        fallback: null,
+      };
+    } catch (error) {
+      errors.push(`${attempt.label}: ${error.message || String(error)}`);
+    }
+  }
+
+  const fallbackRows = stockSummaryRowsFromMovementSnapshot(movement);
+  if (!fallbackRows.length) {
+    throw new Error(`Packhai stock summary failed and movement fallback is empty. ${errors.join(" | ")}`);
+  }
+
+  return {
+    rows: fallbackRows,
+    fallback: {
+      type: "stock-movement-latest-total",
+      reason: "Stock summary API failed; used latest stock movement totalQuantity by stockShopID.",
+      errors,
+      rowCount: fallbackRows.length,
+    },
+  };
 }
 
 async function fetchStockMovements(startDate, endDate) {
@@ -177,9 +213,12 @@ function mapStockRow(row, latestMovement) {
 async function main() {
   fs.mkdirSync(path.dirname(outputFile), { recursive: true });
   const date = process.env.PACKHAI_SYNC_DATE || todayBangkok();
-  const apiRows = await fetchStockSummary(date);
   const movement = includeStockMovements ? await fetchStockMovements(movementStartDate, date) : null;
-  const rows = apiRows
+  const summary = await fetchStockSummaryWithFallback(date, movement);
+  if (summary.fallback) {
+    console.warn(`Packhai stock summary fallback used: ${summary.fallback.reason}`);
+  }
+  const rows = summary.rows
     .map((row) => mapStockRow(row, movement?.latestByStockShopId.get(numberValue(row.stockShopID ?? row.stockShopId))))
     .filter((row) => row.sku);
   const skuCounts = new Map();
@@ -208,6 +247,7 @@ async function main() {
           skipped: true,
           reason: "PACKHAI_INCLUDE_STOCK_MOVEMENTS=0",
         },
+    stockSummaryFallback: summary.fallback,
     rows,
   };
 

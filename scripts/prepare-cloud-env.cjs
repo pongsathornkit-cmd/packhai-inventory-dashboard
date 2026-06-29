@@ -60,6 +60,13 @@ function readGithubTokenFromGh() {
   return String(result.stdout || "").trim();
 }
 
+function supabaseUrlFromEnv() {
+  const explicit = String(process.env.SUPABASE_URL || process.env.PUBLIC_SUPABASE_URL || "").trim().replace(/\/+$/, "");
+  if (explicit) return explicit;
+  const projectId = String(process.env.SUPABASE_PROJECT_ID || "").trim();
+  return projectId ? `https://${projectId}.supabase.co` : "";
+}
+
 function main() {
   const args = parseArgs(process.argv.slice(2));
   const authStateEnv = readEnvFile(authStateEnvFile);
@@ -71,6 +78,7 @@ function main() {
   const publicSyncApiBase = normalizePublicSyncApiBase(args.publicSyncApiBase || process.env.PUBLIC_SYNC_API_BASE, {
     source: "env",
   });
+  const supabaseUrl = supabaseUrlFromEnv();
   const env = {
     HOST: "0.0.0.0",
     SELLER_HEADLESS: "1",
@@ -81,6 +89,10 @@ function main() {
     SHOPEE_SESSION_DIR: "/app/storage/browser-profiles/shopee",
     SELLER_SESSION_DIR: "/app/storage/browser-profiles/lazada",
     PACKHAI_AUTH_TOKEN: process.env.PACKHAI_AUTH_TOKEN || readSecretFile(packhaiTokenFile),
+    SUPABASE_URL: supabaseUrl,
+    SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || "",
+    PUBLIC_SUPABASE_URL: process.env.PUBLIC_SUPABASE_URL || supabaseUrl,
+    PUBLIC_SUPABASE_ANON_KEY: process.env.PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "",
     PUBLIC_SYNC_API_BASE: publicSyncApiBase,
     GITHUB_TOKEN: githubToken,
     SHOPEE_STORAGE_STATE_B64: authStateEnv.SHOPEE_STORAGE_STATE_B64 || process.env.SHOPEE_STORAGE_STATE_B64 || "",
@@ -100,6 +112,8 @@ function main() {
 
   const required = [
     "PACKHAI_AUTH_TOKEN",
+    "SUPABASE_URL",
+    "SUPABASE_SERVICE_ROLE_KEY",
     "GITHUB_TOKEN",
     "SHOPEE_STORAGE_STATE_B64",
     "LAZADA_STORAGE_STATE_B64",
@@ -118,6 +132,7 @@ function main() {
         })),
         missingRequired: required.filter((key) => !String(env[key] || "")),
         publicSyncApiBasePresent: Boolean(publicSyncApiBase),
+        supabaseUrlPresent: Boolean(supabaseUrl),
         githubTokenSource: githubToken
           ? args.githubToken
             ? "argument"

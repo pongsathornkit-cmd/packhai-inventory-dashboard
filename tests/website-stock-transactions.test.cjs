@@ -98,6 +98,7 @@ test("build dashboard includes website stock transaction history for the fronten
 
   assert.match(source, /stockTransactions/);
   assert.match(source, /websiteStockTransactions/);
+  assert.match(source, /supabase_website_stock\.json/);
 });
 
 test("frontend exposes row stock adjustment controls and transaction history", () => {
@@ -109,4 +110,13 @@ test("frontend exposes row stock adjustment controls and transaction history", (
   assert.match(appSource, /websiteStockTransactionTable/);
   assert.match(templateSource, /id="stockAdjustModal"/);
   assert.match(templateSource, /id="stockAdjustForm"/);
+});
+
+test("supabase website stock export script can generate dashboard-compatible snapshots", () => {
+  const exportSource = fs.readFileSync(path.join(__dirname, "..", "scripts", "export-supabase-website-stock.cjs"), "utf8");
+
+  assert.match(exportSource, /mapSupabaseWebsiteSnapshot/);
+  assert.match(exportSource, /stock_balances/);
+  assert.match(exportSource, /stock_transactions/);
+  assert.doesNotMatch(exportSource, /SUPABASE_SERVICE_ROLE_KEY=.*[A-Za-z0-9_\\-]{10,}/);
 });

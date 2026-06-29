@@ -155,6 +155,21 @@ function flowaccountConfigured() {
   return websiteStockConfigured();
 }
 
+function supabaseBaseUrl() {
+  const explicitUrl = String(process.env.SUPABASE_URL || process.env.SUPABASE_REST_URL || "").trim().replace(/\/+$/, "");
+  if (explicitUrl) return explicitUrl.replace(/\/rest\/v1$/i, "");
+  const projectId = String(process.env.SUPABASE_PROJECT_ID || "").trim();
+  return projectId ? `https://${projectId}.supabase.co` : "";
+}
+
+function supabaseApiKey() {
+  return String(process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || "").trim();
+}
+
+function supabaseConfigured() {
+  return Boolean(supabaseBaseUrl() && supabaseApiKey());
+}
+
 function storageStateConfigured(kind) {
   const key = String(kind || "").trim().toUpperCase();
   if (!key) return false;
@@ -180,6 +195,7 @@ function syncReadiness() {
     websiteStockConfigured: websiteStockConfigured(),
     shopeeAuthConfigured: shopeeAuthConfigured(),
     lazadaAuthConfigured: lazadaAuthConfigured(),
+    supabaseConfigured: supabaseConfigured(),
     githubPublishConfigured: Boolean(String(process.env.GITHUB_TOKEN || process.env.GH_TOKEN || "").trim()),
     syncKeyRequired: syncKeyRequired(),
   };
@@ -188,6 +204,7 @@ function syncReadiness() {
   if (!config.websiteStockConfigured) missing.push("WEBSITE_STOCK_SNAPSHOT");
   if (!config.shopeeAuthConfigured) missing.push("SHOPEE_STORAGE_STATE_B64");
   if (!config.lazadaAuthConfigured) missing.push("LAZADA_STORAGE_STATE_B64");
+  if (!config.supabaseConfigured) missing.push("SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY");
   if (!config.githubPublishConfigured && publishGithub) missing.push("GITHUB_TOKEN");
   if (config.syncKeyRequired) missing.push("SYNC_REQUIRE_KEY=0");
   return {
@@ -423,6 +440,64 @@ async function saveGithubStockUpdate(body) {
   };
 }
 
+async function callSupabaseStockAdjustment(payload) {
+  const baseUrl = supabaseBaseUrl();
+  const apiKey = supabaseApiKey();
+  if (!baseUrl || !apiKey) {
+    throw new Error("Supabase is not configured. Set SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY on the sync server.");
+  }
+  const createdAt = new Date().toISOString();
+  const response = await fetch(`${baseUrl}/rest/v1/rpc/adjust_website_stock`, {
+    method: "POST",
+    headers: {
+      apikey: apiKey,
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      p_payload: {
+        ...payload,
+        createdAt,
+      },
+    }),
+  });
+  const text = await response.text();
+  let data;
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { message: text.slice(0, 300) };
+  }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.message || data.error_description || data.hint || `Supabase status ${response.status}`);
+  }
+  return data;
+}
+
+async function saveSupabaseStockUpdate(body) {
+  const payload = sanitizeStockUpdatePayload(body.payload || body);
+  if (!supabaseConfigured()) return saveGithubStockUpdate(payload);
+
+  const supabaseResult = await callSupabaseStockAdjustment(payload);
+  let mirrorResult = null;
+  try {
+    mirrorResult = applyGithubStockUpdate(flowaccountSnapshotFile, payload);
+  } catch (error) {
+    mirrorResult = { ok: false, message: `Local dashboard mirror failed: ${error.message}` };
+  }
+  const buildStep = await runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot);
+  const publishStep = await runPublishGithub();
+  return {
+    ok: true,
+    storage: "supabase",
+    result: supabaseResult.result || supabaseResult,
+    mirrorResult,
+    buildStep,
+    publishStep,
+    message: supabaseResult.message || stockUpdateResultMessage(mirrorResult || {}, publishStep),
+  };
+}
+
 function summarizeOutput(text) {
   const lines = String(text || "")
     .split(/\r?\n/)
@@ -543,6 +618,14 @@ async function runSync(type) {
       runCommand("Sync Packhai stock", nodePath, [path.join(projectRoot, "scripts", "sync-packhai-stock.cjs")], projectRoot);
     const runWebsiteStockSnapshot = () =>
       runCommand("Use Website stock snapshot", nodePath, [path.join(projectRoot, "scripts", "use-website-stock-snapshot.cjs")], projectRoot);
+    const runSupabaseWebsiteStock = () =>
+      runCommand(
+        "Sync Supabase Website Stock",
+        nodePath,
+        [path.join(projectRoot, "scripts", "export-supabase-website-stock.cjs")],
+        projectRoot
+      );
+    const runWebsiteStock = () => (supabaseConfigured() ? runSupabaseWebsiteStock() : runWebsiteStockSnapshot());
     const runShopee = () =>
       runCommand("Sync Shopee Seller", nodePath, [path.join(projectRoot, "scripts", "export-shopee-products.cjs")], projectRoot);
     const runLazada = () =>
@@ -570,7 +653,7 @@ async function runSync(type) {
           error: "PACKHAI_AUTH_TOKEN is not configured.",
         });
       }
-      await pushOptionalStep(runWebsiteStockSnapshot(), errors);
+      await pushOptionalStep(runWebsiteStock(), errors);
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
       await pushWarningStep(runSellerPayments(), warnings);
@@ -595,7 +678,7 @@ async function runSync(type) {
       }
       await pushStep(runPackhai());
     } else if (type === "flowaccount") {
-      await pushStep(runWebsiteStockSnapshot());
+      await pushStep(runWebsiteStock());
     } else if (type === "seller") {
       const shopeeStep = await pushWarningStep(runShopee(), warnings);
       const lazadaStep = await pushWarningStep(runLazada(), warnings);
@@ -758,10 +841,10 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  if (url.pathname === "/api/github-stock/adjust" && req.method === "POST") {
+  if ((url.pathname === "/api/github-stock/adjust" || url.pathname === "/api/supabase-stock/adjust") && req.method === "POST") {
     if (!syncAuthorized(req, res)) return;
     readJsonBody(req)
-      .then(saveGithubStockUpdate)
+      .then(saveSupabaseStockUpdate)
       .then((result) => sendJson(res, 200, result))
       .catch((error) => sendJson(res, /needs|valid|quantity|warehouse/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
     return;

@@ -21,3 +21,14 @@ test("sync smoke script validates health, readiness, and optional sync without p
   assert.doesNotMatch(source, /PACKHAI_AUTH_TOKEN|STORAGE_STATE_B64|GITHUB_TOKEN/);
   assert.equal(packageJson.scripts["sync:smoke"], "node scripts/smoke-sync-server.cjs");
 });
+
+test("stock adjustment server exposes Supabase endpoint without leaking service credentials", () => {
+  const serverSource = readRepoFile("scripts/serve-dashboard.cjs");
+  const appSource = readRepoFile("src/app.js");
+  const templateSource = readRepoFile("src/index.template.html");
+
+  assert.match(serverSource, /\/api\/supabase-stock\/adjust/);
+  assert.match(serverSource, /SUPABASE_SERVICE_ROLE_KEY|SUPABASE_ANON_KEY/);
+  assert.doesNotMatch(appSource, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
+  assert.doesNotMatch(templateSource, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
+});

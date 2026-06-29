@@ -10,6 +10,7 @@
     "sync:flowaccount": "node scripts/sync-flowaccount-stock.cjs",
     "sync:shopee": "node scripts/export-shopee-products.cjs",
     "sync:lazada": "node scripts/export-lazada-products.cjs",
+    "sync:supabase-stock": "node scripts/export-supabase-website-stock.cjs",
     "auth:export": "node scripts/export-browser-auth-state.cjs --write-env-file .tmp/render-auth-state.env",
     "cloud:env": "node scripts/prepare-cloud-env.cjs",
     "sync:configure-api": "node scripts/configure-public-sync-api.cjs",

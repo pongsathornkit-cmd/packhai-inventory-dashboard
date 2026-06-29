@@ -27,8 +27,11 @@ const inputFiles = {
     path.join(workspaceRoot, "packhai_stock_20260622.json")
   ),
   flowaccount: preferExisting(
-    path.join(dataDir, "flowaccount_stock_selected_warehouses.json"),
-    path.join(workspaceRoot, "flowaccount_stock_selected_warehouses.json")
+    path.join(dataDir, "supabase_website_stock.json"),
+    preferExisting(
+      path.join(dataDir, "flowaccount_stock_selected_warehouses.json"),
+      path.join(workspaceRoot, "flowaccount_stock_selected_warehouses.json")
+    )
   ),
   shopee: preferExisting(
     path.join(dataDir, "seller_compare", "shopee_products_export.json"),

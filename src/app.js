@@ -869,14 +869,14 @@
       return;
     }
     if (!ensureRemoteSyncConfig("flowaccount")) {
-      renderStockAdjustStatus("failed", "ยังบันทึกออนไลน์ไม่ได้ เพราะยังไม่มี Sync API URL ของ server");
+      renderStockAdjustStatus("failed", "ยังบันทึกออนไลน์ไม่ได้ เพราะยังไม่มี Cloud/Supabase write server สำหรับบันทึก transaction");
       return;
     }
     if (submitButton) submitButton.disabled = true;
     renderStockAdjustStatus("running", "กำลังบันทึก transaction และ publish dashboard...");
     try {
       const response = await fetch(
-        expenseApiUrl("/api/github-stock/adjust"),
+        expenseApiUrl("/api/supabase-stock/adjust"),
         expenseFetchOptions("POST", {
           sku: row.sku,
           operation: "set",
@@ -2137,7 +2137,7 @@
     if (!ensureRemoteSyncConfig("flowaccount")) {
       pushAssistantMessage(
         "assistant",
-        "\u0e22\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2d\u0e2d\u0e19\u0e44\u0e25\u0e19\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49: \u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35 Sync API URL \u0e02\u0e2d\u0e07 server \u0e01\u0e48\u0e2d\u0e19",
+        "\u0e22\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2d\u0e2d\u0e19\u0e44\u0e25\u0e19\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49: \u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35 Cloud/Supabase write server \u0e01\u0e48\u0e2d\u0e19",
         []
       );
       return;
@@ -2145,7 +2145,7 @@
     setAssistantBusy(true);
     pushAssistantMessage("assistant", "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e41\u0e25\u0e30 publish dashboard...", []);
     try {
-      const response = await fetch(expenseApiUrl("/api/github-stock/adjust"), expenseFetchOptions("POST", action.payload || action));
+      const response = await fetch(expenseApiUrl("/api/supabase-stock/adjust"), expenseFetchOptions("POST", action.payload || action));
       const payload = await response.json().catch(() => ({}));
       if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
       pushAssistantMessage(

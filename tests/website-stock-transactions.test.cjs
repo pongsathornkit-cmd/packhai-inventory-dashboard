@@ -108,6 +108,9 @@ test("frontend exposes row stock adjustment controls and transaction history", (
   assert.match(appSource, /data-stock-adjust-id/);
   assert.match(appSource, /openStockAdjustModal/);
   assert.match(appSource, /websiteStockTransactionTable/);
+  assert.match(appSource, /website_stock_snapshot/);
+  assert.match(appSource, /adjust_website_stock/);
+  assert.match(appSource, /supabaseDirectConfigured/);
   assert.match(templateSource, /id="stockAdjustModal"/);
   assert.match(templateSource, /id="stockAdjustForm"/);
 });
@@ -119,4 +122,23 @@ test("supabase website stock export script can generate dashboard-compatible sna
   assert.match(exportSource, /stock_balances/);
   assert.match(exportSource, /stock_transactions/);
   assert.doesNotMatch(exportSource, /SUPABASE_SERVICE_ROLE_KEY=.*[A-Za-z0-9_\\-]{10,}/);
+});
+
+test("static dashboard embeds public Supabase config without service role keys", () => {
+  const buildSource = fs.readFileSync(path.join(__dirname, "..", "scripts", "build-dashboard.cjs"), "utf8");
+
+  assert.match(buildSource, /__PACKHAI_SUPABASE__/);
+  assert.match(buildSource, /PUBLIC_SUPABASE_ANON_KEY/);
+  assert.doesNotMatch(buildSource, /SERVICE_ROLE_KEY.*__PACKHAI_SUPABASE__/);
+});
+
+test("Supabase public website stock RPC is available to the website anon role", () => {
+  const migration = fs.readFileSync(
+    path.join(__dirname, "..", "supabase", "migrations", "20260629_public_website_stock_rpc.sql"),
+    "utf8"
+  );
+
+  assert.match(migration, /website_stock_snapshot/);
+  assert.match(migration, /grant execute on function public\.website_stock_snapshot\(integer\) to anon/);
+  assert.match(migration, /grant execute on function public\.adjust_website_stock\(jsonb\) to anon/);
 });

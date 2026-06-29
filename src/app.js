@@ -1,8 +1,9 @@
 (function () {
   const data = window.__PACKHAI_DASHBOARD__;
   const rows = data.rows || [];
-  const stockRows = rows.filter((row) => Number(row.quantity || 0) > 0);
+  let stockRows = rows.filter((row) => Number(row.quantity || 0) > 0);
   const websiteStockTransactions = data.websiteStockTransactions || [];
+  const supabaseConfig = window.__PACKHAI_SUPABASE__ || {};
   let stockMovementRows = data.stockMovements || [];
   const stockMovementsByStockShopId = new Map();
   let stockMovementLoadState = stockMovementRows.length ? "loaded" : "idle";
@@ -100,6 +101,110 @@
     return Number.isFinite(value) ? fmtPercent.format(value) : "0.0%";
   }
 
+  function normalizeSkuValue(value) {
+    return String(value || "").trim().replace(/^'+/, "").replace(/\.0$/, "").toUpperCase();
+  }
+
+  function numberValue(value) {
+    const parsed = typeof value === "number" ? value : Number(String(value ?? "").replace(/[,\s]|THB/gi, ""));
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  function moneyValue(value) {
+    return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+  }
+
+  function rowInventoryValue(row) {
+    const quantity = numberValue(row.quantity);
+    const price = numberValue(row.price);
+    return moneyValue(quantity * price);
+  }
+
+  function refreshDerivedInventoryData() {
+    rows.forEach((row) => {
+      row.quantity = numberValue(row.quantity);
+      row.waiting = numberValue(row.waiting);
+      row.waitImport = numberValue(row.waitImport);
+      row.available = numberValue(row.available ?? row.quantity);
+      row.stockForValue = row.quantity;
+      row.inventoryValue = rowInventoryValue(row);
+      row.availableValue = moneyValue(row.available * numberValue(row.price));
+      row.waitingValue = moneyValue(row.waiting * numberValue(row.price));
+    });
+    stockRows = rows.filter((row) => Number(row.quantity || 0) > 0);
+
+    const sourceMap = new Map();
+    const warehouseMap = new Map();
+    for (const row of rows) {
+      const quantity = numberValue(row.quantity);
+      const value = numberValue(row.inventoryValue);
+      const price = numberValue(row.price);
+      const source = row.priceSource || "Missing";
+      const warehouseId = row.warehouseId ?? "";
+      const warehouseGroupKey = warehouseKey(row);
+
+      if (!sourceMap.has(source)) {
+        sourceMap.set(source, {
+          source,
+          rowCount: 0,
+          positiveStockRows: 0,
+          valuedPositiveRows: 0,
+          quantity: 0,
+          value: 0,
+        });
+      }
+      const sourceItem = sourceMap.get(source);
+      sourceItem.rowCount += 1;
+      sourceItem.quantity += quantity;
+      sourceItem.value += value;
+      if (quantity > 0) sourceItem.positiveStockRows += 1;
+      if (quantity > 0 && price > 0) sourceItem.valuedPositiveRows += 1;
+
+      if (!warehouseMap.has(warehouseGroupKey)) {
+        warehouseMap.set(warehouseGroupKey, {
+          stockSource: row.stockSource || "",
+          warehouseId,
+          warehouseName: row.warehouseName || row.stockSourceLabel || row.stockSource || "-",
+          stockSourceLabel: row.stockSourceLabel || row.stockSource || "",
+          rowCount: 0,
+          positiveStockRows: 0,
+          quantity: 0,
+          value: 0,
+        });
+      }
+      const warehouseItem = warehouseMap.get(warehouseGroupKey);
+      warehouseItem.rowCount += 1;
+      warehouseItem.quantity += quantity;
+      warehouseItem.value += value;
+      if (quantity > 0) warehouseItem.positiveStockRows += 1;
+    }
+
+    const positiveStockRows = stockRows.length;
+    const valuedPositiveRows = stockRows.filter((row) => numberValue(row.price) > 0).length;
+    const totalQuantity = stockRows.reduce((sum, row) => sum + numberValue(row.quantity), 0);
+    const totalInventoryValue = stockRows.reduce((sum, row) => sum + numberValue(row.inventoryValue), 0);
+    const totalWaiting = stockRows.reduce((sum, row) => sum + numberValue(row.waiting), 0);
+    const totalWaitingValue = stockRows.reduce((sum, row) => sum + numberValue(row.waitingValue), 0);
+    const missingRows = stockRows.filter((row) => numberValue(row.price) <= 0);
+
+    data.summary = {
+      ...(data.summary || {}),
+      totalRows: rows.length,
+      positiveStockRows,
+      valuedPositiveRows,
+      missingPositiveRows: missingRows.length,
+      totalQuantity,
+      totalInventoryValue: moneyValue(totalInventoryValue),
+      totalWaiting,
+      totalWaitingValue: moneyValue(totalWaitingValue),
+    };
+    data.sourceBreakdown = [...sourceMap.values()].sort((a, b) => b.value - a.value || b.quantity - a.quantity);
+    data.warehouseBreakdown = [...warehouseMap.values()].sort((a, b) => b.value - a.value || b.quantity - a.quantity);
+    data.topProducts = [...stockRows]
+      .sort((a, b) => numberValue(b.inventoryValue) - numberValue(a.inventoryValue) || numberValue(b.quantity) - numberValue(a.quantity))
+      .slice(0, 30);
+  }
+
   function getOwnerAnalytics() {
     const summary = data.summary || {};
     const totalValue =
@@ -156,6 +261,189 @@
     if (state.warehouse === "All") return "ทุกคลัง";
     const selected = (data.warehouseBreakdown || []).find((item) => warehouseKey(item) === state.warehouse);
     return warehouseLabel(selected);
+  }
+
+  function supabaseDirectConfigured() {
+    return Boolean(
+      supabaseConfig?.directWebsiteStock &&
+        String(supabaseConfig.url || "").trim() &&
+        String(supabaseConfig.anonKey || "").trim()
+    );
+  }
+
+  function supabaseRpcUrl(functionName) {
+    return `${String(supabaseConfig.url || "").replace(/\/+$/, "")}/rest/v1/rpc/${functionName}`;
+  }
+
+  async function callSupabaseRpc(functionName, body) {
+    const key = String(supabaseConfig.anonKey || "").trim();
+    const response = await fetch(supabaseRpcUrl(functionName), {
+      method: "POST",
+      cache: "no-store",
+      headers: {
+        apikey: key,
+        Authorization: `Bearer ${key}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body || {}),
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok || payload.ok === false) {
+      throw new Error(payload.message || payload.hint || payload.details || `Supabase status ${response.status}`);
+    }
+    return payload;
+  }
+
+  function websiteStockKey(sku, warehouseId) {
+    return `${normalizeSkuValue(sku)}|${String(warehouseId || "")}`;
+  }
+
+  function fallbackWebsiteWarehouseName(warehouseId) {
+    if (String(warehouseId) === "491661") return "\u0e04\u0e25\u0e31\u0e07 \u0e0b.\u0e40\u0e08\u0e23\u0e34\u0e0d\u0e01\u0e34\u0e08";
+    if (String(warehouseId) === "491662") return "\u0e04\u0e25\u0e31\u0e07 \u0e2a\u0e38\u0e02\u0e2a\u0e27\u0e31\u0e2a\u0e14\u0e34\u0e4c";
+    return `Warehouse ${warehouseId}`;
+  }
+
+  function findWebsiteStockRow(sku, warehouseId) {
+    const key = websiteStockKey(sku, warehouseId);
+    return rows.find((row) => isWebsiteStockWarehouse(row) && websiteStockKey(row.sku, row.warehouseId) === key);
+  }
+
+  function upsertWebsiteStockRow(item) {
+    const sku = normalizeSkuValue(item.sku);
+    const warehouseId = item.warehouseId ?? item.warehouse_id;
+    if (!sku || !warehouseId) return null;
+    const existing = findWebsiteStockRow(sku, warehouseId);
+    const template = existing || rows.find((row) => normalizeSkuValue(row.sku) === sku) || {};
+    const row =
+      existing ||
+      {
+        ...template,
+        detailId: "",
+        sku,
+        stockSource: "Website Stock",
+        stockSourceLabel: "Website Stock",
+        warehouseId,
+        warehouseName: item.warehouseName || fallbackWebsiteWarehouseName(warehouseId),
+        latestStockMovementAt: "",
+        latestStockMovementAtLabel: "",
+        latestStockMovementType: "",
+        latestStockMovementDescription: "",
+        latestStockMovementReferenceNo: "",
+      };
+
+    row.sku = sku;
+    row.name = item.name || template.name || sku;
+    row.barcode = item.barcode ?? template.barcode ?? "";
+    row.prop = item.prop ?? template.prop ?? "";
+    row.productId = item.productId ?? template.productId ?? "";
+    row.productMasterId = item.productMasterId ?? template.productMasterId ?? "";
+    row.stockSource = "Website Stock";
+    row.stockSourceLabel = "Website Stock";
+    row.warehouseId = warehouseId;
+    row.warehouseName = item.warehouseName || row.warehouseName || fallbackWebsiteWarehouseName(warehouseId);
+    row.quantity = numberValue(item.quantity);
+    row.waiting = numberValue(item.waiting);
+    row.waitImport = numberValue(item.waitImport ?? item.wait_import);
+    row.available = numberValue(item.available ?? item.quantity);
+    row.stockForValue = row.quantity;
+    row.manualUpdateNote = item.manualUpdateNote || item.manual_update_note || "";
+    row.lastTransactionId = item.lastTransactionId || item.last_transaction_id || "";
+    row.sourceRef = item.source || row.sourceRef || "";
+    row.updatedAt = item.updatedAt || item.updated_at || row.updatedAt || "";
+    row.inventoryValue = rowInventoryValue(row);
+    row.availableValue = moneyValue(row.available * numberValue(row.price));
+    row.waitingValue = moneyValue(row.waiting * numberValue(row.price));
+
+    if (!existing) rows.push(row);
+    return row;
+  }
+
+  function normalizeWebsiteStockTransaction(item) {
+    const warehouseId = item.warehouseId ?? item.warehouse_id;
+    return {
+      id: String(item.id || ""),
+      createdAt: item.createdAt || item.created_at || "",
+      sku: normalizeSkuValue(item.sku),
+      warehouseId,
+      warehouseName: item.warehouseName || item.warehouse_name || fallbackWebsiteWarehouseName(warehouseId),
+      operation: item.operation || "set",
+      beforeQuantity: numberValue(item.beforeQuantity ?? item.before_quantity),
+      inputQuantity: numberValue(item.inputQuantity ?? item.input_quantity),
+      afterQuantity: numberValue(item.afterQuantity ?? item.after_quantity),
+      deltaQuantity: numberValue(item.deltaQuantity ?? item.delta_quantity),
+      actor: item.actor || "Website",
+      note: item.note || "",
+      sourceText: item.sourceText || item.source_text || "",
+      source: item.source || "Website Stock",
+    };
+  }
+
+  function mergeWebsiteStockSnapshot(snapshot) {
+    const liveRows = Array.isArray(snapshot?.rows) ? snapshot.rows : [];
+    const seen = new Set();
+    liveRows.forEach((item) => {
+      const row = upsertWebsiteStockRow(item);
+      if (row) seen.add(websiteStockKey(row.sku, row.warehouseId));
+    });
+    rows.forEach((row) => {
+      if (!isWebsiteStockWarehouse(row)) return;
+      if (seen.has(websiteStockKey(row.sku, row.warehouseId))) return;
+      row.quantity = 0;
+      row.available = 0;
+      row.waiting = 0;
+      row.waitImport = 0;
+      row.inventoryValue = 0;
+      row.availableValue = 0;
+      row.waitingValue = 0;
+    });
+
+    const transactions = (Array.isArray(snapshot?.stockTransactions) ? snapshot.stockTransactions : [])
+      .map(normalizeWebsiteStockTransaction)
+      .filter((item) => item.id && item.sku)
+      .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+    websiteStockTransactions.splice(0, websiteStockTransactions.length, ...transactions);
+    data.websiteStockTransactions = websiteStockTransactions;
+    refreshInventoryViews();
+  }
+
+  function refreshInventoryViews() {
+    refreshDerivedInventoryData();
+    renderKpis();
+    renderOwnerCommand();
+    renderOwnerAnalytics();
+    renderDecisionSignals();
+    renderSourceBars();
+    renderWarehouseBars();
+    renderWarehouseProductGroups();
+    renderTopProducts();
+    renderWarehouseFilters();
+    renderFilters();
+    renderTable();
+  }
+
+  async function loadLiveWebsiteStockFromSupabase() {
+    if (!supabaseDirectConfigured()) return false;
+    const snapshot = await callSupabaseRpc("website_stock_snapshot", { p_transaction_limit: 500 });
+    mergeWebsiteStockSnapshot(snapshot);
+    return true;
+  }
+
+  async function saveWebsiteStockAdjustment(payload) {
+    if (supabaseDirectConfigured()) {
+      const result = await callSupabaseRpc("adjust_website_stock", {
+        p_payload: {
+          ...payload,
+          createdAt: new Date().toISOString(),
+        },
+      });
+      await loadLiveWebsiteStockFromSupabase();
+      return result;
+    }
+    const response = await fetch(expenseApiUrl("/api/supabase-stock/adjust"), expenseFetchOptions("POST", payload));
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok || result.ok === false) throw new Error(result.message || `Status ${response.status}`);
+    return result;
   }
 
   function valueOrDash(value) {
@@ -868,28 +1156,23 @@
       renderStockAdjustStatus("failed", "กรุณาใส่จำนวน stock คงเหลือเป็นตัวเลข 0 ขึ้นไป");
       return;
     }
-    if (!ensureRemoteSyncConfig("flowaccount")) {
+    if (!supabaseDirectConfigured() && !ensureRemoteSyncConfig("flowaccount")) {
       renderStockAdjustStatus("failed", "ยังบันทึกออนไลน์ไม่ได้ เพราะยังไม่มี Cloud/Supabase write server สำหรับบันทึก transaction");
       return;
     }
     if (submitButton) submitButton.disabled = true;
     renderStockAdjustStatus("running", "กำลังบันทึก transaction และ publish dashboard...");
     try {
-      const response = await fetch(
-        expenseApiUrl("/api/supabase-stock/adjust"),
-        expenseFetchOptions("POST", {
-          sku: row.sku,
-          operation: "set",
-          actor: "Website Stock UI",
-          note: noteInput?.value || "",
-          sourceText: `Manual row adjustment for ${row.sku} at ${row.warehouseName}`,
-          allocations: [{ warehouseId: row.warehouseId, quantity: nextQuantity }],
-        })
-      );
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      const payload = await saveWebsiteStockAdjustment({
+        sku: row.sku,
+        operation: "set",
+        actor: "Website Stock UI",
+        note: noteInput?.value || "",
+        sourceText: `Manual row adjustment for ${row.sku} at ${row.warehouseName}`,
+        allocations: [{ warehouseId: row.warehouseId, quantity: nextQuantity }],
+      });
       renderStockAdjustStatus("passed", payload.message || "บันทึก stock สำเร็จ รอหน้าเว็บอัปเดตสักครู่");
-      setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
+      if (!supabaseDirectConfigured()) setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
     } catch (error) {
       renderStockAdjustStatus("failed", `บันทึกไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
     } finally {
@@ -2134,7 +2417,7 @@
   }
 
   async function applyStockUpdateAction(action = {}) {
-    if (!ensureRemoteSyncConfig("flowaccount")) {
+    if (!supabaseDirectConfigured() && !ensureRemoteSyncConfig("flowaccount")) {
       pushAssistantMessage(
         "assistant",
         "\u0e22\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2d\u0e2d\u0e19\u0e44\u0e25\u0e19\u0e4c\u0e44\u0e21\u0e48\u0e44\u0e14\u0e49: \u0e15\u0e49\u0e2d\u0e07\u0e21\u0e35 Cloud/Supabase write server \u0e01\u0e48\u0e2d\u0e19",
@@ -2145,16 +2428,14 @@
     setAssistantBusy(true);
     pushAssistantMessage("assistant", "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e41\u0e25\u0e30 publish dashboard...", []);
     try {
-      const response = await fetch(expenseApiUrl("/api/supabase-stock/adjust"), expenseFetchOptions("POST", action.payload || action));
-      const payload = await response.json().catch(() => ({}));
-      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      const payload = await saveWebsiteStockAdjustment(action.payload || action);
       pushAssistantMessage(
         "assistant",
         payload.message ||
           "\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08 \u0e23\u0e2d GitHub Pages \u0e2d\u0e31\u0e1b\u0e40\u0e14\u0e15\u0e2a\u0e31\u0e01\u0e04\u0e23\u0e39\u0e48",
         [{ type: "filterInventory", label: "\u0e14\u0e39 SKU", query: action.payload?.sku || "", sort: "valueDesc", hash: "inventory-detail" }]
       );
-      setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
+      if (!supabaseDirectConfigured()) setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
     } catch (error) {
       pushAssistantMessage("assistant", `\u0e1a\u0e31\u0e19\u0e17\u0e36\u0e01 stock \u0e44\u0e21\u0e48\u0e2a\u0e33\u0e40\u0e23\u0e47\u0e08: ${syncNetworkErrorMessage(error)}`, []);
     } finally {
@@ -3078,6 +3359,7 @@
     });
   }
 
+  refreshDerivedInventoryData();
   renderFreshness();
   renderSidebarStatus();
   renderKpis();
@@ -3105,4 +3387,7 @@
   } else {
     getSyncStatus(true);
   }
+  loadLiveWebsiteStockFromSupabase().catch((error) => {
+    console.warn("Supabase website stock snapshot failed", error);
+  });
 })();

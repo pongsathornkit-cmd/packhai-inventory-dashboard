@@ -77,6 +77,26 @@ function readPublicSyncApiBase() {
   });
 }
 
+function readPublicSupabaseConfig() {
+  const url = String(
+    process.env.PUBLIC_SUPABASE_URL ||
+      process.env.SUPABASE_URL ||
+      "https://fabfhzcsppniuwtdwvfg.supabase.co"
+  )
+    .trim()
+    .replace(/\/+$/, "");
+  const anonKey = String(
+    process.env.PUBLIC_SUPABASE_ANON_KEY ||
+      process.env.SUPABASE_ANON_KEY ||
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZhYmZoemNzcHBuaXV3dGR3dmZnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2Njk3NjQsImV4cCI6MjA5ODI0NTc2NH0.2w3Wr8Bov2Jc-1PQw1KyVa99_B9jMFez8YXonZx8WGk"
+  ).trim();
+  return {
+    url,
+    anonKey,
+    directWebsiteStock: Boolean(url && anonKey),
+  };
+}
+
 function numberValue(value) {
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   if (value && typeof value === "object") {
@@ -829,7 +849,10 @@ function build() {
   const template = fs.readFileSync(path.join(srcDir, "index.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "styles.css"), "utf8");
   const app = fs.readFileSync(path.join(srcDir, "app.js"), "utf8");
-  const configScript = `window.__PACKHAI_SYNC_API_BASE__ = ${JSON.stringify(readPublicSyncApiBase())};`;
+  const configScript = [
+    `window.__PACKHAI_SYNC_API_BASE__ = ${JSON.stringify(readPublicSyncApiBase())};`,
+    `window.__PACKHAI_SUPABASE__ = ${JSON.stringify(readPublicSupabaseConfig())};`,
+  ].join("\n");
   const dataScript = `window.__PACKHAI_DASHBOARD__ = ${JSON.stringify(dashboard)};`;
   const html = template
     .replace("/* __INLINE_STYLES__ */", styles)

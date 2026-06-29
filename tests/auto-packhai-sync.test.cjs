@@ -157,6 +157,8 @@ test("platform payment sync uses long-running live progress and process tree tim
   assert.match(paymentsSource, /seller-payment-progress/);
   assert.match(paymentsSource, /seller-payment-targets/);
   assert.match(paymentsSource, /seller-payment-checkpoint/);
+  assert.match(paymentsSource, /LAZADA_ORDER_PAYMENT_EMPTY_ABORT_AFTER/);
+  assert.match(paymentsSource, /seller-payment-platform-skip/);
   assert.match(paymentsSource, /writePaymentOutput/);
 });
 

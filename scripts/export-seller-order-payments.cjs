@@ -25,6 +25,7 @@ const maxNew = Math.max(0, Number(process.env.SELLER_ORDER_PAYMENT_MAX_NEW || 0)
 const shopeeDelayMs = Math.max(0, Number(process.env.SHOPEE_ORDER_PAYMENT_DELAY_MS || 120));
 const lazadaDelayMs = Math.max(0, Number(process.env.LAZADA_ORDER_PAYMENT_DELAY_MS || 120));
 const progressEvery = Math.max(1, Number(process.env.SELLER_ORDER_PAYMENT_PROGRESS_EVERY || 25));
+const lazadaEmptyAbortAfter = Math.max(1, Number(process.env.LAZADA_ORDER_PAYMENT_EMPTY_ABORT_AFTER || 50));
 const shopeeBrowserFallback = boolEnv("SELLER_ORDER_PAYMENT_BROWSER_FALLBACK", !process.env.RENDER);
 
 const shopeeLegacySessionDir = path.join(workspaceRoot, ".codex-seller-browser-session");
@@ -999,6 +1000,7 @@ async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
   try {
     logProgress({ event: "seller-payment-platform-start", platform: "Lazada", total: orderNos.length });
     let current = 0;
+    const platformErrorStart = errors.length;
     for (const orderNo of orderNos) {
       try {
         const row = await fetchLazadaPayment(session.page, orderNo);
@@ -1025,6 +1027,21 @@ async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
       }
       current += 1;
       logPaymentProgress("Lazada", current, orderNos.length, orderNo, records.length, errors.length);
+      const platformErrors = errors.length - platformErrorStart;
+      if (records.length === 0 && current >= lazadaEmptyAbortAfter && platformErrors >= current) {
+        const message = `Lazada skipped after ${current} consecutive payment lookup failures. Refresh Lazada seller auth before retrying Lazada payments.`;
+        errors.push(message);
+        logProgress({
+          event: "seller-payment-platform-skip",
+          platform: "Lazada",
+          current,
+          total: orderNos.length,
+          fetched: records.length,
+          errors: errors.length,
+          reason: message,
+        });
+        break;
+      }
       await sleep(lazadaDelayMs);
     }
   } finally {

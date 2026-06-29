@@ -125,6 +125,11 @@ test("package start boots through cloud sync startup script", () => {
 
   assert.equal(packageJson.scripts.start, "node scripts/start-cloud-sync.cjs");
   assert.match(startSource, /loadCloudEnv/);
+  assert.match(startSource, /materializeStorageStateEnv/);
+  assert.ok(
+    startSource.indexOf("materializeStorageStateEnv") < startSource.indexOf('runScript("seed-cloud-storage.cjs")'),
+    "startup must remove large storage-state env vars before spawning child scripts"
+  );
   assert.match(startSource, /seed-cloud-storage\.cjs/);
   assert.match(startSource, /build-dashboard\.cjs/);
   assert.match(startSource, /serve-dashboard\.cjs/);

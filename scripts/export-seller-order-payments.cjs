@@ -1,11 +1,13 @@
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
-const { openAuthContext } = require("./browser-auth-state.cjs");
+const { loadStorageState, openAuthContext } = require("./browser-auth-state.cjs");
 const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
+const { cookieHeaderForHost, cookieValueForHost } = require("./seller-direct-api.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
+const shopeeHost = "seller.shopee.co.th";
 const outputDir = process.env.SELLER_COMPARE_DIR
   ? path.resolve(process.env.SELLER_COMPARE_DIR)
   : path.join(projectRoot, "data", "seller_compare");
@@ -20,6 +22,7 @@ const maxNew = Math.max(0, Number(process.env.SELLER_ORDER_PAYMENT_MAX_NEW || 0)
 const shopeeDelayMs = Math.max(0, Number(process.env.SHOPEE_ORDER_PAYMENT_DELAY_MS || 120));
 const lazadaDelayMs = Math.max(0, Number(process.env.LAZADA_ORDER_PAYMENT_DELAY_MS || 120));
 const progressEvery = Math.max(1, Number(process.env.SELLER_ORDER_PAYMENT_PROGRESS_EVERY || 25));
+const shopeeBrowserFallback = boolEnv("SELLER_ORDER_PAYMENT_BROWSER_FALLBACK", !process.env.RENDER);
 
 const shopeeLegacySessionDir = path.join(workspaceRoot, ".codex-seller-browser-session");
 const shopeeSessionDir = process.env.SHOPEE_SESSION_DIR
@@ -554,7 +557,177 @@ async function fetchShopeeIncomeComponents(page, spc, shopId, orderId, orderSn) 
   );
 }
 
-async function exportShopeePayments(orderNos, existingMap, errors) {
+function shopeeDirectContext() {
+  const loaded = loadStorageState("shopee");
+  if (!loaded.state) throw new Error("Shopee storage state is not configured.");
+  const spcToken = cookieValueForHost(loaded.state, "SPC_CDS", shopeeHost);
+  if (!spcToken) throw new Error("Missing Shopee SPC_CDS cookie; refresh Seller Center session.");
+  return {
+    state: loaded.state,
+    spcToken,
+    shopId: Number(process.env.SHOPEE_SHOP_ID || 18147317),
+  };
+}
+
+function shopeeDirectUrl(endpoint, params, spcToken) {
+  const url = new URL(endpoint, `https://${shopeeHost}`);
+  for (const [key, value] of Object.entries({ SPC_CDS: spcToken, SPC_CDS_VER: "2", ...params })) {
+    if (value != null && value !== "") url.searchParams.set(key, String(value));
+  }
+  return url;
+}
+
+async function parseShopeeDirectJson(response, label) {
+  const text = await response.text();
+  let json;
+  try {
+    json = JSON.parse(text);
+  } catch {
+    throw new Error(`${label} returned non-JSON status ${response.status}: ${text.slice(0, 160)}`);
+  }
+  if (!response.ok) {
+    throw new Error(`${label} returned HTTP ${response.status}: ${JSON.stringify(json).slice(0, 240)}`);
+  }
+  if (json.code !== 0) {
+    throw new Error(
+      `${label} ${JSON.stringify({
+        code: json.code,
+        message: json.message,
+        user_message: json.user_message,
+      })}`
+    );
+  }
+  return json.data || {};
+}
+
+function isRetryableShopeeDirectError(error) {
+  return /ErrorCode:10000|code["']?:10000|spex client error|fetch failed|ECONNRESET|ETIMEDOUT|UND_ERR/i.test(
+    error?.message || String(error)
+  );
+}
+
+async function fetchShopeeDirectJson(context, endpoint, params = {}, options = {}) {
+  const url = shopeeDirectUrl(endpoint, params, context.spcToken);
+  const headers = {
+    accept: "application/json",
+    "accept-language": "th-TH,th;q=0.9,en-US;q=0.8,en;q=0.7",
+    cookie: cookieHeaderForHost(context.state, shopeeHost, endpoint),
+    origin: `https://${shopeeHost}`,
+    referer: "https://seller.shopee.co.th/portal/sale/order",
+    "user-agent": "Mozilla/5.0",
+    "x-requested-with": "XMLHttpRequest",
+    ...(options.headers || {}),
+  };
+  let lastError = null;
+  for (let attempt = 1; attempt <= 4; attempt += 1) {
+    try {
+      return await parseShopeeDirectJson(
+        await fetch(url, {
+          credentials: "include",
+          ...options,
+          headers,
+        }),
+        endpoint
+      );
+    } catch (error) {
+      lastError = error;
+      if (attempt >= 4 || !isRetryableShopeeDirectError(error)) break;
+      await sleep(750 * attempt);
+    }
+  }
+  throw lastError;
+}
+
+async function fetchShopeeDirectOrderPayment(context, orderNo) {
+  const search = await fetchShopeeDirectJson(context, "/api/v3/order/get_order_list_search_bar_hint", {
+    keyword: orderNo,
+    category: "1",
+    order_list_tab: "100",
+    entity_type: "1",
+  });
+  const order = search.order_sn_result?.list?.find((item) => item.order_sn === orderNo) || search.order_sn_result?.list?.[0];
+  if (!order?.order_id) throw new Error("Order not found in Shopee Seller Center");
+
+  let card = null;
+  let payment = null;
+  try {
+    const cardData = await fetchShopeeDirectJson(
+      context,
+      "/api/v3/order/get_order_list_card_list",
+      {},
+      {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          order_list_tab: 100,
+          need_count_down_desc: true,
+          order_param_list: [{ order_id: Number(order.order_id), shop_id: Number(context.shopId), region_id: "TH" }],
+        }),
+      }
+    );
+    card = cardFromShopeeList(cardData.card_list || [], orderNo);
+    payment = paymentFromShopeeCard(card);
+  } catch {}
+
+  const incomeComponents = await fetchShopeeDirectJson(
+    context,
+    "/api/v4/accounting/pc/seller_income/income_detail/get_order_income_components",
+    {},
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        order_id: Number(order.order_id),
+        order_sn: orderNo,
+        shop_id: Number(context.shopId),
+        components: [2, 3, 4, 5, 6],
+      }),
+    }
+  );
+  const incomeDetail = shopeePaymentDetailFromIncomeComponents(incomeComponents);
+  const fallbackCollectedAmount = shopeeMoney(payment?.total_price ?? incomeDetail.buyerPaidAmount ?? 0);
+  const collectedAmount = incomeDetail.orderIncomeAmount != null ? incomeDetail.orderIncomeAmount : fallbackCollectedAmount;
+  const items = incomeDetail.items.length ? incomeDetail.items : card ? shopeeItemsFromCard(card) : [];
+
+  return {
+    platform: "Shopee",
+    orderNo,
+    collectedAmount,
+    orderIncomeAmount: incomeDetail.orderIncomeAmount,
+    buyerPaidAmount: incomeDetail.buyerPaidAmount != null ? incomeDetail.buyerPaidAmount : fallbackCollectedAmount,
+    paymentBreakdown: incomeDetail.paymentBreakdown,
+    currency: "THB",
+    paymentMethod: payment?.payment_method || incomeComponents.order_info?.source || "",
+    status: card?.status_info?.status || String(incomeComponents.order_info?.status || ""),
+    source: "Shopee Seller Center",
+    capturedAt: new Date().toISOString(),
+    orderId: order.order_id,
+    incomeDetailCaptured: true,
+    sessionMode: "storage-state:direct-api",
+    items,
+  };
+}
+
+async function exportShopeePaymentsDirect(orderNos, existingMap, errors) {
+  if (!orderNos.length) return [];
+  const context = shopeeDirectContext();
+  const records = [];
+  logProgress({ event: "seller-payment-platform-start", platform: "Shopee", total: orderNos.length, mode: "direct-api" });
+  let current = 0;
+  for (const orderNo of orderNos) {
+    try {
+      records.push(await fetchShopeeDirectOrderPayment(context, orderNo));
+    } catch (error) {
+      errors.push(`Shopee ${orderNo}: ${error.message || error}`);
+    }
+    current += 1;
+    logPaymentProgress("Shopee", current, orderNos.length, orderNo, records.length, errors.length);
+    await sleep(shopeeDelayMs);
+  }
+  return records;
+}
+
+async function exportShopeePaymentsBrowser(orderNos, existingMap, errors) {
   if (!orderNos.length) return [];
   const session = await openShopeePage();
   const records = [];
@@ -610,6 +783,17 @@ async function exportShopeePayments(orderNos, existingMap, errors) {
     await session.close().catch(() => {});
   }
   return records;
+}
+
+async function exportShopeePayments(orderNos, existingMap, errors) {
+  if (!orderNos.length) return [];
+  try {
+    return await exportShopeePaymentsDirect(orderNos, existingMap, errors);
+  } catch (error) {
+    if (!shopeeBrowserFallback) throw error;
+    errors.push(`Shopee direct API failed, falling back to browser: ${error.message || error}`);
+    return exportShopeePaymentsBrowser(orderNos, existingMap, errors);
+  }
 }
 
 function endpointJsonUrl(endpoint) {

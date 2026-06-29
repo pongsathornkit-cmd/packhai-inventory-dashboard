@@ -70,6 +70,22 @@ test("seller price export scripts prefer direct API before browser fallback", ()
   );
 });
 
+test("seller payment export uses Shopee direct API before browser fallback", () => {
+  const payments = fs.readFileSync(path.join(projectRoot, "scripts", "export-seller-order-payments.cjs"), "utf8");
+
+  assert.match(payments, /exportShopeePaymentsDirect/);
+  assert.match(payments, /fetchShopeeDirectOrderPayment/);
+  assert.match(payments, /SELLER_ORDER_PAYMENT_BROWSER_FALLBACK/);
+  assert.ok(
+    payments.indexOf("exportShopeePaymentsDirect") < payments.indexOf("exportShopeePaymentsBrowser"),
+    "Shopee payment direct API should be defined before browser fallback"
+  );
+  assert.ok(
+    payments.indexOf("exportShopeePaymentsDirect(orderNos") < payments.indexOf("exportShopeePaymentsBrowser(orderNos"),
+    "Shopee payment export should try direct API before browser fallback"
+  );
+});
+
 function shopeeDirectApiSource() {
   return fs.readFileSync(path.join(projectRoot, "scripts", "seller-direct-api.cjs"), "utf8");
 }

@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const http = require("http");
+const { fetchLazadaSellerData } = require("./seller-direct-api.cjs");
 const { openAuthContext } = require("./browser-auth-state.cjs");
 const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
 
@@ -163,12 +164,26 @@ async function isLoginPage(page) {
 async function main() {
   fs.mkdirSync(outputDir, { recursive: true });
 
-  let session = await openSellerSession();
-  const attempts = [];
+  let exportData = null;
+  let sessionMode = "storage-state:direct-api";
 
-  try {
-    let page = session.page;
-    await prepareProductList(page);
+  if (process.env.SELLER_DIRECT_API !== "0") {
+    try {
+      exportData = await fetchLazadaSellerData();
+      sessionMode = exportData.sessionMode || sessionMode;
+    } catch (error) {
+      if (!boolEnv("SELLER_BROWSER_FALLBACK", false)) throw error;
+      console.warn(`Lazada direct API failed, falling back to browser: ${error.message}`);
+    }
+  }
+
+  if (!exportData) {
+    let session = await openSellerSession();
+    const attempts = [];
+
+    try {
+      let page = session.page;
+      await prepareProductList(page);
 
     if ((await isLoginPage(page)) && session.mode.startsWith("cdp:")) {
       attempts.push(`${session.mode} is not logged in`);
@@ -187,7 +202,8 @@ async function main() {
       throw new Error("Lazada Seller Center is not logged in. Please log in in the opened browser and rerun this script.");
     }
 
-    const exportData = await page.evaluate(async () => {
+    sessionMode = session.mode;
+    exportData = await page.evaluate(async () => {
       function simplify(value) {
         try {
           return JSON.parse(JSON.stringify(value));
@@ -264,49 +280,50 @@ async function main() {
         pages,
       };
     });
-
-    const rawRows = exportData.pages.flatMap((pageData) => pageData.rows || []);
-    const products = rawRows.map(normalizeRow);
-    const skuRows = products.flatMap((product) =>
-      product.skuRows.map((sku) => ({
-        productId: product.productId,
-        catId: product.catId,
-        title: product.title,
-        pdpLink: product.pdpLink,
-        imageUrl: sku.imageUrl || product.imageUrl,
-        statusMark: product.statusMark,
-        ...sku,
-      }))
-    );
-
-    const output = {
-      exportedAt: exportData.exportedAt,
-      source: "lazada_seller_center",
-      api: exportData.api,
-      tab: exportData.tab,
-      counts: {
-        reportedTotal: exportData.total,
-        pages: exportData.totalPages,
-        productRows: products.length,
-        skuRows: skuRows.length,
-        inStockSkuRows: skuRows.filter((sku) => sku.stock > 0).length,
-      },
-      sessionMode: session.mode,
-      products,
-      skuRows,
-      pageMeta: exportData.pages.map((pageData) => ({
-        current: pageData.current,
-        rowCount: pageData.rows.length,
-        pagination: pageData.pagination,
-        responseMeta: pageData.responseMeta,
-      })),
-    };
-
-    fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
-    console.log(JSON.stringify({ ok: true, counts: output.counts, sessionMode: output.sessionMode, outputFile }, null, 2));
-  } finally {
-    await session.close();
+    } finally {
+      await session.close();
+    }
   }
+
+  const rawRows = exportData.pages.flatMap((pageData) => pageData.rows || []);
+  const products = rawRows.map(normalizeRow);
+  const skuRows = products.flatMap((product) =>
+    product.skuRows.map((sku) => ({
+      productId: product.productId,
+      catId: product.catId,
+      title: product.title,
+      pdpLink: product.pdpLink,
+      imageUrl: sku.imageUrl || product.imageUrl,
+      statusMark: product.statusMark,
+      ...sku,
+    }))
+  );
+
+  const output = {
+    exportedAt: exportData.exportedAt,
+    source: "lazada_seller_center",
+    api: exportData.api,
+    tab: exportData.tab,
+    counts: {
+      reportedTotal: exportData.total,
+      pages: exportData.totalPages,
+      productRows: products.length,
+      skuRows: skuRows.length,
+      inStockSkuRows: skuRows.filter((sku) => sku.stock > 0).length,
+    },
+    sessionMode,
+    products,
+    skuRows,
+    pageMeta: exportData.pages.map((pageData) => ({
+      current: pageData.current,
+      rowCount: pageData.rows.length,
+      pagination: pageData.pagination,
+      responseMeta: pageData.responseMeta,
+    })),
+  };
+
+  fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
+  console.log(JSON.stringify({ ok: true, counts: output.counts, sessionMode: output.sessionMode, outputFile }, null, 2));
 }
 
 main().catch((error) => {

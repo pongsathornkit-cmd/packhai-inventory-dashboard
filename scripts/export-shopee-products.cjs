@@ -1,5 +1,6 @@
 const fs = require("fs");
 const path = require("path");
+const { fetchShopeeSellerData } = require("./seller-direct-api.cjs");
 const { openAuthContext } = require("./browser-auth-state.cjs");
 const { boolEnv } = require("./playwright-runtime.cjs");
 
@@ -27,121 +28,134 @@ function normSku(value) {
 async function main() {
   fs.mkdirSync(outputDir, { recursive: true });
 
-  const session = await openAuthContext({
-    kind: "shopee",
-    persistentDir: sessionDir,
-    headless,
-    viewport: { width: 1365, height: 900 },
-    locale: "th-TH",
-    args: ["--no-sandbox", "--disable-dev-shm-usage", ...(headless ? [] : ["--start-maximized"])],
-  });
-  const { context, page } = session;
+  let data = null;
+  if (process.env.SELLER_DIRECT_API !== "0") {
+    try {
+      data = await fetchShopeeSellerData();
+    } catch (error) {
+      if (!boolEnv("SELLER_BROWSER_FALLBACK", false)) throw error;
+      console.warn(`Shopee direct API failed, falling back to browser: ${error.message}`);
+    }
+  }
 
-  let spc = null;
-  page.on("response", (response) => {
-    const match = response.url().match(/[?&]SPC_CDS=([^&]+)/);
-    if (match) spc = decodeURIComponent(match[1]);
-  });
+  if (!data) {
+    const session = await openAuthContext({
+      kind: "shopee",
+      persistentDir: sessionDir,
+      headless,
+      viewport: { width: 1365, height: 900 },
+      locale: "th-TH",
+      args: ["--no-sandbox", "--disable-dev-shm-usage", ...(headless ? [] : ["--start-maximized"])],
+    });
+    const { page } = session;
 
-  await page
-    .goto("https://seller.shopee.co.th/portal/product/list/live/all?operationSortBy=recommend_v2", {
-      waitUntil: "domcontentloaded",
-      timeout: 60000,
-    })
-    .catch(() => {});
-  await page.waitForTimeout(8000);
-
-  const data = await page.evaluate(async (spcToken) => {
-    if (!spcToken) throw new Error("Missing Shopee SPC_CDS token; is Seller Centre logged in?");
-
-    async function fetchJson(endpoint, params) {
-      const qs = new URLSearchParams({
-        SPC_CDS: spcToken,
-        SPC_CDS_VER: "2",
-        ...params,
+    try {
+      let spc = null;
+      page.on("response", (response) => {
+        const match = response.url().match(/[?&]SPC_CDS=([^&]+)/);
+        if (match) spc = decodeURIComponent(match[1]);
       });
-      const response = await fetch(`${endpoint}?${qs.toString()}`, { credentials: "include" });
-      const json = await response.json();
-      if (json.code !== 0) {
-        throw new Error(
-          `${endpoint} ${JSON.stringify({
-            code: json.code,
-            message: json.message,
-            user_message: json.user_message,
-          })}`
-        );
-      }
-      return json.data || {};
-    }
 
-    async function fetchCursorList(listType) {
-      const products = [];
-      let cursor = "";
-      let total = null;
+      await page
+        .goto("https://seller.shopee.co.th/portal/product/list/live/all?operationSortBy=recommend_v2", {
+          waitUntil: "domcontentloaded",
+          timeout: 60000,
+        })
+        .catch(() => {});
+      await page.waitForTimeout(8000);
 
-      for (let pageNo = 1; pageNo <= 200; pageNo += 1) {
-        const params = {
-          page_size: "48",
-          list_type: listType,
-          request_attribute: "",
-          operation_sort_by: "recommend_v4",
-          need_ads: "false",
-        };
-        if (cursor) params.cursor = cursor;
+      data = await page.evaluate(async (spcToken) => {
+        if (!spcToken) throw new Error("Missing Shopee SPC_CDS token; is Seller Centre logged in?");
 
-        const pageData = await fetchJson("/api/v3/opt/mpsku/list/v2/search_product_list", params);
-        const list = pageData.products || [];
-        total = pageData.page_info?.total ?? total;
-        products.push(...list);
-
-        const next = pageData.page_info?.cursor || "";
-        if (!next || next === cursor || !list.length || products.length >= Number(total || Infinity)) {
-          break;
+        async function fetchJson(endpoint, params) {
+          const qs = new URLSearchParams({
+            SPC_CDS: spcToken,
+            SPC_CDS_VER: "2",
+            ...params,
+          });
+          const response = await fetch(`${endpoint}?${qs.toString()}`, { credentials: "include" });
+          const json = await response.json();
+          if (json.code !== 0) {
+            throw new Error(
+              `${endpoint} ${JSON.stringify({
+                code: json.code,
+                message: json.message,
+                user_message: json.user_message,
+              })}`
+            );
+          }
+          return json.data || {};
         }
-        cursor = next;
-      }
 
-      return { listType, total, products };
+        async function fetchCursorList(listType) {
+          const products = [];
+          let cursor = "";
+          let total = null;
+
+          for (let pageNo = 1; pageNo <= 200; pageNo += 1) {
+            const params = {
+              page_size: "48",
+              list_type: listType,
+              request_attribute: "",
+              operation_sort_by: "recommend_v4",
+              need_ads: "false",
+            };
+            if (cursor) params.cursor = cursor;
+
+            const pageData = await fetchJson("/api/v3/opt/mpsku/list/v2/search_product_list", params);
+            const list = pageData.products || [];
+            total = pageData.page_info?.total ?? total;
+            products.push(...list);
+
+            const next = pageData.page_info?.cursor || "";
+            if (!next || next === cursor || !list.length || products.length >= Number(total || Infinity)) break;
+            cursor = next;
+          }
+
+          return { listType, total, products };
+        }
+
+        async function fetchDraft() {
+          const products = [];
+          let total = null;
+
+          for (let pageNumber = 1; pageNumber <= 50; pageNumber += 1) {
+            const pageData = await fetchJson("/api/v3/mpsku/list/v2/get_draft_product_list", {
+              page_number: String(pageNumber),
+              page_size: "48",
+            });
+            const list = pageData.products || [];
+            total = pageData.page_info?.total ?? total;
+            products.push(...list);
+            if (!list.length || products.length >= Number(total || Infinity)) break;
+          }
+
+          return { listType: "draft", total, products };
+        }
+
+        async function fetchSimple(endpoint, params = {}) {
+          const pageData = await fetchJson(endpoint, { page_size: "48", ...params });
+          return {
+            endpoint,
+            total: pageData.page_info?.total,
+            products: pageData.products || [],
+          };
+        }
+
+        return {
+          exportedAt: new Date().toISOString(),
+          all: await fetchCursorList("all"),
+          liveAll: await fetchCursorList("live_all"),
+          delisted: await fetchCursorList("delisted"),
+          draft: await fetchDraft(),
+          deboosted: await fetchSimple("/api/v3/mpsku/list/v2/search_deboosted_product_list"),
+          reviewing: await fetchCursorList("reviewing"),
+        };
+      }, spc);
+    } finally {
+      await session.close();
     }
-
-    async function fetchDraft() {
-      const products = [];
-      let total = null;
-
-      for (let pageNumber = 1; pageNumber <= 50; pageNumber += 1) {
-        const pageData = await fetchJson("/api/v3/mpsku/list/v2/get_draft_product_list", {
-          page_number: String(pageNumber),
-          page_size: "48",
-        });
-        const list = pageData.products || [];
-        total = pageData.page_info?.total ?? total;
-        products.push(...list);
-
-        if (!list.length || products.length >= Number(total || Infinity)) break;
-      }
-
-      return { listType: "draft", total, products };
-    }
-
-    async function fetchSimple(endpoint, params = {}) {
-      const pageData = await fetchJson(endpoint, { page_size: "48", ...params });
-      return {
-        endpoint,
-        total: pageData.page_info?.total,
-        products: pageData.products || [],
-      };
-    }
-
-    return {
-      exportedAt: new Date().toISOString(),
-      all: await fetchCursorList("all"),
-      liveAll: await fetchCursorList("live_all"),
-      delisted: await fetchCursorList("delisted"),
-      draft: await fetchDraft(),
-      deboosted: await fetchSimple("/api/v3/mpsku/list/v2/search_deboosted_product_list"),
-      reviewing: await fetchCursorList("reviewing"),
-    };
-  }, spc);
+  }
 
   const combined = [];
   for (const group of ["all", "liveAll", "delisted", "draft", "deboosted", "reviewing"]) {
@@ -189,8 +203,6 @@ async function main() {
   const outputFile = path.join(outputDir, "shopee_products_export.json");
   fs.writeFileSync(outputFile, JSON.stringify(output, null, 2), "utf8");
   console.log(JSON.stringify({ ok: true, counts: output.counts, outputFile }, null, 2));
-
-  await session.close();
 }
 
 main().catch((error) => {

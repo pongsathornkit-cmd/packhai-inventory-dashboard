@@ -57,6 +57,11 @@ const syncState = {
   message: "พร้อม Sync",
   steps: [],
 };
+function envEnabled(name, fallback = false) {
+  const value = process.env[name];
+  if (value == null || value === "") return fallback;
+  return /^(1|true|yes|on)$/i.test(String(value));
+}
 const autoSyncSettings = createAutoSyncSettings(process.env);
 const autoSyncBusyRetryMs = Math.max(30, Number(process.env.AUTO_SYNC_BUSY_RETRY_SECONDS || 120)) * 1000;
 const autoSyncState = {
@@ -88,6 +93,9 @@ const sellerPaymentsAutoSyncState = {
   lastSkipReason: "",
   lastOk: null,
 };
+const secondaryAutoSyncJobsScheduled =
+  envEnabled("AUTO_SYNC_SECONDARY_JOBS", false) || !sellerPriceAutoSyncSettings.enabled;
+const secondaryAutoSyncPauseReason = "Paused while Seller price auto sync is prioritized.";
 
 const contentTypes = {
   ".html": "text/html; charset=utf-8",
@@ -276,6 +284,17 @@ function syncReadiness() {
   };
 }
 
+function publicScheduledAutoSyncState(settings, state, scheduled) {
+  const publicState = publicAutoSyncState(settings, state);
+  if (scheduled) return publicState;
+  return {
+    ...publicState,
+    enabled: false,
+    nextRunAt: null,
+    lastSkipReason: publicState.lastSkipReason || secondaryAutoSyncPauseReason,
+  };
+}
+
 function publicSyncState(extra = {}) {
   const readiness = syncReadiness();
   return {
@@ -287,11 +306,15 @@ function publicSyncState(extra = {}) {
     },
     ready: readiness.ready,
     missingConfig: readiness.missing,
-    autoSync: publicAutoSyncState(autoSyncSettings, autoSyncState),
+    autoSync: publicScheduledAutoSyncState(autoSyncSettings, autoSyncState, secondaryAutoSyncJobsScheduled),
     autoSyncJobs: {
-      packhai: publicAutoSyncState(autoSyncSettings, autoSyncState),
+      packhai: publicScheduledAutoSyncState(autoSyncSettings, autoSyncState, secondaryAutoSyncJobsScheduled),
       sellerPrices: publicAutoSyncState(sellerPriceAutoSyncSettings, sellerPriceAutoSyncState),
-      sellerPayments: publicAutoSyncState(sellerPaymentsAutoSyncSettings, sellerPaymentsAutoSyncState),
+      sellerPayments: publicScheduledAutoSyncState(
+        sellerPaymentsAutoSyncSettings,
+        sellerPaymentsAutoSyncState,
+        secondaryAutoSyncJobsScheduled
+      ),
     },
   };
 }
@@ -868,7 +891,7 @@ function startSync(type, res) {
 }
 
 function autoSyncJobDefinitions() {
-  return [
+  const jobs = [
     {
       key: "sellerPrices",
       label: "Seller prices",
@@ -877,23 +900,28 @@ function autoSyncJobDefinitions() {
       configured: sellerPricesConfigured,
       missingReason: "Shopee/Lazada Seller sessions are not configured.",
     },
-    {
-      key: "packhai",
-      label: "Packhai",
-      settings: autoSyncSettings,
-      state: autoSyncState,
-      configured: packhaiConfigured,
-      missingReason: "PACKHAI_AUTH_TOKEN is not configured.",
-    },
-    {
-      key: "sellerPayments",
-      label: "Platform payments",
-      settings: sellerPaymentsAutoSyncSettings,
-      state: sellerPaymentsAutoSyncState,
-      configured: sellerPaymentsConfigured,
-      missingReason: "Shopee/Lazada Seller sessions are not configured.",
-    },
   ];
+  if (secondaryAutoSyncJobsScheduled) {
+    jobs.push(
+      {
+        key: "packhai",
+        label: "Packhai",
+        settings: autoSyncSettings,
+        state: autoSyncState,
+        configured: packhaiConfigured,
+        missingReason: "PACKHAI_AUTH_TOKEN is not configured.",
+      },
+      {
+        key: "sellerPayments",
+        label: "Platform payments",
+        settings: sellerPaymentsAutoSyncSettings,
+        state: sellerPaymentsAutoSyncState,
+        configured: sellerPaymentsConfigured,
+        missingReason: "Shopee/Lazada Seller sessions are not configured.",
+      }
+    );
+  }
+  return jobs;
 }
 
 function scheduleNextAutoSync(job, delayMs = job.settings.intervalMs) {

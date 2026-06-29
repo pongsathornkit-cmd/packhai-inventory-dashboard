@@ -99,9 +99,10 @@ test("Render enables Packhai auto sync for the cloud service", () => {
   assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*AUTO_SYNC_BUSY_RETRY_SECONDS\s*\n\s*value:\s*"120"/);
+  assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"0"/);
 });
 
-test("sync server schedules Packhai and platform payment auto sync and exposes their status", () => {
+test("sync server prioritizes seller price auto sync and exposes paused secondary jobs", () => {
   const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
 
   assert.match(serverSource, /createAutoSyncSettings/);
@@ -111,10 +112,10 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   assert.match(serverSource, /function\s+scheduleNextAutoSync/);
   assert.match(serverSource, /function\s+runAutoSync/);
   assert.match(serverSource, /runSync\(job\.settings\.type\)/);
-  assert.match(serverSource, /autoSync:\s*publicAutoSyncState\(autoSyncSettings,\s*autoSyncState\)/);
+  assert.match(serverSource, /autoSync:\s*publicScheduledAutoSyncState\(autoSyncSettings,\s*autoSyncState,\s*secondaryAutoSyncJobsScheduled\)/);
   assert.match(serverSource, /autoSyncJobs:\s*\{/);
   assert.match(serverSource, /sellerPrices:\s*publicAutoSyncState\(sellerPriceAutoSyncSettings,\s*sellerPriceAutoSyncState\)/);
-  assert.match(serverSource, /sellerPayments:\s*publicAutoSyncState\(sellerPaymentsAutoSyncSettings,\s*sellerPaymentsAutoSyncState\)/);
+  assert.match(serverSource, /sellerPayments:\s*publicScheduledAutoSyncState\(/);
   assert.ok(
     serverSource.indexOf('key: "sellerPrices"') < serverSource.indexOf('key: "packhai"'),
     "seller price refresh must get startup priority when auto-sync timers overlap"
@@ -124,6 +125,8 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*job\.settings\.startDelayMs\)/);
   assert.match(serverSource, /AUTO_SYNC_BUSY_RETRY_SECONDS/);
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*autoSyncBusyRetryMs\)/);
+  assert.match(serverSource, /AUTO_SYNC_SECONDARY_JOBS/);
+  assert.match(serverSource, /secondaryAutoSyncJobsScheduled/);
 });
 
 test("auto seller price sync does not run platform payment collection import", () => {

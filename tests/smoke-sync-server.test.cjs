@@ -33,3 +33,13 @@ test("stock adjustment server exposes Supabase endpoint without leaking service 
   assert.doesNotMatch(appSource, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
   assert.doesNotMatch(templateSource, /SUPABASE_SERVICE_ROLE_KEY|service_role/);
 });
+
+test("sync server stores browser auth states behind an admin key", () => {
+  const serverSource = readRepoFile("scripts/serve-dashboard.cjs");
+
+  assert.match(serverSource, /\/api\/admin\/auth-state/);
+  assert.match(serverSource, /x-admin-key/);
+  assert.match(serverSource, /readJsonBody\(req,\s*5\s*\*\s*1024\s*\*\s*1024\)/);
+  assert.match(serverSource, /writeStorageStateFile/);
+  assert.doesNotMatch(serverSource, /storageState:\s*state/);
+});

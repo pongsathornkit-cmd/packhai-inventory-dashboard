@@ -57,6 +57,10 @@
     sort: "riskDesc",
     page: 1,
   };
+  const websiteStockEditWarehouses = [
+    { id: 491661, name: "คลัง ซ.เจริญกิจ", label: "ซ.เจริญกิจ" },
+    { id: 491662, name: "คลัง สุขสวัสดิ์", label: "สุขสวัสดิ์" },
+  ];
 
   const sourceColors = {
     Shopee: "Shopee",
@@ -893,14 +897,75 @@
     );
   }
 
-  function stockAdjustButton(row, className = "") {
-    if (!isWebsiteStockWarehouse(row)) return "";
+  function canEditWebsiteStockSku(row) {
+    return Boolean(normalizeSkuValue(row?.sku));
+  }
+
+  function websiteStockRowForSkuWarehouse(row, warehouseId) {
+    const sku = normalizeSkuValue(row?.sku);
+    if (!sku) return null;
+    const localRows = row?.isSkuGroup && Array.isArray(row.warehouseRows) ? row.warehouseRows : [];
+    return (
+      localRows.find(
+        (item) =>
+          isWebsiteStockWarehouse(item) &&
+          normalizeSkuValue(item.sku) === sku &&
+          String(item.warehouseId) === String(warehouseId)
+      ) ||
+      rows.find(
+        (item) =>
+          isWebsiteStockWarehouse(item) &&
+          normalizeSkuValue(item.sku) === sku &&
+          String(item.warehouseId) === String(warehouseId)
+      ) ||
+      null
+    );
+  }
+
+  function stockAdjustContextForRow(row) {
+    const sku = normalizeSkuValue(row?.sku);
+    if (!sku) return null;
+    const productRow = rows.find((item) => normalizeSkuValue(item.sku) === sku && item.name) || row || {};
+    const warehouses = websiteStockEditWarehouses.map((warehouse) => {
+      const stockRow = websiteStockRowForSkuWarehouse(row, warehouse.id);
+      return {
+        ...warehouse,
+        row: stockRow,
+        name: stockRow?.warehouseName || warehouse.name,
+        quantity: numberValue(stockRow?.quantity),
+      };
+    });
+    return {
+      sku,
+      productName: productRow.name || sku,
+      sourceRow: row,
+      warehouses,
+      totalQuantity: warehouses.reduce((total, warehouse) => total + numberValue(warehouse.quantity), 0),
+    };
+  }
+
+  function stockTotalCell(row) {
+    if (!canEditWebsiteStockSku(row)) {
+      return `<td class="num">${fmtQty.format(row.quantity)}</td>`;
+    }
+    const detailId = detailIdForRow(row);
     return `
-      <button class="stock-adjust-button ${escapeHtml(className)}" type="button" data-stock-adjust-id="${escapeHtml(
-        detailIdForRow(row)
-      )}" title="ปรับจำนวน stock คงเหลือ">
-        ปรับ
-      </button>`;
+      <td class="num stock-total-cell editable">
+        <div class="stock-total-value">
+          <strong>${fmtQty.format(row.quantity)}</strong>
+          <button
+            class="stock-total-edit"
+            type="button"
+            data-stock-adjust-id="${escapeHtml(detailId)}"
+            data-stock-adjust-sku="${escapeHtml(row.sku || "")}"
+            title="แก้ไข stock คลัง ซ.เจริญกิจ / สุขสวัสดิ์"
+            aria-label="แก้ไข stock ${escapeHtml(row.sku || "")}"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+          </button>
+        </div>
+        <span class="stock-total-edit-hint">แก้ 2 คลัง</span>
+      </td>`;
   }
 
   function websiteStockTransactionsForRow(row) {
@@ -1093,7 +1158,6 @@
         <td class="warehouse-cell">
           <strong>${escapeHtml(row.stockSource || "-")}</strong>
           <span>${escapeHtml(row.warehouseName || "-")}</span>
-          ${stockAdjustButton(row, "inline")}
         </td>`;
     }
 
@@ -1110,7 +1174,6 @@
                 <span class="warehouse-chip" title="${escapeHtml(warehouseChipTitle(item))}">
                   <span>${escapeHtml(shortWarehouseName(item))}</span>
                   <strong>${fmtQty.format(item.quantity || 0)}</strong>
-                  ${stockAdjustButton(item, "chip")}
                 </span>
                 `
             )
@@ -1142,7 +1205,6 @@
                 <strong>${escapeHtml(item.warehouseName || "-")}</strong>
                 <div>${fmtQty.format(item.quantity || 0)} คงเหลือ · ${fmtQty.format(item.available || 0)} พร้อมขาย</div>
                 <small>${fmtBaht.format(item.inventoryValue || 0)} · ${escapeHtml(movementSummary(item))}</small>
-                ${stockAdjustButton(item, "detail")}
               </article>`
           )
           .join("")}
@@ -1436,21 +1498,46 @@
     status.textContent = message || "";
   }
 
+  function renderStockAdjustWarehouseFields(context) {
+    const target = $("stockAdjustWarehouseFields");
+    if (!target) return;
+    target.innerHTML = context.warehouses
+      .map(
+        (warehouse) => `
+          <label class="stock-adjust-field stock-adjust-warehouse-field">
+            <span>${escapeHtml(warehouse.name)}</span>
+            <small>คงเหลือปัจจุบัน <strong>${fmtQty.format(warehouse.quantity || 0)}</strong> หน่วย</small>
+            <input
+              id="stockAdjustQuantity-${escapeHtml(warehouse.id)}"
+              data-stock-adjust-warehouse="${escapeHtml(warehouse.id)}"
+              type="number"
+              min="0"
+              step="1"
+              inputmode="numeric"
+              value="${escapeHtml(warehouse.quantity || 0)}"
+              required
+            />
+          </label>`
+      )
+      .join("");
+  }
+
   function openStockAdjustModal(row) {
-    if (!isWebsiteStockWarehouse(row)) return;
-    activeStockAdjustRow = row;
+    const context = stockAdjustContextForRow(row);
+    if (!context) return;
+    activeStockAdjustRow = context;
     const modal = $("stockAdjustModal");
     const form = $("stockAdjustForm");
     if (!modal || !form) return;
-    $("stockAdjustSku").textContent = row.sku || "-";
-    $("stockAdjustWarehouse").textContent = row.warehouseName || "-";
-    $("stockAdjustCurrent").textContent = `${fmtQty.format(row.quantity || 0)} หน่วย`;
-    $("stockAdjustQuantity").value = Number(row.quantity || 0);
+    $("stockAdjustSku").textContent = context.sku || "-";
+    $("stockAdjustWarehouse").textContent = "คลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์";
+    $("stockAdjustCurrent").textContent = `${fmtQty.format(context.totalQuantity || 0)} หน่วยรวม`;
+    renderStockAdjustWarehouseFields(context);
     $("stockAdjustNote").value = "";
     renderStockAdjustStatus("", "");
     modal.hidden = false;
     document.body.classList.add("modal-open");
-    $("stockAdjustQuantity")?.focus();
+    form.querySelector("[data-stock-adjust-warehouse]")?.focus();
   }
 
   function closeStockAdjustModal() {
@@ -1465,14 +1552,20 @@
 
   async function submitStockAdjustment(event) {
     event.preventDefault();
-    const row = activeStockAdjustRow;
-    if (!isWebsiteStockWarehouse(row)) return;
-    const quantityInput = $("stockAdjustQuantity");
+    const context = activeStockAdjustRow;
+    if (!context?.sku) return;
     const noteInput = $("stockAdjustNote");
     const submitButton = $("stockAdjustSubmit");
-    const nextQuantity = Number(quantityInput?.value);
-    if (!Number.isFinite(nextQuantity) || nextQuantity < 0) {
-      renderStockAdjustStatus("failed", "กรุณาใส่จำนวน stock คงเหลือเป็นตัวเลข 0 ขึ้นไป");
+    const allocations = context.warehouses.map((warehouse) => {
+      const input = document.querySelector(`[data-stock-adjust-warehouse="${warehouse.id}"]`);
+      return {
+        warehouseId: warehouse.id,
+        warehouseName: warehouse.name,
+        quantity: Number(input?.value),
+      };
+    });
+    if (allocations.some((item) => !Number.isFinite(item.quantity) || item.quantity < 0)) {
+      renderStockAdjustStatus("failed", "กรุณาใส่จำนวน stock ของทั้ง 2 คลังเป็นตัวเลข 0 ขึ้นไป");
       return;
     }
     if (!supabaseDirectConfigured() && !ensureRemoteSyncConfig("flowaccount")) {
@@ -1480,17 +1573,17 @@
       return;
     }
     if (submitButton) submitButton.disabled = true;
-    renderStockAdjustStatus("running", "กำลังบันทึก transaction บน Supabase...");
+    renderStockAdjustStatus("running", "กำลังบันทึก transaction ทั้ง 2 คลังบน Supabase...");
     try {
       const payload = await saveWebsiteStockAdjustment({
-        sku: row.sku,
+        sku: context.sku,
         operation: "set",
         actor: "Website Stock UI",
         note: noteInput?.value || "",
-        sourceText: `Manual row adjustment for ${row.sku} at ${row.warehouseName}`,
-        allocations: [{ warehouseId: row.warehouseId, quantity: nextQuantity }],
+        sourceText: `Manual SKU adjustment for ${context.sku} across Website Stock warehouses`,
+        allocations,
       });
-      renderStockAdjustStatus("passed", payload.message || "บันทึก stock สำเร็จบน Supabase แล้ว");
+      renderStockAdjustStatus("passed", payload.message || "บันทึก stock ทั้ง 2 คลังสำเร็จบน Supabase แล้ว");
       if (!supabaseDirectConfigured()) setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
     } catch (error) {
       renderStockAdjustStatus("failed", `บันทึกไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
@@ -4376,7 +4469,7 @@
             <div class="detail-link">ดูรายละเอียด</div>
             ${row.note ? `<div class="product-note">${escapeHtml(row.note)}</div>` : ""}
           </td>
-          <td class="num">${fmtQty.format(row.quantity)}</td>
+          ${stockTotalCell(row)}
           <td class="num">${fmtQty.format(row.waiting)}</td>
           <td class="num">${fmtQty.format(row.available)}</td>
           <td>${movementCell(row)}</td>
@@ -4509,11 +4602,15 @@
     $("closeStockAdjust")?.addEventListener("click", closeStockAdjustModal);
     $("stockAdjustForm")?.addEventListener("submit", submitStockAdjustment);
     document.addEventListener("click", (event) => {
-      const stockAdjustTarget = event.target.closest("[data-stock-adjust-id]");
+      const stockAdjustTarget = event.target.closest("[data-stock-adjust-sku]");
       if (stockAdjustTarget) {
         event.preventDefault();
         event.stopPropagation();
-        openStockAdjustModal(rowByDetailId.get(stockAdjustTarget.dataset.stockAdjustId));
+        const sku = normalizeSkuValue(stockAdjustTarget.dataset.stockAdjustSku);
+        const row =
+          rowByDetailId.get(stockAdjustTarget.dataset.stockAdjustId) ||
+          rows.find((item) => normalizeSkuValue(item.sku) === sku);
+        openStockAdjustModal(row);
         return;
       }
       if (event.target.closest("[data-close-stock-adjust]")) {
@@ -4534,6 +4631,7 @@
         closeProductDetail();
         return;
       }
+      if (event.target.closest("[data-stock-adjust-sku]")) return;
       if (event.key !== "Enter" && event.key !== " ") return;
       const detailTarget = event.target.closest("[data-detail-id]");
       if (!detailTarget) return;

@@ -1904,6 +1904,87 @@ tbody tr:hover {
   font-size: 10px;
 }
 
+.stock-total-cell {
+  min-width: 104px;
+  vertical-align: top;
+}
+
+.stock-total-value {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  min-width: 92px;
+}
+
+.stock-total-value strong {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.stock-total-edit {
+  width: 27px;
+  height: 27px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(233, 30, 118, 0.26);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--pink);
+  cursor: pointer;
+  opacity: 0;
+  transform: translateY(1px) scale(0.92);
+  transition: opacity 0.16s ease, transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.stock-total-edit svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.stock-total-cell:hover .stock-total-edit,
+.stock-total-cell:focus-within .stock-total-edit {
+  opacity: 1;
+  transform: translateY(1px) scale(1);
+}
+
+.stock-total-edit:hover,
+.stock-total-edit:focus-visible {
+  border-color: rgba(233, 30, 118, 0.58);
+  background: #fff0f6;
+  outline: none;
+}
+
+.stock-total-edit-hint {
+  display: block;
+  margin-top: 2px;
+  color: var(--soft-muted);
+  font-size: 10px;
+  font-weight: 720;
+  line-height: 1.2;
+  opacity: 0;
+  transition: opacity 0.16s ease;
+}
+
+.stock-total-cell:hover .stock-total-edit-hint,
+.stock-total-cell:focus-within .stock-total-edit-hint {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .stock-total-edit {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(1px) scale(1);
+  }
+}
+
 .movement-cell {
   min-width: 170px;
 }
@@ -3046,7 +3127,7 @@ tbody tr:hover {
 }
 
 .stock-adjust-panel {
-  max-width: 560px;
+  max-width: 680px;
 }
 
 .stock-adjust-form {
@@ -3097,6 +3178,24 @@ tbody tr:hover {
 .stock-adjust-field {
   display: grid;
   gap: 8px;
+}
+
+.stock-adjust-warehouse-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.stock-adjust-warehouse-field small {
+  color: var(--soft-muted);
+  font-size: 11px;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.stock-adjust-warehouse-field small strong {
+  color: var(--ink-2);
+  font-weight: 850;
 }
 
 .stock-adjust-field input,
@@ -3429,7 +3528,9 @@ tbody tr:hover {
 
   .form-grid,
   .expense-preview,
-  .expense-filters {
+  .expense-filters,
+  .stock-adjust-summary,
+  .stock-adjust-warehouse-fields {
     grid-template-columns: 1fr;
   }
 

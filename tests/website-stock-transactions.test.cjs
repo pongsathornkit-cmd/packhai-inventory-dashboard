@@ -115,6 +115,21 @@ test("frontend exposes row stock adjustment controls and transaction history", (
   assert.match(templateSource, /id="stockAdjustForm"/);
 });
 
+test("frontend edits website stock from the total quantity cell for both website warehouses", () => {
+  const appSource = fs.readFileSync(path.join(__dirname, "..", "src", "app.js"), "utf8");
+  const templateSource = fs.readFileSync(path.join(__dirname, "..", "src", "index.template.html"), "utf8");
+
+  assert.match(appSource, /stockTotalCell/);
+  assert.match(appSource, /data-stock-adjust-sku/);
+  assert.match(appSource, /stock-total-edit/);
+  assert.match(appSource, /stockAdjustWarehouseFields/);
+  assert.match(appSource, /data-stock-adjust-warehouse/);
+  assert.match(appSource, /warehouseId: warehouse\.id/);
+  assert.doesNotMatch(appSource, /stockAdjustButton\(item, "chip"\)/);
+  assert.doesNotMatch(appSource, /stockAdjustButton\(item, "detail"\)/);
+  assert.match(templateSource, /id="stockAdjustWarehouseFields"/);
+});
+
 test("supabase website stock export script can generate dashboard-compatible snapshots", () => {
   const exportSource = fs.readFileSync(path.join(__dirname, "..", "scripts", "export-supabase-website-stock.cjs"), "utf8");
 

@@ -85,6 +85,28 @@ function dashboardSnapshotPayload(dashboard) {
   return payload;
 }
 
+function sellerPaymentsSnapshotPayload(sellerPayments) {
+  if (!sellerPayments || typeof sellerPayments !== "object") return {};
+  const orders = Array.isArray(sellerPayments.orders) ? sellerPayments.orders : [];
+  return {
+    exportedAt: sellerPayments.exportedAt || "",
+    source: sellerPayments.source || "Seller platform order payments",
+    rule: sellerPayments.rule || "",
+    partial: Boolean(sellerPayments.partial),
+    counts: sellerPayments.counts || {
+      totalOrders: orders.length,
+      errors: Array.isArray(sellerPayments.errors) ? sellerPayments.errors.length : 0,
+    },
+    errors: Array.isArray(sellerPayments.errors) ? sellerPayments.errors.slice(0, 100) : [],
+    ordersMeta: {
+      omittedFromSupabaseSnapshot: true,
+      reason: "Order-level seller payments are joined into stock movements during dashboard build to avoid large Supabase RPC payloads.",
+      rowCount: orders.length,
+      generatedAt: new Date().toISOString(),
+    },
+  };
+}
+
 function snapshotRows() {
   const dashboard = readJson(path.join(distDir, "inventory-valuation-data.json"), {});
   const stockMovements = readJson(path.join(distDir, "stock-movements.json"), { rows: [] });
@@ -92,7 +114,7 @@ function snapshotRows() {
   return [
     { key: "dashboard_current", payload: dashboardSnapshotPayload(dashboard) },
     { key: "stock_movements_current", payload: stockMovementSummary(stockMovements) },
-    { key: "seller_payments_current", payload: sellerPayments },
+    { key: "seller_payments_current", payload: sellerPaymentsSnapshotPayload(sellerPayments) },
     { key: "source_files_current", payload: compactSourceFiles() },
   ];
 }

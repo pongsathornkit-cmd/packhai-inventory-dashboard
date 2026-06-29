@@ -85,6 +85,7 @@ function main() {
     SELLER_HEADLESS: "1",
     SYNC_REQUIRE_KEY: "0",
     PACKHAI_DATA_DIR: "/app/storage/data",
+    SELLER_COMPARE_DIR: "/app/storage/data/seller_compare",
     PACKHAI_AUTH_STATE_DIR: "/app/storage/auth-states",
     FLOW_PROFILE: "/app/storage/browser-profiles/flowaccount",
     SHOPEE_SESSION_DIR: "/app/storage/browser-profiles/shopee",

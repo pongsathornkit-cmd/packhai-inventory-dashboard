@@ -8,9 +8,12 @@ const { cookieHeaderForHost, cookieValueForHost } = require("./seller-direct-api
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
 const shopeeHost = "seller.shopee.co.th";
+const dataDir = process.env.PACKHAI_DATA_DIR
+  ? path.resolve(process.env.PACKHAI_DATA_DIR)
+  : path.join(projectRoot, "data");
 const outputDir = process.env.SELLER_COMPARE_DIR
   ? path.resolve(process.env.SELLER_COMPARE_DIR)
-  : path.join(projectRoot, "data", "seller_compare");
+  : path.join(dataDir, "seller_compare");
 const outputFile = process.env.SELLER_ORDER_PAYMENTS_OUTPUT
   ? path.resolve(process.env.SELLER_ORDER_PAYMENTS_OUTPUT)
   : path.join(outputDir, "seller_order_payments.json");

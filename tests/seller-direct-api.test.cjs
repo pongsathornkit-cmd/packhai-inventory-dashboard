@@ -58,6 +58,10 @@ test("seller price export scripts prefer direct API before browser fallback", ()
   assert.match(shopee, /models:\s*Array\.isArray\(product\.model_list\)/);
   assert.match(lazada, /specialPrice:\s*firstPositive/);
   assert.match(shopee, /warnings:\s*output\.warnings/);
+  assert.match(shopee, /PACKHAI_DATA_DIR/);
+  assert.match(lazada, /PACKHAI_DATA_DIR/);
+  assert.match(shopee, /path\.join\(dataDir,\s*"seller_compare"\)/);
+  assert.match(lazada, /path\.join\(dataDir,\s*"seller_compare"\)/);
   assert.match(shopeeDirectApiSource(), /isRetryableSellerError/);
   assert.match(shopeeDirectApiSource(), /complete:\s*false/);
   assert.ok(
@@ -76,6 +80,8 @@ test("seller payment export uses Shopee direct API before browser fallback", () 
   assert.match(payments, /exportShopeePaymentsDirect/);
   assert.match(payments, /fetchShopeeDirectOrderPayment/);
   assert.match(payments, /SELLER_ORDER_PAYMENT_BROWSER_FALLBACK/);
+  assert.match(payments, /PACKHAI_DATA_DIR/);
+  assert.match(payments, /path\.join\(dataDir,\s*"seller_compare"\)/);
   assert.ok(
     payments.indexOf("exportShopeePaymentsDirect") < payments.indexOf("exportShopeePaymentsBrowser"),
     "Shopee payment direct API should be defined before browser fallback"

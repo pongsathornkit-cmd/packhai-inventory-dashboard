@@ -23,6 +23,8 @@ test("prepare-cloud-env writes the env keys required by the cloud sync server", 
   assert.match(source, /SUPABASE_ANON_KEY/);
   assert.match(source, /PUBLIC_SUPABASE_URL/);
   assert.match(source, /PUBLIC_SUPABASE_ANON_KEY/);
+  assert.match(source, /SELLER_COMPARE_DIR/);
+  assert.match(source, /\/app\/storage\/data\/seller_compare/);
   assert.match(source, /--github-token-from-gh/);
   assert.match(source, /gh",\s*\["auth",\s*"token"\]/);
   assert.match(source, /githubTokenSource/);

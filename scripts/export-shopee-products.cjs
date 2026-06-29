@@ -5,6 +5,9 @@ const { openAuthContext } = require("./browser-auth-state.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
+const dataDir = process.env.PACKHAI_DATA_DIR
+  ? path.resolve(process.env.PACKHAI_DATA_DIR)
+  : path.join(projectRoot, "data");
 const legacySessionDir = path.join(workspaceRoot, ".codex-seller-browser-session");
 const sessionDir = process.env.SHOPEE_SESSION_DIR
   ? path.resolve(process.env.SHOPEE_SESSION_DIR)
@@ -13,7 +16,7 @@ const sessionDir = process.env.SHOPEE_SESSION_DIR
   : path.join(projectRoot, "browser-profiles", "shopee");
 const outputDir = process.env.SELLER_COMPARE_DIR
   ? path.resolve(process.env.SELLER_COMPARE_DIR)
-  : path.join(projectRoot, "data", "seller_compare");
+  : path.join(dataDir, "seller_compare");
 const headless = boolEnv("SELLER_HEADLESS", false);
 
 function boolEnv(name, fallback = false) {

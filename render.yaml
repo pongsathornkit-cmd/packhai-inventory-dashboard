@@ -51,6 +51,8 @@ services:
         sync: false
       - key: PACKHAI_DATA_DIR
         value: /app/storage/data
+      - key: SELLER_COMPARE_DIR
+        value: /app/storage/data/seller_compare
       - key: PACKHAI_AUTH_STATE_DIR
         value: /app/storage/auth-states
       - key: FLOW_PROFILE

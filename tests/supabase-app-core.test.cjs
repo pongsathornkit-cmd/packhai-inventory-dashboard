@@ -89,5 +89,9 @@ test("sync job publishes rebuilt app snapshots to Supabase instead of GitHub Pag
   assert.match(serverSource, /function\s+runPublishSupabase/);
   assert.match(serverSource, /publish-supabase-app\.cjs/);
   assert.match(publishSource, /packhai_stock_movements/);
+  assert.match(publishSource, /function\s+sellerPaymentsSnapshotPayload/);
+  assert.match(publishSource, /ordersMeta/);
+  assert.match(publishSource, /omittedFromSupabaseSnapshot/);
+  assert.match(publishSource, /sellerPaymentsSnapshotPayload\(sellerPayments\)/);
   assert.doesNotMatch(syncJobSource, /publish-github-pages\.cjs/);
 });

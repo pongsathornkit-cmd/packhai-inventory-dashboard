@@ -6,6 +6,9 @@ const { openAuthContext } = require("./browser-auth-state.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
+const dataDir = process.env.PACKHAI_DATA_DIR
+  ? path.resolve(process.env.PACKHAI_DATA_DIR)
+  : path.join(projectRoot, "data");
 const legacySessionDir = path.join(workspaceRoot, "chrome-lazada-cdp-profile");
 const sessionDir = process.env.SELLER_SESSION_DIR
   ? path.resolve(process.env.SELLER_SESSION_DIR)
@@ -14,7 +17,7 @@ const sessionDir = process.env.SELLER_SESSION_DIR
   : path.join(projectRoot, "browser-profiles", "lazada");
 const outputDir = process.env.SELLER_COMPARE_DIR
   ? path.resolve(process.env.SELLER_COMPARE_DIR)
-  : path.join(projectRoot, "data", "seller_compare");
+  : path.join(dataDir, "seller_compare");
 const outputFile = path.join(outputDir, "lazada_products_export.json");
 const headless = boolEnv("SELLER_HEADLESS", false);
 const cdpEndpoint =

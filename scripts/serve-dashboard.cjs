@@ -57,6 +57,7 @@ const syncState = {
   steps: [],
 };
 const autoSyncSettings = createAutoSyncSettings(process.env);
+const autoSyncBusyRetryMs = Math.max(30, Number(process.env.AUTO_SYNC_BUSY_RETRY_SECONDS || 120)) * 1000;
 const autoSyncState = {
   timer: null,
   nextRunAt: null,
@@ -894,7 +895,7 @@ async function runAutoSync(job) {
   }
   if (syncState.running) {
     skipAutoSync(job, "Another sync is already running.");
-    scheduleNextAutoSync(job, job.settings.intervalMs);
+    scheduleNextAutoSync(job, autoSyncBusyRetryMs);
     return;
   }
 

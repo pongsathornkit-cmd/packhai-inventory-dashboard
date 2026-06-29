@@ -76,9 +76,12 @@ test("Render enables Packhai auto sync for the cloud service", () => {
 
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC\s*\n\s*value:\s*"1"/);
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
+  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"300"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC\s*\n\s*value:\s*"1"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
+  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
+  assert.match(renderSource, /key:\s*AUTO_SYNC_BUSY_RETRY_SECONDS\s*\n\s*value:\s*"120"/);
 });
 
 test("sync server schedules Packhai and platform payment auto sync and exposes their status", () => {
@@ -94,6 +97,8 @@ test("sync server schedules Packhai and platform payment auto sync and exposes t
   assert.match(serverSource, /autoSyncJobs:\s*\{/);
   assert.match(serverSource, /sellerPayments:\s*publicAutoSyncState\(sellerPaymentsAutoSyncSettings,\s*sellerPaymentsAutoSyncState\)/);
   assert.match(serverSource, /scheduleNextAutoSync\(job,\s*job\.settings\.startDelayMs\)/);
+  assert.match(serverSource, /AUTO_SYNC_BUSY_RETRY_SECONDS/);
+  assert.match(serverSource, /scheduleNextAutoSync\(job,\s*autoSyncBusyRetryMs\)/);
 });
 
 test("platform payment sync uses long-running live progress and process tree timeout handling", () => {

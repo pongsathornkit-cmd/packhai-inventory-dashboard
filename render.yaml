@@ -17,18 +17,20 @@ services:
         value: "0"
       - key: SYNC_PUBLISH_SUPABASE
         value: "1"
+      - key: AUTO_SYNC_BUSY_RETRY_SECONDS
+        value: "120"
       - key: PACKHAI_AUTO_SYNC
         value: "1"
       - key: PACKHAI_AUTO_SYNC_INTERVAL_MINUTES
         value: "15"
       - key: PACKHAI_AUTO_SYNC_START_DELAY_SECONDS
-        value: "60"
+        value: "300"
       - key: SELLER_PAYMENTS_AUTO_SYNC
         value: "1"
       - key: SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES
         value: "15"
       - key: SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS
-        value: "240"
+        value: "60"
       - key: SELLER_ORDER_PAYMENT_MAX_NEW
         value: "0"
       - key: SELLER_ORDER_PAYMENT_PROGRESS_EVERY

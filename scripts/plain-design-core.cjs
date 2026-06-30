@@ -4,6 +4,17 @@ const crypto = require("crypto");
 
 const STATE_VERSION = 1;
 const ASSET_GROUPS = new Set(["product_images", "packaging_images", "factory_files"]);
+const COMMERCIAL_NUMBER_FIELDS = [
+  "orderQuantity",
+  "purchaseUnitCost",
+  "saleUnitPrice",
+  "widthCm",
+  "lengthCm",
+  "heightCm",
+  "unitWeightKg",
+  "packagingUnitCost",
+  "otherUnitCost",
+];
 
 function readJson(file, fallback = null) {
   try {
@@ -119,6 +130,16 @@ function buildPlainDesignInitialState({ seed, dashboard }) {
       category: product.category || "wood",
       ktwPrice: numberValue(product.ktwPrice),
       orderQuantity: numberValue(product.orderQuantity),
+      purchaseUnitCost: numberValue(product.purchaseUnitCost || product.ktwPrice),
+      saleUnitPrice: numberValue(product.saleUnitPrice || product.ktwPrice),
+      widthCm: numberValue(product.widthCm),
+      lengthCm: numberValue(product.lengthCm),
+      heightCm: numberValue(product.heightCm),
+      unitWeightKg: numberValue(product.unitWeightKg),
+      packagingUnitCost: numberValue(product.packagingUnitCost),
+      otherUnitCost: numberValue(product.otherUnitCost),
+      cargoMode: product.cargoMode || "truck",
+      cargoType: product.cargoType || "A",
       sourceImageUrl: product.sourceImageUrl || packhai.imageUrl || "",
       sourceUrl: product.sourceUrl || "",
       status: product.status || "not_started",
@@ -152,6 +173,29 @@ function mergeStoredState(initialState, storedState) {
         ...product,
         status: stored.status || product.status,
         notes: Object.prototype.hasOwnProperty.call(stored, "notes") ? String(stored.notes || "") : product.notes,
+        orderQuantity: Object.prototype.hasOwnProperty.call(stored, "orderQuantity")
+          ? numberValue(stored.orderQuantity)
+          : product.orderQuantity,
+        purchaseUnitCost: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCost")
+          ? numberValue(stored.purchaseUnitCost)
+          : product.purchaseUnitCost,
+        saleUnitPrice: Object.prototype.hasOwnProperty.call(stored, "saleUnitPrice")
+          ? numberValue(stored.saleUnitPrice)
+          : product.saleUnitPrice,
+        widthCm: Object.prototype.hasOwnProperty.call(stored, "widthCm") ? numberValue(stored.widthCm) : product.widthCm,
+        lengthCm: Object.prototype.hasOwnProperty.call(stored, "lengthCm") ? numberValue(stored.lengthCm) : product.lengthCm,
+        heightCm: Object.prototype.hasOwnProperty.call(stored, "heightCm") ? numberValue(stored.heightCm) : product.heightCm,
+        unitWeightKg: Object.prototype.hasOwnProperty.call(stored, "unitWeightKg")
+          ? numberValue(stored.unitWeightKg)
+          : product.unitWeightKg,
+        packagingUnitCost: Object.prototype.hasOwnProperty.call(stored, "packagingUnitCost")
+          ? numberValue(stored.packagingUnitCost)
+          : product.packagingUnitCost,
+        otherUnitCost: Object.prototype.hasOwnProperty.call(stored, "otherUnitCost")
+          ? numberValue(stored.otherUnitCost)
+          : product.otherUnitCost,
+        cargoMode: stored.cargoMode || product.cargoMode,
+        cargoType: stored.cargoType || product.cargoType,
         assets: Array.isArray(stored.assets) ? stored.assets : [],
         updatedAt: stored.updatedAt || product.updatedAt,
       };
@@ -190,6 +234,19 @@ function updatePlainDesignProduct(options, payload) {
       notes: Object.prototype.hasOwnProperty.call(payload, "notes") ? String(payload.notes || "") : product.notes,
       updatedAt: new Date().toISOString(),
     };
+    for (const field of COMMERCIAL_NUMBER_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(payload, field)) {
+        found[field] = numberValue(payload[field]);
+      }
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "cargoMode")) {
+      found.cargoMode = ["truck", "sea"].includes(String(payload.cargoMode)) ? String(payload.cargoMode) : product.cargoMode;
+    }
+    if (Object.prototype.hasOwnProperty.call(payload, "cargoType")) {
+      found.cargoType = ["A", "M", "O", "X", "Z"].includes(String(payload.cargoType).toUpperCase())
+        ? String(payload.cargoType).toUpperCase()
+        : product.cargoType;
+    }
     return found;
   });
   if (!found) throw new Error(`Product ${sku} was not found.`);

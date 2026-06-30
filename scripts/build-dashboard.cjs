@@ -9,6 +9,7 @@ const {
 } = require("./seller-order-payment-core.cjs");
 const { buildPlatformSalesDashboard } = require("./platform-sales-core.cjs");
 const { selectPublicSyncApiBase } = require("./sync-api-base-core.cjs");
+const { buildPlainDesignInitialState } = require("./plain-design-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -98,6 +99,29 @@ function readPublicSupabaseConfig() {
     anonKey,
     directWebsiteStock: Boolean(url && anonKey),
   };
+}
+
+function writePlainDesignPage(dashboard) {
+  const seed = readOptionalJson(path.join(projectRoot, "data", "plain_design_products.json"), {
+    statusOptions: [],
+    categoryOptions: [],
+    assetGroups: [],
+    products: [],
+  });
+  const plainDesign = buildPlainDesignInitialState({ seed, dashboard });
+  const template = fs.readFileSync(path.join(srcDir, "plain-design.template.html"), "utf8");
+  const styles = fs.readFileSync(path.join(srcDir, "plain-design.css"), "utf8");
+  const app = fs.readFileSync(path.join(srcDir, "plain-design.js"), "utf8");
+  const configScript = `window.__PACKHAI_SUPABASE__ = ${JSON.stringify(readPublicSupabaseConfig())};`;
+  const dataScript = `window.__PLAIN_DESIGN__ = ${JSON.stringify(plainDesign)};`;
+  const html = template
+    .replace("/* __INLINE_PLAIN_STYLES__ */", styles)
+    .replace("/* __INLINE_PLAIN_DATA__ */", `${configScript}\n${dataScript}`)
+    .replace("/* __INLINE_PLAIN_APP__ */", app);
+
+  const plainDir = path.join(distDir, "plain-design");
+  fs.mkdirSync(plainDir, { recursive: true });
+  fs.writeFileSync(path.join(plainDir, "index.html"), html, "utf8");
 }
 
 function numberValue(value) {
@@ -878,6 +902,7 @@ function build() {
     .replace("/* __INLINE_APP__ */", app);
 
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");
+  writePlainDesignPage(dashboard);
   fs.writeFileSync(path.join(distDir, "inventory-valuation-data.json"), JSON.stringify(dashboard, null, 2), "utf8");
   fs.writeFileSync(
     path.join(distDir, "stock-movements.json"),

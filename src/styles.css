@@ -142,8 +142,12 @@ select {
   order: 1;
 }
 
+.sidebar-nav a[href="/plain-design/"] {
+  order: 2;
+}
+
 .sidebar-nav a[href="#uncollected-stock"] {
-  order: 3;
+  order: 4;
 }
 
 .sidebar-nav a[href="#ai-command"] {
@@ -151,27 +155,27 @@ select {
 }
 
 .sidebar-nav a[href="#warehouses"] {
-  order: 4;
-}
-
-.sidebar-nav a[href="#executive"] {
   order: 5;
 }
 
-.sidebar-nav a[href="#valuation"] {
+.sidebar-nav a[href="#executive"] {
   order: 6;
 }
 
-.sidebar-nav a[href="#platform-sales"] {
-  order: 2;
-}
-
-.sidebar-nav a[href="#expenses"] {
+.sidebar-nav a[href="#valuation"] {
   order: 7;
 }
 
-.sidebar-nav a[href="#methodology"] {
+.sidebar-nav a[href="#platform-sales"] {
+  order: 3;
+}
+
+.sidebar-nav a[href="#expenses"] {
   order: 8;
+}
+
+.sidebar-nav a[href="#methodology"] {
+  order: 9;
 }
 
 .sidebar-nav a.active,

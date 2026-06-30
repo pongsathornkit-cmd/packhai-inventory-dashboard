@@ -2203,21 +2203,40 @@
     return error.message || String(error);
   }
 
+  function currentHashRoute() {
+    return ((location.hash || "#executive").split("?")[0] || "#executive").replace(/^#/, "");
+  }
+
+  function currentHashParams() {
+    const query = (location.hash || "").split("?")[1] || "";
+    return new URLSearchParams(query);
+  }
+
   function isExpenseRoute() {
-    return (location.hash || "").replace(/^#/, "") === "expenses";
+    return currentHashRoute() === "expenses";
   }
 
   function updateRouteState() {
-    const hash = location.hash || "#executive";
+    const routeHash = `#${currentHashRoute()}`;
     const expensesPage = isExpenseRoute();
-    const assistantPage = hash === "#ai-command";
+    const assistantPage = routeHash === "#ai-command";
     const expensesSection = $("expenses");
     if (expensesSection) {
       expensesSection.hidden = !expensesPage;
     }
     document.querySelectorAll(".sidebar-nav a").forEach((link) => {
-      link.classList.toggle("active", link.getAttribute("href") === hash);
+      link.classList.toggle("active", link.getAttribute("href") === routeHash);
     });
+    if (routeHash === "#inventory-detail") {
+      const sku = normalizeSkuValue(currentHashParams().get("sku") || "");
+      if (sku && $("searchInput")?.value !== sku) {
+        state.query = sku;
+        state.page = 1;
+        $("searchInput").value = sku;
+        renderTable();
+      }
+      window.requestAnimationFrame(() => $("inventory-detail")?.scrollIntoView({ block: "start" }));
+    }
     if (expensesPage) {
       if (!expenseState.loaded && !expenseState.loading) loadExpenses(true);
       window.requestAnimationFrame(() => expensesSection?.scrollIntoView({ block: "start" }));

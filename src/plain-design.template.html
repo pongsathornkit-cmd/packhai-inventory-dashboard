@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PLAIN Design Hub | Packhai</title>
+    <style>
+/* __INLINE_PLAIN_STYLES__ */
+    </style>
+  </head>
+  <body>
+    <div class="plain-shell">
+      <aside class="plain-sidebar">
+        <a class="back-link" href="../">Packhai Dashboard</a>
+        <div class="brand">
+          <div class="brand-mark">P</div>
+          <div>
+            <strong>PLAIN</strong>
+            <span>Design Hub</span>
+          </div>
+        </div>
+        <nav class="plain-nav">
+          <a href="#products">รายการสินค้า</a>
+          <a href="#design">งานออกแบบ</a>
+          <a href="#factory">ไฟล์โรงงาน</a>
+          <a href="#summary">สรุปสถานะ</a>
+        </nav>
+        <div class="storage-note">
+          <span>Linked with Packhai</span>
+          <strong id="linkedCount">-</strong>
+        </div>
+      </aside>
+
+      <main class="plain-workspace">
+        <header class="topbar">
+          <div>
+            <p>PLAIN Redesign Workflow</p>
+            <h1>งานรีดีไซน์สินค้า PLAIN</h1>
+          </div>
+          <div class="topbar-actions">
+            <a class="secondary-button" href="../#inventory-detail">Packhai Stock</a>
+            <button class="primary-button" id="refreshState" type="button">Refresh</button>
+          </div>
+        </header>
+
+        <section class="status-line" id="statusLine" hidden></section>
+        <section class="stats-grid" id="summary"></section>
+
+        <section class="controls" id="products">
+          <label class="search-box">
+            <span>ค้นหา</span>
+            <input id="searchInput" type="search" placeholder="SKU หรือชื่อสินค้า" />
+          </label>
+          <label class="filter-select">
+            <span>หมวด</span>
+            <select id="categoryFilter"></select>
+          </label>
+          <label class="filter-select">
+            <span>สถานะ</span>
+            <select id="statusFilter"></select>
+          </label>
+        </section>
+
+        <section class="main-grid">
+          <section class="product-panel">
+            <div class="section-heading">
+              <div>
+                <h2>รายการสินค้า</h2>
+                <span id="tableSubtitle">-</span>
+              </div>
+            </div>
+            <div class="table-wrap">
+              <table class="product-table">
+                <thead>
+                  <tr>
+                    <th>สินค้า</th>
+                    <th>ราคา KTW</th>
+                    <th>จำนวนสั่ง</th>
+                    <th>Packhai</th>
+                    <th>สถานะ</th>
+                    <th>ไฟล์</th>
+                  </tr>
+                </thead>
+                <tbody id="productRows"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <aside class="detail-panel" id="design"></aside>
+        </section>
+      </main>
+    </div>
+
+    <script>
+/* __INLINE_PLAIN_DATA__ */
+    </script>
+    <script>
+/* __INLINE_PLAIN_APP__ */
+    </script>
+  </body>
+</html>

@@ -1,0 +1,322 @@
+{
+  "statusOptions": [
+    {
+      "id": "not_started",
+      "label": "ยังไม่เริ่ม",
+      "tone": "neutral"
+    },
+    {
+      "id": "designing",
+      "label": "กำลังออกแบบ",
+      "tone": "blue"
+    },
+    {
+      "id": "review",
+      "label": "รอตรวจ",
+      "tone": "orange"
+    },
+    {
+      "id": "approved",
+      "label": "อนุมัติแล้ว",
+      "tone": "green"
+    },
+    {
+      "id": "factory_ready",
+      "label": "พร้อมส่งโรงงาน",
+      "tone": "dark"
+    }
+  ],
+  "categoryOptions": [
+    {
+      "id": "all",
+      "label": "ทั้งหมด"
+    },
+    {
+      "id": "metal",
+      "label": "ใบเลื่อยตัดเหล็ก"
+    },
+    {
+      "id": "wood",
+      "label": "ใบเลื่อยตัดไม้"
+    },
+    {
+      "id": "aluminium",
+      "label": "ใบเลื่อยตัดอลูมิเนียม"
+    }
+  ],
+  "assetGroups": [
+    {
+      "id": "product_images",
+      "label": "รูปสินค้า",
+      "description": "อัปโหลดภาพออกแบบตัวสินค้าได้หลายมุม",
+      "accept": "image/*"
+    },
+    {
+      "id": "packaging_images",
+      "label": "รูปแพคเกจจิ้ง",
+      "description": "อัปโหลดกล่อง ฉลาก และ mockup แพคเกจจิ้ง",
+      "accept": "image/*,application/pdf"
+    },
+    {
+      "id": "factory_files",
+      "label": "ไฟล์ส่งโรงงาน",
+      "description": "ไฟล์ AI, PDF, ZIP, CAD หรือเอกสารพร้อมผลิต",
+      "accept": ".ai,.eps,.pdf,.zip,.rar,.7z,.psd,.svg,.png,.jpg,.jpeg,.webp,.dwg,.dxf"
+    }
+  ],
+  "products": [
+    {
+      "sku": "P525-1310",
+      "name": "ใบเลื่อยตัดเหล็ก 4” (105 MM) X 24T",
+      "category": "metal",
+      "ktwPrice": 203.36,
+      "orderQuantity": 1000,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/hd9/h1b/10106866532382/-POLO-ACCESSORIES-P525-1310-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1310",
+      "status": "designing",
+      "notes": "เริ่มจากภาพสินค้า KTW แล้วเปลี่ยนแบรนด์/สีเป็น PLAIN"
+    },
+    {
+      "sku": "P525-1320",
+      "name": "ใบเลื่อยตัดเหล็ก 7” (185 MM) X 36T",
+      "category": "metal",
+      "ktwPrice": 546.12,
+      "orderQuantity": 1500,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/hf7/h9a/10106861027358/-POLO-ACCESSORIES-P525-1320-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1320",
+      "status": "review",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1330",
+      "name": "ใบเลื่อยตัดเหล็ก 10”(254 MM) X 60T",
+      "category": "metal",
+      "ktwPrice": 1336.6,
+      "orderQuantity": 1200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h6f/h3d/10106900414494/-POLO-ACCESSORIES-P525-1330-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1330",
+      "status": "not_started",
+      "notes": "รวมจำนวนจากหลายบรรทัดสั่งซื้อที่ใช้ SKU เดียวกัน"
+    },
+    {
+      "sku": "P525-1340",
+      "name": "ใบเลื่อยตัดเหล็ก 12”(305 MM) X 60T",
+      "category": "metal",
+      "ktwPrice": 1705.6,
+      "orderQuantity": 500,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h3b/h0b/10106855981086/-POLO-ACCESSORIES-P525-1340-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1340",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1520",
+      "name": "CERMET-7 ใบเลื่อยวงเดือนตัดเหล็ก 7\"X36T",
+      "category": "metal",
+      "ktwPrice": 394.42,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/hd9/hb3/10106889863198/-POLO-ACCESSORIES-P525-1520-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1520",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1510",
+      "name": "CERMET-4 ใบเลื่อยวงเดือนตัดเหล็ก 4\"X24T",
+      "category": "metal",
+      "ktwPrice": 170.56,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h96/h7a/10106875707422/-POLO-ACCESSORIES-P525-1510-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1510",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1540",
+      "name": "CERMET-12ใบเลื่อยวงเดือนตัดเหล็ก 12\"X60T",
+      "category": "metal",
+      "ktwPrice": 1230,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h20/h8e/10106901331998/-POLO-ACCESSORIES-P525-1540-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1540",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1530",
+      "name": "CERMET-10 ใบเลื่อยวงเดือนตัดเหล็ก10\"X60T",
+      "category": "metal",
+      "ktwPrice": 959.4,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h14/haa/10106879377438/-POLO-ACCESSORIES-P525-1530-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1530",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1550",
+      "name": "CERMET-14ใบเลื่อยวงเดือนตัดเหล็ก 14\"X66T",
+      "category": "metal",
+      "ktwPrice": 1426.8,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th/medias/sys_master/SAP-ZL1/SAP-ZL1/h0c/h84/10066088689694/-POLO-P525-1550-Nprice.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1550",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1040",
+      "name": "ใบเลื่อยวงเดือน 7\" (184 MM) X 24T",
+      "category": "wood",
+      "ktwPrice": 220.58,
+      "orderQuantity": 1200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/he4/hdb/10106853228574/-POLO-ACCESSORIES-P525-1040-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1040",
+      "status": "approved",
+      "notes": "รวมจำนวนจากรายการเดิม 1,000 และรายการเพิ่ม 200"
+    },
+    {
+      "sku": "P525-1060",
+      "name": "ใบเลื่อยวงเดือน 7\" (184 MM) X 40T",
+      "category": "wood",
+      "ktwPrice": 252.56,
+      "orderQuantity": 1200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h48/h51/10106893074462/-POLO-ACCESSORIES-P525-1060-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1060",
+      "status": "factory_ready",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1030",
+      "name": "ใบเลื่อยวงเดือน 4” (110 MM) X 40T",
+      "category": "wood",
+      "ktwPrice": 145.14,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h6e/h36/10106870202398/-POLO-ACCESSORIES-P525-1030-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1030",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1050",
+      "name": "ใบเลื่อยวงเดือน 7\" (184 MM) X 30T",
+      "category": "wood",
+      "ktwPrice": 233.7,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h06/h26/10106848182302/-POLO-ACCESSORIES-P525-1050-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1050",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1070",
+      "name": "ใบเลื่อยวงเดือน 7\" (184 MM) X 60T",
+      "category": "wood",
+      "ktwPrice": 279.62,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h23/h74/10106899955742/-POLO-ACCESSORIES-P525-1070-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1070",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1080",
+      "name": "ใบเลื่อยวงเดือน 9\" (230 MM) X 24T",
+      "category": "wood",
+      "ktwPrice": 363.26,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/hd4/hdb/10106873872414/-POLO-ACCESSORIES-P525-1080-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1080",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1010",
+      "name": "ใบเลื่อยวงเดือน 4” (110 MM) X 24T",
+      "category": "wood",
+      "ktwPrice": 119.72,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/he7/h12/10106806698014/-POLO-ACCESSORIES-P525-1010-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1010",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1120",
+      "name": "ใบเลื่อยวงเดือน 10\" (250 MM) X 30T",
+      "category": "wood",
+      "ktwPrice": 425.58,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h10/hcf/10108501131294/-POLO-ACCESSORIES-P525-1120-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1120",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1110",
+      "name": "ใบเลื่อยวงเดือน 10\" (250 MM) X 24T",
+      "category": "wood",
+      "ktwPrice": 414.1,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h24/h45/10108503883806/-POLO-ACCESSORIES-P525-1110-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1110",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1090",
+      "name": "ใบเลื่อยวงเดือน 9\" (230 MM) X 30T",
+      "category": "wood",
+      "ktwPrice": 378.84,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h5e/h00/10106865614878/-POLO-ACCESSORIES-P525-1090-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1090",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1020",
+      "name": "ใบเลื่อยวงเดือน 4” (110 MM) X 30T",
+      "category": "wood",
+      "ktwPrice": 126.28,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h31/h05/10106787201054/-POLO-ACCESSORIES-P525-1020-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1020",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1130",
+      "name": "ใบเลื่อยวงเดือน 10\" (250 MM) X 40T",
+      "category": "wood",
+      "ktwPrice": 449.36,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/hf9/h60/10106747125790/-POLO-ACCESSORIES-P525-1130-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1130",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1220",
+      "name": "ใบเลื่อยตัดอลูมีเนียม 10\" X 120T",
+      "category": "aluminium",
+      "ktwPrice": 819.18,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h79/h6c/10106857816094/-POLO-ACCESSORIES-P525-1220-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1220",
+      "status": "not_started",
+      "notes": ""
+    },
+    {
+      "sku": "P525-1210",
+      "name": "ใบเลื่อยตัดอลูมีเนียม 10\" X 100T",
+      "category": "aluminium",
+      "ktwPrice": 770.8,
+      "orderQuantity": 200,
+      "sourceImageUrl": "https://shop.ktw.co.th:443/ktw/th/THB/medias/sys_master/SAP-L01/SAP-L01/h2e/had/10106870661150/-POLO-ACCESSORIES-P525-1210-1.jpg",
+      "sourceUrl": "https://shop.ktw.co.th/p/P525-1210",
+      "status": "not_started",
+      "notes": ""
+    }
+  ]
+}

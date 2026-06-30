@@ -25,12 +25,22 @@ const {
   createSellerPaymentsAutoSyncSettings,
   publicAutoSyncState,
 } = require("./auto-sync-core.cjs");
+const {
+  deletePlainDesignAsset,
+  loadPlainDesignState,
+  resolvePlainDesignAssetPath,
+  savePlainDesignAssetFiles,
+  updatePlainDesignProduct,
+} = require("./plain-design-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const dashboardDataFile = path.join(distDir, "inventory-valuation-data.json");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
 const expensesFile = path.join(dataDir, "expenses.json");
+const plainDesignSeedFile = path.join(projectRoot, "data", "plain_design_products.json");
+const plainDesignStateFile = path.join(dataDir, "plain-design-state.json");
+const plainDesignAssetDir = path.join(dataDir, "plain-design-assets");
 const flowaccountSnapshotFile = path.join(dataDir, "flowaccount_stock_selected_warehouses.json");
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 8123);
@@ -110,6 +120,12 @@ const contentTypes = {
   ".png": "image/png",
   ".jpg": "image/jpeg",
   ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".gif": "image/gif",
+  ".pdf": "application/pdf",
+  ".zip": "application/zip",
+  ".rar": "application/vnd.rar",
+  ".7z": "application/x-7z-compressed",
 };
 
 function send(res, status, body, contentType = "text/plain; charset=utf-8") {
@@ -976,10 +992,23 @@ async function runAutoSync(job) {
 
 function resolveRequestPath(urlPath) {
   const pathname = decodeURIComponent(new URL(urlPath, `http://${host}:${port}`).pathname);
-  const requested = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
-  const filePath = path.resolve(distDir, requested);
+  let requested = pathname === "/" ? "index.html" : pathname.replace(/^\/+/, "");
+  if (requested.endsWith("/")) requested += "index.html";
+  let filePath = path.resolve(distDir, requested);
   if (!filePath.startsWith(distDir)) return null;
+  if (fs.existsSync(filePath) && fs.statSync(filePath).isDirectory()) {
+    filePath = path.join(filePath, "index.html");
+  }
   return filePath;
+}
+
+function plainDesignOptions() {
+  return {
+    seedFile: plainDesignSeedFile,
+    stateFile: plainDesignStateFile,
+    assetDir: plainDesignAssetDir,
+    dashboardFile: dashboardDataFile,
+  };
 }
 
 function authStateAdminKey() {
@@ -1172,6 +1201,48 @@ const server = http.createServer((req, res) => {
       .then(saveSupabaseStockUpdate)
       .then((result) => sendJson(res, 200, result))
       .catch((error) => sendJson(res, /needs|valid|quantity|warehouse/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/state" && req.method === "GET") {
+    sendJson(res, 200, loadPlainDesignState(plainDesignOptions()));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/product" && req.method === "POST") {
+    readJsonBody(req)
+      .then((body) => updatePlainDesignProduct(plainDesignOptions(), body))
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, /required|not found|status/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/upload" && req.method === "POST") {
+    readJsonBody(req, 80 * 1024 * 1024)
+      .then((body) => savePlainDesignAssetFiles(plainDesignOptions(), body))
+      .then((result) => sendJson(res, 201, result))
+      .catch((error) => sendJson(res, /required|invalid|payload|not found/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/delete-asset" && req.method === "POST") {
+    readJsonBody(req)
+      .then((body) => deletePlainDesignAsset(plainDesignOptions(), body))
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, /required|not found/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  const plainAssetPath = req.method === "GET" ? resolvePlainDesignAssetPath(plainDesignOptions(), url.pathname) : null;
+  if (plainAssetPath) {
+    fs.readFile(plainAssetPath, (error, data) => {
+      if (error) {
+        send(res, 404, "Not found");
+        return;
+      }
+      const contentType = contentTypes[path.extname(plainAssetPath).toLowerCase()] || "application/octet-stream";
+      send(res, 200, data, contentType);
+    });
     return;
   }
 

@@ -3,7 +3,13 @@ const path = require("path");
 const http = require("http");
 const { loadStorageState, openAuthContext } = require("./browser-auth-state.cjs");
 const { boolEnv, chromium, chromiumOptions } = require("./playwright-runtime.cjs");
-const { cookieHeaderForHost, cookieValueForHost } = require("./seller-direct-api.cjs");
+const {
+  cookieHeaderForHost,
+  cookieHeaderForHosts,
+  cookieValueForHost,
+  createLazadaMtopUrl,
+  lazadaMtopEndpoint,
+} = require("./seller-direct-api.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -27,6 +33,8 @@ const lazadaDelayMs = Math.max(0, Number(process.env.LAZADA_ORDER_PAYMENT_DELAY_
 const progressEvery = Math.max(1, Number(process.env.SELLER_ORDER_PAYMENT_PROGRESS_EVERY || 25));
 const lazadaEmptyAbortAfter = Math.max(1, Number(process.env.LAZADA_ORDER_PAYMENT_EMPTY_ABORT_AFTER || 50));
 const shopeeBrowserFallback = boolEnv("SELLER_ORDER_PAYMENT_BROWSER_FALLBACK", !process.env.RENDER);
+const lazadaDirectApi = boolEnv("LAZADA_ORDER_PAYMENT_DIRECT_API", true);
+const lazadaBrowserFallback = boolEnv("LAZADA_ORDER_PAYMENT_BROWSER_FALLBACK", !process.env.RENDER);
 
 const shopeeLegacySessionDir = path.join(workspaceRoot, ".codex-seller-browser-session");
 const shopeeSessionDir = process.env.SHOPEE_SESSION_DIR
@@ -45,6 +53,11 @@ const lazadaCdpEndpoint =
   process.env.LAZADA_CDP_ENDPOINT === "0"
     ? ""
     : process.env.LAZADA_CDP_ENDPOINT || process.env.CDP_ENDPOINT || "http://127.0.0.1:9223";
+const lazadaApiHost = "acs-m.lazada.co.th";
+const lazadaSellerHost = "sellercenter.lazada.co.th";
+const lazadaOrderQueryApi = "mtop.lazada.seller.order.query.list";
+const lazadaOrderQueryVersion = "1.0";
+const lazadaOrderQueryEndpoint = lazadaMtopEndpoint(lazadaOrderQueryApi, lazadaOrderQueryVersion);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -843,6 +856,130 @@ async function exportShopeePayments(orderNos, existingMap, errors, onRecord) {
   }
 }
 
+function lazadaDirectContext() {
+  const loaded = loadStorageState("lazada");
+  const state = loaded.state;
+  if (!state) throw new Error("Lazada storage state is not configured.");
+  const tokenCookie =
+    cookieValueForHost(state, "_m_h5_tk", lazadaApiHost) ||
+    cookieValueForHost(state, "_m_h5_tk", lazadaSellerHost) ||
+    cookieValueForHost(state, "_m_h5_tk", "lazada.co.th");
+  if (!tokenCookie) throw new Error("Missing Lazada _m_h5_tk cookie; refresh Seller Center session.");
+  return { state, tokenCookie };
+}
+
+async function callLazadaOrderQueryDirect(context, orderNo) {
+  const dataPayload = {
+    page: 1,
+    pageSize: 20,
+    filterOrderItems: true,
+    sort: "GMT_CREATE",
+    sortOrder: "DESC",
+    orderNumbers: orderNo,
+    tab: "all",
+  };
+  const data = JSON.stringify(dataPayload);
+  const { url } = createLazadaMtopUrl({
+    api: lazadaOrderQueryApi,
+    version: lazadaOrderQueryVersion,
+    token: context.tokenCookie,
+    data,
+    timestamp: String(Date.now()),
+  });
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      cookie: cookieHeaderForHosts(context.state, [lazadaApiHost, lazadaSellerHost], lazadaOrderQueryEndpoint),
+      origin: `https://${lazadaSellerHost}`,
+      referer: `https://${lazadaSellerHost}/apps/order/list?tab=all`,
+      "user-agent": "Mozilla/5.0",
+    },
+  });
+  const text = await response.text();
+  let json;
+  try {
+    json = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(`${lazadaOrderQueryApi} returned non-JSON status ${response.status}: ${text.slice(0, 160)}`);
+  }
+  if (!response.ok) {
+    throw new Error(`${lazadaOrderQueryApi} returned HTTP ${response.status}: ${JSON.stringify(json).slice(0, 240)}`);
+  }
+  const ret = (json.ret || []).join(" ");
+  if (!/SUCCESS/i.test(ret)) throw new Error(ret || "Lazada order query failed");
+  const rows = json?.data?.data?.dataSource || [];
+  return rows.find((row) => String(row.orderNumber || "") === orderNo) || rows[0] || null;
+}
+
+function lazadaCollectedAmount(row) {
+  return firstPositive(
+    row?.totalUnitPrice,
+    row?.totalRetailPrice,
+    row?.totalPrice,
+    row?.paidPrice,
+    row?.paidAmount,
+    row?.actualAmount
+  );
+}
+
+function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:direct-api") {
+  return {
+    platform: "Lazada",
+    orderNo,
+    collectedAmount: lazadaCollectedAmount(row),
+    currency: "THB",
+    paymentMethod: row.paymentMethod || "",
+    status: row.tabStatus || row.packages?.[0]?.packageStatusName || "",
+    source: "Lazada Seller Center",
+    capturedAt: new Date().toISOString(),
+    orderId: row.orderNumber || "",
+    sessionMode,
+    items: lazadaItemsFromOrder(row),
+  };
+}
+
+async function exportLazadaPaymentsDirect(orderNos, existingMap, errors, onRecord) {
+  if (!orderNos.length) return [];
+  const context = lazadaDirectContext();
+  const records = [];
+  logProgress({ event: "seller-payment-platform-start", platform: "Lazada", total: orderNos.length, mode: "direct-api" });
+  let current = 0;
+  const platformErrorStart = errors.length;
+  for (const orderNo of orderNos) {
+    try {
+      const row = await callLazadaOrderQueryDirect(context, orderNo);
+      if (!row) {
+        errors.push(`Lazada ${orderNo}: order not found`);
+      } else {
+        const record = lazadaPaymentRecordFromRow(orderNo, row);
+        records.push(record);
+        if (onRecord) onRecord(record, { platform: "Lazada", current: current + 1, total: orderNos.length });
+      }
+    } catch (error) {
+      errors.push(`Lazada ${orderNo}: ${error.message || error}`);
+    }
+    current += 1;
+    logPaymentProgress("Lazada", current, orderNos.length, orderNo, records.length, errors.length);
+    const platformErrors = errors.length - platformErrorStart;
+    if (records.length === 0 && current >= lazadaEmptyAbortAfter && platformErrors >= current) {
+      const message = `Lazada skipped after ${current} consecutive payment lookup failures. Refresh Lazada seller auth before retrying Lazada payments.`;
+      errors.push(message);
+      logProgress({
+        event: "seller-payment-platform-skip",
+        platform: "Lazada",
+        current,
+        total: orderNos.length,
+        fetched: records.length,
+        errors: errors.length,
+        reason: message,
+      });
+      break;
+    }
+    await sleep(lazadaDelayMs);
+  }
+  return records;
+}
+
 function endpointJsonUrl(endpoint) {
   return `${String(endpoint || "").replace(/\/+$/, "")}/json/version`;
 }
@@ -993,7 +1130,7 @@ function lazadaItemsFromOrder(row) {
   return items;
 }
 
-async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
+async function exportLazadaPaymentsBrowser(orderNos, existingMap, errors, onRecord) {
   if (!orderNos.length) return [];
   const session = await openLazadaPage();
   const records = [];
@@ -1010,13 +1147,14 @@ async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
           const record = {
             platform: "Lazada",
             orderNo,
-            collectedAmount: numberValue(row.totalUnitPrice || row.totalRetailPrice),
+            collectedAmount: lazadaCollectedAmount(row),
             currency: "THB",
             paymentMethod: row.paymentMethod || "",
             status: row.tabStatus || row.packages?.[0]?.packageStatusName || "",
             source: "Lazada Seller Center",
             capturedAt: new Date().toISOString(),
             orderId: row.orderNumber || "",
+            sessionMode: session.mode || "browser",
             items: lazadaItemsFromOrder(row),
           };
           records.push(record);
@@ -1048,6 +1186,20 @@ async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
     await session.close().catch(() => {});
   }
   return records;
+}
+
+async function exportLazadaPayments(orderNos, existingMap, errors, onRecord) {
+  if (!orderNos.length) return [];
+  if (lazadaDirectApi) {
+    try {
+      return await exportLazadaPaymentsDirect(orderNos, existingMap, errors, onRecord);
+    } catch (error) {
+      if (!lazadaBrowserFallback) throw error;
+      errors.push(`Lazada direct API failed, falling back to browser: ${error.message || error}`);
+    }
+  }
+  if (!lazadaBrowserFallback) return [];
+  return exportLazadaPaymentsBrowser(orderNos, existingMap, errors, onRecord);
 }
 
 async function main() {

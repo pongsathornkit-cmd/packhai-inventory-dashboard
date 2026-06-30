@@ -6,7 +6,12 @@ const SHOPEE_HOST = "seller.shopee.co.th";
 const LAZADA_API_HOST = "acs-m.lazada.co.th";
 const LAZADA_SELLER_HOST = "sellercenter.lazada.co.th";
 const LAZADA_PRODUCT_API = "mtop.lazada.merchant.product.manager.simple.render.list";
-const LAZADA_PRODUCT_ENDPOINT = `/h5/${LAZADA_PRODUCT_API}/1.0/`;
+
+function lazadaMtopEndpoint(api, version = "1.0") {
+  return `/h5/${api}/${version}/`;
+}
+
+const LAZADA_PRODUCT_ENDPOINT = lazadaMtopEndpoint(LAZADA_PRODUCT_API);
 
 function normalizeCookieDomain(domain) {
   return String(domain || "").trim().replace(/^\./, "").toLowerCase();
@@ -207,19 +212,22 @@ async function fetchShopeeSellerData(options = {}) {
 }
 
 function createLazadaMtopUrl(options) {
+  const api = String(options.api || LAZADA_PRODUCT_API);
+  const version = String(options.version || options.v || "1.0");
+  const endpoint = String(options.endpoint || lazadaMtopEndpoint(api, version));
   const token = String(options.token || "").split("_")[0];
   const timestamp = String(options.timestamp || Date.now());
   const appKey = String(options.appKey || process.env.LAZADA_MTOP_APP_KEY || "12574478");
   const data = String(options.data || "{}");
   const sign = crypto.createHash("md5").update(`${token}&${timestamp}&${appKey}&${data}`).digest("hex");
-  const url = new URL(`https://${LAZADA_API_HOST}${LAZADA_PRODUCT_ENDPOINT}`);
+  const url = new URL(`https://${LAZADA_API_HOST}${endpoint}`);
   const params = {
     jsv: "2.7.2",
     appKey,
     t: timestamp,
     sign,
-    api: LAZADA_PRODUCT_API,
-    v: "1.0",
+    api,
+    v: version,
     type: "originaljson",
     dataType: "json",
     H5Request: "true",
@@ -320,4 +328,5 @@ module.exports = {
   createLazadaMtopUrl,
   fetchLazadaSellerData,
   fetchShopeeSellerData,
+  lazadaMtopEndpoint,
 };

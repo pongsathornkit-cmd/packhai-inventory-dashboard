@@ -43,6 +43,22 @@ test("seller direct API helpers sign Lazada mtop URLs", () => {
   assert.equal(request.url.searchParams.get("appKey"), "app");
 });
 
+test("seller direct API helpers sign custom Lazada mtop APIs", () => {
+  const { createLazadaMtopUrl } = require("../scripts/seller-direct-api.cjs");
+  const request = createLazadaMtopUrl({
+    api: "mtop.lazada.seller.order.query.list",
+    version: "1.0",
+    token: "token",
+    appKey: "app",
+    timestamp: "12345",
+    data: JSON.stringify({ orderNumbers: "1104275633439603" }),
+  });
+
+  assert.equal(request.url.pathname, "/h5/mtop.lazada.seller.order.query.list/1.0/");
+  assert.equal(request.url.searchParams.get("api"), "mtop.lazada.seller.order.query.list");
+  assert.equal(request.url.searchParams.get("v"), "1.0");
+});
+
 test("seller price export scripts prefer direct API before browser fallback", () => {
   const shopee = fs.readFileSync(path.join(projectRoot, "scripts", "export-shopee-products.cjs"), "utf8");
   const lazada = fs.readFileSync(path.join(projectRoot, "scripts", "export-lazada-products.cjs"), "utf8");
@@ -74,12 +90,16 @@ test("seller price export scripts prefer direct API before browser fallback", ()
   );
 });
 
-test("seller payment export uses Shopee direct API before browser fallback", () => {
+test("seller payment export uses Shopee and Lazada direct APIs before browser fallback", () => {
   const payments = fs.readFileSync(path.join(projectRoot, "scripts", "export-seller-order-payments.cjs"), "utf8");
 
   assert.match(payments, /exportShopeePaymentsDirect/);
   assert.match(payments, /fetchShopeeDirectOrderPayment/);
+  assert.match(payments, /exportLazadaPaymentsDirect/);
+  assert.match(payments, /callLazadaOrderQueryDirect/);
   assert.match(payments, /SELLER_ORDER_PAYMENT_BROWSER_FALLBACK/);
+  assert.match(payments, /LAZADA_ORDER_PAYMENT_DIRECT_API/);
+  assert.match(payments, /LAZADA_ORDER_PAYMENT_BROWSER_FALLBACK/);
   assert.match(payments, /PACKHAI_DATA_DIR/);
   assert.match(payments, /path\.join\(dataDir,\s*"seller_compare"\)/);
   assert.ok(
@@ -89,6 +109,14 @@ test("seller payment export uses Shopee direct API before browser fallback", () 
   assert.ok(
     payments.indexOf("exportShopeePaymentsDirect(orderNos") < payments.indexOf("exportShopeePaymentsBrowser(orderNos"),
     "Shopee payment export should try direct API before browser fallback"
+  );
+  assert.ok(
+    payments.indexOf("exportLazadaPaymentsDirect(orderNos") < payments.indexOf("exportLazadaPaymentsBrowser(orderNos"),
+    "Lazada payment direct API should be defined before browser fallback"
+  );
+  assert.ok(
+    payments.indexOf("return await exportLazadaPaymentsDirect") < payments.indexOf("return exportLazadaPaymentsBrowser"),
+    "Lazada payment export should try direct API before browser fallback"
   );
 });
 

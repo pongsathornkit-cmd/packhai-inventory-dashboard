@@ -1,5 +1,6 @@
 (function () {
   const embedded = window.__PLAIN_DESIGN__ || {};
+  const EXCHANGE_RATE_REFRESH_MS = 5 * 60 * 1000;
   const MOMO_RATES = {
     truck: {
       label: "ทางรถ 7-14 วัน",
@@ -32,6 +33,15 @@
     poNumber: localStorage.getItem("plainPoNumber") || `PLAIN-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
     supplierName: localStorage.getItem("plainSupplierName") || "PLAIN Redesign Supplier",
     poDate: localStorage.getItem("plainPoDate") || new Date().toISOString().slice(0, 10),
+    exchangeRate: {
+      rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
+      fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
+      source: "Google Finance",
+      sourceUrl: "https://www.google.com/finance/quote/USD-THB",
+      loading: false,
+      stale: false,
+      error: "",
+    },
     saving: false,
   };
 
@@ -42,6 +52,11 @@
     style: "currency",
     currency: "THB",
     maximumFractionDigits: 2,
+  });
+  const fmtUsd = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 4,
   });
   const fmtPercent = new Intl.NumberFormat("th-TH", {
     style: "percent",
@@ -102,6 +117,7 @@
     return {
       ...product,
       orderQuantity: numberValue(product.orderQuantity),
+      purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
       purchaseUnitCost: numberValue(product.purchaseUnitCost || ktwPrice),
       saleUnitPrice: numberValue(product.saleUnitPrice || ktwPrice),
       widthCm: numberValue(product.widthCm),
@@ -113,6 +129,32 @@
       cargoMode: product.cargoMode || "truck",
       cargoType: product.cargoType || "A",
     };
+  }
+
+  async function loadExchangeRate(force = false) {
+    state.exchangeRate.loading = true;
+    try {
+      const payload = await api(`/api/plain-design/exchange-rate${force ? "?force=1" : ""}`);
+      const rate = numberValue(payload.rate);
+      if (rate > 0) {
+        state.exchangeRate = {
+          rate,
+          fetchedAt: payload.fetchedAt || new Date().toISOString(),
+          source: payload.source || "Google Finance",
+          sourceUrl: payload.sourceUrl || state.exchangeRate.sourceUrl,
+          loading: false,
+          stale: Boolean(payload.stale),
+          error: payload.error || "",
+        };
+        localStorage.setItem("plainUsdThbRate", String(rate));
+        localStorage.setItem("plainUsdThbFetchedAt", state.exchangeRate.fetchedAt);
+      }
+    } catch (error) {
+      state.exchangeRate.loading = false;
+      state.exchangeRate.error = error.message || String(error);
+      showMessage(`ดึงเรต USD/THB ไม่สำเร็จ: ${state.exchangeRate.error}`, true);
+    }
+    render();
   }
 
   async function loadState() {
@@ -149,9 +191,25 @@
     return { mode, type, ...MOMO_RATES[mode][type], modeLabel: MOMO_RATES[mode].label };
   }
 
+  function effectivePurchaseUnitCost(product) {
+    const usd = numberValue(product.purchaseUnitCostUsd);
+    const rate = numberValue(state.exchangeRate.rate);
+    if (usd > 0 && rate > 0) return moneyValue(usd * rate);
+    return numberValue(product.purchaseUnitCost || product.ktwPrice);
+  }
+
+  function displayPurchaseUnitCostUsd(product) {
+    const usd = numberValue(product.purchaseUnitCostUsd);
+    if (usd > 0) return usd;
+    const thb = numberValue(product.purchaseUnitCost || product.ktwPrice);
+    const rate = numberValue(state.exchangeRate.rate);
+    return rate > 0 && thb > 0 ? moneyValue(thb / rate) : 0;
+  }
+
   function lineCalc(product, discountPercent = state.fastCargoDiscount) {
     const qty = numberValue(product.orderQuantity);
-    const purchaseUnitCost = numberValue(product.purchaseUnitCost || product.ktwPrice);
+    const purchaseUnitCostUsd = displayPurchaseUnitCostUsd(product);
+    const purchaseUnitCost = effectivePurchaseUnitCost(product);
     const saleUnitPrice = numberValue(product.saleUnitPrice || product.ktwPrice);
     const packagingUnitCost = numberValue(product.packagingUnitCost);
     const otherUnitCost = numberValue(product.otherUnitCost);
@@ -178,6 +236,7 @@
     const profitTotal = revenueTotal - totalCost;
     return {
       qty,
+      purchaseUnitCostUsd,
       purchaseUnitCost,
       saleUnitPrice,
       packagingUnitCost,
@@ -306,8 +365,8 @@
                 </div>
               </td>
               <td class="num">
-                <strong>${fmtMoney.format(calc.purchaseUnitCost)}</strong>
-                <small>ขาย ${fmtMoney.format(calc.saleUnitPrice)}</small>
+                <strong>${fmtUsd.format(calc.purchaseUnitCostUsd)}</strong>
+                <small>${fmtMoney.format(calc.purchaseUnitCost)} · ขาย ${fmtMoney.format(calc.saleUnitPrice)}</small>
               </td>
               <td class="num">
                 <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
@@ -373,13 +432,14 @@
         <div class="mini-heading">
           <div>
             <h3>คำนวณรายชิ้น</h3>
-            <span>อิงหลัก Momocargo แล้วหัก Fast Cargo ${fmtQty.format(state.fastCargoDiscount)}%</span>
+            <span>ต้นทุน USD แปลงเป็นบาทด้วยเรต Google Finance แล้วคำนวณต่อกับ Momocargo</span>
           </div>
           <button class="ghost-button" id="saveCommercial" type="button">บันทึกตัวเลข</button>
         </div>
+        ${renderExchangeCard("compact")}
         <div class="calc-grid">
           ${numberInput("orderQuantity", "จำนวนสั่ง", fieldValue(product, "orderQuantity"), "1")}
-          ${numberInput("purchaseUnitCost", "ต้นทุน/ชิ้น", fieldValue(product, "purchaseUnitCost"), "0.01")}
+          ${numberInput("purchaseUnitCostUsd", "ต้นทุน USD/ชิ้น", displayPurchaseUnitCostUsd(product), "0.0001")}
           ${numberInput("saleUnitPrice", "ราคาขาย/ชิ้น", fieldValue(product, "saleUnitPrice"), "0.01")}
           ${numberInput("packagingUnitCost", "แพคเกจ/ชิ้น", fieldValue(product, "packagingUnitCost"), "0.01")}
           ${numberInput("otherUnitCost", "ค่าอื่น/ชิ้น", fieldValue(product, "otherUnitCost"), "0.01")}
@@ -433,8 +493,43 @@
       </label>`;
   }
 
+  function exchangeRateLabel() {
+    const rate = numberValue(state.exchangeRate.rate);
+    return rate > 0 ? `1 USD = ${fmtMoney.format(rate)}` : "ยังไม่มีเรต";
+  }
+
+  function exchangeRateTimeLabel() {
+    if (!state.exchangeRate.fetchedAt) return "กำลังรอ sync จาก Google";
+    return new Date(state.exchangeRate.fetchedAt).toLocaleString("th-TH", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }
+
+  function renderExchangeCard(variant = "") {
+    const status = state.exchangeRate.loading
+      ? "กำลัง sync..."
+      : state.exchangeRate.error
+      ? `ใช้ค่าล่าสุด · ${state.exchangeRate.error}`
+      : state.exchangeRate.stale
+      ? "ใช้ cache ล่าสุด"
+      : "sync จาก Google Finance";
+    return `
+      <article class="exchange-card ${escapeHtml(variant)}">
+        <div>
+          <span>USD → THB</span>
+          <strong>${escapeHtml(exchangeRateLabel())}</strong>
+          <small>${escapeHtml(status)} · ${escapeHtml(exchangeRateTimeLabel())}</small>
+        </div>
+        <button class="ghost-button" data-refresh-exchange type="button">Sync เรต</button>
+      </article>`;
+  }
+
   function renderCalcResult(calc) {
     return [
+      ["ต้นทุน USD", fmtUsd.format(calc.purchaseUnitCostUsd)],
+      ["ต้นทุน THB", fmtMoney.format(calc.purchaseUnitCost)],
+      ["เรต USD/THB", exchangeRateLabel()],
       ["คิวรวม", `${fmtMeasure.format(calc.totalCbm)} CBM`],
       ["น้ำหนักรวม", `${fmtMeasure.format(calc.totalWeightKg)} KG`],
       ["ค่าส่งก่อนลด", fmtMoney.format(calc.momoBaseShipping)],
@@ -447,9 +542,16 @@
   }
 
   function collectCommercialFields() {
+    const product = selectedProduct() || {};
+    const purchaseUnitCostUsd = numberValue($("purchaseUnitCostUsd")?.value);
+    const purchaseUnitCost =
+      state.exchangeRate.rate > 0 && purchaseUnitCostUsd > 0
+        ? moneyValue(purchaseUnitCostUsd * state.exchangeRate.rate)
+        : numberValue(product.purchaseUnitCost || product.ktwPrice);
     return {
       orderQuantity: numberValue($("orderQuantity")?.value),
-      purchaseUnitCost: numberValue($("purchaseUnitCost")?.value),
+      purchaseUnitCostUsd,
+      purchaseUnitCost,
       saleUnitPrice: numberValue($("saleUnitPrice")?.value),
       packagingUnitCost: numberValue($("packagingUnitCost")?.value),
       otherUnitCost: numberValue($("otherUnitCost")?.value),
@@ -470,6 +572,9 @@
     $("detailStatus").addEventListener("change", (event) => updateProduct(product.sku, { status: event.target.value }));
     $("saveNotes").addEventListener("click", () => updateProduct(product.sku, { notes: $("detailNotes").value }));
     $("saveCommercial").addEventListener("click", () => updateProduct(product.sku, collectCommercialFields()));
+    document.querySelectorAll("[data-refresh-exchange]").forEach((button) => {
+      button.addEventListener("click", () => loadExchangeRate(true));
+    });
     $("itemCalculator").addEventListener("input", () => {
       updateLocalProduct(product.sku, collectCommercialFields());
       const nextProduct = selectedProduct();
@@ -540,6 +645,7 @@
         <button class="primary-button" id="printPo" type="button">พิมพ์ใบสั่งซื้อ</button>
       </div>
       <div class="po-controls">
+        ${renderExchangeCard()}
         <label class="field">
           <span>เลขที่ PO</span>
           <input id="poNumber" type="text" value="${escapeHtml(state.poNumber)}" />
@@ -575,7 +681,8 @@
               <th>SKU</th>
               <th>รายการ</th>
               <th class="num">จำนวน</th>
-              <th class="num">ต้นทุน/ชิ้น</th>
+              <th class="num">ต้นทุน USD</th>
+              <th class="num">ต้นทุน THB</th>
               <th class="num">ค่าส่ง/ชิ้น</th>
               <th class="num">ต้นทุนรวม</th>
               <th class="num">ราคาขายรวม</th>
@@ -588,6 +695,7 @@
                 <td><strong>${escapeHtml(product.sku)}</strong></td>
                 <td>${escapeHtml(product.name)}<small>${escapeHtml(calc.rate.modeLabel)} · ${escapeHtml(calc.rate.label)} · ฐาน ${calc.chargeBasis}</small></td>
                 <td class="num">${fmtQty.format(calc.qty)}</td>
+                <td class="num">${fmtUsd.format(calc.purchaseUnitCostUsd)}</td>
                 <td class="num">${fmtMoney.format(calc.purchaseUnitCost)}</td>
                 <td class="num">${fmtMoney.format(calc.shippingUnit)}</td>
                 <td class="num">${fmtMoney.format(calc.totalCost)}</td>
@@ -602,6 +710,9 @@
 
   function bindPoEvents() {
     $("printPo")?.addEventListener("click", () => window.print());
+    document.querySelectorAll("#purchase-order [data-refresh-exchange]").forEach((button) => {
+      button.addEventListener("click", () => loadExchangeRate(true));
+    });
     $("fastCargoDiscount")?.addEventListener("input", (event) => {
       state.fastCargoDiscount = clamp(event.target.value, 0, 100);
       localStorage.setItem("plainFastCargoDiscount", String(state.fastCargoDiscount));
@@ -719,4 +830,6 @@
 
   bindEvents();
   loadState();
+  loadExchangeRate(false);
+  window.setInterval(() => loadExchangeRate(false), EXCHANGE_RATE_REFRESH_MS);
 })();

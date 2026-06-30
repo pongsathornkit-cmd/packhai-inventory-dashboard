@@ -6,6 +6,7 @@ const STATE_VERSION = 1;
 const ASSET_GROUPS = new Set(["product_images", "packaging_images", "factory_files"]);
 const COMMERCIAL_NUMBER_FIELDS = [
   "orderQuantity",
+  "purchaseUnitCostUsd",
   "purchaseUnitCost",
   "saleUnitPrice",
   "widthCm",
@@ -130,6 +131,7 @@ function buildPlainDesignInitialState({ seed, dashboard }) {
       category: product.category || "wood",
       ktwPrice: numberValue(product.ktwPrice),
       orderQuantity: numberValue(product.orderQuantity),
+      purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
       purchaseUnitCost: numberValue(product.purchaseUnitCost || product.ktwPrice),
       saleUnitPrice: numberValue(product.saleUnitPrice || product.ktwPrice),
       widthCm: numberValue(product.widthCm),
@@ -179,6 +181,9 @@ function mergeStoredState(initialState, storedState) {
         purchaseUnitCost: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCost")
           ? numberValue(stored.purchaseUnitCost)
           : product.purchaseUnitCost,
+        purchaseUnitCostUsd: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCostUsd")
+          ? numberValue(stored.purchaseUnitCostUsd)
+          : product.purchaseUnitCostUsd,
         saleUnitPrice: Object.prototype.hasOwnProperty.call(stored, "saleUnitPrice")
           ? numberValue(stored.saleUnitPrice)
           : product.saleUnitPrice,

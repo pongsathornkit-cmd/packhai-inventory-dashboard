@@ -552,6 +552,37 @@ h2 {
   background: #fbfcff;
 }
 
+.exchange-card {
+  grid-column: span 2;
+  min-height: 74px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid #d7e2f1;
+  border-radius: 8px;
+  background: #f3f8ff;
+}
+
+.exchange-card.compact {
+  grid-column: auto;
+}
+
+.exchange-card span,
+.exchange-card small {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.exchange-card strong {
+  display: block;
+  margin-top: 4px;
+  font-size: 20px;
+  line-height: 1.15;
+}
+
 .mini-heading {
   display: flex;
   justify-content: space-between;
@@ -618,7 +649,7 @@ h2 {
 
 .po-controls {
   display: grid;
-  grid-template-columns: 180px 170px minmax(220px, 1fr) 190px;
+  grid-template-columns: minmax(280px, 1.35fr) 170px 160px minmax(220px, 1fr) 190px;
   gap: 10px;
   padding: 14px 16px;
   border-bottom: 1px solid var(--line);
@@ -631,7 +662,7 @@ h2 {
 
 .po-table {
   width: 100%;
-  min-width: 1120px;
+  min-width: 1220px;
   border-collapse: separate;
   border-spacing: 0;
 }
@@ -780,6 +811,10 @@ h2 {
 
   .detail-panel {
     position: static;
+  }
+
+  .exchange-card {
+    grid-column: auto;
   }
 }
 

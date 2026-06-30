@@ -41,6 +41,16 @@ const expensesFile = path.join(dataDir, "expenses.json");
 const plainDesignSeedFile = path.join(projectRoot, "data", "plain_design_products.json");
 const plainDesignStateFile = path.join(dataDir, "plain-design-state.json");
 const plainDesignAssetDir = path.join(dataDir, "plain-design-assets");
+const googleUsdThbUrl = "https://www.google.com/finance/quote/USD-THB";
+const exchangeRateCacheTtlMs = Math.max(60, Number(process.env.EXCHANGE_RATE_CACHE_SECONDS || 300)) * 1000;
+const exchangeRateCache = {
+  rate: 0,
+  fetchedAt: "",
+  expiresAt: 0,
+  source: "Google Finance",
+  sourceUrl: googleUsdThbUrl,
+  error: "",
+};
 const flowaccountSnapshotFile = path.join(dataDir, "flowaccount_stock_selected_warehouses.json");
 const host = process.env.HOST || "127.0.0.1";
 const port = Number(process.env.PORT || 8123);
@@ -138,6 +148,57 @@ function send(res, status, body, contentType = "text/plain; charset=utf-8") {
 
 function sendJson(res, status, body) {
   send(res, status, JSON.stringify(body, null, 2), "application/json; charset=utf-8");
+}
+
+function parseUsdThbRateFromGoogleFinance(html) {
+  const text = String(html || "").replace(/\s+/g, " ");
+  const patterns = [
+    /United States Dollar\s*\/\s*Thai Baht\s*([0-9]{2,3}(?:,[0-9]{3})*(?:\.[0-9]{2,6})?)/i,
+    /USD\s*\/\s*THB[\s\S]{0,1200}?>([0-9]{2,3}(?:,[0-9]{3})*(?:\.[0-9]{2,6})?)</i,
+    /\[\[\[\s*\[\s*\[\s*\[?\s*([0-9]{2,3}\.[0-9]{2,6})\s*,/i,
+  ];
+  for (const pattern of patterns) {
+    const match = text.match(pattern);
+    if (!match) continue;
+    const rate = Number(String(match[1]).replace(/,/g, ""));
+    if (Number.isFinite(rate) && rate > 20 && rate < 50) return rate;
+  }
+  const nearby = text.match(/United States Dollar\s*\/\s*Thai Baht[\s\S]{0,5000}/i)?.[0] || "";
+  const numeric = nearby.match(/([0-9]{2,3}\.[0-9]{2,6})/);
+  const rate = numeric ? Number(numeric[1]) : 0;
+  if (Number.isFinite(rate) && rate > 20 && rate < 50) return rate;
+  throw new Error("USD/THB rate was not found in Google Finance response.");
+}
+
+async function fetchUsdThbExchangeRate(force = false) {
+  const now = Date.now();
+  if (!force && exchangeRateCache.rate && exchangeRateCache.expiresAt > now) {
+    return { ...exchangeRateCache, cached: true, ok: true };
+  }
+
+  try {
+    const response = await fetch(googleUsdThbUrl, {
+      headers: {
+        "Accept-Language": "en-US,en;q=0.9,th;q=0.8",
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126 Safari/537.36",
+      },
+    });
+    if (!response.ok) throw new Error(`Google Finance status ${response.status}`);
+    const html = await response.text();
+    const rate = parseUsdThbRateFromGoogleFinance(html);
+    exchangeRateCache.rate = Math.round((rate + Number.EPSILON) * 1000000) / 1000000;
+    exchangeRateCache.fetchedAt = new Date().toISOString();
+    exchangeRateCache.expiresAt = now + exchangeRateCacheTtlMs;
+    exchangeRateCache.error = "";
+    return { ...exchangeRateCache, cached: false, ok: true };
+  } catch (error) {
+    exchangeRateCache.error = error.message || String(error);
+    if (exchangeRateCache.rate) {
+      return { ...exchangeRateCache, cached: true, stale: true, ok: true };
+    }
+    throw error;
+  }
 }
 
 function readJsonBody(req, maxBytes = 1024 * 1024) {
@@ -1206,6 +1267,13 @@ const server = http.createServer((req, res) => {
 
   if (url.pathname === "/api/plain-design/state" && req.method === "GET") {
     sendJson(res, 200, loadPlainDesignState(plainDesignOptions()));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/exchange-rate" && req.method === "GET") {
+    fetchUsdThbExchangeRate(url.searchParams.get("force") === "1")
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, 503, { ok: false, message: error.message || String(error), source: "Google Finance" }));
     return;
   }
 

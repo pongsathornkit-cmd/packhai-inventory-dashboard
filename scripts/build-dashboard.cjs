@@ -7,6 +7,7 @@ const {
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
 } = require("./seller-order-payment-core.cjs");
+const { buildPlatformSalesDashboard } = require("./platform-sales-core.cjs");
 const { selectPublicSyncApiBase } = require("./sync-api-base-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -845,6 +846,9 @@ function build() {
     .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
   const platformPaymentOrders = buildPlatformPaymentOrders(stockMovements);
   const platformPaymentSummary = buildPlatformPaymentSummary(stockMovements);
+  const platformSalesDashboard = buildPlatformSalesDashboard(platformPaymentOrders, {
+    generatedAt: new Date().toISOString(),
+  });
   const uncollectedStockDeductions = buildUncollectedStockDeductionReport(stockMovements, rows);
 
   const dashboard = {
@@ -852,9 +856,11 @@ function build() {
     rows,
     websiteStockTransactions,
     platformPaymentOrders,
+    platformSalesDashboard,
     uncollectedStockDeductions,
   };
   dashboard.summary.platformPayment = platformPaymentSummary;
+  dashboard.summary.platformSales = platformSalesDashboard.summary;
   dashboard.platformPaymentSummary = platformPaymentSummary;
   dashboard.summary.uncollectedStockDeductions = uncollectedStockDeductions.summary;
 

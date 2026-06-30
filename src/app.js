@@ -10,6 +10,9 @@
   let stockMovementLoadState = stockMovementRows.length ? "loaded" : "idle";
   let stockMovementLoadError = "";
   let stockMovementLoadPromise = null;
+  const PLATFORM_SALES_REFRESH_MS = 60000;
+  let platformSalesRefreshTimer = null;
+  let platformSalesLastRefreshAt = "";
   let activeDetailRow = null;
   let activeStockAdjustRow = null;
   const rowByDetailId = new Map();
@@ -685,6 +688,8 @@
 
     renderFreshness();
     renderSidebarStatus();
+    platformSalesLastRefreshAt = new Date().toISOString();
+    renderPlatformSalesDashboard();
     renderPaymentCollectionReport();
     renderUncollectedStockDashboard();
     renderMethodology();
@@ -703,6 +708,7 @@
     renderWarehouseFilters();
     renderFilters();
     renderTable();
+    renderPlatformSalesDashboard();
     renderUncollectedStockDashboard();
   }
 
@@ -3318,6 +3324,191 @@
     return Array.isArray(data.platformPaymentOrders) ? data.platformPaymentOrders : [];
   }
 
+  function platformSalesDateKey(value) {
+    const date = new Date(value || 0);
+    if (Number.isNaN(date.getTime())) return "";
+    try {
+      const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Bangkok",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).formatToParts(date);
+      const part = (type) => parts.find((item) => item.type === type)?.value || "";
+      return `${part("year")}-${part("month")}-${part("day")}`;
+    } catch {
+      return date.toISOString().slice(0, 10);
+    }
+  }
+
+  function platformSalesAddDaysKey(key, days) {
+    const [year, month, day] = String(key || "")
+      .split("-")
+      .map((item) => Number(item));
+    if (!year || !month || !day) return "";
+    const date = new Date(Date.UTC(year, month - 1, day));
+    date.setUTCDate(date.getUTCDate() + days);
+    return date.toISOString().slice(0, 10);
+  }
+
+  function platformSalesDaysBetween(startKey, endKey) {
+    const parse = (key) => {
+      const [year, month, day] = String(key || "")
+        .split("-")
+        .map((item) => Number(item));
+      if (!year || !month || !day) return NaN;
+      return Date.UTC(year, month - 1, day);
+    };
+    const start = parse(startKey);
+    const end = parse(endKey);
+    if (!Number.isFinite(start) || !Number.isFinite(end)) return Infinity;
+    return Math.round((end - start) / 86400000);
+  }
+
+  function platformSalesOrderDate(order) {
+    return order?.latestSaleAt || order?.firstSaleAt || order?.saleAt || order?.paymentCapturedAt || order?.capturedAt || "";
+  }
+
+  function emptyPlatformSales(platform) {
+    return {
+      platform,
+      orderCount: 0,
+      salesAmount: 0,
+      quantity: 0,
+      averageOrderValue: 0,
+      salesShare: 0,
+      latestSaleAt: "",
+    };
+  }
+
+  function normalizePlatformSalesOrder(order) {
+    const platform = normalizePlatformValue(order?.platform || order?.source || order?.paymentSource);
+    if (!["Shopee", "Lazada"].includes(platform)) return null;
+    const amount = moneyValue(order?.collectedAmount);
+    if (String(order?.paymentStatus || "").trim() !== "matched" || amount <= 0) return null;
+    const latestSaleAt = platformSalesOrderDate(order);
+    const saleDate = platformSalesDateKey(latestSaleAt);
+    if (!saleDate) return null;
+    return {
+      platform,
+      orderNo: String(order?.orderNo || order?.platformOrderNo || "").trim(),
+      packhaiOrderSummary: String(order?.packhaiOrderSummary || "").trim(),
+      skuSummary: String(order?.skuSummary || "").trim(),
+      productSummary: String(order?.productSummary || "").trim(),
+      totalQuantity: moneyValue(order?.totalQuantity),
+      collectedAmount: amount,
+      latestSaleAt,
+      saleDate,
+      paymentCapturedAt: order?.paymentCapturedAt || "",
+      orderStatus: order?.orderStatus || "",
+    };
+  }
+
+  function buildPlatformSalesDashboardFromOrders(orders = {}, options = {}) {
+    const nowKey = platformSalesDateKey(options.now || new Date());
+    const windowDays = Math.max(1, Math.floor(Number(options.dailyWindowDays || 14)));
+    const recentLimit = Math.max(1, Math.floor(Number(options.recentLimit || 12)));
+    const byPlatform = {
+      Shopee: emptyPlatformSales("Shopee"),
+      Lazada: emptyPlatformSales("Lazada"),
+    };
+    const dailyMap = new Map();
+    for (let offset = windowDays - 1; offset >= 0; offset -= 1) {
+      const key = platformSalesAddDaysKey(nowKey, -offset);
+      dailyMap.set(key, { date: key, Shopee: 0, Lazada: 0, total: 0, orderCount: 0 });
+    }
+    const normalizedOrders = (Array.isArray(orders) ? orders : [])
+      .map(normalizePlatformSalesOrder)
+      .filter(Boolean);
+    const summary = {
+      orderCount: 0,
+      totalSalesAmount: 0,
+      averageOrderValue: 0,
+      todaySalesAmount: 0,
+      last7SalesAmount: 0,
+      last30SalesAmount: 0,
+      latestSaleAt: "",
+      liveSource: "Seller platform payments",
+    };
+
+    normalizedOrders.forEach((order) => {
+      const amount = moneyValue(order.collectedAmount);
+      summary.orderCount += 1;
+      summary.totalSalesAmount += amount;
+      if (!summary.latestSaleAt || dateTimeValue(order.latestSaleAt) > dateTimeValue(summary.latestSaleAt)) {
+        summary.latestSaleAt = order.latestSaleAt;
+      }
+
+      const platform = byPlatform[order.platform];
+      platform.orderCount += 1;
+      platform.salesAmount += amount;
+      platform.quantity += numberValue(order.totalQuantity);
+      if (!platform.latestSaleAt || dateTimeValue(order.latestSaleAt) > dateTimeValue(platform.latestSaleAt)) {
+        platform.latestSaleAt = order.latestSaleAt;
+      }
+
+      const diffDays = platformSalesDaysBetween(order.saleDate, nowKey);
+      if (diffDays === 0) summary.todaySalesAmount += amount;
+      if (diffDays >= 0 && diffDays < 7) summary.last7SalesAmount += amount;
+      if (diffDays >= 0 && diffDays < 30) summary.last30SalesAmount += amount;
+
+      const daily = dailyMap.get(order.saleDate);
+      if (daily) {
+        daily[order.platform] = moneyValue(numberValue(daily[order.platform]) + amount);
+        daily.total = moneyValue(numberValue(daily.total) + amount);
+        daily.orderCount += 1;
+      }
+    });
+
+    summary.totalSalesAmount = moneyValue(summary.totalSalesAmount);
+    summary.todaySalesAmount = moneyValue(summary.todaySalesAmount);
+    summary.last7SalesAmount = moneyValue(summary.last7SalesAmount);
+    summary.last30SalesAmount = moneyValue(summary.last30SalesAmount);
+    summary.averageOrderValue = summary.orderCount ? moneyValue(summary.totalSalesAmount / summary.orderCount) : 0;
+    ["Shopee", "Lazada"].forEach((platformName) => {
+      const item = byPlatform[platformName];
+      item.salesAmount = moneyValue(item.salesAmount);
+      item.quantity = moneyValue(item.quantity);
+      item.averageOrderValue = item.orderCount ? moneyValue(item.salesAmount / item.orderCount) : 0;
+      item.salesShare = summary.totalSalesAmount ? item.salesAmount / summary.totalSalesAmount : 0;
+    });
+
+    return {
+      generatedAt: new Date().toISOString(),
+      timeZone: "Asia/Bangkok",
+      nowKey,
+      windowDays,
+      summary,
+      byPlatform,
+      platformRanking: ["Shopee", "Lazada"]
+        .map((platform) => byPlatform[platform])
+        .sort((a, b) => b.salesAmount - a.salesAmount || b.orderCount - a.orderCount),
+      dailySeries: [...dailyMap.values()],
+      recentOrders: normalizedOrders
+        .sort((a, b) => dateTimeValue(b.latestSaleAt) - dateTimeValue(a.latestSaleAt) || numberValue(b.collectedAmount) - numberValue(a.collectedAmount))
+        .slice(0, recentLimit),
+    };
+  }
+
+  function getPlatformSalesDashboard() {
+    const dashboard = data.platformSalesDashboard;
+    if (dashboard?.summary && Array.isArray(dashboard.dailySeries)) {
+      dashboard.byPlatform = {
+        Shopee: { ...emptyPlatformSales("Shopee"), ...(dashboard.byPlatform?.Shopee || {}) },
+        Lazada: { ...emptyPlatformSales("Lazada"), ...(dashboard.byPlatform?.Lazada || {}) },
+      };
+      dashboard.platformRanking = Array.isArray(dashboard.platformRanking)
+        ? dashboard.platformRanking
+        : ["Shopee", "Lazada"].map((platform) => dashboard.byPlatform[platform]);
+      dashboard.recentOrders = Array.isArray(dashboard.recentOrders) ? dashboard.recentOrders : [];
+      return dashboard;
+    }
+    data.platformSalesDashboard = buildPlatformSalesDashboardFromOrders(getPlatformPaymentOrders());
+    data.summary = data.summary || {};
+    data.summary.platformSales = data.platformSalesDashboard.summary;
+    return data.platformSalesDashboard;
+  }
+
   function buildInventoryValueIndex(inventoryRows = []) {
     const byStockShopId = new Map();
     const bySku = new Map();
@@ -3711,6 +3902,227 @@
       renderPlatformPaymentOrderRows();
     });
     $("exportPaymentOrdersCsv")?.addEventListener("click", exportPlatformPaymentOrdersCsv);
+  }
+
+  function salesDateLabel(key) {
+    const [year, month, day] = String(key || "")
+      .split("-")
+      .map((item) => Number(item));
+    if (!year || !month || !day) return "-";
+    return new Intl.DateTimeFormat("th-TH", {
+      timeZone: "Asia/Bangkok",
+      day: "2-digit",
+      month: "short",
+    }).format(new Date(Date.UTC(year, month - 1, day, 12)));
+  }
+
+  function renderSalesTrendRows(dailySeries) {
+    const rows = Array.isArray(dailySeries) ? dailySeries : [];
+    const maxTotal = Math.max(1, ...rows.map((item) => numberValue(item.total)));
+    return rows
+      .map((item) => {
+        const shopee = Math.max(0, numberValue(item.Shopee));
+        const lazada = Math.max(0, numberValue(item.Lazada));
+        const shopeeWidth = Math.round((shopee / maxTotal) * 100);
+        const lazadaWidth = Math.round((lazada / maxTotal) * 100);
+        return `
+          <div class="sales-trend-row">
+            <span>${escapeHtml(salesDateLabel(item.date))}</span>
+            <div class="sales-trend-track" aria-label="${escapeHtml(item.date)} ${escapeHtml(fmtBaht.format(item.total || 0))}">
+              <i class="shopee" style="width:${shopeeWidth}%"></i>
+              <i class="lazada" style="width:${lazadaWidth}%"></i>
+            </div>
+            <strong>${escapeHtml(fmtBaht.format(item.total || 0))}</strong>
+          </div>`;
+      })
+      .join("");
+  }
+
+  function renderRecentSalesRows(orders) {
+    const rows = Array.isArray(orders) ? orders : [];
+    if (!rows.length) {
+      return `<tr><td colspan="5" class="empty-cell">ยังไม่มีรายการขายที่จับคู่ยอดจาก Seller</td></tr>`;
+    }
+    return rows
+      .map(
+        (order) => `
+        <tr>
+          <td>
+            <strong>${escapeHtml(formatDateTime(order.latestSaleAt) || "-")}</strong>
+            <span>${escapeHtml(order.platform || "-")}</span>
+          </td>
+          <td>
+            <strong>${escapeHtml(order.orderNo || "-")}</strong>
+            <span>Packhai ${escapeHtml(order.packhaiOrderSummary || "-")}</span>
+          </td>
+          <td>
+            <strong>${escapeHtml(order.skuSummary || "-")}</strong>
+            <span>${escapeHtml(order.productSummary || "-")}</span>
+          </td>
+          <td class="num">
+            <strong>${escapeHtml(fmtQty.format(order.totalQuantity || 0))}</strong>
+            <span>หน่วย</span>
+          </td>
+          <td class="num">
+            <strong>${escapeHtml(fmtBaht2.format(order.collectedAmount || 0))}</strong>
+            <span>${escapeHtml(order.orderStatus || (order.paymentCapturedAt ? formatDateTime(order.paymentCapturedAt) : ""))}</span>
+          </td>
+        </tr>`
+      )
+      .join("");
+  }
+
+  function bindPlatformSalesEvents() {
+    const refresh = $("refreshPlatformSalesNow");
+    if (!refresh) return;
+    refresh.onclick = () => {
+      refresh.disabled = true;
+      refresh.textContent = "กำลังโหลด...";
+      loadSupabaseDashboardState(true)
+        .catch((error) => {
+          renderSyncStatus(
+            {
+              ok: false,
+              type: "platform-sales",
+              message: `โหลดข้อมูลยอดขายล่าสุดไม่สำเร็จ: ${error.message}`,
+              steps: [{ name: "Supabase dashboard_state", code: 1 }],
+              finishedAt: new Date().toISOString(),
+            },
+            true
+          );
+        })
+        .finally(() => {
+          refresh.disabled = false;
+          refresh.textContent = "รีเฟรชยอดขาย";
+        });
+    };
+  }
+
+  function renderPlatformSalesDashboard() {
+    const el = $("platformSalesDashboard");
+    if (!el) return;
+    const sales = getPlatformSalesDashboard();
+    const summary = sales.summary || {};
+    const source = data.metadata?.sources?.sellerPayments || {};
+    const shopee = sales.byPlatform?.Shopee || emptyPlatformSales("Shopee");
+    const lazada = sales.byPlatform?.Lazada || emptyPlatformSales("Lazada");
+    const lastDataAt = source.exportedAtLabel || formatDateTime(source.exportedAt) || formatDateTime(sales.generatedAt);
+    const lastRefreshAt = platformSalesLastRefreshAt ? formatDateTime(platformSalesLastRefreshAt) : formatDateTime(sales.generatedAt);
+    const cards = [
+      {
+        label: "ยอดขายรวมจาก Platform",
+        value: fmtBaht.format(summary.totalSalesAmount || 0),
+        sub: `${fmtInt.format(summary.orderCount || 0)} ออเดอร์ที่พบยอด Seller`,
+      },
+      {
+        label: "ยอดขายวันนี้",
+        value: fmtBaht.format(summary.todaySalesAmount || 0),
+        sub: "นับตามวันที่ตัด stock ใน Packhai",
+      },
+      {
+        label: "ยอดขาย 7 วันล่าสุด",
+        value: fmtBaht.format(summary.last7SalesAmount || 0),
+        sub: `เฉลี่ย ${escapeHtml(fmtBaht.format((summary.last7SalesAmount || 0) / 7))} ต่อวัน`,
+      },
+      {
+        label: "Average Order Value",
+        value: fmtBaht.format(summary.averageOrderValue || 0),
+        sub: "คำนวณจากยอด Seller ที่ matched แล้ว",
+      },
+    ];
+    const platformRows = [shopee, lazada];
+    el.innerHTML = `
+      <div class="section-heading platform-sales-heading">
+        <div>
+          <h2>ยอดขาย Realtime แยก Platform</h2>
+          <p>สรุปยอดขายจาก Shopee/Lazada Seller ที่จับคู่กับรายการตัด stock แล้วเท่านั้น เพื่อกันยอดออเดอร์หลาย SKU มาปนกัน</p>
+        </div>
+        <div class="sales-live-actions">
+          <span class="sales-live-pill"><b></b>Live · Auto refresh 60s</span>
+          <button id="refreshPlatformSalesNow" type="button">รีเฟรชยอดขาย</button>
+        </div>
+      </div>
+      <div class="sales-meta-row">
+        <span>ข้อมูล Seller ล่าสุด ${escapeHtml(lastDataAt || "-")}</span>
+        <span>หน้าเว็บ refresh ล่าสุด ${escapeHtml(lastRefreshAt || "-")}</span>
+      </div>
+      <div class="sales-kpi-grid">
+        ${cards
+          .map(
+            (card, index) => `
+          <article class="sales-kpi-card${index === 0 ? " primary" : ""}">
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(card.value)}</strong>
+            <small>${escapeHtml(card.sub)}</small>
+          </article>`
+          )
+          .join("")}
+      </div>
+      <div class="sales-platform-grid">
+        ${platformRows
+          .map((item) => {
+            const share = Math.max(0, Math.min(1, numberValue(item.salesShare)));
+            return `
+            <article class="sales-platform-card ${escapeHtml(String(item.platform || "").toLowerCase())}">
+              <div>
+                <span>${escapeHtml(item.platform || "-")}</span>
+                <strong>${escapeHtml(fmtBaht.format(item.salesAmount || 0))}</strong>
+                <small>${fmtInt.format(item.orderCount || 0)} ออเดอร์ · ${fmtQty.format(item.quantity || 0)} หน่วย</small>
+              </div>
+              <div class="sales-share-meter">
+                <i style="width:${Math.round(share * 100)}%"></i>
+              </div>
+              <p>Share ${escapeHtml(safePercent(share))} · ล่าสุด ${escapeHtml(formatDateTime(item.latestSaleAt) || "-")}</p>
+            </article>`;
+          })
+          .join("")}
+      </div>
+      <div class="sales-analytics-grid">
+        <section class="sales-trend-panel">
+          <div class="mini-heading">
+            <h3>แนวโน้มยอดขาย 14 วัน</h3>
+            <span>Shopee + Lazada</span>
+          </div>
+          <div class="sales-trend-legend">
+            <span><i class="shopee"></i>Shopee</span>
+            <span><i class="lazada"></i>Lazada</span>
+          </div>
+          <div class="sales-trend-list">
+            ${renderSalesTrendRows(sales.dailySeries || [])}
+          </div>
+        </section>
+        <section class="sales-recent-panel">
+          <div class="mini-heading">
+            <h3>รายการขายล่าสุด</h3>
+            <span>ยอดเฉพาะออเดอร์ matched</span>
+          </div>
+          <div class="sales-recent-table-wrap">
+            <table class="sales-recent-table">
+              <thead>
+                <tr>
+                  <th>เวลา</th>
+                  <th>Order</th>
+                  <th>SKU</th>
+                  <th>จำนวน</th>
+                  <th>ยอดขาย</th>
+                </tr>
+              </thead>
+              <tbody>${renderRecentSalesRows(sales.recentOrders || [])}</tbody>
+            </table>
+          </div>
+        </section>
+      </div>`;
+    bindPlatformSalesEvents();
+  }
+
+  function startPlatformSalesRealtimeRefresh() {
+    if (platformSalesRefreshTimer || !supabaseAppHubConfigured()) return;
+    platformSalesRefreshTimer = window.setInterval(() => {
+      if (document.hidden) return;
+      loadSupabaseDashboardState(false).catch((error) => {
+        console.warn("Realtime platform sales refresh failed", error);
+      });
+    }, PLATFORM_SALES_REFRESH_MS);
   }
 
   function renderPaymentCollectionReport() {
@@ -4708,6 +5120,7 @@
   renderFreshness();
   renderSidebarStatus();
   renderKpis();
+  renderPlatformSalesDashboard();
   renderPaymentCollectionReport();
   renderUncollectedStockDashboard();
   renderOwnerCommand();
@@ -4744,4 +5157,5 @@
         console.warn("Supabase website stock snapshot failed", stockError);
       });
     });
+  startPlatformSalesRealtimeRefresh();
 })();

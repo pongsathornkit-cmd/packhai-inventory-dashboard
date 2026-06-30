@@ -143,7 +143,7 @@ select {
 }
 
 .sidebar-nav a[href="#uncollected-stock"] {
-  order: 2;
+  order: 3;
 }
 
 .sidebar-nav a[href="#ai-command"] {
@@ -151,23 +151,27 @@ select {
 }
 
 .sidebar-nav a[href="#warehouses"] {
-  order: 3;
-}
-
-.sidebar-nav a[href="#executive"] {
   order: 4;
 }
 
-.sidebar-nav a[href="#valuation"] {
+.sidebar-nav a[href="#executive"] {
   order: 5;
 }
 
-.sidebar-nav a[href="#expenses"] {
+.sidebar-nav a[href="#valuation"] {
   order: 6;
 }
 
-.sidebar-nav a[href="#methodology"] {
+.sidebar-nav a[href="#platform-sales"] {
+  order: 2;
+}
+
+.sidebar-nav a[href="#expenses"] {
   order: 7;
+}
+
+.sidebar-nav a[href="#methodology"] {
+  order: 8;
 }
 
 .sidebar-nav a.active,
@@ -668,6 +672,377 @@ svg {
   .sync-status button {
     flex: 1 1 142px;
   }
+}
+
+.platform-sales-dashboard {
+  display: grid;
+  margin-bottom: 18px;
+}
+
+#platformSalesDashboard {
+  display: grid;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--pink);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(239, 246, 255, 0.92)),
+    var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.platform-sales-heading {
+  margin-bottom: 0;
+}
+
+.sales-live-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  align-items: center;
+}
+
+.sales-live-pill,
+.sales-live-actions button {
+  min-height: 38px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.sales-live-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 13px;
+  border: 1px solid rgba(44, 197, 181, 0.34);
+  background: rgba(44, 197, 181, 0.1);
+  color: #126a63;
+  white-space: nowrap;
+}
+
+.sales-live-pill b {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--teal);
+  box-shadow: 0 0 0 5px rgba(44, 197, 181, 0.12);
+}
+
+.sales-live-actions button {
+  padding: 0 14px;
+  border: 1px solid rgba(236, 32, 117, 0.28);
+  background: #ffffff;
+  color: var(--pink);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.sales-live-actions button:hover:not(:disabled) {
+  background: var(--pink-soft);
+}
+
+.sales-live-actions button:disabled {
+  cursor: progress;
+  opacity: 0.68;
+}
+
+.sales-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.sales-meta-row span {
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #ffffff;
+}
+
+.sales-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sales-kpi-card,
+.sales-platform-card,
+.sales-trend-panel,
+.sales-recent-panel {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #ffffff;
+}
+
+.sales-kpi-card {
+  min-height: 112px;
+  padding: 16px;
+}
+
+.sales-kpi-card span,
+.sales-kpi-card small {
+  display: block;
+  color: var(--muted);
+  line-height: 1.42;
+}
+
+.sales-kpi-card span {
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.sales-kpi-card strong {
+  display: block;
+  margin: 8px 0 5px;
+  color: var(--ink);
+  font-size: 29px;
+  font-weight: 880;
+  line-height: 1.05;
+}
+
+.sales-kpi-card small {
+  font-size: 12px;
+}
+
+.sales-kpi-card.primary {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--sidebar-2) 100%);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.sales-kpi-card.primary span,
+.sales-kpi-card.primary small,
+.sales-kpi-card.primary strong {
+  color: #ffffff;
+}
+
+.sales-kpi-card.primary small {
+  opacity: 0.78;
+}
+
+.sales-platform-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sales-platform-card {
+  display: grid;
+  gap: 10px;
+  padding: 15px;
+}
+
+.sales-platform-card div:first-child {
+  display: grid;
+  gap: 4px;
+}
+
+.sales-platform-card span,
+.sales-platform-card small,
+.sales-platform-card p {
+  color: var(--muted);
+  line-height: 1.38;
+}
+
+.sales-platform-card span {
+  font-size: 12px;
+  font-weight: 840;
+}
+
+.sales-platform-card strong {
+  color: var(--ink-2);
+  font-size: 27px;
+  font-weight: 880;
+  line-height: 1.08;
+}
+
+.sales-platform-card p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.sales-share-meter {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e8edf8;
+}
+
+.sales-share-meter i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+}
+
+.sales-platform-card.shopee .sales-share-meter i {
+  background: var(--pink);
+}
+
+.sales-platform-card.lazada .sales-share-meter i {
+  background: var(--blue);
+}
+
+.sales-analytics-grid {
+  display: grid;
+  grid-template-columns: minmax(360px, 0.95fr) minmax(480px, 1.35fr);
+  gap: 10px;
+}
+
+.sales-trend-panel,
+.sales-recent-panel {
+  min-width: 0;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+}
+
+.mini-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: start;
+}
+
+.mini-heading h3 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 17px;
+  font-weight: 880;
+}
+
+.mini-heading span {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+  white-space: nowrap;
+}
+
+.sales-trend-legend {
+  display: flex;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 760;
+}
+
+.sales-trend-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sales-trend-legend i {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
+.sales-trend-legend .shopee,
+.sales-trend-track .shopee {
+  background: var(--pink);
+}
+
+.sales-trend-legend .lazada,
+.sales-trend-track .lazada {
+  background: var(--blue);
+}
+
+.sales-trend-list {
+  display: grid;
+  gap: 8px;
+}
+
+.sales-trend-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 104px;
+  gap: 10px;
+  align-items: center;
+  min-height: 26px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sales-trend-row > span {
+  font-weight: 760;
+}
+
+.sales-trend-row > strong {
+  color: var(--ink-2);
+  font-weight: 840;
+  text-align: right;
+}
+
+.sales-trend-track {
+  display: flex;
+  height: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #edf1f9;
+}
+
+.sales-trend-track i {
+  min-width: 0;
+  height: 100%;
+}
+
+.sales-recent-table-wrap {
+  max-height: 408px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.sales-recent-table {
+  width: 100%;
+  min-width: 760px;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.sales-recent-table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 9px 10px;
+  background: var(--blue);
+  color: #ffffff;
+  font-size: 12px;
+  font-weight: 840;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.sales-recent-table td {
+  height: 52px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink);
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.sales-recent-table td strong,
+.sales-recent-table td span {
+  display: block;
+}
+
+.sales-recent-table td strong {
+  color: var(--ink-2);
+  font-weight: 840;
+  line-height: 1.25;
+}
+
+.sales-recent-table td span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.3;
 }
 
 .payment-collection-report,
@@ -3321,6 +3696,10 @@ tbody tr:hover {
     grid-template-columns: 1fr;
     align-items: stretch;
   }
+
+  .sales-analytics-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 980px) {
@@ -3414,6 +3793,8 @@ tbody tr:hover {
 
   .freshness-band,
   .kpi-grid,
+  .sales-kpi-grid,
+  .sales-platform-grid,
   .payment-report-grid,
   .uncollected-breakdown,
   .expense-kpis,
@@ -3431,6 +3812,15 @@ tbody tr:hover {
 
   .payment-orders-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .platform-sales-heading,
+  .mini-heading {
+    display: grid;
+  }
+
+  .sales-live-actions {
+    justify-content: flex-start;
   }
 
   .detail-sections {
@@ -3475,6 +3865,8 @@ tbody tr:hover {
 
   .freshness-band,
   .kpi-grid,
+  .sales-kpi-grid,
+  .sales-platform-grid,
   .payment-report-grid,
   .uncollected-breakdown,
   .expense-kpis,
@@ -3502,6 +3894,15 @@ tbody tr:hover {
 
   .payment-orders-actions {
     grid-template-columns: 1fr;
+  }
+
+  .sales-trend-row {
+    grid-template-columns: 62px minmax(0, 1fr);
+  }
+
+  .sales-trend-row > strong {
+    grid-column: 2;
+    text-align: left;
   }
 
   .payment-orders-footer {

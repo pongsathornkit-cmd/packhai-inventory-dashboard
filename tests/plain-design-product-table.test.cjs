@@ -149,6 +149,17 @@ test("product detail sidebar can collapse and expand from the product table", ()
   assert.match(css, /\.detail-panel-expand-button\[hidden\]\s*\{[\s\S]*?display:\s*none;/);
 });
 
+test("product detail sidebar shows image comparison before upload groups", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const detailBlock = functionBlock(source, "renderDesignDetail", "numberInput");
+  const compareIndex = detailBlock.indexOf("${renderImageComparison(product)}");
+  const uploadStackIndex = detailBlock.indexOf('<div class="upload-stack" id="factory">');
+
+  assert.ok(compareIndex >= 0, "image comparison is rendered in the detail sidebar");
+  assert.ok(uploadStackIndex >= 0, "upload stack is rendered in the detail sidebar");
+  assert.ok(compareIndex < uploadStackIndex, "image comparison appears before upload groups");
+});
+
 test("product list supports Accounting, Designer, and combined table modes", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");

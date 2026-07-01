@@ -1245,10 +1245,10 @@
           </select>
         </label>
       </section>
+      ${renderImageComparison(product)}
       <div class="upload-stack" id="factory">
         ${state.assetGroups.map((group) => renderDesignUploadGroup(product, group)).join("")}
       </div>
-      ${renderImageComparison(product)}
       <section class="source-card ktw-reference">
         <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" />
         <div>

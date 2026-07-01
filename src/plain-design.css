@@ -1448,6 +1448,7 @@ h2 {
 .bulk-status-bar {
   min-height: 54px;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -1506,6 +1507,82 @@ h2 {
   padding: 0 10px;
   border-radius: 6px;
   font-size: 12px;
+}
+
+.bulk-ai-design {
+  flex: 1 1 100%;
+  display: grid;
+  grid-template-columns: minmax(142px, 0.6fr) minmax(260px, 1.8fr) auto;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid #eadfd4;
+  border-radius: 7px;
+  background: #fffaf4;
+}
+
+.bulk-ai-design > div strong,
+.bulk-ai-design > div span,
+.bulk-ai-design small {
+  display: block;
+}
+
+.bulk-ai-design > div strong {
+  color: #3a3029;
+  font-size: 12px;
+}
+
+.bulk-ai-design > div span,
+.bulk-ai-design small {
+  color: #7d7065;
+  font-size: 11px;
+}
+
+.bulk-ai-design textarea {
+  min-height: 38px;
+  max-height: 82px;
+  resize: vertical;
+  border: 1px solid #dfcfc0;
+  border-radius: 6px;
+  background: #fffdf9;
+  color: #302a24;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.25;
+  padding: 7px 8px;
+}
+
+.bulk-ai-design button {
+  min-width: 118px;
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.bulk-ai-design small {
+  grid-column: 2 / -1;
+}
+
+.bulk-ai-spinner {
+  width: 13px;
+  height: 13px;
+  display: none;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  border-radius: 999px;
+}
+
+.bulk-ai-design.working .bulk-ai-spinner {
+  display: inline-block;
+  animation: bulk-ai-spin 0.8s linear infinite;
+}
+
+@keyframes bulk-ai-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .product-table {

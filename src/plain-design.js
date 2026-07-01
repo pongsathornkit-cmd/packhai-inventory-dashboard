@@ -39,6 +39,8 @@
     activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
     bulkStatusSelectedSkus: new Set(),
     bulkStatusTarget: "",
+    bulkAiPrompt: "",
+    bulkAiRequest: null,
     productTableMode: localStorage.getItem("plainProductTableMode") || "combined",
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
@@ -1066,6 +1068,12 @@
     }
     const selectedCount = state.bulkStatusSelectedSkus.size;
     const canApply = selectedCount > 0 && statusOptionExists(state.bulkStatusTarget);
+    const isDesignerMode = normalizeProductTableMode(state.productTableMode) === "designer";
+    const aiTargets = isDesignerMode && selectedCount ? bulkAiDesignTargets() : [];
+    const aiBusy = Boolean(state.bulkAiRequest?.running);
+    const aiProgress = state.bulkAiRequest
+      ? `${fmtQty.format(state.bulkAiRequest.done)}/${fmtQty.format(state.bulkAiRequest.total)} รูป${state.bulkAiRequest.failed ? ` · พลาด ${fmtQty.format(state.bulkAiRequest.failed)}` : ""}`
+      : `${fmtQty.format(aiTargets.length)} รูปจาก ${fmtQty.format(selectedCount)} SKU`;
     bar.innerHTML = `
       <div class="bulk-status-summary">
         <strong>${selectedCount ? `เลือก ${fmtQty.format(selectedCount)} SKU` : "ยังไม่ได้เลือก SKU"}</strong>
@@ -1082,7 +1090,20 @@
         <button class="secondary-button" data-bulk-status-apply type="button" ${canApply ? "" : "disabled"}>ใช้กับที่เลือก</button>
         <button class="danger-button" data-bulk-cost-clear type="button" ${selectedCount ? "" : "disabled"}>ลบราคาต้นทุน</button>
         <button class="ghost-button" data-bulk-status-clear type="button" ${selectedCount ? "" : "disabled"}>ล้างที่เลือก</button>
-      </div>`;
+      </div>
+      ${isDesignerMode ? `
+        <div class="bulk-ai-design ${aiBusy ? "working" : ""}">
+          <div>
+            <strong>AI Bulk Design</strong>
+            <span>${escapeHtml(aiProgress)}</span>
+          </div>
+          <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
+          <button class="secondary-button" data-bulk-ai-design-start type="button" ${selectedCount && state.bulkAiPrompt.trim() && !aiBusy ? "" : "disabled"}>
+            <span class="bulk-ai-spinner" aria-hidden="true"></span>
+            <span>${aiBusy ? "กำลังออกแบบ Bulk" : "สั่ง AI Bulk"}</span>
+          </button>
+          ${state.bulkAiRequest?.current ? `<small>กำลังทำ: ${escapeHtml(state.bulkAiRequest.current)}</small>` : ""}
+        </div>` : ""}`;
   }
 
   function renderProductImageModeToggle() {
@@ -1721,6 +1742,82 @@
     await updateProduct(sku, { plainImageVersionSelections });
   }
 
+  function mergeAiImageRevisionResult(result) {
+    if (!result?.sku) return;
+    state.products = state.products.map((product) => {
+      if (product.sku !== result.sku) return product;
+      return normalizeProduct({
+        ...product,
+        ...result.product,
+        assets: result.product?.assets || [result.asset, ...(product.assets || [])].filter(Boolean),
+      });
+    });
+  }
+
+  function bulkAiDesignTargets() {
+    return state.products
+      .filter((product) => state.bulkStatusSelectedSkus.has(product.sku))
+      .flatMap((product) => {
+        const angleCount = Math.max(1, assetTarget(product, "product_images"));
+        return Array.from({ length: angleCount }, (_, index) => ({
+          sku: product.sku,
+          name: product.name,
+          angleIndex: index + 1,
+          version: plainImageVersionSelection(product, index),
+        }));
+      });
+  }
+
+  async function requestBulkAiDesign() {
+    const prompt = String(state.bulkAiPrompt || "").trim();
+    const targets = bulkAiDesignTargets();
+    if (!targets.length) {
+      showMessage("เลือก SKU ที่ต้องการสั่ง AI Bulk ก่อน", true);
+      return;
+    }
+    if (!prompt) {
+      showMessage("ใส่คำสั่ง AI Bulk ก่อน", true);
+      document.querySelector("[data-bulk-ai-prompt]")?.focus();
+      return;
+    }
+    if (state.bulkAiRequest?.running) return;
+    const confirmText = `จะสั่ง AI ออกแบบ ${fmtQty.format(targets.length)} รูป จาก ${fmtQty.format(state.bulkStatusSelectedSkus.size)} SKU ที่เลือก ต้องการเริ่มไหม?`;
+    if (typeof window.confirm === "function" && !window.confirm(confirmText)) return;
+
+    state.bulkAiRequest = { running: true, total: targets.length, done: 0, failed: 0, current: "", errors: [] };
+    renderBulkStatusBar();
+    try {
+      for (const target of targets) {
+        state.bulkAiRequest.current = `${target.sku} มุม ${fmtQty.format(target.angleIndex)}`;
+        renderBulkStatusBar();
+        try {
+          const result = await api("/api/plain-design/ai-image-edit", {
+            method: "POST",
+            body: JSON.stringify({
+              sku: target.sku,
+              angleIndex: target.angleIndex,
+              version: target.version,
+              prompt,
+            }),
+          });
+          mergeAiImageRevisionResult(result);
+          state.bulkAiRequest.done += 1;
+        } catch (error) {
+          state.bulkAiRequest.failed += 1;
+          state.bulkAiRequest.errors.push(`${target.sku} มุม ${fmtQty.format(target.angleIndex)}: ${error.message}`);
+        }
+        renderTrackerTable();
+        renderDesignDetail();
+      }
+      const { done, failed } = state.bulkAiRequest;
+      showMessage(`AI Bulk เสร็จ ${fmtQty.format(done)} รูป${failed ? `, พลาด ${fmtQty.format(failed)} รูป` : ""}`, failed > 0);
+    } finally {
+      state.bulkAiRequest = null;
+      renderTrackerTable();
+      renderDesignDetail();
+    }
+  }
+
   async function requestPlainImageAiEdit(sku, angleIndex, version) {
     const normalizedAngleIndex = normalizePlainImageAngleIndex(angleIndex);
     const normalizedVersion = normalizePlainImageVersion(version);
@@ -1744,14 +1841,7 @@
         method: "POST",
         body: JSON.stringify({ sku, angleIndex: normalizedAngleIndex, version: normalizedVersion, prompt }),
       });
-      state.products = state.products.map((product) => {
-        if (product.sku !== sku) return product;
-        return normalizeProduct({
-          ...product,
-          ...result.product,
-          assets: result.product?.assets || [result.asset, ...(product.assets || [])].filter(Boolean),
-        });
-      });
+      mergeAiImageRevisionResult(result);
       showMessage(`AI สร้างรูป PLAIN V${plainVersionLabel(result.newVersion)} แล้ว`);
       render();
     } catch (error) {
@@ -2687,6 +2777,13 @@
       state.bulkStatusTarget = select.value;
       renderBulkStatusBar(filteredProducts());
     });
+    $("bulkStatusBar")?.addEventListener("input", (event) => {
+      const prompt = event.target.closest("[data-bulk-ai-prompt]");
+      if (!prompt) return;
+      state.bulkAiPrompt = prompt.value;
+      renderBulkStatusBar(filteredProducts());
+      document.querySelector("[data-bulk-ai-prompt]")?.focus();
+    });
     $("bulkStatusBar")?.addEventListener("click", (event) => {
       if (event.target.closest("[data-bulk-status-apply]")) {
         applyBulkRedesignStatus();
@@ -2699,6 +2796,11 @@
       if (event.target.closest("[data-bulk-status-clear]")) {
         state.bulkStatusSelectedSkus.clear();
         renderTrackerTable();
+        return;
+      }
+      if (event.target.closest("[data-bulk-ai-design-start]")) {
+        requestBulkAiDesign();
+        return;
       }
     });
     document.querySelector(".product-table")?.addEventListener("change", (event) => {

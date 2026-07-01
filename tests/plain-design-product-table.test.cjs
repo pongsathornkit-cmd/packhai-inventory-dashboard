@@ -102,6 +102,35 @@ test("product list supports bulk redesign status updates from selected rows", ()
   assert.match(eventsBlock, /data-bulk-status-apply/);
 });
 
+test("Designer Expert can send one AI design command for selected products in bulk", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
+  const targetsBlock = functionBlock(source, "bulkAiDesignTargets", "requestBulkAiDesign");
+  const requestBlock = functionBlock(source, "requestBulkAiDesign", "queueProductCommercialSave");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(source, /bulkAiPrompt:\s*""/);
+  assert.match(source, /bulkAiRequest:\s*null/);
+  assert.match(bulkBarBlock, /normalizeProductTableMode\(state\.productTableMode\)\s*===\s*"designer"/);
+  assert.match(bulkBarBlock, /data-bulk-ai-prompt/);
+  assert.match(bulkBarBlock, /data-bulk-ai-design-start/);
+  assert.match(bulkBarBlock, /bulk-ai-design/);
+  assert.match(targetsBlock, /state\.bulkStatusSelectedSkus/);
+  assert.match(targetsBlock, /assetTarget\(product,\s*"product_images"\)/);
+  assert.match(targetsBlock, /plainImageVersionSelection\(product,\s*index\)/);
+  assert.match(requestBlock, /for \(const target of targets\)/);
+  assert.match(requestBlock, /\/api\/plain-design\/ai-image-edit/);
+  assert.match(requestBlock, /bulkAiRequest/);
+  assert.match(requestBlock, /mergeAiImageRevisionResult/);
+  assert.match(eventsBlock, /data-bulk-ai-prompt/);
+  assert.match(eventsBlock, /data-bulk-ai-design-start/);
+  assert.match(eventsBlock, /requestBulkAiDesign/);
+  assert.match(css, /\.bulk-ai-design/);
+  assert.match(css, /\.bulk-ai-spinner/);
+  assert.match(css, /@keyframes bulk-ai-spin/);
+});
+
 test("product list can bulk clear selected USD costs after confirmation", () => {
   const source = readRepoFile("src/plain-design.js");
   const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");

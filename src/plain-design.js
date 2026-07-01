@@ -1244,20 +1244,9 @@
   }
 
   function renderStats() {
-    const bill = billCalc();
-    const ready = state.products.filter((product) => product.status === "passed").length;
     const linked = state.products.filter((product) => product.packhai?.matched).length;
-    $("linkedCount").textContent = `${linked}/${state.products.length} SKU matched`;
-    $("summary").innerHTML = [
-      ["SKU", `${fmtQty.format(state.products.length)} รายการ`],
-      ["จำนวนสั่งรวม", `${fmtQty.format(bill.qty)} ชิ้น`],
-      ["ยอดสั่งซื้อทั้งบิล", fmtMoney.format(bill.totalCost)],
-      ["ยอดขายคาดการณ์", fmtMoney.format(bill.revenueTotal)],
-      ["กำไรรวมทั้งบิล", fmtMoney.format(bill.profitTotal)],
-      ["ผ่าน", `${fmtQty.format(ready)} SKU`],
-    ]
-      .map(([label, value]) => `<article class="stat-card"><span>${label}</span><strong>${value}</strong></article>`)
-      .join("");
+    const linkedCount = $("linkedCount");
+    if (linkedCount) linkedCount.textContent = `${linked}/${state.products.length} SKU matched`;
   }
 
   function renderTable() {

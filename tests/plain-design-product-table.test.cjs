@@ -25,6 +25,19 @@ function blockUntil(source, startMarker, endMarker) {
   return source.slice(start, end);
 }
 
+test("Plain Design removes the top summary card strip", () => {
+  const template = readRepoFile("src/plain-design.template.html");
+  const source = readRepoFile("src/plain-design.js");
+  const statsBlock = functionBlock(source, "renderStats", "renderTable");
+
+  assert.doesNotMatch(template, /id="summary"/);
+  assert.doesNotMatch(template, /class="stats-grid"/);
+  assert.match(statsBlock, /const linkedCount = \$\("linkedCount"\)/);
+  assert.match(statsBlock, /if \(linkedCount\)/);
+  assert.doesNotMatch(statsBlock, /\$\("summary"\)\.innerHTML/);
+  assert.doesNotMatch(statsBlock, /stat-card/);
+});
+
 test("product list places SKU under the product name instead of a separate SKU column", () => {
   const source = readRepoFile("src/plain-design.js");
   const headerBlock = functionBlock(source, "renderProductTableHead", "filteredProducts");

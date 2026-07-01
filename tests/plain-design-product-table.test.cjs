@@ -162,6 +162,23 @@ test("table product cover images open a multi-angle image gallery", () => {
   assert.match(css, /\.image-lightbox-thumbs/);
 });
 
+test("selected product row shows a continuous animated arrow indicator", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
+  const designerRowBlock = functionBlock(source, "renderDesignerProductRow", "renderCombinedProductRow");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
+
+  assert.match(accountingRowBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
+  assert.match(designerRowBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
+  assert.match(combinedRowBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
+  assert.match(css, /#productRows tr\.selected > td:first-child\s*\{[\s\S]*?position:\s*relative;/);
+  assert.match(css, /#productRows tr\.selected > td:first-child::before\s*\{[\s\S]*?content:\s*"";/);
+  assert.match(css, /#productRows tr\.selected > td:first-child::before\s*\{[\s\S]*?border-left:\s*12px solid #9f7658;/);
+  assert.match(css, /#productRows tr\.selected > td:first-child::before\s*\{[\s\S]*?animation:\s*selected-row-arrow 1s ease-in-out infinite;/);
+  assert.match(css, /@keyframes selected-row-arrow/);
+});
+
 test("product detail sidebar can collapse and expand from the product table", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");

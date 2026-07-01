@@ -8,7 +8,6 @@ const COMMERCIAL_NUMBER_FIELDS = [
   "orderQuantity",
   "purchaseUnitCostUsd",
   "purchaseUnitCost",
-  "saleUnitPrice",
   "widthCm",
   "lengthCm",
   "heightCm",
@@ -72,6 +71,10 @@ function buildKtwLogisticsIndex(ktwLogistics) {
       lengthCm: numberValue(item.lengthCm),
       heightCm: numberValue(item.heightCm),
       unitWeightKg: numberValue(item.unitWeightKg),
+      sourcePrice: numberValue(item.sourcePrice),
+      priceSourceLabel: item.priceSourceLabel || item.sourceLabel || ktwLogistics.sourceLabel || "shop.ktw.co.th",
+      priceCapturedAt: item.priceCapturedAt || item.capturedAt || ktwLogistics.createdAt || "",
+      priceValid: numberValue(item.sourcePrice) > 0,
       ktwImages: (Array.isArray(item.ktwImages) ? item.ktwImages : []).map((image, index) => ({
         angleNo: numberValue(image.angleNo) || index + 1,
         url: image.url || "",
@@ -92,6 +95,14 @@ function logisticsValue(product, logistics, field) {
 function storedOrKtwLogisticsValue(stored, product, field) {
   const storedValue = numberValue(stored?.[field]);
   return storedValue > 0 ? storedValue : numberValue(product[field]);
+}
+
+function ktwWebsitePrice(logistics) {
+  if (!logistics) return 0;
+  const sourceLabel = String(logistics.sourceLabel || "").toLowerCase();
+  const sourceUrl = String(logistics.sourceUrl || "");
+  const isShopKtw = sourceLabel === "shop.ktw.co.th" || /^https:\/\/shop\.ktw\.co\.th\//i.test(sourceUrl);
+  return isShopKtw ? moneyValue(logistics.sourcePrice) : 0;
 }
 
 function normalizePurchaseOrder(order) {
@@ -187,16 +198,20 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       priceSource: "",
       url: packhaiUrlForSku(sku),
     };
+    const ktwPrice = ktwWebsitePrice(logistics);
     return {
       id: sku,
       sku,
       name: product.name || packhai.productName || sku,
       category: product.category || "wood",
-      ktwPrice: numberValue(product.ktwPrice),
+      ktwPrice,
+      ktwPriceSourceLabel: ktwPrice > 0 ? "shop.ktw.co.th" : "",
+      ktwPriceSourceUrl: ktwPrice > 0 ? logistics?.sourceUrl || "" : "",
+      ktwPriceCapturedAt: ktwPrice > 0 ? logistics?.priceCapturedAt || logistics?.capturedAt || "" : "",
       orderQuantity: numberValue(product.orderQuantity),
       purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
-      purchaseUnitCost: numberValue(product.purchaseUnitCost || product.ktwPrice),
-      saleUnitPrice: numberValue(product.saleUnitPrice || product.ktwPrice),
+      purchaseUnitCost: numberValue(product.purchaseUnitCost || ktwPrice),
+      saleUnitPrice: ktwPrice,
       widthCm: logisticsValue(product, logistics, "widthCm"),
       lengthCm: logisticsValue(product, logistics, "lengthCm"),
       heightCm: logisticsValue(product, logistics, "heightCm"),
@@ -251,9 +266,7 @@ function mergeStoredState(initialState, storedState) {
         purchaseUnitCostUsd: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCostUsd")
           ? numberValue(stored.purchaseUnitCostUsd)
           : product.purchaseUnitCostUsd,
-        saleUnitPrice: Object.prototype.hasOwnProperty.call(stored, "saleUnitPrice")
-          ? numberValue(stored.saleUnitPrice)
-          : product.saleUnitPrice,
+        saleUnitPrice: product.ktwPrice,
         widthCm: storedOrKtwLogisticsValue(stored, product, "widthCm"),
         lengthCm: storedOrKtwLogisticsValue(stored, product, "lengthCm"),
         heightCm: storedOrKtwLogisticsValue(stored, product, "heightCm"),
@@ -318,6 +331,7 @@ function updatePlainDesignProduct(options, payload) {
         ? String(payload.cargoType).toUpperCase()
         : product.cargoType;
     }
+    found.saleUnitPrice = found.ktwPrice;
     return found;
   });
   if (!found) throw new Error(`Product ${sku} was not found.`);

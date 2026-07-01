@@ -33,6 +33,10 @@ function moneyValue(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 10000) / 10000;
 }
 
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 function lengthToCm(value, unit) {
   const parsed = numberValue(value);
   const normalized = String(unit || "").trim().toUpperCase();
@@ -102,6 +106,32 @@ function parseProductImages(html, sourceUrl) {
   ]);
 }
 
+function parseKtwSourcePrice(html, sku) {
+  const page = String(html || "");
+  const normalizedSku = normalizeSku(sku);
+  const skuPattern = escapeRegExp(normalizedSku);
+  const skuScopedPatterns = [
+    new RegExp(`[\\\"']item_id[\\\"']\\s*:\\s*[\\\"']${skuPattern}[\\\"'][\\s\\S]{0,700}?[\\\"']price[\\\"']\\s*:\\s*[\\\"']?([\\d,.]+)`, "i"),
+    new RegExp(`[\\\"']item_id[\\\"']\\s*:\\s*[\\\"']${skuPattern}[\\\"'][\\s\\S]{0,700}?productPrice\\s*[:=]\\s*[\\\"']?([\\d,.]+)`, "i"),
+  ];
+  for (const pattern of skuScopedPatterns) {
+    const match = page.match(pattern);
+    const price = numberValue(match?.[1]);
+    if (price > 0) return moneyValue(price);
+  }
+
+  const fallbackPatterns = [
+    /\/\/KTW-\d+[^'"]*pdp price[\s\S]{0,120}?['"]price['"]\s*:\s*['"]?([\d,.]+)/i,
+    /['"]price['"]\s*:\s*['"]?([\d,.]+)[\s\S]{0,120}?['"]item_brand['"]/i,
+  ];
+  for (const pattern of fallbackPatterns) {
+    const match = page.match(pattern);
+    const price = numberValue(match?.[1]);
+    if (price > 0) return moneyValue(price);
+  }
+  return 0;
+}
+
 function parseConversionUnitTable(html) {
   const tableMatch = String(html).match(/id=["']conversionunit["'][\s\S]*?<tbody>([\s\S]*?)<\/tbody>/i);
   if (!tableMatch) return null;
@@ -155,6 +185,7 @@ async function fetchProductKtwData(product) {
   const html = await response.text();
   const parsed = parseConversionUnitTable(html);
   const ktwImages = parseProductImages(html, sourceUrl);
+  const sourcePrice = parseKtwSourcePrice(html, sku);
   const logisticsValid = Boolean(parsed?.widthCm && parsed?.lengthCm && parsed?.heightCm && parsed?.unitWeightKg);
   const logisticsIssue = !parsed
     ? "conversion-unit table was not found"
@@ -166,6 +197,10 @@ async function fetchProductKtwData(product) {
     sourceLabel: "shop.ktw.co.th",
     sourceUrl,
     capturedAt: new Date().toISOString(),
+    sourcePrice,
+    priceSourceLabel: "shop.ktw.co.th",
+    priceCapturedAt: new Date().toISOString(),
+    priceValid: sourcePrice > 0,
     widthCm: parsed?.widthCm || 0,
     lengthCm: parsed?.lengthCm || 0,
     heightCm: parsed?.heightCm || 0,
@@ -205,7 +240,7 @@ async function main() {
   const payload = {
     createdAt: new Date().toISOString(),
     sourceLabel: "shop.ktw.co.th",
-    source: "KTW product conversion-unit table",
+    source: "KTW product page data",
     itemCount: items.length,
     missingCount: missing.length,
     items,

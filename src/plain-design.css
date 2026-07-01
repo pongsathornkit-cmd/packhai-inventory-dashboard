@@ -309,6 +309,19 @@ h2 {
   color-scheme: light;
 }
 
+.locked-price-field input[readonly] {
+  border-color: #e2d7ca;
+  background: #f8f3ed;
+  color: #6f553c;
+  font-weight: 850;
+}
+
+.locked-price-field small {
+  color: #8b8177;
+  font-size: 11px;
+  font-weight: 720;
+}
+
 .main-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(360px, 0.44fr);

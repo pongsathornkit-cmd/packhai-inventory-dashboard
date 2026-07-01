@@ -120,10 +120,11 @@
     const ktwPrice = numberValue(product.ktwPrice);
     return {
       ...product,
+      ktwPrice,
       orderQuantity: numberValue(product.orderQuantity),
       purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
       purchaseUnitCost: numberValue(product.purchaseUnitCost || ktwPrice),
-      saleUnitPrice: numberValue(product.saleUnitPrice || ktwPrice),
+      saleUnitPrice: ktwPrice,
       widthCm: numberValue(product.widthCm),
       lengthCm: numberValue(product.lengthCm),
       heightCm: numberValue(product.heightCm),
@@ -977,10 +978,21 @@
   }
 
   function numberInput(id, label, value, step) {
+    if (id === "saleUnitPrice") return lockedSalePriceField(selectedProduct() || {});
     return `
       <label class="field">
         <span>${escapeHtml(label)}</span>
         <input id="${escapeHtml(id)}" type="number" min="0" step="${escapeHtml(step)}" value="${escapeHtml(value)}" />
+      </label>`;
+  }
+
+  function lockedSalePriceField(product) {
+    const source = product.ktwPriceSourceLabel || "shop.ktw.co.th";
+    return `
+      <label class="field locked-price-field">
+        <span>ราคาขาย PLAIN/ชิ้น</span>
+        <input type="text" value="${escapeHtml(fmtMoney.format(product.ktwPrice || 0))}" readonly />
+        <small>ใช้ราคา KTW จาก ${escapeHtml(source)} เท่านั้น</small>
       </label>`;
   }
 
@@ -1043,7 +1055,6 @@
       orderQuantity: numberValue($("orderQuantity")?.value),
       purchaseUnitCostUsd,
       purchaseUnitCost,
-      saleUnitPrice: numberValue($("saleUnitPrice")?.value),
       packagingUnitCost: numberValue($("packagingUnitCost")?.value),
       otherUnitCost: numberValue($("otherUnitCost")?.value),
       widthCm: numberValue($("widthCm")?.value),

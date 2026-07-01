@@ -165,6 +165,7 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   const template = readRepoFile("src/plain-design.template.html");
   const css = readRepoFile("src/plain-design.css");
   const headerBlock = functionBlock(source, "renderProductTableHead", "trackerCostInputValue");
+  const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
   const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
@@ -178,8 +179,13 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(source, /productTableMode:\s*localStorage\.getItem\("plainProductTableMode"\)\s*\|\|\s*"combined"/);
   assert.match(source, /function normalizeProductTableMode/);
   assert.match(source, /function renderProductTableModeToggle/);
+  assert.match(source, /if \(normalized === "accounting"\) return 10/);
   assert.match(headerBlock, />ยอดขายรวม</);
   assert.match(headerBlock, />กำไรรวม</);
+  assert.match(accountingRowBlock, /const coverImage\s*=\s*tableCoverImageFor\(product\)/);
+  assert.match(accountingRowBlock, /class="product-image-cell"/);
+  assert.match(accountingRowBlock, /class="table-product-image"/);
+  assert.match(accountingRowBlock, /class="table-product-image-empty"/);
   assert.match(tableBlock, /renderAccountingProductRow/);
   assert.match(tableBlock, /renderDesignerProductRow/);
   assert.match(tableBlock, /renderCombinedProductRow/);
@@ -190,6 +196,7 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(eventsBlock, /plainProductTableMode/);
   assert.match(eventsBlock, /renderProductTableModeToggle/);
   assert.match(css, /\.product-table\.accounting-mode/);
+  assert.match(css, /\.product-table\.accounting-mode th:nth-child\(10\)/);
   assert.match(css, /\.product-table\.designer-mode/);
   assert.match(css, /\.product-image-pairs/);
 });

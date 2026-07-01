@@ -747,7 +747,7 @@
 
   function productTableColspan(mode = state.productTableMode) {
     const normalized = normalizeProductTableMode(mode);
-    if (normalized === "accounting") return 9;
+    if (normalized === "accounting") return 10;
     if (normalized === "designer") return 7;
     return 12;
   }
@@ -774,6 +774,7 @@
     if (mode === "accounting") {
       header.innerHTML = `
         ${selectHeader}
+        <th>รูปสินค้า</th>
         <th>สินค้า</th>
         <th class="num">ราคาขาย</th>
         <th class="num">ต้นทุนสินค้า</th>
@@ -1038,9 +1039,15 @@
   function renderAccountingProductRow(product, index) {
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
+    const coverImage = tableCoverImageFor(product);
     return `
       <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
+        <td class="product-image-cell">
+          ${coverImage.src
+            ? `<img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />`
+            : `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`}
+        </td>
         <td>
           <span class="table-product-name">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>

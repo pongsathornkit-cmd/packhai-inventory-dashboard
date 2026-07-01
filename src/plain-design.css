@@ -1485,7 +1485,7 @@ h2 {
 }
 
 .product-table.accounting-mode {
-  min-width: 980px;
+  min-width: 1080px;
 }
 
 .product-table.designer-mode {
@@ -1552,11 +1552,14 @@ h2 {
 
 .product-table.accounting-mode th:nth-child(2),
 .product-table.accounting-mode td:nth-child(2) {
-  width: 210px;
+  width: 48px;
 }
 
 .product-table.accounting-mode th:nth-child(3),
-.product-table.accounting-mode td:nth-child(3),
+.product-table.accounting-mode td:nth-child(3) {
+  width: 190px;
+}
+
 .product-table.accounting-mode th:nth-child(4),
 .product-table.accounting-mode td:nth-child(4),
 .product-table.accounting-mode th:nth-child(5),
@@ -1568,7 +1571,9 @@ h2 {
 .product-table.accounting-mode th:nth-child(8),
 .product-table.accounting-mode td:nth-child(8),
 .product-table.accounting-mode th:nth-child(9),
-.product-table.accounting-mode td:nth-child(9) {
+.product-table.accounting-mode td:nth-child(9),
+.product-table.accounting-mode th:nth-child(10),
+.product-table.accounting-mode td:nth-child(10) {
   width: 104px;
 }
 

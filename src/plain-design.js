@@ -656,7 +656,6 @@
     header.innerHTML = `
       <th>ลำดับ</th>
       <th>รูปสินค้า</th>
-      <th>SKU</th>
       <th>ชื่อสินค้า</th>
       <th class="num">ราคา KTW</th>
       <th class="num">จำนวนสั่งซื้อ</th>
@@ -763,10 +762,10 @@
               <td class="product-image-cell">
                 <img class="table-product-image" src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" />
               </td>
-              <td><strong class="sku-code">${escapeHtml(product.sku)}</strong></td>
               <td>
                 <span class="table-product-name">${escapeHtml(product.name)}</span>
-                <small>${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
+                <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+                <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
               </td>
               <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
               <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
@@ -776,7 +775,7 @@
               <td class="num">${assetPill(product, "factory_files")}</td>
             </tr>`;
         }).join("")
-      : `<tr><td class="empty-state" colspan="10">ไม่พบสินค้า</td></tr>`;
+      : `<tr><td class="empty-state" colspan="9">ไม่พบสินค้า</td></tr>`;
   }
 
   function fileSize(value) {

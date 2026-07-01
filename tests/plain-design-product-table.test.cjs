@@ -326,18 +326,43 @@ test("table product cover images open a multi-angle image gallery", () => {
 test("selected product row shows a continuous animated arrow indicator", () => {
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");
+  const rowClassBlock = functionBlock(source, "productRowClass", "codexAiJobLabel");
   const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
   const designerRowBlock = functionBlock(source, "renderDesignerProductRow", "renderCombinedProductRow");
   const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
 
-  assert.match(accountingRowBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
-  assert.match(designerRowBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
-  assert.match(combinedRowBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
+  assert.match(rowClassBlock, /product\.sku === state\.selectedSku \? "selected" : ""/);
+  assert.match(accountingRowBlock, /productRowClass\(product\)/);
+  assert.match(designerRowBlock, /productRowClass\(product,\s*"designer-product-row"\)/);
+  assert.match(combinedRowBlock, /productRowClass\(product\)/);
   assert.match(css, /#productRows tr\.selected > td:first-child\s*\{[\s\S]*?position:\s*relative;/);
   assert.match(css, /#productRows tr\.selected > td:first-child::before\s*\{[\s\S]*?content:\s*"";/);
   assert.match(css, /#productRows tr\.selected > td:first-child::before\s*\{[\s\S]*?border-left:\s*12px solid #9f7658;/);
   assert.match(css, /#productRows tr\.selected > td:first-child::before\s*\{[\s\S]*?animation:\s*selected-row-arrow 1s ease-in-out infinite;/);
   assert.match(css, /@keyframes selected-row-arrow/);
+});
+
+test("product rows with active Codex AI jobs show a luxury looping work animation", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const activeJobBlock = functionBlock(source, "hasActiveCodexAiWork", "productRowClass");
+  const rowClassBlock = functionBlock(source, "productRowClass", "codexAiJobLabel");
+  const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
+  const designerRowBlock = functionBlock(source, "renderDesignerProductRow", "renderCombinedProductRow");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
+
+  assert.match(activeJobBlock, /\["pending",\s*"working"\]\.includes\(job\.status\)/);
+  assert.doesNotMatch(activeJobBlock, /\["pending",\s*"working",\s*"failed"\]/);
+  assert.match(rowClassBlock, /hasActiveCodexAiWork\(product\.sku\) \? "ai-working-row" : ""/);
+  assert.match(accountingRowBlock, /productRowClass\(product\)/);
+  assert.match(designerRowBlock, /productRowClass\(product,\s*"designer-product-row"\)/);
+  assert.match(combinedRowBlock, /productRowClass\(product\)/);
+  assert.match(accountingRowBlock, /data-ai-work-active="\$\{hasActiveCodexAiWork\(product\.sku\) \? "true" : "false"\}"/);
+  assert.match(css, /#productRows tr\.ai-working-row > td\s*\{[\s\S]*?animation:\s*ai-row-gold-sweep 2\.8s linear infinite;/);
+  assert.match(css, /#productRows tr\.ai-working-row \.bulk-row-check::after\s*\{[\s\S]*?conic-gradient/);
+  assert.match(css, /@keyframes ai-row-gold-sweep/);
+  assert.match(css, /@keyframes ai-row-loop-spin/);
+  assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)/);
 });
 
 test("product detail sidebar can collapse and expand from the product table", () => {

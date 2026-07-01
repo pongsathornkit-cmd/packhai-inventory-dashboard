@@ -221,6 +221,21 @@
       )) || null;
   }
 
+  function hasActiveCodexAiWork(sku) {
+    const normalizedSku = String(sku || "").trim().toUpperCase();
+    return state.codexAiJobs
+      .map(normalizeCodexAiJob)
+      .some((job) => job.sku === normalizedSku && ["pending", "working"].includes(job.status));
+  }
+
+  function productRowClass(product, extra = "") {
+    return [
+      extra,
+      product.sku === state.selectedSku ? "selected" : "",
+      hasActiveCodexAiWork(product.sku) ? "ai-working-row" : "",
+    ].filter(Boolean).join(" ");
+  }
+
   function codexAiJobLabel(job) {
     if (!job) return "";
     if (job.status === "working") return "Codex กำลังทำงาน";
@@ -1298,7 +1313,7 @@
           const status = statusMeta(product.status);
           const calc = lineCalc(product);
           return `
-            <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+            <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
               <td>
                 <div class="product-cell">
                   <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" />
@@ -1379,7 +1394,7 @@
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
     return `
-      <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+      <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
           ${renderTableCoverImage(product)}
@@ -1416,7 +1431,7 @@
     const status = statusMeta(product.status);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
     return `
-      <tr class="designer-product-row ${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+      <tr class="${escapeHtml(productRowClass(product, "designer-product-row"))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td>
           <span class="table-product-name">${escapeHtml(product.name)}</span>
@@ -1437,7 +1452,7 @@
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
     return `
-      <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+      <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
           ${renderTableCoverImage(product)}

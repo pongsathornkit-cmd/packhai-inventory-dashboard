@@ -1280,10 +1280,13 @@ h2 {
 .product-panel-actions,
 .detail-toolbar-actions {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: flex-end;
   gap: 8px;
 }
 
+.product-table-mode-toggle,
 .product-image-mode-toggle {
   display: inline-flex;
   align-items: center;
@@ -1294,6 +1297,11 @@ h2 {
   background: #f8f4ee;
 }
 
+.product-table-mode-toggle {
+  background: #fffdf9;
+}
+
+.product-table-mode-toggle button,
 .product-image-mode-toggle button {
   min-height: 28px;
   border: 0;
@@ -1305,10 +1313,15 @@ h2 {
   font-weight: 780;
 }
 
+.product-table-mode-toggle button.active,
 .product-image-mode-toggle button.active {
   background: #9f7658;
   color: #fff;
   box-shadow: 0 6px 14px rgba(159, 118, 88, 0.18);
+}
+
+.product-image-mode-toggle[hidden] {
+  display: none;
 }
 
 .detail-panel-expand-button,
@@ -1401,6 +1414,18 @@ h2 {
   table-layout: fixed;
 }
 
+.product-table.accounting-mode {
+  min-width: 980px;
+}
+
+.product-table.designer-mode {
+  min-width: 1120px;
+}
+
+.product-table.combined-mode {
+  min-width: 1080px;
+}
+
 .product-table th:nth-child(1),
 .product-table td:nth-child(1) {
   width: 42px;
@@ -1455,6 +1480,52 @@ h2 {
   width: 44px;
 }
 
+.product-table.accounting-mode th:nth-child(2),
+.product-table.accounting-mode td:nth-child(2) {
+  width: 210px;
+}
+
+.product-table.accounting-mode th:nth-child(3),
+.product-table.accounting-mode td:nth-child(3),
+.product-table.accounting-mode th:nth-child(4),
+.product-table.accounting-mode td:nth-child(4),
+.product-table.accounting-mode th:nth-child(5),
+.product-table.accounting-mode td:nth-child(5),
+.product-table.accounting-mode th:nth-child(6),
+.product-table.accounting-mode td:nth-child(6),
+.product-table.accounting-mode th:nth-child(7),
+.product-table.accounting-mode td:nth-child(7),
+.product-table.accounting-mode th:nth-child(8),
+.product-table.accounting-mode td:nth-child(8),
+.product-table.accounting-mode th:nth-child(9),
+.product-table.accounting-mode td:nth-child(9) {
+  width: 104px;
+}
+
+.product-table.designer-mode th:nth-child(2),
+.product-table.designer-mode td:nth-child(2) {
+  width: 190px;
+}
+
+.product-table.designer-mode th:nth-child(3),
+.product-table.designer-mode td:nth-child(3) {
+  width: 560px;
+}
+
+.product-table.designer-mode th:nth-child(4),
+.product-table.designer-mode td:nth-child(4) {
+  width: 110px;
+}
+
+.product-table.designer-mode th:nth-child(5),
+.product-table.designer-mode td:nth-child(5),
+.product-table.designer-mode th:nth-child(6),
+.product-table.designer-mode td:nth-child(6),
+.product-table.designer-mode th:nth-child(7),
+.product-table.designer-mode td:nth-child(7) {
+  width: 62px;
+}
+
 .product-table th,
 .po-table th {
   height: 44px;
@@ -1476,6 +1547,15 @@ h2 {
 
 .product-table td {
   overflow: hidden;
+}
+
+.product-table.designer-mode td {
+  height: 132px;
+  vertical-align: top;
+}
+
+.product-table.designer-mode .image-pairs-cell {
+  overflow: visible;
 }
 
 .product-table tr:hover {
@@ -1592,6 +1672,83 @@ h2 {
 
 .product-table .table-product-meta {
   display: none;
+}
+
+.product-table.designer-mode .table-product-meta {
+  display: block;
+  margin-top: 5px;
+  color: #8b8177;
+  font-size: 11px;
+}
+
+.product-image-pairs {
+  max-width: 100%;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 2px 6px;
+}
+
+.product-image-pair {
+  flex: 0 0 154px;
+  border: 1px solid #eee3d9;
+  border-radius: 7px;
+  background: #fffdf9;
+  padding: 7px;
+}
+
+.product-image-pair.matched {
+  border-color: #cde5d2;
+  background: #f8fff9;
+}
+
+.product-image-pair > strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #6f6257;
+  font-size: 11px;
+}
+
+.product-image-pair-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.product-image-pair-columns span {
+  display: block;
+  margin-bottom: 4px;
+  color: #8a8077;
+  font-size: 10px;
+  font-weight: 780;
+}
+
+.product-image-pairs .image-compare-image,
+.product-image-missing {
+  width: 100%;
+  height: 58px;
+  min-height: 58px;
+  aspect-ratio: auto;
+}
+
+.product-image-missing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px dashed #efcaa2;
+  border-radius: 6px;
+  background: #fff8ee;
+  color: #9b5d05;
+  text-align: center;
+}
+
+.product-image-missing b,
+.product-image-missing em {
+  font-size: 10px;
+  font-style: normal;
+  line-height: 1.15;
 }
 
 .asset-pill {

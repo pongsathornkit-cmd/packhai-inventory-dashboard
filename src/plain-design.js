@@ -38,6 +38,7 @@
     activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
     bulkStatusSelectedSkus: new Set(),
     bulkStatusTarget: "",
+    productTableMode: localStorage.getItem("plainProductTableMode") || "combined",
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
     exchangeRate: {
@@ -687,13 +688,62 @@
       </section>`;
   }
 
+  function normalizeProductTableMode(mode) {
+    return ["accounting", "designer", "combined"].includes(mode) ? mode : "combined";
+  }
+
+  function productTableColspan(mode = state.productTableMode) {
+    const normalized = normalizeProductTableMode(mode);
+    if (normalized === "accounting") return 9;
+    if (normalized === "designer") return 7;
+    return 12;
+  }
+
+  function renderProductTableModeToggle() {
+    const toggle = $("productTableModeToggle");
+    if (!toggle) return;
+    state.productTableMode = normalizeProductTableMode(state.productTableMode);
+    toggle.querySelectorAll("[data-product-table-mode]").forEach((button) => {
+      const active = button.dataset.productTableMode === state.productTableMode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
   function renderProductTableHead() {
     const header = document.querySelector(".product-table thead tr");
     if (!header) return;
-    header.innerHTML = `
+    const selectHeader = `
       <th class="bulk-select-col">
         <input class="bulk-checkbox" data-bulk-status-toggle-all type="checkbox" aria-label="เลือกสินค้าทั้งหมดในตาราง" />
-      </th>
+      </th>`;
+    const mode = normalizeProductTableMode(state.productTableMode);
+    if (mode === "accounting") {
+      header.innerHTML = `
+        ${selectHeader}
+        <th>สินค้า</th>
+        <th class="num">ราคาขาย</th>
+        <th class="num">ต้นทุนสินค้า</th>
+        <th class="num">ต้นทุนขนส่ง</th>
+        <th class="num">กำไร</th>
+        <th class="num">จำนวนสั่งซื้อ</th>
+        <th class="num">ยอดขายรวม</th>
+        <th class="num">กำไรรวม</th>`;
+      return;
+    }
+    if (mode === "designer") {
+      header.innerHTML = `
+        ${selectHeader}
+        <th>สินค้า</th>
+        <th>เทียบรูป KTW ↔ PLAIN</th>
+        <th>สถานะรีดีไซน์</th>
+        <th class="num">รูปสินค้า</th>
+        <th class="num">รูปแพคเกจจิ้ง</th>
+        <th class="num">ไฟล์โรงงาน</th>`;
+      return;
+    }
+    header.innerHTML = `
+      ${selectHeader}
       <th>รูปสินค้า</th>
       <th>ชื่อสินค้า</th>
       <th class="num">ราคา KTW</th>
@@ -760,6 +810,7 @@
     const toggle = $("productImageModeToggle");
     if (!toggle) return;
     if (state.productImageMode !== "plain") state.productImageMode = "ktw";
+    toggle.hidden = normalizeProductTableMode(state.productTableMode) !== "combined";
     toggle.querySelectorAll("[data-product-image-mode]").forEach((button) => {
       const active = button.dataset.productImageMode === state.productImageMode;
       button.classList.toggle("active", active);
@@ -890,57 +941,157 @@
       : `<tr><td class="empty-state" colspan="7">ไม่พบสินค้า</td></tr>`;
   }
 
+  function renderBulkSelectionCell(product, index, checked) {
+    return `
+      <td class="row-index">
+        <label class="bulk-row-check">
+          <input class="bulk-checkbox" data-bulk-status-row="${escapeHtml(product.sku)}" type="checkbox" ${checked} aria-label="เลือก ${escapeHtml(product.sku)}" />
+          <span>${fmtQty.format(index + 1)}</span>
+        </label>
+      </td>`;
+  }
+
+  function renderProductImagePairs(product) {
+    const ktwImages = ktwImagesFor(product);
+    const plainImages = assetsFor(product, "product_images");
+    const pairCount = Math.max(1, ktwImages.length, plainImages.length);
+    return `
+      <div class="product-image-pairs">
+        ${Array.from({ length: pairCount }).map((_, index) => {
+          const ktwImage = ktwImages[index] || ktwImages[0] || {};
+          const plainImage = plainImages[index] || null;
+          return `
+            <article class="product-image-pair ${plainImage ? "matched" : "missing"}">
+              <strong>มุม ${fmtQty.format(index + 1)}</strong>
+              <div class="product-image-pair-columns">
+                <div>
+                  <span>KTW</span>
+                  ${ktwImage.url
+                    ? imagePreviewButton(ktwImage.url, ktwImage.alt || product.name, `KTW มุม ${fmtQty.format(index + 1)}`, ktwImage.alt || product.name)
+                    : `<div class="product-image-missing">ไม่มีรูป KTW</div>`}
+                </div>
+                <div>
+                  <span>PLAIN</span>
+                  ${plainImage?.publicUrl
+                    ? imagePreviewButton(plainImage.publicUrl, plainImage.fileName, `PLAIN มุม ${fmtQty.format(index + 1)}`, plainImage.fileName)
+                    : `<div class="product-image-missing"><b>รอรูป PLAIN</b><em>${fmtQty.format(index + 1)}</em></div>`}
+                </div>
+              </div>
+            </article>`;
+        }).join("")}
+      </div>`;
+  }
+
+  function renderAccountingProductRow(product, index) {
+    const calc = lineCalc(product);
+    const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
+    return `
+      <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+        ${renderBulkSelectionCell(product, index, bulkChecked)}
+        <td>
+          <span class="table-product-name">${escapeHtml(product.name)}</span>
+          <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+        </td>
+        <td class="num"><strong>${fmtMoney.format(calc.saleUnitPrice)}</strong><small>ราคา Plain</small></td>
+        <td class="num">
+          <label class="table-cost-editor">
+            <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+            <small data-table-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
+          </label>
+        </td>
+        <td class="num" data-table-cell="shippingUnit">
+          <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
+          <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
+        </td>
+        <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-table-cell="profitUnit">
+          <strong>${fmtMoney.format(calc.profitUnit)}</strong>
+          <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+        </td>
+        <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
+        <td class="num"><strong>${fmtMoney.format(calc.revenueTotal)}</strong></td>
+        <td class="num ${calc.profitTotal < 0 ? "danger-text" : "good-text"}"><strong>${fmtMoney.format(calc.profitTotal)}</strong></td>
+      </tr>`;
+  }
+
+  function renderDesignerProductRow(product, index) {
+    const status = statusMeta(product.status);
+    const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
+    return `
+      <tr class="designer-product-row ${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+        ${renderBulkSelectionCell(product, index, bulkChecked)}
+        <td>
+          <span class="table-product-name">${escapeHtml(product.name)}</span>
+          <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+          <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))}</small>
+        </td>
+        <td class="image-pairs-cell">${renderProductImagePairs(product)}</td>
+        <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
+        <td class="num">${assetPill(product, "product_images")}</td>
+        <td class="num">${assetPill(product, "packaging_images")}</td>
+        <td class="num">${assetPill(product, "factory_files")}</td>
+      </tr>`;
+  }
+
+  function renderCombinedProductRow(product, index) {
+    const status = statusMeta(product.status);
+    const calc = lineCalc(product);
+    const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
+    const coverImage = tableCoverImageFor(product);
+    return `
+      <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+        ${renderBulkSelectionCell(product, index, bulkChecked)}
+        <td class="product-image-cell">
+          <img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />
+        </td>
+        <td>
+          <span class="table-product-name">${escapeHtml(product.name)}</span>
+          <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+          <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
+        </td>
+        <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
+        <td class="num">
+          <label class="table-cost-editor">
+            <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+            <small data-table-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
+          </label>
+        </td>
+        <td class="num" data-table-cell="shippingUnit">
+          <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
+          <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
+        </td>
+        <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-table-cell="profitUnit">
+          <strong>${fmtMoney.format(calc.profitUnit)}</strong>
+          <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+        </td>
+        <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
+        <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
+        <td class="num">${assetPill(product, "product_images")}</td>
+        <td class="num">${assetPill(product, "packaging_images")}</td>
+        <td class="num">${assetPill(product, "factory_files")}</td>
+      </tr>`;
+  }
+
   function renderTrackerTable() {
     const rows = filteredProducts();
+    const mode = normalizeProductTableMode(state.productTableMode);
+    state.productTableMode = mode;
+    const table = document.querySelector(".product-table");
+    if (table) {
+      table.classList.remove("accounting-mode", "designer-mode", "combined-mode");
+      table.classList.add(`${mode}-mode`);
+    }
     pruneBulkStatusSelection(rows);
     renderProductTableHead();
     renderBulkStatusBar(rows);
     $("tableSubtitle").textContent = `รวม ${fmtQty.format(rows.length)} จาก ${fmtQty.format(state.products.length)} รายการ`;
+    const renderRow = mode === "accounting"
+      ? renderAccountingProductRow
+      : mode === "designer"
+        ? renderDesignerProductRow
+        : renderCombinedProductRow;
     $("productRows").innerHTML = rows.length
-      ? rows.map((product, index) => {
-          const status = statusMeta(product.status);
-          const calc = lineCalc(product);
-          const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
-          const coverImage = tableCoverImageFor(product);
-          return `
-            <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
-              <td class="row-index">
-                <label class="bulk-row-check">
-                  <input class="bulk-checkbox" data-bulk-status-row="${escapeHtml(product.sku)}" type="checkbox" ${bulkChecked} aria-label="เลือก ${escapeHtml(product.sku)}" />
-                  <span>${fmtQty.format(index + 1)}</span>
-                </label>
-              </td>
-              <td class="product-image-cell">
-                <img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />
-              </td>
-              <td>
-                <span class="table-product-name">${escapeHtml(product.name)}</span>
-                <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
-                <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
-              </td>
-              <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
-              <td class="num">
-                <label class="table-cost-editor">
-                  <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
-                  <small data-table-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
-                </label>
-              </td>
-              <td class="num" data-table-cell="shippingUnit">
-                <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
-                <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
-              </td>
-              <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-table-cell="profitUnit">
-                <strong>${fmtMoney.format(calc.profitUnit)}</strong>
-                <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
-              </td>
-              <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
-              <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
-              <td class="num">${assetPill(product, "product_images")}</td>
-              <td class="num">${assetPill(product, "packaging_images")}</td>
-              <td class="num">${assetPill(product, "factory_files")}</td>
-            </tr>`;
-        }).join("")
-      : `<tr><td class="empty-state" colspan="12">ไม่พบสินค้า</td></tr>`;
+      ? rows.map((product, index) => renderRow(product, index)).join("")
+      : `<tr><td class="empty-state" colspan="${productTableColspan(mode)}">ไม่พบสินค้า</td></tr>`;
     syncBulkStatusMaster(rows);
   }
 
@@ -1917,6 +2068,7 @@
   function render() {
     renderFilters();
     renderStats();
+    renderProductTableModeToggle();
     renderProductImageModeToggle();
     renderDetailPanelShell();
     renderTrackerTable();
@@ -1947,6 +2099,17 @@
       render();
     });
     $("detailPanelExpandButton")?.addEventListener("click", () => setDetailPanelCollapsed(false));
+    $("productTableModeToggle")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-product-table-mode]");
+      if (!button) return;
+      const mode = normalizeProductTableMode(button.dataset.productTableMode);
+      if (state.productTableMode === mode) return;
+      state.productTableMode = mode;
+      localStorage.setItem("plainProductTableMode", mode);
+      renderProductTableModeToggle();
+      renderProductImageModeToggle();
+      renderTrackerTable();
+    });
     $("productImageModeToggle")?.addEventListener("click", (event) => {
       const button = event.target.closest("[data-product-image-mode]");
       if (!button) return;
@@ -2000,6 +2163,15 @@
       if (tableCostInput) updateProduct(tableCostInput.dataset.tableUsd, poUsdCostUpdates(tableCostInput.dataset.tableUsd, tableCostInput.value));
     });
     $("productRows").addEventListener("click", (event) => {
+      const imageButton = event.target.closest("[data-open-image]");
+      if (imageButton) {
+        openImageLightbox({
+          src: imageButton.dataset.openImage,
+          title: imageButton.dataset.imageTitle,
+          caption: imageButton.dataset.imageCaption,
+        });
+        return;
+      }
       if (event.target.closest("[data-table-usd], button, a, input, select, textarea, label")) return;
       const row = event.target.closest("[data-sku]");
       if (!row) return;

@@ -28,29 +28,30 @@ function blockUntil(source, startMarker, endMarker) {
 test("product list places SKU under the product name instead of a separate SKU column", () => {
   const source = readRepoFile("src/plain-design.js");
   const headerBlock = functionBlock(source, "renderProductTableHead", "filteredProducts");
-  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
 
   assert.doesNotMatch(headerBlock, /<th>SKU<\/th>/);
-  assert.match(tableBlock, /class="table-product-sku"/);
-  assert.match(tableBlock, /SKU\s+\$\{escapeHtml\(product\.sku\)\}/);
-  assert.doesNotMatch(tableBlock, /<td><strong class="sku-code">/);
-  assert.match(tableBlock, /colspan="12"/);
+  assert.match(combinedRowBlock, /class="table-product-sku"/);
+  assert.match(combinedRowBlock, /SKU\s+\$\{escapeHtml\(product\.sku\)\}/);
+  assert.doesNotMatch(combinedRowBlock, /<td><strong class="sku-code">/);
+  assert.match(source, /function productTableColspan/);
+  assert.match(source, /return 12;/);
 });
 
 test("product list shows editable product cost, shipping cost, and profit columns", () => {
   const source = readRepoFile("src/plain-design.js");
   const headerBlock = functionBlock(source, "renderProductTableHead", "filteredProducts");
-  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
   assert.match(headerBlock, />ต้นทุนสินค้า</);
   assert.match(headerBlock, />ต้นทุนขนส่ง</);
   assert.match(headerBlock, />กำไร</);
-  assert.match(tableBlock, /class="table-cost-input"/);
-  assert.match(tableBlock, /data-table-usd=/);
-  assert.match(tableBlock, /data-table-cell="shippingUnit"/);
-  assert.match(tableBlock, /data-table-cell="profitUnit"/);
-  assert.match(tableBlock, /colspan="12"/);
+  assert.match(combinedRowBlock, /class="table-cost-input"/);
+  assert.match(combinedRowBlock, /data-table-usd=/);
+  assert.match(combinedRowBlock, /data-table-cell="shippingUnit"/);
+  assert.match(combinedRowBlock, /data-table-cell="profitUnit"/);
+  assert.match(source, /productTableColspan\(mode\)/);
   assert.match(eventsBlock, /event\.target\.closest\("\[data-table-usd\]"\)/);
   assert.match(eventsBlock, /queueProductCommercialSave\(.*\.dataset\.tableUsd/);
 });
@@ -70,13 +71,13 @@ test("product list supports bulk redesign status updates from selected rows", ()
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");
   const headerBlock = functionBlock(source, "renderProductTableHead", "trackerCostInputValue");
-  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const selectionBlock = functionBlock(source, "renderBulkSelectionCell", "renderProductImagePairs");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
   assert.match(template, /id="bulkStatusBar"/);
   assert.match(source, /bulkStatusSelectedSkus:\s*new Set\(\)/);
   assert.match(headerBlock, /data-bulk-status-toggle-all/);
-  assert.match(tableBlock, /data-bulk-status-row=/);
+  assert.match(selectionBlock, /data-bulk-status-row=/);
   assert.match(source, /function renderBulkStatusBar/);
   assert.match(source, /data-bulk-status-select/);
   assert.match(source, /data-bulk-status-apply/);
@@ -91,7 +92,7 @@ test("product list supports bulk redesign status updates from selected rows", ()
 test("product list can switch cover images between KTW Mode and Plain Mode", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");
-  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
   assert.match(template, /id="productImageModeToggle"/);
@@ -101,9 +102,9 @@ test("product list can switch cover images between KTW Mode and Plain Mode", () 
   assert.match(source, /function tableCoverImageFor/);
   assert.match(source, /assetsFor\(product,\s*"product_images"\)\[0\]/);
   assert.match(source, /plainProductImageMode/);
-  assert.match(tableBlock, /const coverImage\s*=\s*tableCoverImageFor\(product\)/);
-  assert.match(tableBlock, /src="\$\{escapeHtml\(coverImage\.src\)\}"/);
-  assert.match(tableBlock, /data-image-mode="\$\{escapeHtml\(coverImage\.mode\)\}"/);
+  assert.match(combinedRowBlock, /const coverImage\s*=\s*tableCoverImageFor\(product\)/);
+  assert.match(combinedRowBlock, /src="\$\{escapeHtml\(coverImage\.src\)\}"/);
+  assert.match(combinedRowBlock, /data-image-mode="\$\{escapeHtml\(coverImage\.mode\)\}"/);
   assert.match(eventsBlock, /data-product-image-mode/);
   assert.match(eventsBlock, /renderProductImageModeToggle/);
   assert.match(eventsBlock, /renderTrackerTable\(\)/);
@@ -132,4 +133,38 @@ test("product detail sidebar can collapse and expand from the product table", ()
   assert.match(css, /\.main-grid\.detail-collapsed\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\);/);
   assert.match(css, /\.main-grid\.detail-collapsed\s+\.detail-panel\s*\{[\s\S]*?display:\s*none;/);
   assert.match(css, /\.detail-panel-expand-button\[hidden\]\s*\{[\s\S]*?display:\s*none;/);
+});
+
+test("product list supports Accounting, Designer, and combined table modes", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const template = readRepoFile("src/plain-design.template.html");
+  const css = readRepoFile("src/plain-design.css");
+  const headerBlock = functionBlock(source, "renderProductTableHead", "trackerCostInputValue");
+  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(template, /id="productTableModeToggle"/);
+  assert.match(template, /data-product-table-mode="accounting"/);
+  assert.match(template, /data-product-table-mode="designer"/);
+  assert.match(template, /data-product-table-mode="combined"/);
+  assert.match(template, /Accounting Expert/);
+  assert.match(template, /Designer Expert/);
+  assert.match(template, /Accounting&Design Mode/);
+  assert.match(source, /productTableMode:\s*localStorage\.getItem\("plainProductTableMode"\)\s*\|\|\s*"combined"/);
+  assert.match(source, /function normalizeProductTableMode/);
+  assert.match(source, /function renderProductTableModeToggle/);
+  assert.match(headerBlock, />ยอดขายรวม</);
+  assert.match(headerBlock, />กำไรรวม</);
+  assert.match(tableBlock, /renderAccountingProductRow/);
+  assert.match(tableBlock, /renderDesignerProductRow/);
+  assert.match(tableBlock, /renderCombinedProductRow/);
+  assert.match(source, /function renderProductImagePairs/);
+  assert.match(source, /ktwImagesFor\(product\)/);
+  assert.match(source, /assetsFor\(product,\s*"product_images"\)/);
+  assert.match(eventsBlock, /data-product-table-mode/);
+  assert.match(eventsBlock, /plainProductTableMode/);
+  assert.match(eventsBlock, /renderProductTableModeToggle/);
+  assert.match(css, /\.product-table\.accounting-mode/);
+  assert.match(css, /\.product-table\.designer-mode/);
+  assert.match(css, /\.product-image-pairs/);
 });

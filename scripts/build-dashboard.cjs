@@ -108,7 +108,8 @@ function writePlainDesignPage(dashboard) {
     assetGroups: [],
     products: [],
   });
-  const plainDesign = buildPlainDesignInitialState({ seed, dashboard });
+  const ktwLogistics = readOptionalJson(path.join(projectRoot, "data", "plain_design_ktw_logistics.json"), {});
+  const plainDesign = buildPlainDesignInitialState({ seed, dashboard, ktwLogistics });
   const template = fs.readFileSync(path.join(srcDir, "plain-design.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "plain-design.css"), "utf8");
   const app = fs.readFileSync(path.join(srcDir, "plain-design.js"), "utf8");

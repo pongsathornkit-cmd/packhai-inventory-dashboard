@@ -39,6 +39,7 @@ const dashboardDataFile = path.join(distDir, "inventory-valuation-data.json");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
 const expensesFile = path.join(dataDir, "expenses.json");
 const plainDesignSeedFile = path.join(projectRoot, "data", "plain_design_products.json");
+const plainDesignKtwLogisticsFile = path.join(projectRoot, "data", "plain_design_ktw_logistics.json");
 const plainDesignStateFile = path.join(dataDir, "plain-design-state.json");
 const plainDesignAssetDir = path.join(dataDir, "plain-design-assets");
 const googleUsdThbUrl = "https://www.google.com/finance/quote/USD-THB";
@@ -1066,6 +1067,7 @@ function resolveRequestPath(urlPath) {
 function plainDesignOptions() {
   return {
     seedFile: plainDesignSeedFile,
+    ktwLogisticsFile: plainDesignKtwLogisticsFile,
     stateFile: plainDesignStateFile,
     assetDir: plainDesignAssetDir,
     dashboardFile: dashboardDataFile,

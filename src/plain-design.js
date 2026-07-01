@@ -128,6 +128,7 @@
       otherUnitCost: numberValue(product.otherUnitCost),
       cargoMode: product.cargoMode || "truck",
       cargoType: product.cargoType || "A",
+      ktwLogistics: product.ktwLogistics || null,
     };
   }
 
@@ -318,6 +319,59 @@
   function assetPill(product, groupId) {
     const progress = assetProgress(product, groupId);
     return `<span class="asset-pill ${progress.tone}">${fmtQty.format(progress.count)}/${fmtQty.format(progress.target)}</span>`;
+  }
+
+  function hasShippingMetrics(product) {
+    return numberValue(product.widthCm) > 0 &&
+      numberValue(product.lengthCm) > 0 &&
+      numberValue(product.heightCm) > 0 &&
+      numberValue(product.unitWeightKg) > 0;
+  }
+
+  function shippingMeasureSummary(product) {
+    if (!hasShippingMetrics(product)) return "KTW ยังไม่มีข้อมูลขนาด/น้ำหนักสำหรับคำนวณค่าส่ง";
+    return `ยาว ${fmtMeasure.format(product.lengthCm)} x กว้าง ${fmtMeasure.format(product.widthCm)} x สูง ${fmtMeasure.format(product.heightCm)} ซม. · ${fmtMeasure.format(product.unitWeightKg)} กก./ชิ้น`;
+  }
+
+  function sameMeasureValue(a, b) {
+    return Math.abs(numberValue(a) - numberValue(b)) < 0.0001;
+  }
+
+  function usingKtwShippingMetrics(product) {
+    const logistics = product.ktwLogistics;
+    return Boolean(logistics) &&
+      sameMeasureValue(product.widthCm, logistics.widthCm) &&
+      sameMeasureValue(product.lengthCm, logistics.lengthCm) &&
+      sameMeasureValue(product.heightCm, logistics.heightCm) &&
+      sameMeasureValue(product.unitWeightKg, logistics.unitWeightKg);
+  }
+
+  function shippingMeasureTitle(product) {
+    if (!product.ktwLogistics) return "ขนาด/น้ำหนักจาก KTW";
+    return usingKtwShippingMetrics(product) ? "ขนาด/น้ำหนักจาก KTW" : "ขนาด/น้ำหนักที่ใช้คำนวณ";
+  }
+
+  function ktwLogisticsTimeLabel(product) {
+    const capturedAt = product.ktwLogistics?.capturedAt;
+    if (!capturedAt) return "";
+    return new Date(capturedAt).toLocaleString("th-TH", {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  }
+
+  function renderKtwLogisticsStrip(product) {
+    const hasMetrics = hasShippingMetrics(product);
+    const timeLabel = ktwLogisticsTimeLabel(product);
+    return `
+      <div class="ktw-logistics-strip ${hasMetrics ? "" : "missing"}">
+        <div>
+          <strong>${escapeHtml(shippingMeasureTitle(product))}</strong>
+          <span>${escapeHtml(shippingMeasureSummary(product))}</span>
+          ${timeLabel ? `<small>อัปเดตจาก shop.ktw.co.th ${escapeHtml(timeLabel)}</small>` : ""}
+        </div>
+        <em>${hasMetrics ? (usingKtwShippingMetrics(product) ? "ใช้ค่า KTW" : "แก้ไขเอง") : "รอข้อมูลจาก KTW"}</em>
+      </div>`;
   }
 
   function renderProductTableHead() {
@@ -595,6 +649,7 @@
           <span>ข้อมูลอ้างอิงจาก KTW</span>
           <strong>${fmtMoney.format(product.ktwPrice || 0)}</strong>
           <small>จำนวนสั่งซื้อ ${fmtQty.format(product.orderQuantity || 0)} ใบ</small>
+          <small>${escapeHtml(shippingMeasureSummary(product))}</small>
           <a href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">ดูต้นฉบับจาก KTW</a>
         </div>
       </section>
@@ -615,6 +670,7 @@
           <button class="ghost-button" id="saveCommercial" type="button">บันทึก</button>
         </div>
         ${renderExchangeCard("compact")}
+        ${renderKtwLogisticsStrip(product)}
         <div class="calc-grid">
           ${numberInput("orderQuantity", "จำนวนสั่ง", fieldValue(product, "orderQuantity"), "1")}
           ${numberInput("purchaseUnitCostUsd", "ต้นทุน USD/ชิ้น", displayPurchaseUnitCostUsd(product), "0.0001")}

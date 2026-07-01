@@ -58,6 +58,36 @@ function packhaiUrlForSku(sku) {
   return `../#inventory-detail?sku=${encodeURIComponent(normalizeSku(sku))}`;
 }
 
+function buildKtwLogisticsIndex(ktwLogistics) {
+  const bySku = new Map();
+  for (const item of ktwLogistics?.items || []) {
+    const sku = normalizeSku(item.sku);
+    if (!sku) continue;
+    bySku.set(sku, {
+      sku,
+      sourceUrl: item.sourceUrl || "",
+      capturedAt: item.capturedAt || ktwLogistics.createdAt || "",
+      sourceLabel: item.sourceLabel || ktwLogistics.sourceLabel || "shop.ktw.co.th",
+      widthCm: numberValue(item.widthCm),
+      lengthCm: numberValue(item.lengthCm),
+      heightCm: numberValue(item.heightCm),
+      unitWeightKg: numberValue(item.unitWeightKg),
+      rawUnit: item.rawUnit || item.raw?.dimensionUnit || "",
+      raw: item.raw || {},
+    });
+  }
+  return bySku;
+}
+
+function logisticsValue(product, logistics, field) {
+  return numberValue(product[field]) || numberValue(logistics?.[field]);
+}
+
+function storedOrKtwLogisticsValue(stored, product, field) {
+  const storedValue = numberValue(stored?.[field]);
+  return storedValue > 0 ? storedValue : numberValue(product[field]);
+}
+
 function buildPackhaiIndex(dashboard) {
   const bySku = new Map();
   for (const row of dashboard?.rows || []) {
@@ -106,10 +136,12 @@ function buildPackhaiIndex(dashboard) {
   return bySku;
 }
 
-function buildPlainDesignInitialState({ seed, dashboard }) {
+function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
   const packhaiBySku = buildPackhaiIndex(dashboard);
+  const ktwLogisticsBySku = buildKtwLogisticsIndex(ktwLogistics);
   const products = (seed?.products || []).map((product, index) => {
     const sku = normalizeSku(product.sku);
+    const logistics = ktwLogisticsBySku.get(sku) || null;
     const packhai = packhaiBySku.get(sku) || {
       sku,
       matched: false,
@@ -134,10 +166,10 @@ function buildPlainDesignInitialState({ seed, dashboard }) {
       purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
       purchaseUnitCost: numberValue(product.purchaseUnitCost || product.ktwPrice),
       saleUnitPrice: numberValue(product.saleUnitPrice || product.ktwPrice),
-      widthCm: numberValue(product.widthCm),
-      lengthCm: numberValue(product.lengthCm),
-      heightCm: numberValue(product.heightCm),
-      unitWeightKg: numberValue(product.unitWeightKg),
+      widthCm: logisticsValue(product, logistics, "widthCm"),
+      lengthCm: logisticsValue(product, logistics, "lengthCm"),
+      heightCm: logisticsValue(product, logistics, "heightCm"),
+      unitWeightKg: logisticsValue(product, logistics, "unitWeightKg"),
       packagingUnitCost: numberValue(product.packagingUnitCost),
       otherUnitCost: numberValue(product.otherUnitCost),
       cargoMode: product.cargoMode || "truck",
@@ -149,6 +181,7 @@ function buildPlainDesignInitialState({ seed, dashboard }) {
       sortOrder: index + 1,
       updatedAt: new Date().toISOString(),
       packhai,
+      ktwLogistics: logistics,
       assets: [],
     };
   });
@@ -187,12 +220,10 @@ function mergeStoredState(initialState, storedState) {
         saleUnitPrice: Object.prototype.hasOwnProperty.call(stored, "saleUnitPrice")
           ? numberValue(stored.saleUnitPrice)
           : product.saleUnitPrice,
-        widthCm: Object.prototype.hasOwnProperty.call(stored, "widthCm") ? numberValue(stored.widthCm) : product.widthCm,
-        lengthCm: Object.prototype.hasOwnProperty.call(stored, "lengthCm") ? numberValue(stored.lengthCm) : product.lengthCm,
-        heightCm: Object.prototype.hasOwnProperty.call(stored, "heightCm") ? numberValue(stored.heightCm) : product.heightCm,
-        unitWeightKg: Object.prototype.hasOwnProperty.call(stored, "unitWeightKg")
-          ? numberValue(stored.unitWeightKg)
-          : product.unitWeightKg,
+        widthCm: storedOrKtwLogisticsValue(stored, product, "widthCm"),
+        lengthCm: storedOrKtwLogisticsValue(stored, product, "lengthCm"),
+        heightCm: storedOrKtwLogisticsValue(stored, product, "heightCm"),
+        unitWeightKg: storedOrKtwLogisticsValue(stored, product, "unitWeightKg"),
         packagingUnitCost: Object.prototype.hasOwnProperty.call(stored, "packagingUnitCost")
           ? numberValue(stored.packagingUnitCost)
           : product.packagingUnitCost,
@@ -211,7 +242,8 @@ function mergeStoredState(initialState, storedState) {
 function loadPlainDesignState(options) {
   const seed = readJson(options.seedFile, { products: [] });
   const dashboard = readJson(options.dashboardFile, {});
-  const initialState = buildPlainDesignInitialState({ seed, dashboard });
+  const ktwLogistics = readJson(options.ktwLogisticsFile, {});
+  const initialState = buildPlainDesignInitialState({ seed, dashboard, ktwLogistics });
   const storedState = readJson(options.stateFile, null);
   return mergeStoredState(initialState, storedState);
 }

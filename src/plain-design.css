@@ -1481,6 +1481,72 @@ h2 {
   font-size: 15px;
 }
 
+.ktw-logistics-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #d8eadc;
+  border-radius: 6px;
+  background: #f6fbf5;
+  color: #24432d;
+}
+
+.ktw-logistics-strip div {
+  min-width: 0;
+}
+
+.ktw-logistics-strip strong,
+.ktw-logistics-strip span,
+.ktw-logistics-strip small {
+  display: block;
+}
+
+.ktw-logistics-strip strong {
+  font-size: 12px;
+}
+
+.ktw-logistics-strip span {
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 720;
+  line-height: 1.35;
+}
+
+.ktw-logistics-strip small {
+  margin-top: 2px;
+  color: #5b7462;
+  font-size: 10px;
+}
+
+.ktw-logistics-strip em {
+  flex: 0 0 auto;
+  border-radius: 999px;
+  background: #dff1e3;
+  color: #247040;
+  font-size: 10px;
+  font-style: normal;
+  font-weight: 760;
+  padding: 4px 7px;
+}
+
+.ktw-logistics-strip.missing {
+  border-color: #f4d9b8;
+  background: #fff8ed;
+  color: #8a520c;
+}
+
+.ktw-logistics-strip.missing small {
+  color: #9c6a26;
+}
+
+.ktw-logistics-strip.missing em {
+  background: #ffe9c7;
+  color: #9a5600;
+}
+
 .calc-grid {
   gap: 8px;
 }

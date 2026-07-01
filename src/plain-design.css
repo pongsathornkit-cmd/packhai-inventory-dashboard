@@ -819,6 +819,30 @@ h2 {
   border-bottom: 1px solid var(--line);
 }
 
+.po-line-toolbar {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) 130px auto;
+  align-items: end;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--line);
+  background: #fffdf9;
+}
+
+.po-line-toolbar .field {
+  min-height: auto;
+}
+
+.po-line-toolbar select,
+.po-line-toolbar input {
+  width: 100%;
+}
+
+.po-line-toolbar button {
+  min-height: 38px;
+  white-space: nowrap;
+}
+
 .po-table {
   width: 100%;
   min-width: 1220px;
@@ -893,6 +917,23 @@ h2 {
 .po-product-table .po-qty-input + small {
   display: block;
   margin-top: 4px;
+}
+
+.po-line-delete-button {
+  min-height: 24px;
+  margin-top: 5px;
+  border: 1px solid #f0b7b7;
+  border-radius: 6px;
+  background: #fff5f5;
+  color: #d34444;
+  font-size: 11px;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.po-line-delete-button:hover {
+  background: #ffecec;
+  border-color: #e98f8f;
 }
 
 .po-summary-good strong,

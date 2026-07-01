@@ -163,6 +163,15 @@
     );
   }
 
+  function poAvailableProducts(order = activePurchaseOrder()) {
+    const selectedSkus = new Set(
+      Object.entries(order?.lines || {})
+        .filter(([, qty]) => numberValue(qty) > 0)
+        .map(([sku]) => sku)
+    );
+    return state.products.filter((product) => !selectedSkus.has(product.sku));
+  }
+
   function normalizePurchaseOrder(order = {}, index = 0) {
     const lines = {};
     Object.entries(order.lines || {}).forEach(([sku, qty]) => {
@@ -315,7 +324,43 @@
     order.updatedAt = new Date().toISOString();
     syncActivePurchaseOrderState();
     persistPurchaseOrders();
-    refreshPoRealtime();
+    renderStats();
+    if (normalizedQty > 0) refreshPoRealtime();
+    else renderPoPanel();
+  }
+
+  function addPurchaseOrderLine(sku, qty) {
+    const order = activePurchaseOrder();
+    const product = state.products.find((item) => item.sku === sku);
+    if (!order || !product) {
+      showMessage("เลือกสินค้าที่ต้องการเพิ่มเข้าบิลก่อน", true);
+      return;
+    }
+    const defaultQty = numberValue(product.orderQuantity) || 1;
+    const normalizedQty = Math.max(1, numberValue(qty) || defaultQty);
+    order.lines[sku] = normalizedQty;
+    order.updatedAt = new Date().toISOString();
+    syncActivePurchaseOrderState();
+    persistPurchaseOrders();
+    renderStats();
+    renderTrackerTable();
+    renderDesignDetail();
+    renderPoPanel();
+    showMessage(`เพิ่ม ${sku} เข้าบิลแล้ว`);
+  }
+
+  function removePurchaseOrderLine(sku) {
+    const order = activePurchaseOrder();
+    if (!order || !order.lines?.[sku]) return;
+    delete order.lines[sku];
+    order.updatedAt = new Date().toISOString();
+    syncActivePurchaseOrderState();
+    persistPurchaseOrders();
+    renderStats();
+    renderTrackerTable();
+    renderDesignDetail();
+    renderPoPanel();
+    showMessage(`ลบ ${sku} ออกจากบิลแล้ว`);
   }
 
   function poUsdCostUpdates(sku, value) {
@@ -1757,7 +1802,10 @@
   }
 
   function renderPoRows(bill) {
-    return bill.tableRows.map(({ product, calc }, index) => {
+    if (!bill.lines.length) {
+      return `<tr><td class="empty-state" colspan="12">ยังไม่มีสินค้าในใบสั่งซื้อ เลือก SKU แล้วกดเพิ่มรายการสินค้า</td></tr>`;
+    }
+    return bill.lines.map(({ product, calc }, index) => {
       const status = statusMeta(product.status);
       const coverImage = tableCoverImageFor(product);
       return `
@@ -1794,6 +1842,7 @@
           <td class="num">
             <input class="po-qty-input" data-po-qty="${escapeHtml(product.sku)}" type="number" min="0" step="1" inputmode="numeric" value="${calc.qty > 0 ? escapeHtml(calc.qty) : ""}" placeholder="0" aria-label="จำนวนในบิล ${escapeHtml(product.sku)}" />
             <small>ใบ</small>
+            <button class="po-line-delete-button" type="button" data-po-remove-line="${escapeHtml(product.sku)}">ลบรายการ</button>
           </td>
           <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
           <td class="num">${assetPill(product, "product_images")}</td>
@@ -1868,6 +1917,8 @@
   function renderPoPanel() {
     const order = activePurchaseOrder() || makePurchaseOrder(plannedOrderLines());
     const bill = billCalc(order);
+    const availableProducts = poAvailableProducts(order);
+    const defaultAddQty = Math.max(1, numberValue(availableProducts[0]?.orderQuantity) || 1);
     $("purchase-order").innerHTML = `
       <div class="section-heading">
         <div>
@@ -1923,6 +1974,21 @@
             </label>
           </div>
           <div class="po-summary" id="poSummary">${renderPoSummaryCards(bill)}</div>
+          <div class="po-line-toolbar">
+            <label class="field po-product-picker">
+              <span>เพิ่มรายการสินค้าสั่งซื้อ</span>
+              <select id="poProductSelect" ${availableProducts.length ? "" : "disabled"}>
+                ${availableProducts.length
+                  ? availableProducts.map((product) => `<option value="${escapeHtml(product.sku)}">${escapeHtml(product.sku)} - ${escapeHtml(product.name)}</option>`).join("")
+                  : `<option value="">เพิ่มสินค้าครบทุก SKU แล้ว</option>`}
+              </select>
+            </label>
+            <label class="field po-add-qty">
+              <span>จำนวนเริ่มต้น</span>
+              <input id="poAddQuantity" type="number" min="1" step="1" inputmode="numeric" value="${escapeHtml(defaultAddQty)}" ${availableProducts.length ? "" : "disabled"} />
+            </label>
+            <button class="secondary-button" id="addPoProductLine" type="button" ${availableProducts.length ? "" : "disabled"}>+ เพิ่มรายการสินค้า</button>
+          </div>
           <div class="table-wrap">
             <table class="product-table po-table po-product-table combined-mode">
               <thead>
@@ -1960,6 +2026,14 @@
       const button = event.target.closest("[data-po-bill]");
       if (button) setActivePurchaseOrder(button.dataset.poBill);
     });
+    $("poProductSelect")?.addEventListener("change", (event) => {
+      const product = state.products.find((item) => item.sku === event.target.value);
+      const qtyInput = $("poAddQuantity");
+      if (qtyInput) qtyInput.value = String(Math.max(1, numberValue(product?.orderQuantity) || 1));
+    });
+    $("addPoProductLine")?.addEventListener("click", () => {
+      addPurchaseOrderLine($("poProductSelect")?.value || "", $("poAddQuantity")?.value || "");
+    });
     $("fastCargoDiscount")?.addEventListener("input", (event) => {
       updateActivePurchaseOrder({ fastCargoDiscount: clamp(event.target.value, 0, 100) });
       renderStats();
@@ -1989,6 +2063,10 @@
         renderDesignDetail();
         refreshPoRealtime();
       }
+    });
+    $("poTableBody")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-po-remove-line]");
+      if (button) removePurchaseOrderLine(button.dataset.poRemoveLine);
     });
     $("poTableBody")?.addEventListener("change", (event) => {
       const input = event.target.closest("[data-po-usd]");

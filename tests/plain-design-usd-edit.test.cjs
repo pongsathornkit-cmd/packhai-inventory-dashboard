@@ -66,3 +66,22 @@ test("purchase order table uses the same combined product table layout as the pr
   assert.match(rowsBlock, /assetPill\(product,\s*"factory_files"\)/);
   assert.match(css, /\.po-product-table/);
 });
+
+test("purchase order can add and remove product lines inside the bill", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const renderBlock = blockUntil(source, "function renderPoPanel() {", "function bindPoEvents");
+  const rowsBlock = blockUntil(source, "function renderPoRows", "function refreshPoRealtime");
+  const eventsBlock = blockUntil(source, "function bindPoEvents", "async function applyBulkRedesignStatus");
+
+  assert.match(source, /function poAvailableProducts/);
+  assert.match(source, /function addPurchaseOrderLine/);
+  assert.match(source, /function removePurchaseOrderLine/);
+  assert.match(source, /delete order\.lines\[sku\]/);
+  assert.match(renderBlock, /id="poProductSelect"/);
+  assert.match(renderBlock, /id="poAddQuantity"/);
+  assert.match(renderBlock, /id="addPoProductLine"/);
+  assert.match(rowsBlock, /bill\.lines\.map/);
+  assert.match(rowsBlock, /data-po-remove-line=/);
+  assert.match(eventsBlock, /addPurchaseOrderLine\(/);
+  assert.match(eventsBlock, /removePurchaseOrderLine\(/);
+});

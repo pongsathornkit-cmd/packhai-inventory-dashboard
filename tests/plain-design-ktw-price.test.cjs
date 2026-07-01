@@ -1,8 +1,11 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 const vm = require("vm");
+
+const { loadPlainDesignState } = require("../scripts/plain-design-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 
@@ -54,4 +57,82 @@ test("KTW price parser can compute a discounted website price from list price an
   `;
 
   assert.equal(parseKtwSourcePrice(html, "P525-1310"), 155);
+});
+
+test("stored default cost follows a corrected KTW website price", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-price-"));
+  const files = {
+    seedFile: path.join(dir, "seed.json"),
+    dashboardFile: path.join(dir, "dashboard.json"),
+    ktwLogisticsFile: path.join(dir, "ktw.json"),
+    stateFile: path.join(dir, "state.json"),
+  };
+  fs.writeFileSync(
+    files.seedFile,
+    JSON.stringify({
+      products: [{ sku: "P525-1310", name: "Blade", category: "metal", orderQuantity: 1000 }],
+    }),
+    "utf8"
+  );
+  fs.writeFileSync(files.dashboardFile, JSON.stringify({ rows: [] }), "utf8");
+  fs.writeFileSync(
+    files.ktwLogisticsFile,
+    JSON.stringify({
+      sourceLabel: "shop.ktw.co.th",
+      items: [{ sku: "P525-1310", sourceLabel: "shop.ktw.co.th", sourceUrl: "https://shop.ktw.co.th/p/P525-1310", sourcePrice: 155 }],
+    }),
+    "utf8"
+  );
+  fs.writeFileSync(
+    files.stateFile,
+    JSON.stringify({
+      products: [{ sku: "P525-1310", ktwPrice: 203.36, saleUnitPrice: 203.36, purchaseUnitCost: 203.36, status: "review" }],
+    }),
+    "utf8"
+  );
+
+  try {
+    const state = loadPlainDesignState(files);
+    const product = state.products[0];
+    assert.equal(product.ktwPrice, 155);
+    assert.equal(product.saleUnitPrice, 155);
+    assert.equal(product.purchaseUnitCost, 155);
+    assert.equal(product.status, "review");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("stored edited cost is preserved when it differs from the old KTW website price", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-edited-cost-"));
+  const files = {
+    seedFile: path.join(dir, "seed.json"),
+    dashboardFile: path.join(dir, "dashboard.json"),
+    ktwLogisticsFile: path.join(dir, "ktw.json"),
+    stateFile: path.join(dir, "state.json"),
+  };
+  fs.writeFileSync(files.seedFile, JSON.stringify({ products: [{ sku: "P525-1310", name: "Blade" }] }), "utf8");
+  fs.writeFileSync(files.dashboardFile, JSON.stringify({ rows: [] }), "utf8");
+  fs.writeFileSync(
+    files.ktwLogisticsFile,
+    JSON.stringify({
+      sourceLabel: "shop.ktw.co.th",
+      items: [{ sku: "P525-1310", sourceLabel: "shop.ktw.co.th", sourceUrl: "https://shop.ktw.co.th/p/P525-1310", sourcePrice: 155 }],
+    }),
+    "utf8"
+  );
+  fs.writeFileSync(
+    files.stateFile,
+    JSON.stringify({
+      products: [{ sku: "P525-1310", ktwPrice: 203.36, saleUnitPrice: 203.36, purchaseUnitCost: 120 }],
+    }),
+    "utf8"
+  );
+
+  try {
+    const state = loadPlainDesignState(files);
+    assert.equal(state.products[0].purchaseUnitCost, 120);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
 });

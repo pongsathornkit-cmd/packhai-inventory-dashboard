@@ -97,6 +97,18 @@ function storedOrKtwLogisticsValue(stored, product, field) {
   return storedValue > 0 ? storedValue : numberValue(product[field]);
 }
 
+function storedPurchaseUnitCost(stored, product) {
+  if (!Object.prototype.hasOwnProperty.call(stored || {}, "purchaseUnitCost")) return product.purchaseUnitCost;
+  const storedCost = numberValue(stored.purchaseUnitCost);
+  const oldKtwPrice = numberValue(stored.ktwPrice || stored.saleUnitPrice);
+  const wasDefaultKtwCost =
+    storedCost > 0 &&
+    oldKtwPrice > 0 &&
+    storedCost === oldKtwPrice &&
+    !numberValue(stored.purchaseUnitCostUsd);
+  return wasDefaultKtwCost ? product.purchaseUnitCost : storedCost;
+}
+
 function ktwWebsitePrice(logistics) {
   if (!logistics) return 0;
   const sourceLabel = String(logistics.sourceLabel || "").toLowerCase();
@@ -260,9 +272,7 @@ function mergeStoredState(initialState, storedState) {
         orderQuantity: Object.prototype.hasOwnProperty.call(stored, "orderQuantity")
           ? numberValue(stored.orderQuantity)
           : product.orderQuantity,
-        purchaseUnitCost: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCost")
-          ? numberValue(stored.purchaseUnitCost)
-          : product.purchaseUnitCost,
+        purchaseUnitCost: storedPurchaseUnitCost(stored, product),
         purchaseUnitCostUsd: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCostUsd")
           ? numberValue(stored.purchaseUnitCostUsd)
           : product.purchaseUnitCostUsd,

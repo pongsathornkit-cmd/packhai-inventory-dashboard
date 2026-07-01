@@ -133,9 +133,9 @@ test("Designer Expert can send one AI design command for selected products in bu
   assert.match(targetsBlock, /assetTarget\(product,\s*"product_images"\)/);
   assert.match(targetsBlock, /plainImageVersionSelection\(product,\s*index\)/);
   assert.match(requestBlock, /for \(const target of targets\)/);
-  assert.match(requestBlock, /\/api\/plain-design\/ai-image-edit/);
+  assert.match(requestBlock, /\/api\/plain-design\/codex-ai-jobs/);
   assert.match(requestBlock, /bulkAiRequest/);
-  assert.match(requestBlock, /mergeAiImageRevisionResult/);
+  assert.match(requestBlock, /mergeCodexAiJobQueueResult/);
   assert.match(eventsBlock, /data-bulk-ai-prompt/);
   assert.match(eventsBlock, /data-bulk-ai-design-start/);
   assert.match(eventsBlock, /requestBulkAiDesign/);
@@ -503,11 +503,13 @@ test("Designer Expert can send AI edit commands for the selected Plain image ver
   assert.match(aiCommandBlock, /data-ai-image-command=/);
   assert.match(aiCommandBlock, /data-ai-image-submit=/);
   assert.match(aiCommandBlock, /ai-image-spinner/);
-  assert.match(source, /\/api\/plain-design\/ai-image-edit/);
+  assert.match(source, /\/api\/plain-design\/codex-ai-jobs/);
+  assert.match(source, /mergeCodexAiJobQueueResult/);
   assert.match(eventsBlock, /data-ai-image-submit/);
   assert.match(eventsBlock, /requestPlainImageAiEdit/);
-  assert.match(server, /createPlainDesignAiImageRevision/);
-  assert.match(server, /\/api\/plain-design\/ai-image-edit/);
+  assert.match(server, /queuePlainDesignCodexImageJob/);
+  assert.match(server, /completePlainDesignCodexImageJob/);
+  assert.match(server, /\/api\/plain-design\/codex-ai-jobs/);
   assert.match(css, /\.ai-image-command/);
   assert.match(css, /@keyframes ai-image-spin/);
 });

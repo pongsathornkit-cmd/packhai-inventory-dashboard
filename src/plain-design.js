@@ -53,6 +53,7 @@
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
     aiImageRequests: new Map(),
     aiImageReferenceUploads: new Map(),
+    codexAiJobs: embedded.codexAiJobs || [],
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -190,6 +191,41 @@
       ktwImages: Array.isArray(product.ktwImages) ? product.ktwImages : [],
       plainImageVersionSelections: normalizePlainImageVersionSelections(product.plainImageVersionSelections),
     };
+  }
+
+  function normalizeCodexAiJob(job) {
+    const status = String(job?.status || "pending").toLowerCase();
+    return {
+      ...job,
+      id: String(job?.id || ""),
+      status: ["pending", "working", "completed", "failed", "cancelled"].includes(status) ? status : "pending",
+      sku: String(job?.sku || "").trim().toUpperCase(),
+      angleIndex: normalizePlainImageAngleIndex(job?.angleIndex),
+      sourceVersion: normalizePlainImageVersion(job?.sourceVersion || job?.version),
+      newVersion: normalizePlainImageVersion(job?.newVersion),
+      prompt: String(job?.prompt || ""),
+    };
+  }
+
+  function activeCodexAiJobFor(sku, angleIndex, version) {
+    const normalizedSku = String(sku || "").trim().toUpperCase();
+    const normalizedAngleIndex = normalizePlainImageAngleIndex(angleIndex);
+    const normalizedVersion = normalizePlainImageVersion(version);
+    return state.codexAiJobs
+      .map(normalizeCodexAiJob)
+      .find((job) => (
+        job.sku === normalizedSku &&
+        job.angleIndex === normalizedAngleIndex &&
+        job.sourceVersion === normalizedVersion &&
+        ["pending", "working", "failed"].includes(job.status)
+      )) || null;
+  }
+
+  function codexAiJobLabel(job) {
+    if (!job) return "";
+    if (job.status === "working") return "Codex กำลังทำงาน";
+    if (job.status === "failed") return "คิว Codex มีปัญหา";
+    return "รอ Codex รับงาน";
   }
 
   function todayDate() {
@@ -454,6 +490,7 @@
       state.statusOptions = payload.statusOptions || state.statusOptions;
       state.categoryOptions = payload.categoryOptions || state.categoryOptions;
       state.assetGroups = payload.assetGroups || state.assetGroups;
+      state.codexAiJobs = (payload.codexAiJobs || []).map(normalizeCodexAiJob);
       state.selectedSku = state.selectedSku || state.products[0]?.sku || "";
       initializePurchaseOrders(payload.purchaseOrders || []);
     } catch (error) {
@@ -900,15 +937,17 @@
     const versionLabel = plainVersionLabel(selectedVersion);
     const requestKey = aiImageRequestKey(product.sku, angleIndex, selectedVersion);
     const busy = state.aiImageRequests.has(requestKey);
+    const codexJob = activeCodexAiJobFor(product.sku, angleIndex, selectedVersion);
+    const hasOpenCodexJob = codexJob && codexJob.status !== "failed";
     const referenceImages = state.aiImageReferenceUploads.get(requestKey) || [];
     return `
-      <div class="ai-image-command ${busy ? "working" : ""}">
+      <div class="ai-image-command ${busy || hasOpenCodexJob ? "working" : ""}">
         <textarea data-ai-image-command="${escapeHtml(product.sku)}"
           data-ai-image-prompt="${escapeHtml(product.sku)}"
           data-angle-index="${escapeHtml(angleIndex)}"
           data-version="${escapeHtml(selectedVersion)}"
           rows="2"
-          placeholder="สั่ง AI แก้ V${escapeHtml(versionLabel)}..."></textarea>
+          placeholder="สั่ง Codex ออกแบบ PLAIN V${escapeHtml(versionLabel)}..."></textarea>
         <div class="ai-reference-tools">
           <label class="ai-reference-picker icon-only" title="แนบรูปอ้างอิงให้ AI" aria-label="แนบรูปอ้างอิงให้ AI">
             ${PAPERCLIP_ICON}
@@ -923,13 +962,14 @@
             data-version="${escapeHtml(selectedVersion)}">ล้าง</button>` : ""}
         </div>
         ${renderAiReferenceSummary(state.aiImageReferenceUploads.get(requestKey))}
+        ${codexJob ? `<div class="ai-job-status ${escapeHtml(codexJob.status)}">${escapeHtml(codexAiJobLabel(codexJob))}${codexJob.error ? `: ${escapeHtml(codexJob.error)}` : ""}</div>` : ""}
         <button type="button"
           data-ai-image-submit="${escapeHtml(product.sku)}"
           data-angle-index="${escapeHtml(angleIndex)}"
           data-version="${escapeHtml(selectedVersion)}"
-          ${busy ? "disabled" : ""}>
+          ${busy || hasOpenCodexJob ? "disabled" : ""}>
           <span class="ai-image-spinner" aria-hidden="true"></span>
-          <span>${busy ? "กำลังออกแบบ" : "สั่ง AI"}</span>
+          <span>${busy ? "กำลังส่งคิว" : hasOpenCodexJob ? "รอ Codex" : "ส่งให้ Codex"}</span>
         </button>
       </div>`;
   }
@@ -1148,7 +1188,7 @@
       ${isDesignerMode ? `
         <div class="bulk-ai-design ${aiBusy ? "working" : ""}">
           <div>
-            <strong>AI Bulk Design</strong>
+            <strong>Codex Bulk Design</strong>
             <span>${escapeHtml(aiProgress)}</span>
           </div>
           <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
@@ -1162,7 +1202,7 @@
           </div>
           <button class="secondary-button" data-bulk-ai-design-start type="button" ${canStartBulkAiDesign() ? "" : "disabled"}>
             <span class="bulk-ai-spinner" aria-hidden="true"></span>
-            <span>${aiBusy ? "กำลังออกแบบ Bulk" : "สั่ง AI Bulk"}</span>
+            <span>${aiBusy ? "กำลังส่งคิว Bulk" : "ส่งคิว Codex Bulk"}</span>
           </button>
           ${state.bulkAiRequest?.current ? `<small>กำลังทำ: ${escapeHtml(state.bulkAiRequest.current)}</small>` : ""}
         </div>` : ""}`;
@@ -1805,6 +1845,15 @@
     });
   }
 
+  function mergeCodexAiJobQueueResult(result) {
+    const job = normalizeCodexAiJob(result?.job);
+    if (!job.id) return;
+    state.codexAiJobs = [
+      job,
+      ...state.codexAiJobs.map(normalizeCodexAiJob).filter((item) => item.id !== job.id),
+    ];
+  }
+
   function bulkAiDesignTargets() {
     return state.products
       .filter((product) => state.bulkStatusSelectedSkus.has(product.sku))
@@ -1823,16 +1872,16 @@
     const prompt = String(state.bulkAiPrompt || "").trim();
     const targets = bulkAiDesignTargets();
     if (!targets.length) {
-      showMessage("เลือก SKU ที่ต้องการสั่ง AI Bulk ก่อน", true);
+      showMessage("เลือก SKU ที่ต้องการส่งคิว Codex Bulk ก่อน", true);
       return;
     }
     if (!prompt) {
-      showMessage("ใส่คำสั่ง AI Bulk ก่อน", true);
+      showMessage("ใส่คำสั่ง Codex Bulk ก่อน", true);
       document.querySelector("[data-bulk-ai-prompt]")?.focus();
       return;
     }
     if (state.bulkAiRequest?.running) return;
-    const confirmText = `จะสั่ง AI ออกแบบ ${fmtQty.format(targets.length)} รูป จาก ${fmtQty.format(state.bulkStatusSelectedSkus.size)} SKU ที่เลือก ต้องการเริ่มไหม?`;
+    const confirmText = `จะส่งคิว Codex ออกแบบ ${fmtQty.format(targets.length)} รูป จาก ${fmtQty.format(state.bulkStatusSelectedSkus.size)} SKU ที่เลือก ต้องการเริ่มไหม?`;
     if (typeof window.confirm === "function" && !window.confirm(confirmText)) return;
 
     state.bulkAiRequest = { running: true, total: targets.length, done: 0, failed: 0, current: "", errors: [] };
@@ -1842,7 +1891,7 @@
         state.bulkAiRequest.current = `${target.sku} มุม ${fmtQty.format(target.angleIndex)}`;
         renderBulkStatusBar();
         try {
-          const result = await api("/api/plain-design/ai-image-edit", {
+          const result = await api("/api/plain-design/codex-ai-jobs", {
             method: "POST",
             body: JSON.stringify({
               sku: target.sku,
@@ -1852,7 +1901,7 @@
               referenceImages: state.bulkAiReferenceImages,
             }),
           });
-          mergeAiImageRevisionResult(result);
+          mergeCodexAiJobQueueResult(result);
           state.bulkAiRequest.done += 1;
         } catch (error) {
           state.bulkAiRequest.failed += 1;
@@ -1862,7 +1911,7 @@
         renderDesignDetail();
       }
       const { done, failed } = state.bulkAiRequest;
-      showMessage(`AI Bulk เสร็จ ${fmtQty.format(done)} รูป${failed ? `, พลาด ${fmtQty.format(failed)} รูป` : ""}`, failed > 0);
+      showMessage(`ส่งคิว Codex แล้ว ${fmtQty.format(done)} รูป${failed ? `, ส่งไม่สำเร็จ ${fmtQty.format(failed)} รูป` : ""}`, failed > 0);
     } finally {
       state.bulkAiRequest = null;
       renderTrackerTable();
@@ -1878,7 +1927,7 @@
     );
     const prompt = String(command?.value || "").trim();
     if (!prompt) {
-      showMessage("ใส่คำสั่งให้ AI ก่อน", true);
+      showMessage("ใส่คำสั่งให้ Codex ก่อน", true);
       command?.focus();
       return;
     }
@@ -1888,8 +1937,8 @@
     renderTrackerTable();
     renderDesignDetail();
     try {
-      showMessage("รับคำสั่งแล้ว กำลังให้ AI ออกแบบรูป");
-      const result = await api("/api/plain-design/ai-image-edit", {
+      showMessage("รับคำสั่งแล้ว กำลังส่งคิวให้ Codex");
+      const result = await api("/api/plain-design/codex-ai-jobs", {
         method: "POST",
         body: JSON.stringify({
           sku,
@@ -1899,12 +1948,13 @@
           referenceImages: referenceImagesForAiRequest(requestKey),
         }),
       });
-      mergeAiImageRevisionResult(result);
+      mergeCodexAiJobQueueResult(result);
       state.aiImageReferenceUploads.delete(requestKey);
-      showMessage(`AI สร้างรูป PLAIN V${plainVersionLabel(result.newVersion)} แล้ว`);
+      const queuedCodexJob = normalizeCodexAiJob(result.job);
+      showMessage(`ส่งคิวให้ Codex แล้ว: ${sku} มุม ${fmtQty.format(normalizedAngleIndex)} เป็น V${plainVersionLabel(queuedCodexJob.newVersion)}`);
       render();
     } catch (error) {
-      showMessage(`AI ยังสร้างรูปไม่ได้: ${error.message}`, true);
+      showMessage(`ส่งคิว Codex ไม่สำเร็จ: ${error.message}`, true);
       render();
     } finally {
       state.aiImageRequests.delete(requestKey);
@@ -2750,7 +2800,7 @@
       return type.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(file.name || "");
     });
     if (imageFiles.length !== candidates.length) {
-      showMessage("แนบได้เฉพาะไฟล์รูปภาพสำหรับคำสั่ง AI", true);
+      showMessage("แนบได้เฉพาะไฟล์รูปภาพสำหรับคำสั่ง Codex", true);
     }
     const limitedFiles = imageFiles.slice(0, MAX_AI_REFERENCE_IMAGES);
     if (imageFiles.length > MAX_AI_REFERENCE_IMAGES) {

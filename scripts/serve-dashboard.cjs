@@ -27,12 +27,16 @@ const {
   publicAutoSyncState,
 } = require("./auto-sync-core.cjs");
 const {
+  completePlainDesignCodexImageJob,
   createPlainDesignAiImageRevision,
   deletePlainDesignAsset,
+  listPlainDesignCodexImageJobs,
   loadPlainDesignState,
+  queuePlainDesignCodexImageJob,
   resolvePlainDesignAssetPath,
   savePlainDesignAssetFiles,
   savePlainDesignPurchaseOrders,
+  updatePlainDesignCodexImageJob,
   updatePlainDesignProduct,
 } = require("./plain-design-core.cjs");
 
@@ -1320,6 +1324,37 @@ const server = http.createServer((req, res) => {
           : 500;
         sendJson(res, status, { ok: false, message: error.message });
       });
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/codex-ai-jobs" && req.method === "GET") {
+    sendJson(res, 200, listPlainDesignCodexImageJobs(plainDesignOptions(), {
+      status: url.searchParams.get("status") || "",
+      sku: url.searchParams.get("sku") || "",
+    }));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/codex-ai-jobs" && req.method === "POST") {
+    readJsonBody(req, 32 * 1024 * 1024)
+      .then((body) => queuePlainDesignCodexImageJob(plainDesignOptions(), body))
+      .then((result) => sendJson(res, 201, result))
+      .catch((error) => sendJson(res, /required|not found|source image|reference image|sub-version/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  const codexImageJobMatch = url.pathname.match(/^\/api\/plain-design\/codex-ai-jobs\/([^/]+)\/(status|complete)$/);
+  if (codexImageJobMatch && req.method === "POST") {
+    const [, jobId, action] = codexImageJobMatch;
+    readJsonBody(req, action === "complete" ? 80 * 1024 * 1024 : 1024 * 1024)
+      .then((body) => {
+        const payload = { ...body, jobId };
+        return action === "complete"
+          ? completePlainDesignCodexImageJob(plainDesignOptions(), payload)
+          : updatePlainDesignCodexImageJob(plainDesignOptions(), payload);
+      })
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, /required|not found|already|data URL|imageDataUrl/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
     return;
   }
 

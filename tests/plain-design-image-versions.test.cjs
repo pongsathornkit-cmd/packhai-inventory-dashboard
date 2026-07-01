@@ -5,8 +5,10 @@ const os = require("os");
 const path = require("path");
 
 const {
+  completePlainDesignCodexImageJob,
   createPlainDesignAiImageRevision,
   loadPlainDesignState,
+  queuePlainDesignCodexImageJob,
   savePlainDesignAssetFiles,
   updatePlainDesignProduct,
 } = require("../scripts/plain-design-core.cjs");
@@ -188,6 +190,76 @@ test("AI image edit sends attached reference images with the source image", asyn
   assert.equal(openAiRequestBody.images[1].image_url, "data:image/png;base64,cmVmZXJlbmNlLW9uZQ==");
   assert.equal(openAiRequestBody.images[2].image_url, "data:image/webp;base64,cmVmZXJlbmNlLXR3bw==");
   assert.equal(result.asset.metadata.referenceImageCount, 2);
+});
+
+test("Codex image jobs queue a pending redesign without calling OpenAI", () => {
+  const options = makePlainDesignOptions({
+    statusOptions: [],
+    categoryOptions: [],
+    assetGroups: [],
+    products: [{ sku: "SKU-1", name: "Blade", status: "waiting_ai_images", sourceImageUrl: "https://shop.ktw.co.th/source-1.jpg" }],
+  });
+
+  const result = queuePlainDesignCodexImageJob(options, {
+    sku: "sku-1",
+    angleIndex: 1,
+    version: 1,
+    prompt: "redesign as PLAIN premium brown gold",
+    referenceImages: [
+      {
+        name: "style.png",
+        type: "image/png",
+        dataUrl: "data:image/png;base64,c3R5bGUtcmVm",
+      },
+    ],
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.job.sku, "SKU-1");
+  assert.equal(result.job.status, "pending");
+  assert.equal(result.job.angleIndex, 1);
+  assert.equal(result.job.sourceVersion, 1);
+  assert.equal(result.job.newVersion, 1.1);
+  assert.equal(result.job.referenceImages.length, 1);
+  assert.match(result.job.prompt, /PLAIN premium/);
+
+  const state = loadPlainDesignState(options);
+  assert.equal(state.codexAiJobs.length, 1);
+  assert.equal(state.codexAiJobs[0].status, "pending");
+});
+
+test("Codex image job completion saves the returned image as the reserved Plain version", () => {
+  const options = makePlainDesignOptions({
+    statusOptions: [],
+    categoryOptions: [],
+    assetGroups: [],
+    products: [{ sku: "SKU-1", name: "Blade", status: "waiting_ai_images", sourceImageUrl: "https://shop.ktw.co.th/source-1.jpg" }],
+  });
+  const queued = queuePlainDesignCodexImageJob(options, {
+    sku: "SKU-1",
+    angleIndex: 1,
+    version: 1,
+    prompt: "redesign as PLAIN",
+  });
+
+  const result = completePlainDesignCodexImageJob(options, {
+    jobId: queued.job.id,
+    imageDataUrl: "data:image/png;base64,Y29kZXgtcmVzdWx0",
+    fileName: "plain-v1-1.png",
+    revisedPrompt: "final PLAIN redesign",
+  });
+
+  assert.equal(result.ok, true);
+  assert.equal(result.job.status, "completed");
+  assert.equal(result.asset.version, 1.1);
+  assert.equal(result.asset.angleIndex, 1);
+  assert.equal(result.asset.metadata.codexJobId, queued.job.id);
+  assert.equal(result.product.plainImageVersionSelections[1], 1.1);
+
+  const state = loadPlainDesignState(options);
+  const product = state.products.find((item) => item.sku === "SKU-1");
+  assert.equal(product.assets[0].version, 1.1);
+  assert.equal(state.codexAiJobs[0].assetId, result.asset.id);
 });
 
 test("Render exposes OpenAI image editing environment variables", () => {

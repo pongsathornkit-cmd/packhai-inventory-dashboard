@@ -8,6 +8,7 @@ const PLAIN_IMAGE_VERSION_COUNT = 3;
 const MAX_AI_REFERENCE_IMAGES = 3;
 const MAX_AI_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
 const AI_REFERENCE_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const CODEX_AI_JOB_STATUSES = new Set(["pending", "working", "completed", "failed", "cancelled"]);
 const COMMERCIAL_NUMBER_FIELDS = [
   "orderQuantity",
   "purchaseUnitCostUsd",
@@ -110,6 +111,68 @@ function normalizePlainImageVersionSelections(value) {
       .map(([angleIndex, version]) => [normalizePlainImageAngleIndex(angleIndex), normalizePlainImageVersion(version)])
       .filter(([angleIndex]) => angleIndex > 0)
   );
+}
+
+function normalizeCodexAiJobStatus(value) {
+  const status = String(value || "").trim().toLowerCase();
+  return CODEX_AI_JOB_STATUSES.has(status) ? status : "pending";
+}
+
+function normalizeStoredAiReferenceImages(value) {
+  return (Array.isArray(value) ? value : [])
+    .slice(0, MAX_AI_REFERENCE_IMAGES)
+    .map((image, index) => {
+      const dataUrl = String(image?.dataUrl || "").trim();
+      if (!dataUrl.startsWith("data:")) return null;
+      return {
+        name: safeSegment(image?.name || `reference-${index + 1}.png`, `reference-${index + 1}.png`),
+        type: String(image?.type || "").split(";")[0].toLowerCase() || mimeTypeForFilePath(image?.name || ".png"),
+        size: numberValue(image?.size),
+        dataUrl,
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeCodexAiJobs(jobs) {
+  return (Array.isArray(jobs) ? jobs : [])
+    .map((job) => {
+      const sku = normalizeSku(job?.sku);
+      const angleIndex = normalizePlainImageAngleIndex(job?.angleIndex);
+      const prompt = String(job?.prompt || "").trim();
+      if (!sku || !angleIndex || !prompt) return null;
+      return {
+        id: String(job?.id || crypto.randomUUID()),
+        type: "plain_image_redesign",
+        status: normalizeCodexAiJobStatus(job?.status),
+        sku,
+        productName: String(job?.productName || ""),
+        angleIndex,
+        sourceVersion: normalizePlainImageVersion(job?.sourceVersion || job?.version),
+        newVersion: normalizePlainImageVersion(job?.newVersion),
+        prompt,
+        referenceImages: normalizeStoredAiReferenceImages(job?.referenceImages),
+        source: job?.source && typeof job.source === "object" && !Array.isArray(job.source) ? {
+          type: String(job.source.type || ""),
+          imageUrl: String(job.source.imageUrl || ""),
+          publicUrl: String(job.source.publicUrl || ""),
+          sourceUrl: String(job.source.sourceUrl || ""),
+          assetId: String(job.source.assetId || ""),
+          fileName: String(job.source.fileName || ""),
+          alt: String(job.source.alt || ""),
+        } : {},
+        createdAt: job?.createdAt || new Date().toISOString(),
+        updatedAt: job?.updatedAt || job?.createdAt || new Date().toISOString(),
+        startedAt: job?.startedAt || "",
+        completedAt: job?.completedAt || "",
+        error: String(job?.error || ""),
+        assetId: String(job?.assetId || ""),
+        assetPublicUrl: String(job?.assetPublicUrl || ""),
+        fileName: String(job?.fileName || ""),
+        revisedPrompt: String(job?.revisedPrompt || ""),
+      };
+    })
+    .filter(Boolean);
 }
 
 function safeSegment(value, fallback = "file") {
@@ -324,6 +387,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
     assetGroups: seed?.assetGroups || [],
     products,
     purchaseOrders: [],
+    codexAiJobs: [],
   };
 }
 
@@ -333,6 +397,7 @@ function mergeStoredState(initialState, storedState) {
     ...initialState,
     updatedAt: storedState?.updatedAt || initialState.updatedAt,
     purchaseOrders: normalizePurchaseOrders(storedState?.purchaseOrders),
+    codexAiJobs: normalizeCodexAiJobs(storedState?.codexAiJobs),
     products: initialState.products.map((product) => {
       const stored = storedBySku.get(product.sku);
       if (!stored) return product;
@@ -390,6 +455,7 @@ function savePlainDesignState(options, state) {
     version: STATE_VERSION,
     updatedAt: new Date().toISOString(),
     statusOptions: normalizeStatusOptions(state.statusOptions),
+    codexAiJobs: normalizeCodexAiJobs(state.codexAiJobs),
     products: (state.products || []).map((product) => ({
       ...product,
       status: normalizeRedesignStatus(product.status),
@@ -543,12 +609,14 @@ function plainImageAssetFor(product, angleIndex, version) {
   return normalizedVersion === 1 ? legacyPlainImageAssetFor(product, angleIndex) : null;
 }
 
-function nextPlainImageSubVersion(product, angleIndex, sourceVersion) {
+function nextPlainImageSubVersion(product, angleIndex, sourceVersion, reservedVersions = []) {
   const normalizedSourceVersion = normalizePlainImageVersion(sourceVersion);
   const baseVersion = Math.trunc(normalizedSourceVersion);
   const used = new Set(
-    plainImageAssetsForAngle(product, angleIndex)
-      .map((asset) => normalizePlainImageVersion(asset.version))
+    [
+      ...plainImageAssetsForAngle(product, angleIndex).map((asset) => normalizePlainImageVersion(asset.version)),
+      ...reservedVersions.map(normalizePlainImageVersion),
+    ]
       .filter((version) => Math.trunc(version) === baseVersion)
       .map((version) => Math.round((version - baseVersion) * 10))
       .filter((suffix) => suffix > 0)
@@ -593,6 +661,30 @@ async function sourceImageDataUrlFor(options, product, angleIndex, version, fetc
     };
   }
   throw new Error("No source image is available for this angle/version.");
+}
+
+function sourceImageReferenceFor(product, angleIndex, version) {
+  const sourceAsset = plainImageAssetFor(product, angleIndex, version);
+  if (sourceAsset) {
+    return {
+      type: "plain",
+      assetId: sourceAsset.id || "",
+      publicUrl: sourceAsset.publicUrl || "",
+      fileName: sourceAsset.fileName || "",
+    };
+  }
+  const normalizedAngleIndex = normalizePlainImageAngleIndex(angleIndex);
+  const ktwImage = (product.ktwImages || [])[normalizedAngleIndex - 1] ||
+    (normalizedAngleIndex === 1 && product.sourceImageUrl ? { url: product.sourceImageUrl } : null);
+  if (ktwImage?.url) {
+    return {
+      type: "ktw",
+      imageUrl: ktwImage.url || "",
+      sourceUrl: ktwImage.sourceUrl || product.sourceUrl || "",
+      alt: ktwImage.alt || product.name || product.sku || "",
+    };
+  }
+  return null;
 }
 
 async function createOpenAIImageEdit(request) {
@@ -765,6 +857,171 @@ async function createPlainDesignAiImageRevision(options, payload, deps = {}) {
   };
 }
 
+function pendingCodexVersionsFor(state, sku, angleIndex) {
+  return (state.codexAiJobs || [])
+    .filter((job) => (
+      job.sku === sku &&
+      normalizePlainImageAngleIndex(job.angleIndex) === normalizePlainImageAngleIndex(angleIndex) &&
+      ["pending", "working"].includes(normalizeCodexAiJobStatus(job.status))
+    ))
+    .map((job) => normalizePlainImageVersion(job.newVersion));
+}
+
+function queuePlainDesignCodexImageJob(options, payload) {
+  const sku = normalizeSku(payload.sku);
+  const angleIndex = normalizePlainImageAngleIndex(payload.angleIndex);
+  const sourceVersion = normalizePlainImageVersion(payload.version);
+  const prompt = String(payload.prompt || "").trim();
+  if (!sku) throw new Error("SKU is required.");
+  if (!angleIndex) throw new Error("Angle index is required.");
+  if (!prompt) throw new Error("AI edit prompt is required.");
+  const referenceImages = sanitizeAiReferenceImages(payload.referenceImages);
+
+  const state = loadPlainDesignState(options);
+  const product = state.products.find((item) => item.sku === sku);
+  if (!product) throw new Error(`Product ${sku} was not found.`);
+  const source = sourceImageReferenceFor(product, angleIndex, sourceVersion);
+  if (!source) throw new Error("No source image is available for this angle/version.");
+  const newVersion = nextPlainImageSubVersion(product, angleIndex, sourceVersion, pendingCodexVersionsFor(state, sku, angleIndex));
+  const now = new Date().toISOString();
+  const job = {
+    id: crypto.randomUUID(),
+    type: "plain_image_redesign",
+    status: "pending",
+    sku,
+    productName: product.name || "",
+    angleIndex,
+    sourceVersion,
+    newVersion,
+    prompt,
+    referenceImages,
+    source,
+    createdAt: now,
+    updatedAt: now,
+    startedAt: "",
+    completedAt: "",
+    error: "",
+    assetId: "",
+    assetPublicUrl: "",
+    fileName: "",
+    revisedPrompt: "",
+  };
+  state.codexAiJobs = [job, ...(state.codexAiJobs || [])];
+  savePlainDesignState(options, state);
+  return { ok: true, job, codexAiJobs: state.codexAiJobs };
+}
+
+function listPlainDesignCodexImageJobs(options, filters = {}) {
+  const status = String(filters.status || "").trim().toLowerCase();
+  const sku = normalizeSku(filters.sku);
+  const state = loadPlainDesignState(options);
+  const jobs = (state.codexAiJobs || []).filter((job) => {
+    if (status && normalizeCodexAiJobStatus(job.status) !== status) return false;
+    if (sku && job.sku !== sku) return false;
+    return true;
+  });
+  return { ok: true, jobs };
+}
+
+function updatePlainDesignCodexImageJob(options, payload) {
+  const jobId = String(payload.jobId || payload.id || "");
+  const status = normalizeCodexAiJobStatus(payload.status);
+  if (!jobId) throw new Error("jobId is required.");
+  const state = loadPlainDesignState(options);
+  let updated = null;
+  const now = new Date().toISOString();
+  state.codexAiJobs = (state.codexAiJobs || []).map((job) => {
+    if (job.id !== jobId) return job;
+    updated = {
+      ...job,
+      status,
+      updatedAt: now,
+      startedAt: status === "working" && !job.startedAt ? now : job.startedAt,
+      completedAt: ["completed", "failed", "cancelled"].includes(status) ? now : job.completedAt,
+      error: Object.prototype.hasOwnProperty.call(payload, "error") ? String(payload.error || "") : job.error,
+    };
+    return updated;
+  });
+  if (!updated) throw new Error(`Codex image job ${jobId} was not found.`);
+  savePlainDesignState(options, state);
+  return { ok: true, job: updated };
+}
+
+function completePlainDesignCodexImageJob(options, payload) {
+  const jobId = String(payload.jobId || payload.id || "");
+  const imageDataUrl = String(payload.imageDataUrl || payload.dataUrl || "").trim();
+  if (!jobId) throw new Error("jobId is required.");
+  if (!imageDataUrl) throw new Error("imageDataUrl is required.");
+
+  let state = loadPlainDesignState(options);
+  const job = (state.codexAiJobs || []).find((item) => item.id === jobId);
+  if (!job) throw new Error(`Codex image job ${jobId} was not found.`);
+  if (["completed", "cancelled"].includes(normalizeCodexAiJobStatus(job.status))) {
+    throw new Error(`Codex image job ${jobId} is already ${job.status}.`);
+  }
+  const product = state.products.find((item) => item.sku === job.sku);
+  if (!product) throw new Error(`Product ${job.sku} was not found.`);
+
+  const decoded = decodeDataUrl(imageDataUrl);
+  const fileName = safeSegment(
+    payload.fileName || `${job.sku}-angle-${job.angleIndex}-v${String(job.newVersion).replace(".", "-")}-codex.png`,
+    "codex-result.png"
+  );
+  const [asset] = savePlainDesignAssetFiles(options, {
+    sku: job.sku,
+    group: "product_images",
+    angleIndex: job.angleIndex,
+    version: job.newVersion,
+    files: [{
+      name: fileName,
+      type: payload.mimeType || decoded.mimeType || "image/png",
+      dataUrl: imageDataUrl,
+    }],
+    metadata: {
+      aiGenerated: true,
+      codexGenerated: true,
+      codexJobId: job.id,
+      aiPrompt: job.prompt,
+      aiModel: payload.model || "Codex + ChatGPT",
+      sourceVersion: job.sourceVersion,
+      sourceType: job.source?.type || "",
+      parentAssetId: job.source?.assetId || "",
+      referenceImageCount: (job.referenceImages || []).length,
+      revisedPrompt: payload.revisedPrompt || "",
+    },
+  });
+  const productWithSelection = updatePlainDesignProduct(options, {
+    sku: job.sku,
+    plainImageVersionSelections: { [job.angleIndex]: job.newVersion },
+  });
+
+  state = loadPlainDesignState(options);
+  const now = new Date().toISOString();
+  let completedJob = null;
+  state.codexAiJobs = (state.codexAiJobs || []).map((item) => {
+    if (item.id !== job.id) return item;
+    completedJob = {
+      ...item,
+      status: "completed",
+      updatedAt: now,
+      completedAt: now,
+      error: "",
+      assetId: asset.id,
+      assetPublicUrl: asset.publicUrl,
+      fileName: asset.fileName,
+      revisedPrompt: String(payload.revisedPrompt || ""),
+    };
+    return completedJob;
+  });
+  savePlainDesignState(options, state);
+  return {
+    ok: true,
+    job: completedJob,
+    asset,
+    product: productWithSelection,
+  };
+}
+
 function deletePlainDesignAsset(options, payload) {
   const sku = normalizeSku(payload.sku);
   const assetId = String(payload.assetId || "");
@@ -802,11 +1059,15 @@ function resolvePlainDesignAssetPath(options, urlPath) {
 
 module.exports = {
   buildPlainDesignInitialState,
+  completePlainDesignCodexImageJob,
   createPlainDesignAiImageRevision,
   deletePlainDesignAsset,
+  listPlainDesignCodexImageJobs,
   loadPlainDesignState,
+  queuePlainDesignCodexImageJob,
   resolvePlainDesignAssetPath,
   savePlainDesignAssetFiles,
   savePlainDesignPurchaseOrders,
+  updatePlainDesignCodexImageJob,
   updatePlainDesignProduct,
 };

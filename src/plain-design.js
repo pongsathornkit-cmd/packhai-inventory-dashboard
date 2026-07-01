@@ -271,6 +271,21 @@
     showMessage("สร้างบิลใหม่แล้ว");
   }
 
+  function deletePurchaseOrder(id = state.activePurchaseOrderId) {
+    const target = state.purchaseOrders.find((order) => order.id === id);
+    if (!target) return;
+    if (window.confirm && !window.confirm(`ลบใบสั่งซื้อ ${target.number} ใช่ไหม?`)) return;
+    state.purchaseOrders = state.purchaseOrders.filter((order) => order.id !== id);
+    if (!state.purchaseOrders.length) state.purchaseOrders = [makePurchaseOrder({})];
+    const nextActiveOrder = activePurchaseOrder() || state.purchaseOrders[0];
+    state.activePurchaseOrderId = nextActiveOrder?.id || "";
+    syncActivePurchaseOrderState();
+    persistPurchaseOrders();
+    renderStats();
+    renderPoPanel();
+    showMessage(`ลบใบสั่งซื้อ ${target.number} แล้ว`);
+  }
+
   function setActivePurchaseOrder(id) {
     if (!state.purchaseOrders.some((order) => order.id === id)) return;
     state.activePurchaseOrderId = id;
@@ -1660,6 +1675,7 @@
         </div>
         <div class="po-actions">
           <button class="secondary-button" id="newPurchaseOrder" type="button">+ สร้างบิลใหม่</button>
+          <button class="danger-button" id="deletePurchaseOrder" type="button" data-delete-purchase-order="${escapeHtml(order.id)}">ลบบิลนี้</button>
           <button class="primary-button" id="printPo" type="button">พิมพ์ใบสั่งซื้อ</button>
         </div>
       </div>
@@ -1732,6 +1748,7 @@
   function bindPoEvents() {
     $("printPo")?.addEventListener("click", () => window.print());
     $("newPurchaseOrder")?.addEventListener("click", createPurchaseOrder);
+    $("deletePurchaseOrder")?.addEventListener("click", (event) => deletePurchaseOrder(event.currentTarget.dataset.deletePurchaseOrder));
     document.querySelectorAll("#purchase-order [data-refresh-exchange]").forEach((button) => {
       button.addEventListener("click", () => loadExchangeRate(true));
     });

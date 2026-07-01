@@ -1123,6 +1123,7 @@ h2 {
 .primary-button,
 .secondary-button,
 .ghost-button,
+.danger-button,
 .mini-upload,
 .asset-chip button {
   min-height: 34px;
@@ -1140,6 +1141,12 @@ h2 {
   border-color: #ded4ca;
   background: #fffdfb;
   color: #6c5948;
+}
+
+.danger-button {
+  border: 1px solid #f0c8c8;
+  background: #fff6f4;
+  color: var(--danger);
 }
 
 .designer-chip {
@@ -2345,6 +2352,7 @@ body.image-lightbox-open {
   .status-line,
   #printPo,
   #newPurchaseOrder,
+  #deletePurchaseOrder,
   .po-bill-sidebar,
   .po-live-strip {
     display: none !important;

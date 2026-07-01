@@ -72,6 +72,8 @@
     maximumFractionDigits: 1,
   });
   let imageLightboxLastFocus = null;
+  let imageLightboxSlides = [];
+  let imageLightboxSlideIndex = 0;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -595,6 +597,42 @@
     return ktwImage;
   }
 
+  function tableImageGalleryFor(product, mode = state.productImageMode) {
+    const normalizedMode = mode === "plain" ? "plain" : "ktw";
+    if (normalizedMode === "plain") {
+      return assetsFor(product, "product_images")
+        .filter((asset) => asset?.publicUrl)
+        .map((asset, index) => ({
+          src: asset.publicUrl,
+          alt: asset.fileName || product.name || product.sku || "",
+          title: `PLAIN ${product.sku} มุมที่ ${fmtQty.format(index + 1)}`,
+          caption: asset.fileName || product.name || "",
+        }));
+    }
+    return ktwImagesFor(product)
+      .filter((image) => image?.url)
+      .map((image, index) => ({
+        src: image.url,
+        alt: image.alt || product.name || product.sku || "",
+        title: `KTW ${product.sku} มุมที่ ${fmtQty.format(index + 1)}`,
+        caption: image.alt || product.name || "",
+      }));
+  }
+
+  function renderTableCoverImage(product) {
+    const coverImage = tableCoverImageFor(product);
+    if (!coverImage.src) {
+      return `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`;
+    }
+    return `
+      <button class="table-product-image-button" type="button"
+        data-open-gallery-sku="${escapeHtml(product.sku)}"
+        data-open-gallery-mode="${escapeHtml(coverImage.mode)}"
+        aria-label="ดูรูปสินค้า ${escapeHtml(product.sku)} แบบเต็มจอ">
+        <img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />
+      </button>`;
+  }
+
   function assetTarget(product, groupId) {
     if (groupId === "product_images") return Math.max(1, ktwImagesFor(product).length || 0);
     return groupId === "factory_files" ? 2 : 2;
@@ -1039,14 +1077,11 @@
   function renderAccountingProductRow(product, index) {
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
-    const coverImage = tableCoverImageFor(product);
     return `
       <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
-          ${coverImage.src
-            ? `<img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />`
-            : `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`}
+          ${renderTableCoverImage(product)}
         </td>
         <td>
           <span class="table-product-name">${escapeHtml(product.name)}</span>
@@ -1096,14 +1131,11 @@
     const status = statusMeta(product.status);
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
-    const coverImage = tableCoverImageFor(product);
     return `
       <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
-          ${coverImage.src
-            ? `<img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />`
-            : `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`}
+          ${renderTableCoverImage(product)}
         </td>
         <td>
           <span class="table-product-name">${escapeHtml(product.name)}</span>
@@ -1498,30 +1530,81 @@
       <div class="image-lightbox-backdrop" data-close-image></div>
       <figure class="image-lightbox-dialog">
         <button class="image-lightbox-close" type="button" data-close-image aria-label="ปิดรูป">ปิด</button>
-        <img id="imageLightboxImage" alt="" />
+        <div class="image-lightbox-stage">
+          <button class="image-lightbox-nav previous" type="button" data-gallery-prev aria-label="รูปก่อนหน้า">‹</button>
+          <img class="image-lightbox-main-image" id="imageLightboxImage" alt="" />
+          <button class="image-lightbox-nav next" type="button" data-gallery-next aria-label="รูปถัดไป">›</button>
+        </div>
         <figcaption>
           <strong id="imageLightboxTitle"></strong>
           <span id="imageLightboxCaption"></span>
+          <small id="imageLightboxCounter"></small>
         </figcaption>
+        <div class="image-lightbox-thumbs" id="imageLightboxThumbs" aria-label="เลือกรูปสินค้า"></div>
       </figure>`;
     modal.addEventListener("click", (event) => {
       if (event.target.closest("[data-close-image]")) closeImageLightbox();
+      const previous = event.target.closest("[data-gallery-prev]");
+      if (previous) setImageLightboxSlide(imageLightboxSlideIndex - 1);
+      const next = event.target.closest("[data-gallery-next]");
+      if (next) setImageLightboxSlide(imageLightboxSlideIndex + 1);
+      const thumb = event.target.closest("[data-gallery-index]");
+      if (thumb) setImageLightboxSlide(Number(thumb.dataset.galleryIndex || 0));
     });
     document.addEventListener("keydown", (event) => {
-      if (event.key === "Escape" && !$("imageLightbox")?.hidden) closeImageLightbox();
+      if ($("imageLightbox")?.hidden) return;
+      if (event.key === "Escape") closeImageLightbox();
+      if (event.key === "ArrowLeft") setImageLightboxSlide(imageLightboxSlideIndex - 1);
+      if (event.key === "ArrowRight") setImageLightboxSlide(imageLightboxSlideIndex + 1);
     });
     document.body.appendChild(modal);
     return modal;
+  }
+
+  function openProductImageGallery(sku, mode = state.productImageMode) {
+    const product = state.products.find((item) => item.sku === sku);
+    if (!product) return;
+    const slides = tableImageGalleryFor(product, mode);
+    if (!slides.length) return;
+    const modal = ensureImageLightbox();
+    imageLightboxLastFocus = document.activeElement;
+    imageLightboxSlides = slides;
+    setImageLightboxSlide(0);
+    modal.hidden = false;
+    document.body.classList.add("image-lightbox-open");
+    modal.querySelector(".image-lightbox-close")?.focus();
+  }
+
+  function setImageLightboxSlide(index) {
+    if (!imageLightboxSlides.length) return;
+    const total = imageLightboxSlides.length;
+    imageLightboxSlideIndex = ((Number(index) || 0) + total) % total;
+    const slide = imageLightboxSlides[imageLightboxSlideIndex];
+    $("imageLightboxImage").src = slide.src;
+    $("imageLightboxImage").alt = slide.alt || slide.title || slide.caption || "รูปสินค้า";
+    $("imageLightboxTitle").textContent = slide.title || "รูปสินค้า";
+    $("imageLightboxCaption").textContent = slide.caption || "";
+    $("imageLightboxCounter").textContent = `${fmtQty.format(imageLightboxSlideIndex + 1)} / ${fmtQty.format(total)}`;
+    document.querySelectorAll("[data-gallery-prev], [data-gallery-next]").forEach((button) => {
+      button.disabled = total <= 1;
+    });
+    $("imageLightboxThumbs").innerHTML = imageLightboxSlides.map((item, itemIndex) => `
+      <button class="image-lightbox-thumb ${itemIndex === imageLightboxSlideIndex ? "active" : ""}" type="button" data-gallery-index="${itemIndex}" aria-label="ดูรูปที่ ${fmtQty.format(itemIndex + 1)}">
+        <img src="${escapeHtml(item.src)}" alt="${escapeHtml(item.alt || item.title || "")}" loading="lazy" />
+      </button>`).join("");
   }
 
   function openImageLightbox({ src, title, caption }) {
     if (!src) return;
     const modal = ensureImageLightbox();
     imageLightboxLastFocus = document.activeElement;
-    $("imageLightboxImage").src = src;
-    $("imageLightboxImage").alt = title || caption || "รูปสินค้า";
-    $("imageLightboxTitle").textContent = title || "รูปสินค้า";
-    $("imageLightboxCaption").textContent = caption || "";
+    imageLightboxSlides = [{
+      src,
+      alt: title || caption || "รูปสินค้า",
+      title: title || "รูปสินค้า",
+      caption: caption || "",
+    }];
+    setImageLightboxSlide(0);
     modal.hidden = false;
     document.body.classList.add("image-lightbox-open");
     modal.querySelector(".image-lightbox-close")?.focus();
@@ -1532,6 +1615,9 @@
     if (!modal) return;
     modal.hidden = true;
     $("imageLightboxImage").removeAttribute("src");
+    $("imageLightboxThumbs").innerHTML = "";
+    imageLightboxSlides = [];
+    imageLightboxSlideIndex = 0;
     document.body.classList.remove("image-lightbox-open");
     if (imageLightboxLastFocus?.focus) imageLightboxLastFocus.focus();
     imageLightboxLastFocus = null;
@@ -1816,14 +1902,11 @@
     }
     return bill.lines.map(({ product, calc }, index) => {
       const status = statusMeta(product.status);
-      const coverImage = tableCoverImageFor(product);
       return `
         <tr data-po-row="${escapeHtml(product.sku)}" class="${calc.qty <= 0 ? "line-muted" : ""}">
           <td class="row-index">${fmtQty.format(index + 1)}</td>
           <td class="product-image-cell">
-            ${coverImage.src
-              ? `<img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />`
-              : `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`}
+            ${renderTableCoverImage(product)}
           </td>
           <td>
             <span class="table-product-name">${escapeHtml(product.name)}</span>
@@ -2074,6 +2157,11 @@
       }
     });
     $("poTableBody")?.addEventListener("click", (event) => {
+      const galleryButton = event.target.closest("[data-open-gallery-sku]");
+      if (galleryButton) {
+        openProductImageGallery(galleryButton.dataset.openGallerySku, galleryButton.dataset.openGalleryMode);
+        return;
+      }
       const button = event.target.closest("[data-po-remove-line]");
       if (button) removePurchaseOrderLine(button.dataset.poRemoveLine);
     });
@@ -2289,6 +2377,11 @@
       if (tableCostInput) updateProduct(tableCostInput.dataset.tableUsd, poUsdCostUpdates(tableCostInput.dataset.tableUsd, tableCostInput.value));
     });
     $("productRows").addEventListener("click", (event) => {
+      const galleryButton = event.target.closest("[data-open-gallery-sku]");
+      if (galleryButton) {
+        openProductImageGallery(galleryButton.dataset.openGallerySku, galleryButton.dataset.openGalleryMode);
+        return;
+      }
       const imageButton = event.target.closest("[data-open-image]");
       if (imageButton) {
         openImageLightbox({

@@ -102,9 +102,10 @@ test("product list can switch cover images between KTW Mode and Plain Mode", () 
   assert.match(source, /function tableCoverImageFor/);
   assert.match(source, /assetsFor\(product,\s*"product_images"\)\[0\]/);
   assert.match(source, /plainProductImageMode/);
-  assert.match(combinedRowBlock, /const coverImage\s*=\s*tableCoverImageFor\(product\)/);
-  assert.match(combinedRowBlock, /src="\$\{escapeHtml\(coverImage\.src\)\}"/);
-  assert.match(combinedRowBlock, /data-image-mode="\$\{escapeHtml\(coverImage\.mode\)\}"/);
+  assert.match(source, /function renderTableCoverImage/);
+  assert.match(combinedRowBlock, /renderTableCoverImage\(product\)/);
+  assert.match(source, /src="\$\{escapeHtml\(coverImage\.src\)\}"/);
+  assert.match(source, /data-image-mode="\$\{escapeHtml\(coverImage\.mode\)\}"/);
   assert.match(eventsBlock, /data-product-image-mode/);
   assert.match(eventsBlock, /renderProductImageModeToggle/);
   assert.match(eventsBlock, /renderTrackerTable\(\)/);
@@ -119,9 +120,46 @@ test("Plain Mode shows no table cover image when a product has no Plain image", 
   assert.match(coverBlock, /if \(state\.productImageMode === "plain"\)\s*\{/);
   assert.match(coverBlock, /src:\s*""/);
   assert.match(coverBlock, /empty:\s*true/);
-  assert.match(combinedRowBlock, /coverImage\.src\s*\?/);
-  assert.match(combinedRowBlock, /table-product-image-empty/);
+  assert.match(combinedRowBlock, /renderTableCoverImage\(product\)/);
+  assert.match(source, /table-product-image-empty/);
   assert.match(css, /\.table-product-image-empty/);
+});
+
+test("table product cover images open a multi-angle image gallery", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
+  const poRowsBlock = functionBlock(source, "renderPoRows", "renderPoPanel");
+  const lightboxBlock = functionBlock(source, "ensureImageLightbox", "openImageLightbox");
+  const openGalleryBlock = functionBlock(source, "openProductImageGallery", "setImageLightboxSlide");
+  const gallerySourceBlock = functionBlock(source, "tableImageGalleryFor", "renderTableCoverImage");
+  const setSlideBlock = functionBlock(source, "setImageLightboxSlide", "openImageLightbox");
+  const productEventsBlock = blockUntil(source, "$(\"productRows\").addEventListener(\"click\"", "if (event.target.closest(\"[data-table-usd]");
+  const poEventsBlock = blockUntil(source, "$(\"poTableBody\")?.addEventListener(\"click\"", "$(\"poTableBody\")?.addEventListener(\"change\"");
+
+  assert.match(source, /function tableImageGalleryFor/);
+  assert.match(source, /function renderTableCoverImage/);
+  assert.match(accountingRowBlock, /renderTableCoverImage\(product\)/);
+  assert.match(combinedRowBlock, /renderTableCoverImage\(product\)/);
+  assert.match(poRowsBlock, /renderTableCoverImage\(product\)/);
+  assert.match(source, /data-open-gallery-sku=/);
+  assert.match(source, /data-open-gallery-mode=/);
+  assert.match(openGalleryBlock, /tableImageGalleryFor\(product,\s*mode\)/);
+  assert.match(gallerySourceBlock, /ktwImagesFor\(product\)/);
+  assert.match(gallerySourceBlock, /assetsFor\(product,\s*"product_images"\)/);
+  assert.match(lightboxBlock, /data-gallery-prev/);
+  assert.match(lightboxBlock, /data-gallery-next/);
+  assert.match(lightboxBlock, /id="imageLightboxThumbs"/);
+  assert.match(lightboxBlock, /id="imageLightboxCounter"/);
+  assert.match(setSlideBlock, /image-lightbox-thumb/);
+  assert.match(productEventsBlock, /data-open-gallery-sku/);
+  assert.match(productEventsBlock, /openProductImageGallery/);
+  assert.match(poEventsBlock, /data-open-gallery-sku/);
+  assert.match(poEventsBlock, /openProductImageGallery/);
+  assert.match(css, /\.table-product-image-button/);
+  assert.match(css, /\.image-lightbox-nav/);
+  assert.match(css, /\.image-lightbox-thumbs/);
 });
 
 test("product detail sidebar can collapse and expand from the product table", () => {
@@ -197,10 +235,10 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(source, /if \(normalized === "accounting"\) return 10/);
   assert.match(headerBlock, />ยอดขายรวม</);
   assert.match(headerBlock, />กำไรรวม</);
-  assert.match(accountingRowBlock, /const coverImage\s*=\s*tableCoverImageFor\(product\)/);
   assert.match(accountingRowBlock, /class="product-image-cell"/);
-  assert.match(accountingRowBlock, /class="table-product-image"/);
-  assert.match(accountingRowBlock, /class="table-product-image-empty"/);
+  assert.match(accountingRowBlock, /renderTableCoverImage\(product\)/);
+  assert.match(source, /class="table-product-image"/);
+  assert.match(source, /class="table-product-image-empty"/);
   assert.match(tableBlock, /renderAccountingProductRow/);
   assert.match(tableBlock, /renderDesignerProductRow/);
   assert.match(tableBlock, /renderCombinedProductRow/);

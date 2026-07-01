@@ -54,8 +54,8 @@ test("purchase order table uses the same combined product table layout as the pr
   assert.match(renderBlock, /<th class="num">ต้นทุนสินค้า<\/th>/);
   assert.match(renderBlock, /<th class="num">ต้นทุนขนส่ง<\/th>/);
   assert.match(renderBlock, /<th class="num">กำไร<\/th>/);
-  assert.match(rowsBlock, /tableCoverImageFor\(product\)/);
-  assert.match(rowsBlock, /class="table-product-image"/);
+  assert.match(rowsBlock, /renderTableCoverImage\(product\)/);
+  assert.match(source, /class="table-product-image"/);
   assert.match(rowsBlock, /class="table-product-name"/);
   assert.match(rowsBlock, /class="table-product-sku"/);
   assert.match(rowsBlock, /class="table-cost-input po-usd-input"/);

@@ -221,11 +221,96 @@ test("Codex image jobs queue a pending redesign without calling OpenAI", () => {
   assert.equal(result.job.sourceVersion, 1);
   assert.equal(result.job.newVersion, 1.1);
   assert.equal(result.job.referenceImages.length, 1);
+  assert.equal(result.job.referenceImages[0].dataUrl, undefined);
+  assert.match(result.job.referenceImages[0].publicUrl, /\/api\/plain-design\/assets\/SKU-1\/codex_reference_images\//);
+  assert.match(result.job.referenceImages[0].filePath, /^SKU-1\/codex_reference_images\//);
   assert.match(result.job.prompt, /PLAIN premium/);
 
   const state = loadPlainDesignState(options);
   assert.equal(state.codexAiJobs.length, 1);
   assert.equal(state.codexAiJobs[0].status, "pending");
+  assert.equal(state.codexAiJobs[0].referenceImages[0].dataUrl, undefined);
+  assert.match(state.codexAiJobs[0].referenceImages[0].publicUrl, /\/api\/plain-design\/assets\/SKU-1\/codex_reference_images\//);
+});
+
+test("stored Codex image jobs strip heavy reference data URLs from state", () => {
+  const options = makePlainDesignOptions({
+    statusOptions: [],
+    categoryOptions: [],
+    assetGroups: [],
+    products: [{ sku: "SKU-1", name: "Blade", status: "waiting_ai_images", sourceImageUrl: "https://shop.ktw.co.th/source-1.jpg" }],
+  }, {
+    codexAiJobs: [
+      {
+        id: "job-legacy-reference",
+        status: "pending",
+        sku: "SKU-1",
+        angleIndex: 1,
+        sourceVersion: 1,
+        newVersion: 1.1,
+        prompt: "legacy job with pasted references",
+        referenceImages: [
+          {
+            name: "legacy-reference.png",
+            type: "image/png",
+            size: 123,
+            dataUrl: `data:image/png;base64,${"a".repeat(2048)}`,
+          },
+        ],
+      },
+    ],
+  });
+
+  const state = loadPlainDesignState(options);
+  assert.equal(state.codexAiJobs[0].referenceImages.length, 1);
+  assert.equal(state.codexAiJobs[0].referenceImages[0].dataUrl, undefined);
+  assert.equal(state.codexAiJobs[0].referenceImages[0].name, "legacy-reference.png");
+  assert.ok(state.codexAiJobs[0].referenceImages[0].dataUrlBytes > 2048);
+});
+
+test("Plain product upload compacts legacy Codex reference images in saved state", () => {
+  const options = makePlainDesignOptions({
+    statusOptions: [],
+    categoryOptions: [],
+    assetGroups: [],
+    products: [{ sku: "SKU-1", name: "Blade", status: "waiting_ai_images", sourceImageUrl: "https://shop.ktw.co.th/source-1.jpg" }],
+  }, {
+    codexAiJobs: [
+      {
+        id: "job-heavy-reference",
+        status: "pending",
+        sku: "SKU-1",
+        angleIndex: 1,
+        sourceVersion: 1,
+        newVersion: 1.1,
+        prompt: "legacy heavy reference",
+        referenceImages: [{
+          name: "heavy.png",
+          type: "image/png",
+          size: 123,
+          dataUrl: `data:image/png;base64,${"a".repeat(4096)}`,
+        }],
+      },
+    ],
+  });
+
+  savePlainDesignAssetFiles(options, {
+    sku: "SKU-1",
+    group: "product_images",
+    angleIndex: 1,
+    version: 1,
+    files: [{
+      name: "plain-angle-1.jpg",
+      type: "image/jpeg",
+      dataUrl: "data:image/jpeg;base64,cGxhaW4=",
+    }],
+  });
+
+  const rawState = fs.readFileSync(options.stateFile, "utf8");
+  assert.doesNotMatch(rawState, /data:image\/png;base64/);
+  const state = JSON.parse(rawState);
+  assert.equal(state.codexAiJobs[0].referenceImages[0].dataUrl, undefined);
+  assert.ok(state.codexAiJobs[0].referenceImages[0].dataUrlBytes > 4096);
 });
 
 test("Codex image job completion saves the returned image as the reserved Plain version", () => {

@@ -123,12 +123,17 @@ function normalizeStoredAiReferenceImages(value) {
     .slice(0, MAX_AI_REFERENCE_IMAGES)
     .map((image, index) => {
       const dataUrl = String(image?.dataUrl || "").trim();
-      if (!dataUrl.startsWith("data:")) return null;
+      const filePath = String(image?.filePath || "").replace(/\\/g, "/");
+      const publicUrl = String(image?.publicUrl || (filePath ? publicAssetUrl(filePath) : "")).trim();
+      if (!dataUrl.startsWith("data:") && !filePath && !publicUrl && !image?.name) return null;
       return {
         name: safeSegment(image?.name || `reference-${index + 1}.png`, `reference-${index + 1}.png`),
         type: String(image?.type || "").split(";")[0].toLowerCase() || mimeTypeForFilePath(image?.name || ".png"),
         size: numberValue(image?.size),
-        dataUrl,
+        filePath,
+        publicUrl,
+        uploadedAt: image?.uploadedAt || "",
+        dataUrlBytes: dataUrl ? Buffer.byteLength(dataUrl, "utf8") : numberValue(image?.dataUrlBytes),
       };
     })
     .filter(Boolean);
@@ -549,6 +554,30 @@ function decodeDataUrl(dataUrl) {
   };
 }
 
+function persistAiReferenceImages(options, sku, images) {
+  return (Array.isArray(images) ? images : []).slice(0, MAX_AI_REFERENCE_IMAGES).map((image, index) => {
+    const decoded = decodeDataUrl(image.dataUrl);
+    const id = crypto.randomUUID();
+    const fileName = safeSegment(image.name || `reference-${index + 1}.png`, `reference-${index + 1}.png`);
+    const relativePath = `${sku}/codex_reference_images/${Date.now()}-${id.slice(0, 8)}-${fileName}`;
+    const assetRoot = path.resolve(options.assetDir);
+    const fullPath = path.resolve(assetRoot, relativePath);
+    const relativeToRoot = path.relative(assetRoot, fullPath);
+    if (relativeToRoot.startsWith("..") || path.isAbsolute(relativeToRoot)) throw new Error("Invalid reference image path.");
+    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
+    fs.writeFileSync(fullPath, decoded.buffer);
+    return {
+      name: fileName,
+      type: String(image.type || decoded.mimeType || "image/png").split(";")[0].toLowerCase(),
+      size: decoded.buffer.length,
+      filePath: relativePath.replace(/\\/g, "/"),
+      publicUrl: publicAssetUrl(relativePath.replace(/\\/g, "/")),
+      uploadedAt: new Date().toISOString(),
+      dataUrlBytes: Buffer.byteLength(String(image.dataUrl || ""), "utf8"),
+    };
+  });
+}
+
 function sanitizeAiReferenceImages(value) {
   const images = Array.isArray(value) ? value : [];
   if (images.length > MAX_AI_REFERENCE_IMAGES) {
@@ -875,7 +904,7 @@ function queuePlainDesignCodexImageJob(options, payload) {
   if (!sku) throw new Error("SKU is required.");
   if (!angleIndex) throw new Error("Angle index is required.");
   if (!prompt) throw new Error("AI edit prompt is required.");
-  const referenceImages = sanitizeAiReferenceImages(payload.referenceImages);
+  const referenceImages = persistAiReferenceImages(options, sku, sanitizeAiReferenceImages(payload.referenceImages));
 
   const state = loadPlainDesignState(options);
   const product = state.products.find((item) => item.sku === sku);

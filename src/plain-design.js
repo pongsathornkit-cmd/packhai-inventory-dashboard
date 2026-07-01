@@ -658,11 +658,18 @@
       <th>รูปสินค้า</th>
       <th>ชื่อสินค้า</th>
       <th class="num">ราคา KTW</th>
+      <th class="num">ต้นทุนสินค้า</th>
+      <th class="num">ต้นทุนขนส่ง</th>
+      <th class="num">กำไร</th>
       <th class="num">จำนวนสั่งซื้อ</th>
       <th>สถานะรีดีไซน์</th>
       <th class="num">รูปสินค้า</th>
       <th class="num">รูปแพคเกจจิ้ง</th>
       <th class="num">ไฟล์โรงงาน</th>`;
+  }
+
+  function trackerCostInputValue(calc) {
+    return calc.purchaseUnitCostUsd > 0 ? String(calc.purchaseUnitCostUsd) : "";
   }
 
   function filteredProducts() {
@@ -768,6 +775,20 @@
                 <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
               </td>
               <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
+              <td class="num">
+                <label class="table-cost-editor">
+                  <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+                  <small data-table-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
+                </label>
+              </td>
+              <td class="num" data-table-cell="shippingUnit">
+                <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
+                <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
+              </td>
+              <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-table-cell="profitUnit">
+                <strong>${fmtMoney.format(calc.profitUnit)}</strong>
+                <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+              </td>
               <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
               <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
               <td class="num">${assetPill(product, "product_images")}</td>
@@ -775,7 +796,7 @@
               <td class="num">${assetPill(product, "factory_files")}</td>
             </tr>`;
         }).join("")
-      : `<tr><td class="empty-state" colspan="9">ไม่พบสินค้า</td></tr>`;
+      : `<tr><td class="empty-state" colspan="12">ไม่พบสินค้า</td></tr>`;
   }
 
   function fileSize(value) {
@@ -1472,6 +1493,28 @@
     });
   }
 
+  function refreshTrackerCommercialRow(sku) {
+    const product = state.products.find((item) => item.sku === sku);
+    if (!product) return;
+    const row = Array.from(document.querySelectorAll("#productRows [data-sku]")).find((item) => item.dataset.sku === sku);
+    if (!row) return;
+    const calc = lineCalc(product);
+    const usdInput = row.querySelector("[data-table-usd]");
+    if (usdInput && document.activeElement !== usdInput) usdInput.value = trackerCostInputValue(calc);
+    const purchaseCell = row.querySelector('[data-table-cell="purchaseUnitCost"]');
+    if (purchaseCell) purchaseCell.textContent = fmtMoney.format(calc.purchaseUnitCost);
+    const shippingCell = row.querySelector('[data-table-cell="shippingUnit"]');
+    if (shippingCell) {
+      shippingCell.innerHTML = `<strong>${fmtMoney.format(calc.shippingUnit)}</strong><small>${fmtMoney.format(calc.shippingTotal)} รวม</small>`;
+    }
+    const profitCell = row.querySelector('[data-table-cell="profitUnit"]');
+    if (profitCell) {
+      profitCell.innerHTML = `<strong>${fmtMoney.format(calc.profitUnit)}</strong><small>${fmtMoney.format(calc.profitTotal)} รวม</small>`;
+      profitCell.classList.toggle("danger-text", calc.profitUnit < 0);
+      profitCell.classList.toggle("good-text", calc.profitUnit >= 0);
+    }
+  }
+
   function renderPoPanel() {
     const order = activePurchaseOrder() || makePurchaseOrder(plannedOrderLines());
     const bill = billCalc(order);
@@ -1696,7 +1739,23 @@
       state.status = event.target.value;
       render();
     });
+    $("productRows").addEventListener("input", (event) => {
+      const tableCostInput = event.target.closest("[data-table-usd]");
+      if (!tableCostInput) return;
+      const updates = poUsdCostUpdates(tableCostInput.dataset.tableUsd, tableCostInput.value);
+      updateLocalProduct(tableCostInput.dataset.tableUsd, updates);
+      queueProductCommercialSave(tableCostInput.dataset.tableUsd, updates);
+      renderStats();
+      renderDesignDetail();
+      refreshTrackerCommercialRow(tableCostInput.dataset.tableUsd);
+      refreshPoRealtime();
+    });
+    $("productRows").addEventListener("change", (event) => {
+      const tableCostInput = event.target.closest("[data-table-usd]");
+      if (tableCostInput) updateProduct(tableCostInput.dataset.tableUsd, poUsdCostUpdates(tableCostInput.dataset.tableUsd, tableCostInput.value));
+    });
     $("productRows").addEventListener("click", (event) => {
+      if (event.target.closest("[data-table-usd], button, a, input, select, textarea, label")) return;
       const row = event.target.closest("[data-sku]");
       if (!row) return;
       state.selectedSku = row.dataset.sku;

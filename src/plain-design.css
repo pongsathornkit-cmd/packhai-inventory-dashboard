@@ -2001,8 +2001,8 @@ h2 {
 }
 
 .plain-row-version-controls {
-  flex: 0 0 112px;
-  align-self: flex-start;
+  width: 112px;
+  max-width: 100%;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 4px;
@@ -2010,6 +2010,10 @@ h2 {
   border: 1px solid #e9dccf;
   border-radius: 7px;
   background: #fffaf4;
+}
+
+.designer-row-version-slot {
+  margin-top: 8px;
 }
 
 .plain-row-version-controls span {

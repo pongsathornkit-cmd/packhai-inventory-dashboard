@@ -1301,7 +1301,6 @@
     const pairCount = Math.max(1, ktwImages.length, legacyProductImageAssets(product).length, highestVersionedAngle);
     return `
       <div class="product-image-pairs">
-        ${renderRowPlainVersionControls(product)}
         ${Array.from({ length: pairCount }).map((_, index) => {
           const ktwImage = ktwImages[index] || ktwImages[0] || {};
           const plainImage = plainImageAssetFor(product, index);
@@ -1375,6 +1374,7 @@
           <span class="table-product-name">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
           <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))}</small>
+          <div class="designer-row-version-slot">${renderRowPlainVersionControls(product)}</div>
         </td>
         <td class="image-pairs-cell">${renderProductImagePairs(product)}</td>
         <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>

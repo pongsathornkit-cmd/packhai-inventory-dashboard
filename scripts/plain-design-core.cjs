@@ -72,6 +72,12 @@ function buildKtwLogisticsIndex(ktwLogistics) {
       lengthCm: numberValue(item.lengthCm),
       heightCm: numberValue(item.heightCm),
       unitWeightKg: numberValue(item.unitWeightKg),
+      ktwImages: (Array.isArray(item.ktwImages) ? item.ktwImages : []).map((image, index) => ({
+        angleNo: numberValue(image.angleNo) || index + 1,
+        url: image.url || "",
+        alt: image.alt || "",
+        sourceUrl: image.sourceUrl || item.sourceUrl || "",
+      })).filter((image) => image.url),
       rawUnit: item.rawUnit || item.raw?.dimensionUnit || "",
       raw: item.raw || {},
     });
@@ -174,7 +180,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       otherUnitCost: numberValue(product.otherUnitCost),
       cargoMode: product.cargoMode || "truck",
       cargoType: product.cargoType || "A",
-      sourceImageUrl: product.sourceImageUrl || packhai.imageUrl || "",
+      sourceImageUrl: product.sourceImageUrl || logistics?.ktwImages?.[0]?.url || packhai.imageUrl || "",
       sourceUrl: product.sourceUrl || "",
       status: product.status || "not_started",
       notes: product.notes || "",
@@ -182,6 +188,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       updatedAt: new Date().toISOString(),
       packhai,
       ktwLogistics: logistics,
+      ktwImages: logistics?.ktwImages || [],
       assets: [],
     };
   });

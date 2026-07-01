@@ -55,6 +55,53 @@ function productUrl(product) {
   return product.sourceUrl || `https://shop.ktw.co.th/p/${encodeURIComponent(normalizeSku(product.sku))}`;
 }
 
+function absoluteKtwUrl(url) {
+  const text = String(url || "").trim();
+  if (!text) return "";
+  if (/^https?:\/\//i.test(text)) return text.replace(/^http:\/\//i, "https://");
+  if (text.startsWith("//")) return `https:${text}`;
+  return new URL(text, "https://shop.ktw.co.th").toString();
+}
+
+function parseProductImages(html, sourceUrl) {
+  const page = String(html || "");
+  const collect = (patterns) => {
+    const seen = new Set();
+    const images = [];
+    const pushImage = (url, alt = "") => {
+      const absoluteUrl = absoluteKtwUrl(url);
+      if (!absoluteUrl || !/\/medias\//i.test(absoluteUrl) || seen.has(absoluteUrl)) return;
+      seen.add(absoluteUrl);
+      images.push({
+        url: absoluteUrl,
+        alt: decodeHtml(alt),
+        sourceUrl,
+      });
+    };
+
+    for (const pattern of patterns) {
+      for (const match of page.matchAll(pattern.regex)) {
+        pushImage(match[1], pattern.alt?.(match) || "");
+      }
+    }
+    return images.map((image, index) => ({ ...image, angleNo: index + 1 }));
+  };
+
+  const galleryImages = collect([
+    {
+      regex: /<a[^>]+href=["']([^"']+)["'][^>]*data-fancybox=["']gallery["'][^>]*>/gi,
+    },
+  ]);
+  if (galleryImages.length) return galleryImages;
+
+  return collect([
+    {
+      regex: /<img[^>]+class=["'][^"']*origin_img[^"']*["'][^>]*src=["']([^"']+)["'][^>]*>/gi,
+      alt: (match) => match[0].match(/\b(?:alt|title)=["']([^"']*)["']/i)?.[1] || "",
+    },
+  ]);
+}
+
 function parseConversionUnitTable(html) {
   const tableMatch = String(html).match(/id=["']conversionunit["'][\s\S]*?<tbody>([\s\S]*?)<\/tbody>/i);
   if (!tableMatch) return null;
@@ -91,7 +138,7 @@ function parseConversionUnitTable(html) {
   };
 }
 
-async function fetchProductLogistics(product) {
+async function fetchProductKtwData(product) {
   const sku = normalizeSku(product.sku);
   const sourceUrl = productUrl(product);
   const response = await fetch(sourceUrl, {
@@ -107,18 +154,27 @@ async function fetchProductLogistics(product) {
   }
   const html = await response.text();
   const parsed = parseConversionUnitTable(html);
-  if (!parsed) {
-    throw new Error("conversion-unit table was not found");
-  }
-  if (!parsed.widthCm || !parsed.lengthCm || !parsed.heightCm || !parsed.unitWeightKg) {
-    throw new Error("KTW conversion-unit row has zero dimension or weight");
-  }
+  const ktwImages = parseProductImages(html, sourceUrl);
+  const logisticsValid = Boolean(parsed?.widthCm && parsed?.lengthCm && parsed?.heightCm && parsed?.unitWeightKg);
+  const logisticsIssue = !parsed
+    ? "conversion-unit table was not found"
+    : logisticsValid
+    ? ""
+    : "KTW conversion-unit row has zero dimension or weight";
   return {
     sku,
     sourceLabel: "shop.ktw.co.th",
     sourceUrl,
     capturedAt: new Date().toISOString(),
-    ...parsed,
+    widthCm: parsed?.widthCm || 0,
+    lengthCm: parsed?.lengthCm || 0,
+    heightCm: parsed?.heightCm || 0,
+    unitWeightKg: parsed?.unitWeightKg || 0,
+    logisticsValid,
+    logisticsIssue,
+    ktwImages,
+    imageCount: ktwImages.length,
+    raw: parsed?.raw || {},
   };
 }
 
@@ -131,9 +187,15 @@ async function main() {
   for (const product of products) {
     const sku = normalizeSku(product.sku);
     try {
-      const item = await fetchProductLogistics(product);
+      const item = await fetchProductKtwData(product);
       items.push(item);
-      console.log(`${sku}: ${item.lengthCm} x ${item.widthCm} x ${item.heightCm} cm, ${item.unitWeightKg} kg`);
+      const logisticsText = item.logisticsValid
+        ? `${item.lengthCm} x ${item.widthCm} x ${item.heightCm} cm, ${item.unitWeightKg} kg`
+        : item.logisticsIssue;
+      console.log(`${sku}: ${logisticsText}; ${item.imageCount} images`);
+      if (item.logisticsIssue) {
+        missing.push({ sku, sourceUrl: productUrl(product), message: item.logisticsIssue });
+      }
     } catch (error) {
       missing.push({ sku, sourceUrl: productUrl(product), message: error.message });
       console.warn(`${sku}: ${error.message}`);

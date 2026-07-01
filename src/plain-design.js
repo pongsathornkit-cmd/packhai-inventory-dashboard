@@ -129,6 +129,7 @@
       cargoMode: product.cargoMode || "truck",
       cargoType: product.cargoType || "A",
       ktwLogistics: product.ktwLogistics || null,
+      ktwImages: Array.isArray(product.ktwImages) ? product.ktwImages : [],
     };
   }
 
@@ -300,18 +301,28 @@
   }
 
   function completion(product) {
-    const completed = state.assetGroups.filter((group) => assetsFor(product, group.id).length > 0).length;
+    const completed = state.assetGroups.filter((group) => {
+      const progress = assetProgress(product, group.id);
+      return progress.count >= progress.target;
+    }).length;
     const total = Math.max(1, state.assetGroups.length);
     return { completed, total, percent: Math.round((completed / total) * 100) };
   }
 
-  function assetTarget(groupId) {
+  function ktwImagesFor(product) {
+    const images = (product?.ktwImages || []).filter((image) => image?.url);
+    if (images.length) return images;
+    return product?.sourceImageUrl ? [{ angleNo: 1, url: product.sourceImageUrl, alt: product.name || "", sourceUrl: product.sourceUrl || "" }] : [];
+  }
+
+  function assetTarget(product, groupId) {
+    if (groupId === "product_images") return Math.max(1, ktwImagesFor(product).length || 0);
     return groupId === "factory_files" ? 2 : 2;
   }
 
   function assetProgress(product, groupId) {
     const count = assetsFor(product, groupId).length;
-    const target = assetTarget(groupId);
+    const target = assetTarget(product, groupId);
     const tone = count >= target ? "green" : count > 0 ? "orange" : "red";
     return { count, target, tone };
   }
@@ -372,6 +383,72 @@
         </div>
         <em>${hasMetrics ? (usingKtwShippingMetrics(product) ? "ใช้ค่า KTW" : "แก้ไขเอง") : "รอข้อมูลจาก KTW"}</em>
       </div>`;
+  }
+
+  function renderPlainImagePane(asset, index) {
+    if (!asset) {
+      return `
+        <label class="image-compare-empty" for="product_images-input">
+          <strong>รอรูป PLAIN</strong>
+          <span>อัปโหลดรูปมุมที่ ${fmtQty.format(index + 1)}</span>
+        </label>`;
+    }
+    return `
+      <a class="image-compare-image" href="${escapeHtml(asset.publicUrl)}" target="_blank" rel="noreferrer">
+        <img src="${escapeHtml(asset.publicUrl)}" alt="${escapeHtml(asset.fileName)}" loading="lazy" />
+      </a>`;
+  }
+
+  function renderImageComparison(product) {
+    const ktwImages = ktwImagesFor(product);
+    const plainImages = assetsFor(product, "product_images");
+    const progress = assetProgress(product, "product_images");
+    const pairs = ktwImages.map((ktwImage, index) => ({ ktwImage, plainImage: plainImages[index] || null }));
+    const extraPlain = plainImages.slice(ktwImages.length);
+    return `
+      <section class="image-compare-card" id="image-compare">
+        <div class="mini-heading">
+          <div>
+            <h3>เทียบรูป KTW ↔ PLAIN</h3>
+            <span>ต้องอัปโหลดรูป PLAIN ให้ครบทุกมุมตามรูปสินค้า KTW และเรียงลำดับเดียวกัน</span>
+          </div>
+          <strong class="compare-count ${progress.tone}">${fmtQty.format(progress.count)}/${fmtQty.format(progress.target)} มุม</strong>
+        </div>
+        <div class="image-compare-grid">
+          ${pairs.map(({ ktwImage, plainImage }, index) => `
+            <article class="image-compare-pair ${plainImage ? "matched" : "missing"}">
+              <div class="compare-pair-head">
+                <strong>มุมที่ ${fmtQty.format(index + 1)}</strong>
+                <span>${plainImage ? "จับคู่แล้ว" : "ยังขาดรูป PLAIN"}</span>
+              </div>
+              <div class="compare-columns">
+                <div class="compare-pane">
+                  <span>KTW</span>
+                  <a class="image-compare-image" href="${escapeHtml(ktwImage.url)}" target="_blank" rel="noreferrer">
+                    <img src="${escapeHtml(ktwImage.url)}" alt="${escapeHtml(ktwImage.alt || product.name)}" loading="lazy" />
+                  </a>
+                </div>
+                <div class="compare-pane">
+                  <span>PLAIN</span>
+                  ${renderPlainImagePane(plainImage, index)}
+                </div>
+              </div>
+            </article>`).join("")}
+          ${extraPlain.map((asset, index) => `
+            <article class="image-compare-pair extra">
+              <div class="compare-pair-head">
+                <strong>รูป PLAIN เพิ่มเติม ${fmtQty.format(index + 1)}</strong>
+                <span>เกินจำนวนมุม KTW</span>
+              </div>
+              <div class="compare-columns single">
+                <div class="compare-pane">
+                  <span>PLAIN</span>
+                  ${renderPlainImagePane(asset, ktwImages.length + index)}
+                </div>
+              </div>
+            </article>`).join("")}
+        </div>
+      </section>`;
   }
 
   function renderProductTableHead() {
@@ -643,6 +720,7 @@
       <div class="upload-stack" id="factory">
         ${state.assetGroups.map((group) => renderDesignUploadGroup(product, group)).join("")}
       </div>
+      ${renderImageComparison(product)}
       <section class="source-card ktw-reference">
         <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" />
         <div>

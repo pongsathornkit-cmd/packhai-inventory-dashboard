@@ -1514,6 +1514,15 @@
     document.querySelectorAll(".plain-nav a").forEach((link) => {
       link.classList.toggle("active", link.getAttribute("href") === activeHash);
     });
+    syncActiveView();
+  }
+
+  function syncActiveView() {
+    const activeHash = window.location.hash || "#products";
+    const isPurchaseOrderView = activeHash === "#purchase-order";
+    $("purchase-order").hidden = !isPurchaseOrderView;
+    $("products").hidden = isPurchaseOrderView;
+    $("plainMainGrid").hidden = isPurchaseOrderView;
   }
 
   function applyReferenceCopy() {

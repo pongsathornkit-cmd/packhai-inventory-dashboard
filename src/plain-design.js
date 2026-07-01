@@ -66,6 +66,7 @@
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
   });
+  let imageLightboxLastFocus = null;
 
   function escapeHtml(value) {
     return String(value ?? "")
@@ -562,6 +563,17 @@
       </div>`;
   }
 
+  function imagePreviewButton(src, alt, title, caption = "") {
+    return `
+      <button class="image-compare-image" type="button"
+        data-open-image="${escapeHtml(src)}"
+        data-image-title="${escapeHtml(title)}"
+        data-image-caption="${escapeHtml(caption)}"
+        aria-label="ดูรูป ${escapeHtml(title)}">
+        <img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" />
+      </button>`;
+  }
+
   function renderPlainImagePane(asset, index) {
     if (!asset) {
       return `
@@ -571,9 +583,10 @@
         </label>`;
     }
     return `
-      <a class="image-compare-image" href="${escapeHtml(asset.publicUrl)}" target="_blank" rel="noreferrer">
-        <img src="${escapeHtml(asset.publicUrl)}" alt="${escapeHtml(asset.fileName)}" loading="lazy" />
-      </a>`;
+      <div class="plain-image-preview">
+        ${imagePreviewButton(asset.publicUrl, asset.fileName, `PLAIN มุมที่ ${fmtQty.format(index + 1)}`, asset.fileName)}
+        <button class="image-delete-button" type="button" data-delete-asset="${escapeHtml(asset.id)}" aria-label="ลบรูป PLAIN ${escapeHtml(asset.fileName)}">ลบรูป PLAIN</button>
+      </div>`;
   }
 
   function renderImageComparison(product) {
@@ -601,9 +614,7 @@
               <div class="compare-columns">
                 <div class="compare-pane">
                   <span>KTW</span>
-                  <a class="image-compare-image" href="${escapeHtml(ktwImage.url)}" target="_blank" rel="noreferrer">
-                    <img src="${escapeHtml(ktwImage.url)}" alt="${escapeHtml(ktwImage.alt || product.name)}" loading="lazy" />
-                  </a>
+                  ${imagePreviewButton(ktwImage.url, ktwImage.alt || product.name, `KTW มุมที่ ${fmtQty.format(index + 1)}`, ktwImage.alt || product.name)}
                 </div>
                 <div class="compare-pane">
                   <span>PLAIN</span>
@@ -1048,6 +1059,59 @@
     state.products = state.products.map((product) => product.sku === sku ? normalizeProduct({ ...product, ...updates }) : product);
   }
 
+  function ensureImageLightbox() {
+    let modal = $("imageLightbox");
+    if (modal) return modal;
+    modal = document.createElement("div");
+    modal.id = "imageLightbox";
+    modal.className = "image-lightbox";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "ดูรูปสินค้า");
+    modal.hidden = true;
+    modal.innerHTML = `
+      <div class="image-lightbox-backdrop" data-close-image></div>
+      <figure class="image-lightbox-dialog">
+        <button class="image-lightbox-close" type="button" data-close-image aria-label="ปิดรูป">ปิด</button>
+        <img id="imageLightboxImage" alt="" />
+        <figcaption>
+          <strong id="imageLightboxTitle"></strong>
+          <span id="imageLightboxCaption"></span>
+        </figcaption>
+      </figure>`;
+    modal.addEventListener("click", (event) => {
+      if (event.target.closest("[data-close-image]")) closeImageLightbox();
+    });
+    document.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && !$("imageLightbox")?.hidden) closeImageLightbox();
+    });
+    document.body.appendChild(modal);
+    return modal;
+  }
+
+  function openImageLightbox({ src, title, caption }) {
+    if (!src) return;
+    const modal = ensureImageLightbox();
+    imageLightboxLastFocus = document.activeElement;
+    $("imageLightboxImage").src = src;
+    $("imageLightboxImage").alt = title || caption || "รูปสินค้า";
+    $("imageLightboxTitle").textContent = title || "รูปสินค้า";
+    $("imageLightboxCaption").textContent = caption || "";
+    modal.hidden = false;
+    document.body.classList.add("image-lightbox-open");
+    modal.querySelector(".image-lightbox-close")?.focus();
+  }
+
+  function closeImageLightbox() {
+    const modal = $("imageLightbox");
+    if (!modal) return;
+    modal.hidden = true;
+    $("imageLightboxImage").removeAttribute("src");
+    document.body.classList.remove("image-lightbox-open");
+    if (imageLightboxLastFocus?.focus) imageLightboxLastFocus.focus();
+    imageLightboxLastFocus = null;
+  }
+
   function bindDetailEvents(product) {
     $("detailStatus").addEventListener("change", (event) => updateProduct(product.sku, { status: event.target.value }));
     $("saveNotes").addEventListener("click", () => updateProduct(product.sku, { notes: $("detailNotes").value }));
@@ -1079,6 +1143,13 @@
     });
     document.querySelectorAll("[data-delete-asset]").forEach((button) => {
       button.addEventListener("click", () => deleteAsset(product.sku, button.dataset.deleteAsset));
+    });
+    document.querySelectorAll("[data-open-image]").forEach((button) => {
+      button.addEventListener("click", () => openImageLightbox({
+        src: button.dataset.openImage,
+        title: button.dataset.imageTitle,
+        caption: button.dataset.imageCaption,
+      }));
     });
   }
 

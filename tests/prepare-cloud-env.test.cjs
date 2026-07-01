@@ -18,6 +18,7 @@ test("prepare-cloud-env writes the env keys required by the cloud sync server", 
   assert.match(source, /SHOPEE_STORAGE_STATE_B64/);
   assert.match(source, /LAZADA_STORAGE_STATE_B64/);
   assert.match(source, /FLOWACCOUNT_STORAGE_STATE_B64/);
+  assert.match(source, /KTW_STORAGE_STATE_B64/);
   assert.match(source, /SUPABASE_URL/);
   assert.match(source, /SUPABASE_WRITE_KEY/);
   assert.match(source, /SUPABASE_ANON_KEY/);

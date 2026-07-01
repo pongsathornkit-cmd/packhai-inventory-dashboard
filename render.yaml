@@ -79,3 +79,5 @@ services:
         sync: false
       - key: FLOWACCOUNT_STORAGE_STATE_B64
         sync: false
+      - key: KTW_STORAGE_STATE_B64
+        sync: false

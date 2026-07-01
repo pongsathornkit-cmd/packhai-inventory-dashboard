@@ -102,6 +102,7 @@ function main() {
     LAZADA_STORAGE_STATE_B64: authStateEnv.LAZADA_STORAGE_STATE_B64 || process.env.LAZADA_STORAGE_STATE_B64 || "",
     FLOWACCOUNT_STORAGE_STATE_B64:
       authStateEnv.FLOWACCOUNT_STORAGE_STATE_B64 || process.env.FLOWACCOUNT_STORAGE_STATE_B64 || "",
+    KTW_STORAGE_STATE_B64: authStateEnv.KTW_STORAGE_STATE_B64 || process.env.KTW_STORAGE_STATE_B64 || "",
   };
 
   fs.mkdirSync(path.dirname(args.output), { recursive: true });
@@ -122,6 +123,7 @@ function main() {
     "SHOPEE_STORAGE_STATE_B64",
     "LAZADA_STORAGE_STATE_B64",
     "FLOWACCOUNT_STORAGE_STATE_B64",
+    "KTW_STORAGE_STATE_B64",
   ];
   console.log(
     JSON.stringify(

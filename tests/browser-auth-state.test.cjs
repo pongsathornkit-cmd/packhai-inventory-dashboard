@@ -60,15 +60,19 @@ test("cloud auth states materialize to files before spawning sync scripts", () =
   const state = { cookies: [{ name: "SPC", value: "1" }], origins: [] };
   const env = {
     SHOPEE_STORAGE_STATE_B64: Buffer.from(JSON.stringify(state), "utf8").toString("base64"),
+    KTW_STORAGE_STATE_B64: Buffer.from(JSON.stringify({ cookies: [{ name: "ktw", value: "1" }], origins: [] }), "utf8").toString("base64"),
     PACKHAI_AUTH_STATE_DIR: dir,
   };
 
   try {
     const written = materializeStorageStateEnv(env);
-    assert.equal(written.length, 1);
+    assert.equal(written.length, 2);
     assert.equal(written[0].kind, "shopee");
+    assert.equal(written[1].kind, "ktw");
     assert.ok(fs.existsSync(env.SHOPEE_STORAGE_STATE_FILE));
+    assert.ok(fs.existsSync(env.KTW_STORAGE_STATE_FILE));
     assert.equal(env.SHOPEE_STORAGE_STATE_B64, undefined);
+    assert.equal(env.KTW_STORAGE_STATE_B64, undefined);
     assert.deepEqual(JSON.parse(fs.readFileSync(env.SHOPEE_STORAGE_STATE_FILE, "utf8")), state);
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
@@ -98,6 +102,7 @@ test("cloud deployment config exposes portable auth state secrets", () => {
   assert.match(renderSource, /SHOPEE_STORAGE_STATE_B64/);
   assert.match(renderSource, /LAZADA_STORAGE_STATE_B64/);
   assert.match(renderSource, /FLOWACCOUNT_STORAGE_STATE_B64/);
+  assert.match(renderSource, /KTW_STORAGE_STATE_B64/);
   assert.match(dockerfile, /PACKHAI_AUTH_STATE_DIR=\/app\/storage\/auth-states/);
   assert.equal(packageJson.scripts["auth:export"], "node scripts/export-browser-auth-state.cjs --write-env-file .tmp/render-auth-state.env");
   assert.match(gitignore, /storage-states\//);

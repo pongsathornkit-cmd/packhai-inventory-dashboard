@@ -67,6 +67,40 @@ function absoluteKtwUrl(url) {
   return new URL(text, "https://shop.ktw.co.th").toString();
 }
 
+function normalizeCookieDomain(value) {
+  return String(value || "").trim().replace(/^\./, "").toLowerCase();
+}
+
+function cookieMatchesUrl(cookie, url) {
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch {
+    return false;
+  }
+  const host = parsed.hostname.toLowerCase();
+  const cookieDomain = normalizeCookieDomain(cookie?.domain || host);
+  const cookiePath = String(cookie?.path || "/");
+  const expires = Number(cookie?.expires || 0);
+  if (cookie?.secure && parsed.protocol !== "https:") return false;
+  if (expires > 0 && expires < Date.now() / 1000) return false;
+  if (cookieDomain && host !== cookieDomain && !host.endsWith(`.${cookieDomain}`)) return false;
+  return parsed.pathname.startsWith(cookiePath);
+}
+
+function ktwCookieHeader(sourceUrl) {
+  try {
+    const { loadStorageState } = require(path.join(__dirname, "browser-auth-state.cjs"));
+    const loaded = loadStorageState("ktw");
+    const cookies = (loaded.state?.cookies || [])
+      .filter((cookie) => cookieMatchesUrl(cookie, sourceUrl))
+      .map((cookie) => `${cookie.name}=${cookie.value}`);
+    return cookies.join("; ");
+  } catch {
+    return "";
+  }
+}
+
 function parseProductImages(html, sourceUrl) {
   const page = String(html || "");
   const collect = (patterns) => {
@@ -106,8 +140,35 @@ function parseProductImages(html, sourceUrl) {
   ]);
 }
 
+function parseVisibleKtwSalePrice(html) {
+  const text = decodeHtml(html);
+  const labeledPatterns = [
+    /(?:^|[^\u0E00-\u0E7F])ราคา\s*[:：]\s*([0-9,]+(?:\.\d+)?)\s*บาท/i,
+    /(?:^|[^\u0E00-\u0E7F])ราคาสุทธิ\s*[:：]?\s*([0-9,]+(?:\.\d+)?)\s*บาท/i,
+    /(?:^|[^\u0E00-\u0E7F])ราคาโปร(?:โมชัน)?\s*[:：]?\s*([0-9,]+(?:\.\d+)?)\s*บาท/i,
+  ];
+  for (const pattern of labeledPatterns) {
+    const price = moneyValue(numberValue(text.match(pattern)?.[1]));
+    if (price > 0) return price;
+  }
+
+  const discountMatch = text.match(
+    /ราคาตั้ง\s*[:：]?\s*([0-9,]+(?:\.\d+)?)\s*(?:บาท)?\s*ลด\s*([0-9,]+(?:\.\d+)?)\s*%/i
+  );
+  const listPrice = numberValue(discountMatch?.[1]);
+  const discountPercent = numberValue(discountMatch?.[2]);
+  if (listPrice > 0 && discountPercent > 0 && discountPercent < 100) {
+    return moneyValue(listPrice * (1 - discountPercent / 100));
+  }
+
+  return 0;
+}
+
 function parseKtwSourcePrice(html, sku) {
   const page = String(html || "");
+  const visibleSalePrice = parseVisibleKtwSalePrice(page);
+  if (visibleSalePrice > 0) return visibleSalePrice;
+
   const normalizedSku = normalizeSku(sku);
   const skuPattern = escapeRegExp(normalizedSku);
   const skuScopedPatterns = [
@@ -171,12 +232,15 @@ function parseConversionUnitTable(html) {
 async function fetchProductKtwData(product) {
   const sku = normalizeSku(product.sku);
   const sourceUrl = productUrl(product);
+  const headers = {
+    accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "accept-language": "th-TH,th;q=0.9,en;q=0.8",
+    "user-agent": "Mozilla/5.0",
+  };
+  const cookie = ktwCookieHeader(sourceUrl);
+  if (cookie) headers.cookie = cookie;
   const response = await fetch(sourceUrl, {
-    headers: {
-      accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-      "accept-language": "th-TH,th;q=0.9,en;q=0.8",
-      "user-agent": "Mozilla/5.0",
-    },
+    headers,
     redirect: "follow",
   });
   if (!response.ok) {

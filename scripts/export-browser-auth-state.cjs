@@ -36,6 +36,11 @@ const targets = {
         : path.join(projectRoot, "browser-profiles", "flowaccount")),
     url: "https://advance.flowaccount.com/N8387296/business/reports/inventory",
   },
+  ktw: {
+    env: "KTW_STORAGE_STATE_B64",
+    profile: process.env.KTW_SESSION_DIR || path.join(projectRoot, "browser-profiles", "ktw"),
+    url: "https://shop.ktw.co.th/p/P525-1310",
+  },
 };
 
 function parseArgs(argv) {

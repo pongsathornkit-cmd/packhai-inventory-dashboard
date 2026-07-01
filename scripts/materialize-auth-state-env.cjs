@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 
 const projectRoot = path.resolve(__dirname, "..");
-const stateKinds = ["SHOPEE", "LAZADA", "FLOWACCOUNT"];
+const stateKinds = ["SHOPEE", "LAZADA", "FLOWACCOUNT", "KTW"];
 
 function authStateDir(env = process.env) {
   return env.PACKHAI_AUTH_STATE_DIR

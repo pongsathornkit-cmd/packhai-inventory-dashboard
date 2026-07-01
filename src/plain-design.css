@@ -1258,6 +1258,69 @@ h2 {
   color: #7e746a;
 }
 
+.bulk-status-bar {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee7df;
+  background: #fffdf9;
+}
+
+.bulk-status-summary {
+  min-width: 0;
+}
+
+.bulk-status-summary strong,
+.bulk-status-summary span {
+  display: block;
+}
+
+.bulk-status-summary strong {
+  color: #302a24;
+  font-size: 12px;
+}
+
+.bulk-status-summary span {
+  margin-top: 2px;
+  color: #81766b;
+  font-size: 11px;
+}
+
+.bulk-status-actions {
+  display: flex;
+  align-items: end;
+  gap: 8px;
+}
+
+.bulk-status-actions label {
+  display: grid;
+  gap: 4px;
+  color: #756c63;
+  font-size: 11px;
+  font-weight: 760;
+}
+
+.bulk-status-actions select {
+  min-width: 140px;
+  height: 32px;
+  border: 1px solid #ded8d1;
+  border-radius: 6px;
+  background: #fff;
+  color: #2d2925;
+  padding: 0 8px;
+  font-size: 12px;
+}
+
+.bulk-status-actions button {
+  min-height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
 .product-table {
   min-width: 920px;
   table-layout: fixed;
@@ -1265,7 +1328,7 @@ h2 {
 
 .product-table th:nth-child(1),
 .product-table td:nth-child(1) {
-  width: 30px;
+  width: 42px;
 }
 
 .product-table th:nth-child(2),
@@ -1353,6 +1416,32 @@ h2 {
   width: 42px;
   color: #756c63;
   text-align: center;
+}
+
+.bulk-select-col {
+  text-align: center;
+}
+
+.bulk-row-check {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+}
+
+.bulk-row-check span {
+  min-width: 14px;
+  color: #756c63;
+  font-size: 11px;
+}
+
+.bulk-checkbox {
+  width: 14px;
+  height: 14px;
+  accent-color: #9f7658;
+  cursor: pointer;
 }
 
 .product-image-cell {

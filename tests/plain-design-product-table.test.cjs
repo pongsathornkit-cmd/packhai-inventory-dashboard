@@ -65,3 +65,25 @@ test("product list keeps the cost, shipping, and profit columns near the visible
   assert.match(css, /\.table-product-name\s*\{[\s\S]*?max-width:\s*145px;/);
   assert.match(css, /\.table-cost-input\s*\{[\s\S]*?width:\s*72px;/);
 });
+
+test("product list supports bulk redesign status updates from selected rows", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const template = readRepoFile("src/plain-design.template.html");
+  const headerBlock = functionBlock(source, "renderProductTableHead", "trackerCostInputValue");
+  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(template, /id="bulkStatusBar"/);
+  assert.match(source, /bulkStatusSelectedSkus:\s*new Set\(\)/);
+  assert.match(headerBlock, /data-bulk-status-toggle-all/);
+  assert.match(tableBlock, /data-bulk-status-row=/);
+  assert.match(source, /function renderBulkStatusBar/);
+  assert.match(source, /data-bulk-status-select/);
+  assert.match(source, /data-bulk-status-apply/);
+  assert.match(source, /function applyBulkRedesignStatus/);
+  assert.match(source, /Promise\.all\(\s*skus\.map/);
+  assert.match(source, /body:\s*JSON\.stringify\(\{\s*sku,\s*status/);
+  assert.match(eventsBlock, /data-bulk-status-row/);
+  assert.match(eventsBlock, /data-bulk-status-toggle-all/);
+  assert.match(eventsBlock, /data-bulk-status-apply/);
+});

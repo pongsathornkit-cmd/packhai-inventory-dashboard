@@ -36,6 +36,8 @@
     poDate: localStorage.getItem("plainPoDate") || new Date().toISOString().slice(0, 10),
     purchaseOrders: [],
     activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
+    bulkStatusSelectedSkus: new Set(),
+    bulkStatusTarget: "",
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -654,7 +656,9 @@
     const header = document.querySelector(".product-table thead tr");
     if (!header) return;
     header.innerHTML = `
-      <th>ลำดับ</th>
+      <th class="bulk-select-col">
+        <input class="bulk-checkbox" data-bulk-status-toggle-all type="checkbox" aria-label="เลือกสินค้าทั้งหมดในตาราง" />
+      </th>
       <th>รูปสินค้า</th>
       <th>ชื่อสินค้า</th>
       <th class="num">ราคา KTW</th>
@@ -680,6 +684,68 @@
         (state.category === "all" || product.category === state.category) &&
         (state.status === "all" || product.status === state.status);
     });
+  }
+
+  function statusOptionExists(status) {
+    return state.statusOptions.some((item) => item.id === status);
+  }
+
+  function pruneBulkStatusSelection(rows) {
+    const visibleSkus = new Set(rows.map((product) => product.sku));
+    state.bulkStatusSelectedSkus = new Set([...state.bulkStatusSelectedSkus].filter((sku) => visibleSkus.has(sku)));
+  }
+
+  function renderBulkStatusBar(rows = filteredProducts()) {
+    const bar = $("bulkStatusBar");
+    if (!bar) return;
+    if (state.bulkStatusTarget && !statusOptionExists(state.bulkStatusTarget)) {
+      state.bulkStatusTarget = "";
+    }
+    const selectedCount = state.bulkStatusSelectedSkus.size;
+    const canApply = selectedCount > 0 && statusOptionExists(state.bulkStatusTarget);
+    bar.innerHTML = `
+      <div class="bulk-status-summary">
+        <strong>${selectedCount ? `เลือก ${fmtQty.format(selectedCount)} SKU` : "ยังไม่ได้เลือก SKU"}</strong>
+        <span>เลือกจาก checkbox ในตาราง หรือเลือกทั้งหมด ${fmtQty.format(rows.length)} รายการที่กรองอยู่</span>
+      </div>
+      <div class="bulk-status-actions">
+        <label>
+          <span>สถานะใหม่</span>
+          <select data-bulk-status-select>
+            <option value="">เลือกสถานะ</option>
+            ${state.statusOptions.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === state.bulkStatusTarget ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}
+          </select>
+        </label>
+        <button class="secondary-button" data-bulk-status-apply type="button" ${canApply ? "" : "disabled"}>ใช้กับที่เลือก</button>
+        <button class="ghost-button" data-bulk-status-clear type="button" ${selectedCount ? "" : "disabled"}>ล้างที่เลือก</button>
+      </div>`;
+  }
+
+  function syncBulkStatusMaster(rows = filteredProducts()) {
+    const toggle = document.querySelector("[data-bulk-status-toggle-all]");
+    if (!toggle) return;
+    const visibleSkus = rows.map((product) => product.sku);
+    const selectedVisibleCount = visibleSkus.filter((sku) => state.bulkStatusSelectedSkus.has(sku)).length;
+    toggle.checked = visibleSkus.length > 0 && selectedVisibleCount === visibleSkus.length;
+    toggle.indeterminate = selectedVisibleCount > 0 && selectedVisibleCount < visibleSkus.length;
+    toggle.disabled = visibleSkus.length === 0;
+  }
+
+  function setBulkStatusSelection(sku, selected) {
+    if (!state.products.some((product) => product.sku === sku)) return;
+    if (selected) state.bulkStatusSelectedSkus.add(sku);
+    else state.bulkStatusSelectedSkus.delete(sku);
+    const rows = filteredProducts();
+    renderBulkStatusBar(rows);
+    syncBulkStatusMaster(rows);
+  }
+
+  function setBulkStatusSelectionForRows(rows, selected) {
+    rows.forEach((product) => {
+      if (selected) state.bulkStatusSelectedSkus.add(product.sku);
+      else state.bulkStatusSelectedSkus.delete(product.sku);
+    });
+    renderTrackerTable();
   }
 
   function renderFilters() {
@@ -757,15 +823,23 @@
 
   function renderTrackerTable() {
     const rows = filteredProducts();
+    pruneBulkStatusSelection(rows);
     renderProductTableHead();
+    renderBulkStatusBar(rows);
     $("tableSubtitle").textContent = `รวม ${fmtQty.format(rows.length)} จาก ${fmtQty.format(state.products.length)} รายการ`;
     $("productRows").innerHTML = rows.length
       ? rows.map((product, index) => {
           const status = statusMeta(product.status);
           const calc = lineCalc(product);
+          const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
           return `
             <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
-              <td class="row-index">${fmtQty.format(index + 1)}</td>
+              <td class="row-index">
+                <label class="bulk-row-check">
+                  <input class="bulk-checkbox" data-bulk-status-row="${escapeHtml(product.sku)}" type="checkbox" ${bulkChecked} aria-label="เลือก ${escapeHtml(product.sku)}" />
+                  <span>${fmtQty.format(index + 1)}</span>
+                </label>
+              </td>
               <td class="product-image-cell">
                 <img class="table-product-image" src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" />
               </td>
@@ -797,6 +871,7 @@
             </tr>`;
         }).join("")
       : `<tr><td class="empty-state" colspan="12">ไม่พบสินค้า</td></tr>`;
+    syncBulkStatusMaster(rows);
   }
 
   function fileSize(value) {
@@ -1641,6 +1716,46 @@
     });
   }
 
+  async function applyBulkRedesignStatus() {
+    const status = state.bulkStatusTarget;
+    const skus = [...state.bulkStatusSelectedSkus].filter((sku) => state.products.some((product) => product.sku === sku));
+    if (!skus.length) {
+      showMessage("เลือก SKU ที่ต้องการเปลี่ยนสถานะก่อน", true);
+      return;
+    }
+    if (!statusOptionExists(status)) {
+      showMessage("เลือกสถานะใหม่ก่อน", true);
+      return;
+    }
+    const previousProducts = state.products;
+    const statusLabel = statusMeta(status).label;
+    try {
+      state.saving = true;
+      state.products = state.products.map((product) => (
+        skus.includes(product.sku) ? normalizeProduct({ ...product, status }) : product
+      ));
+      state.bulkStatusSelectedSkus.clear();
+      render();
+      showMessage(`กำลังอัปเดตสถานะ ${fmtQty.format(skus.length)} SKU`);
+      const updatedProducts = await Promise.all(
+        skus.map((sku) => api("/api/plain-design/product", {
+          method: "POST",
+          body: JSON.stringify({ sku, status }),
+        }))
+      );
+      const updatedBySku = new Map(updatedProducts.map((product) => [product.sku, normalizeProduct(product)]));
+      state.products = state.products.map((product) => updatedBySku.get(product.sku) || product);
+      showMessage(`อัปเดตสถานะ ${fmtQty.format(skus.length)} SKU เป็น ${statusLabel}`);
+      render();
+    } catch (error) {
+      state.products = previousProducts;
+      render();
+      showMessage(`อัปเดตสถานะไม่สำเร็จ: ${error.message}`, true);
+    } finally {
+      state.saving = false;
+    }
+  }
+
   async function updateProduct(sku, updates) {
     try {
       state.saving = true;
@@ -1738,6 +1853,33 @@
     $("statusFilter").addEventListener("change", (event) => {
       state.status = event.target.value;
       render();
+    });
+    $("bulkStatusBar")?.addEventListener("change", (event) => {
+      const select = event.target.closest("[data-bulk-status-select]");
+      if (!select) return;
+      state.bulkStatusTarget = select.value;
+      renderBulkStatusBar(filteredProducts());
+    });
+    $("bulkStatusBar")?.addEventListener("click", (event) => {
+      if (event.target.closest("[data-bulk-status-apply]")) {
+        applyBulkRedesignStatus();
+        return;
+      }
+      if (event.target.closest("[data-bulk-status-clear]")) {
+        state.bulkStatusSelectedSkus.clear();
+        renderTrackerTable();
+      }
+    });
+    document.querySelector(".product-table")?.addEventListener("change", (event) => {
+      const toggleAll = event.target.closest("[data-bulk-status-toggle-all]");
+      if (toggleAll) {
+        setBulkStatusSelectionForRows(filteredProducts(), toggleAll.checked);
+        return;
+      }
+      const rowCheckbox = event.target.closest("[data-bulk-status-row]");
+      if (rowCheckbox) {
+        setBulkStatusSelection(rowCheckbox.dataset.bulkStatusRow, rowCheckbox.checked);
+      }
     });
     $("productRows").addEventListener("input", (event) => {
       const tableCostInput = event.target.closest("[data-table-usd]");

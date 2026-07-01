@@ -1239,6 +1239,14 @@ h2 {
   margin-bottom: 14px;
 }
 
+.main-grid.detail-collapsed {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.main-grid.detail-collapsed .detail-panel {
+  display: none;
+}
+
 .product-panel,
 .detail-panel,
 .upload-group,
@@ -1260,6 +1268,13 @@ h2 {
 
 .section-heading span {
   color: #7e746a;
+}
+
+.product-panel-actions,
+.detail-toolbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
 .product-image-mode-toggle {
@@ -1287,6 +1302,28 @@ h2 {
   background: #9f7658;
   color: #fff;
   box-shadow: 0 6px 14px rgba(159, 118, 88, 0.18);
+}
+
+.detail-panel-expand-button,
+.detail-panel-collapse-button {
+  min-height: 30px;
+  border: 1px solid #ded8d1;
+  border-radius: 6px;
+  background: #fff;
+  color: #6d5d4d;
+  padding: 0 10px;
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.detail-panel-expand-button[hidden] {
+  display: none;
+}
+
+.detail-panel-collapse-button {
+  min-height: 26px;
+  padding: 0 8px;
+  background: #fbfaf7;
 }
 
 .bulk-status-bar {

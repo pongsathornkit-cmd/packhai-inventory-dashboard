@@ -108,3 +108,28 @@ test("product list can switch cover images between KTW Mode and Plain Mode", () 
   assert.match(eventsBlock, /renderProductImageModeToggle/);
   assert.match(eventsBlock, /renderTrackerTable\(\)/);
 });
+
+test("product detail sidebar can collapse and expand from the product table", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const template = readRepoFile("src/plain-design.template.html");
+  const css = readRepoFile("src/plain-design.css");
+  const renderBlock = functionBlock(source, "render", "bindEvents");
+  const detailBlock = functionBlock(source, "renderDesignDetail", "numberInput");
+  const detailEventsBlock = functionBlock(source, "bindDetailEvents", "renderUploadGroup");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(template, /id="plainMainGrid"/);
+  assert.match(template, /id="detailPanelExpandButton"/);
+  assert.match(template, /aria-controls="design"/);
+  assert.match(source, /detailPanelCollapsed:\s*localStorage\.getItem\("plainDetailPanelCollapsed"\)\s*===\s*"1"/);
+  assert.match(source, /function renderDetailPanelShell/);
+  assert.match(source, /function setDetailPanelCollapsed/);
+  assert.match(renderBlock, /renderDetailPanelShell\(\)/);
+  assert.match(detailBlock, /data-detail-panel-collapse/);
+  assert.match(detailEventsBlock, /data-detail-panel-collapse/);
+  assert.match(eventsBlock, /detailPanelExpandButton/);
+  assert.match(eventsBlock, /setDetailPanelCollapsed\(false\)/);
+  assert.match(css, /\.main-grid\.detail-collapsed\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\);/);
+  assert.match(css, /\.main-grid\.detail-collapsed\s+\.detail-panel\s*\{[\s\S]*?display:\s*none;/);
+  assert.match(css, /\.detail-panel-expand-button\[hidden\]\s*\{[\s\S]*?display:\s*none;/);
+});

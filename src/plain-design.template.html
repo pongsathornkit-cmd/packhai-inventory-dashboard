@@ -67,16 +67,19 @@
           <button class="ghost-button clear-filters" id="clearFilters" type="button">ล้างตัวกรอง</button>
         </section>
 
-        <section class="main-grid">
+        <section class="main-grid" id="plainMainGrid">
           <section class="product-panel">
             <div class="section-heading">
               <div>
                 <h2>รายการสินค้า</h2>
                 <span id="tableSubtitle">-</span>
               </div>
-              <div class="product-image-mode-toggle" id="productImageModeToggle" aria-label="Product cover image mode">
-                <button type="button" data-product-image-mode="ktw" aria-pressed="true">KTW Mode</button>
-                <button type="button" data-product-image-mode="plain" aria-pressed="false">Plain Mode</button>
+              <div class="product-panel-actions">
+                <div class="product-image-mode-toggle" id="productImageModeToggle" aria-label="Product cover image mode">
+                  <button type="button" data-product-image-mode="ktw" aria-pressed="true">KTW Mode</button>
+                  <button type="button" data-product-image-mode="plain" aria-pressed="false">Plain Mode</button>
+                </div>
+                <button class="detail-panel-expand-button" id="detailPanelExpandButton" type="button" aria-controls="design" aria-expanded="false" hidden>แสดงรายละเอียด</button>
               </div>
             </div>
             <div class="bulk-status-bar" id="bulkStatusBar"></div>

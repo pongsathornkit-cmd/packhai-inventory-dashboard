@@ -39,6 +39,7 @@
     bulkStatusSelectedSkus: new Set(),
     bulkStatusTarget: "",
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
+    detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -751,6 +752,29 @@
     });
   }
 
+  function renderDetailPanelShell() {
+    const grid = $("plainMainGrid");
+    const detail = $("design");
+    const expandButton = $("detailPanelExpandButton");
+    const collapsed = Boolean(state.detailPanelCollapsed);
+    grid?.classList.toggle("detail-collapsed", collapsed);
+    detail?.setAttribute("aria-hidden", collapsed ? "true" : "false");
+    if (expandButton) {
+      expandButton.hidden = !collapsed;
+      expandButton.setAttribute("aria-expanded", collapsed ? "false" : "true");
+    }
+  }
+
+  function setDetailPanelCollapsed(collapsed) {
+    state.detailPanelCollapsed = Boolean(collapsed);
+    localStorage.setItem("plainDetailPanelCollapsed", state.detailPanelCollapsed ? "1" : "0");
+    renderDetailPanelShell();
+    if (!state.detailPanelCollapsed) {
+      renderDesignDetail();
+      $("design")?.scrollIntoView({ block: "nearest" });
+    }
+  }
+
   function syncBulkStatusMaster(rows = filteredProducts()) {
     const toggle = document.querySelector("[data-bulk-status-toggle-all]");
     if (!toggle) return;
@@ -1015,7 +1039,10 @@
     $("design").innerHTML = `
       <div class="detail-toolbar">
         <strong>รายละเอียดสินค้า</strong>
-        <span>${escapeHtml(status.label)}</span>
+        <div class="detail-toolbar-actions">
+          <span>${escapeHtml(status.label)}</span>
+          <button class="detail-panel-collapse-button" data-detail-panel-collapse type="button" aria-controls="design" aria-expanded="true">ซ่อน</button>
+        </div>
       </div>
       <section class="detail-product-card">
         <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" />
@@ -1281,6 +1308,7 @@
   }
 
   function bindDetailEvents(product) {
+    document.querySelector("[data-detail-panel-collapse]")?.addEventListener("click", () => setDetailPanelCollapsed(true));
     $("detailStatus").addEventListener("change", (event) => updateProduct(product.sku, { status: event.target.value }));
     $("saveNotes").addEventListener("click", () => updateProduct(product.sku, { notes: $("detailNotes").value }));
     $("saveCommercial").addEventListener("click", () => updateProduct(product.sku, collectCommercialFields()));
@@ -1859,6 +1887,7 @@
     renderFilters();
     renderStats();
     renderProductImageModeToggle();
+    renderDetailPanelShell();
     renderTrackerTable();
     renderDesignDetail();
     renderPoPanel();
@@ -1886,6 +1915,7 @@
       state.status = event.target.value;
       render();
     });
+    $("detailPanelExpandButton")?.addEventListener("click", () => setDetailPanelCollapsed(false));
     $("productImageModeToggle")?.addEventListener("click", (event) => {
       const button = event.target.closest("[data-product-image-mode]");
       if (!button) return;
@@ -1944,7 +1974,7 @@
       if (!row) return;
       state.selectedSku = row.dataset.sku;
       render();
-      document.getElementById("design")?.scrollIntoView({ block: "nearest" });
+      if (!state.detailPanelCollapsed) document.getElementById("design")?.scrollIntoView({ block: "nearest" });
     });
   }
 

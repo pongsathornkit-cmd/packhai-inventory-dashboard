@@ -866,6 +866,35 @@ h2 {
   background: #fffaf4;
 }
 
+.po-product-table {
+  min-width: 1080px;
+  table-layout: fixed;
+}
+
+.po-product-table td {
+  vertical-align: middle;
+}
+
+.po-product-table .po-qty-input {
+  width: 62px;
+  height: 28px;
+  min-height: 28px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.po-product-table .po-usd-input {
+  width: 72px;
+  height: 28px;
+  min-height: 28px;
+  background: #fff;
+}
+
+.po-product-table .po-qty-input + small {
+  display: block;
+  margin-top: 4px;
+}
+
 .po-summary-good strong,
 .po-summary-good span {
   color: var(--good);

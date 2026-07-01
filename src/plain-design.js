@@ -1757,22 +1757,50 @@
   }
 
   function renderPoRows(bill) {
-    return bill.tableRows.map(({ product, calc }) => `
-      <tr data-po-row="${escapeHtml(product.sku)}" class="${calc.qty <= 0 ? "line-muted" : ""}">
-        <td><strong>${escapeHtml(product.sku)}</strong></td>
-        <td>${escapeHtml(product.name)}<small>${escapeHtml(calc.rate.modeLabel)} | ${escapeHtml(calc.rate.label)} | ฐาน ${calc.chargeBasis}</small></td>
-        <td class="num">
-          <input class="po-qty-input" data-po-qty="${escapeHtml(product.sku)}" type="number" min="0" step="1" inputmode="numeric" value="${calc.qty > 0 ? escapeHtml(calc.qty) : ""}" placeholder="0" />
-        </td>
-        <td class="num">
-          <input class="po-usd-input" data-po-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${calc.purchaseUnitCostUsd > 0 ? escapeHtml(calc.purchaseUnitCostUsd) : ""}" placeholder="0.0000" />
-        </td>
-        <td class="num" data-po-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</td>
-        <td class="num" data-po-cell="shippingUnit">${fmtMoney.format(calc.shippingUnit)}</td>
-        <td class="num" data-po-cell="totalCost">${fmtMoney.format(calc.totalCost)}</td>
-        <td class="num" data-po-cell="revenueTotal">${fmtMoney.format(calc.revenueTotal)}</td>
-        <td class="num ${calc.profitTotal < 0 ? "danger-text" : "good-text"}" data-po-cell="profitTotal">${fmtMoney.format(calc.profitTotal)}</td>
-      </tr>`).join("");
+    return bill.tableRows.map(({ product, calc }, index) => {
+      const status = statusMeta(product.status);
+      const coverImage = tableCoverImageFor(product);
+      return `
+        <tr data-po-row="${escapeHtml(product.sku)}" class="${calc.qty <= 0 ? "line-muted" : ""}">
+          <td class="row-index">${fmtQty.format(index + 1)}</td>
+          <td class="product-image-cell">
+            ${coverImage.src
+              ? `<img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />`
+              : `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`}
+          </td>
+          <td>
+            <span class="table-product-name">${escapeHtml(product.name)}</span>
+            <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+            <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${escapeHtml(calc.rate.modeLabel)} | ${escapeHtml(calc.rate.label)} | ฐาน ${calc.chargeBasis}</small>
+          </td>
+          <td class="num">
+            <strong>${fmtMoney.format(product.ktwPrice || 0)}</strong>
+            <small data-po-cell="revenueTotal">${fmtMoney.format(calc.revenueTotal)} รวม</small>
+          </td>
+          <td class="num">
+            <label class="table-cost-editor">
+              <input class="table-cost-input po-usd-input" data-po-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${calc.purchaseUnitCostUsd > 0 ? escapeHtml(calc.purchaseUnitCostUsd) : ""}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+              <small data-po-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
+            </label>
+          </td>
+          <td class="num" data-po-cell="shippingUnit">
+            <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
+            <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
+          </td>
+          <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-po-cell="profitUnit">
+            <strong>${fmtMoney.format(calc.profitUnit)}</strong>
+            <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+          </td>
+          <td class="num">
+            <input class="po-qty-input" data-po-qty="${escapeHtml(product.sku)}" type="number" min="0" step="1" inputmode="numeric" value="${calc.qty > 0 ? escapeHtml(calc.qty) : ""}" placeholder="0" aria-label="จำนวนในบิล ${escapeHtml(product.sku)}" />
+            <small>ใบ</small>
+          </td>
+          <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
+          <td class="num">${assetPill(product, "product_images")}</td>
+          <td class="num">${assetPill(product, "packaging_images")}</td>
+          <td class="num">${assetPill(product, "factory_files")}</td>
+        </tr>`;
+    }).join("");
   }
 
   function refreshPoRealtime() {
@@ -1798,21 +1826,19 @@
       if (qtyInput && document.activeElement !== qtyInput) qtyInput.value = calc.qty > 0 ? String(calc.qty) : "";
       const usdInput = row.querySelector("[data-po-usd]");
       if (usdInput && document.activeElement !== usdInput) usdInput.value = calc.purchaseUnitCostUsd > 0 ? String(calc.purchaseUnitCostUsd) : "";
-      const cells = {
-        purchaseUnitCost: fmtMoney.format(calc.purchaseUnitCost),
-        shippingUnit: fmtMoney.format(calc.shippingUnit),
-        totalCost: fmtMoney.format(calc.totalCost),
-        revenueTotal: fmtMoney.format(calc.revenueTotal),
-        profitTotal: fmtMoney.format(calc.profitTotal),
-      };
-      Object.entries(cells).forEach(([name, value]) => {
-        const cell = row.querySelector(`[data-po-cell="${name}"]`);
-        if (cell) cell.textContent = value;
-      });
-      const profitCell = row.querySelector('[data-po-cell="profitTotal"]');
+      const purchaseCell = row.querySelector('[data-po-cell="purchaseUnitCost"]');
+      if (purchaseCell) purchaseCell.textContent = fmtMoney.format(calc.purchaseUnitCost);
+      const revenueCell = row.querySelector('[data-po-cell="revenueTotal"]');
+      if (revenueCell) revenueCell.textContent = `${fmtMoney.format(calc.revenueTotal)} รวม`;
+      const shippingCell = row.querySelector('[data-po-cell="shippingUnit"]');
+      if (shippingCell) {
+        shippingCell.innerHTML = `<strong>${fmtMoney.format(calc.shippingUnit)}</strong><small>${fmtMoney.format(calc.shippingTotal)} รวม</small>`;
+      }
+      const profitCell = row.querySelector('[data-po-cell="profitUnit"]');
       if (profitCell) {
-        profitCell.classList.toggle("danger-text", calc.profitTotal < 0);
-        profitCell.classList.toggle("good-text", calc.profitTotal >= 0);
+        profitCell.innerHTML = `<strong>${fmtMoney.format(calc.profitUnit)}</strong><small>${fmtMoney.format(calc.profitTotal)} รวม</small>`;
+        profitCell.classList.toggle("danger-text", calc.profitUnit < 0);
+        profitCell.classList.toggle("good-text", calc.profitUnit >= 0);
       }
     });
   }
@@ -1898,18 +1924,21 @@
           </div>
           <div class="po-summary" id="poSummary">${renderPoSummaryCards(bill)}</div>
           <div class="table-wrap">
-            <table class="po-table">
+            <table class="product-table po-table po-product-table combined-mode">
               <thead>
                 <tr>
-                  <th>SKU</th>
-                  <th>รายการ</th>
+                  <th class="row-index">ลำดับ</th>
+                  <th>รูปสินค้า</th>
+                  <th>ชื่อสินค้า</th>
+                  <th class="num">ราคา KTW</th>
+                  <th class="num">ต้นทุนสินค้า</th>
+                  <th class="num">ต้นทุนขนส่ง</th>
+                  <th class="num">กำไร</th>
                   <th class="num">จำนวนในบิล</th>
-                  <th class="num">ต้นทุน USD</th>
-                  <th class="num">ต้นทุน THB</th>
-                  <th class="num">ขนส่ง/ชิ้น</th>
-                  <th class="num">ต้นทุนรวม</th>
-                  <th class="num">ยอดขายรวม</th>
-                  <th class="num">กำไรรวม</th>
+                  <th>สถานะรีดีไซน์</th>
+                  <th class="num">รูปสินค้า</th>
+                  <th class="num">รูปแพคเกจจิ้ง</th>
+                  <th class="num">ไฟล์โรงงาน</th>
                 </tr>
               </thead>
               <tbody id="poTableBody">${renderPoRows(bill)}</tbody>

@@ -1785,6 +1785,23 @@ h2 {
   justify-items: end;
 }
 
+.table-cost-input-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  width: 72px;
+}
+
+.table-cost-currency {
+  position: absolute;
+  left: 7px;
+  color: #8b8177;
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1;
+  pointer-events: none;
+}
+
 .table-cost-input {
   width: 72px;
   height: 28px;
@@ -1795,6 +1812,7 @@ h2 {
   font: inherit;
   font-size: 12px;
   font-weight: 780;
+  padding: 0 6px 0 18px;
   text-align: right;
 }
 

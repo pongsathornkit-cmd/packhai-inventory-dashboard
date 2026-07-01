@@ -1090,7 +1090,10 @@
         <td class="num"><strong>${fmtMoney.format(calc.saleUnitPrice)}</strong><small>ราคา Plain</small></td>
         <td class="num">
           <label class="table-cost-editor">
-            <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+            <span class="table-cost-input-wrap">
+              <span class="table-cost-currency" aria-hidden="true">$</span>
+              <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+            </span>
             <small data-table-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
           </label>
         </td>
@@ -1145,7 +1148,10 @@
         <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
         <td class="num">
           <label class="table-cost-editor">
-            <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+            <span class="table-cost-input-wrap">
+              <span class="table-cost-currency" aria-hidden="true">$</span>
+              <input class="table-cost-input" data-table-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${escapeHtml(trackerCostInputValue(calc))}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+            </span>
             <small data-table-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
           </label>
         </td>
@@ -1919,7 +1925,10 @@
           </td>
           <td class="num">
             <label class="table-cost-editor">
-              <input class="table-cost-input po-usd-input" data-po-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${calc.purchaseUnitCostUsd > 0 ? escapeHtml(calc.purchaseUnitCostUsd) : ""}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+              <span class="table-cost-input-wrap">
+                <span class="table-cost-currency" aria-hidden="true">$</span>
+                <input class="table-cost-input po-usd-input" data-po-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${calc.purchaseUnitCostUsd > 0 ? escapeHtml(calc.purchaseUnitCostUsd) : ""}" placeholder="0.0000" aria-label="ต้นทุนสินค้า USD ${escapeHtml(product.sku)}" />
+              </span>
               <small data-po-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</small>
             </label>
           </td>

@@ -67,6 +67,19 @@ test("product list keeps the cost, shipping, and profit columns near the visible
   assert.match(css, /\.table-cost-input\s*\{[\s\S]*?width:\s*72px;/);
 });
 
+test("product list USD cost editors display a dollar unit beside the numeric input", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
+
+  assert.match(accountingRowBlock, /class="table-cost-input-wrap"[\s\S]*?class="table-cost-currency" aria-hidden="true">\$/);
+  assert.match(combinedRowBlock, /class="table-cost-input-wrap"[\s\S]*?class="table-cost-currency" aria-hidden="true">\$/);
+  assert.match(css, /\.table-cost-input-wrap\s*\{[\s\S]*?position:\s*relative;/);
+  assert.match(css, /\.table-cost-currency\s*\{[\s\S]*?position:\s*absolute;/);
+  assert.match(css, /\.table-cost-input\s*\{[\s\S]*?padding:\s*0 6px 0 18px;/);
+});
+
 test("product list supports bulk redesign status updates from selected rows", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");

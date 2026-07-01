@@ -38,6 +38,7 @@
     activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
     bulkStatusSelectedSkus: new Set(),
     bulkStatusTarget: "",
+    productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -506,6 +507,24 @@
     return product?.sourceImageUrl ? [{ angleNo: 1, url: product.sourceImageUrl, alt: product.name || "", sourceUrl: product.sourceUrl || "" }] : [];
   }
 
+  function tableCoverImageFor(product) {
+    const ktwCover = ktwImagesFor(product)[0] || {};
+    const ktwImage = {
+      src: ktwCover.url || product.sourceImageUrl || "",
+      alt: ktwCover.alt || product.name || product.sku || "",
+      mode: "ktw",
+    };
+    const plainAsset = assetsFor(product, "product_images")[0];
+    if (state.productImageMode === "plain" && plainAsset?.publicUrl) {
+      return {
+        src: plainAsset.publicUrl,
+        alt: plainAsset.fileName || product.name || product.sku || "",
+        mode: "plain",
+      };
+    }
+    return ktwImage;
+  }
+
   function assetTarget(product, groupId) {
     if (groupId === "product_images") return Math.max(1, ktwImagesFor(product).length || 0);
     return groupId === "factory_files" ? 2 : 2;
@@ -721,6 +740,17 @@
       </div>`;
   }
 
+  function renderProductImageModeToggle() {
+    const toggle = $("productImageModeToggle");
+    if (!toggle) return;
+    if (state.productImageMode !== "plain") state.productImageMode = "ktw";
+    toggle.querySelectorAll("[data-product-image-mode]").forEach((button) => {
+      const active = button.dataset.productImageMode === state.productImageMode;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
   function syncBulkStatusMaster(rows = filteredProducts()) {
     const toggle = document.querySelector("[data-bulk-status-toggle-all]");
     if (!toggle) return;
@@ -832,6 +862,7 @@
           const status = statusMeta(product.status);
           const calc = lineCalc(product);
           const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
+          const coverImage = tableCoverImageFor(product);
           return `
             <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
               <td class="row-index">
@@ -841,7 +872,7 @@
                 </label>
               </td>
               <td class="product-image-cell">
-                <img class="table-product-image" src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" />
+                <img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />
               </td>
               <td>
                 <span class="table-product-name">${escapeHtml(product.name)}</span>
@@ -1827,6 +1858,7 @@
   function render() {
     renderFilters();
     renderStats();
+    renderProductImageModeToggle();
     renderTrackerTable();
     renderDesignDetail();
     renderPoPanel();
@@ -1853,6 +1885,16 @@
     $("statusFilter").addEventListener("change", (event) => {
       state.status = event.target.value;
       render();
+    });
+    $("productImageModeToggle")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-product-image-mode]");
+      if (!button) return;
+      const mode = button.dataset.productImageMode === "plain" ? "plain" : "ktw";
+      if (state.productImageMode === mode) return;
+      state.productImageMode = mode;
+      localStorage.setItem("plainProductImageMode", mode);
+      renderProductImageModeToggle();
+      renderTrackerTable();
     });
     $("bulkStatusBar")?.addEventListener("change", (event) => {
       const select = event.target.closest("[data-bulk-status-select]");

@@ -87,3 +87,24 @@ test("product list supports bulk redesign status updates from selected rows", ()
   assert.match(eventsBlock, /data-bulk-status-toggle-all/);
   assert.match(eventsBlock, /data-bulk-status-apply/);
 });
+
+test("product list can switch cover images between KTW Mode and Plain Mode", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const template = readRepoFile("src/plain-design.template.html");
+  const tableBlock = functionBlock(source, "renderTrackerTable", "fileSize");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(template, /id="productImageModeToggle"/);
+  assert.match(template, /data-product-image-mode="ktw"/);
+  assert.match(template, /data-product-image-mode="plain"/);
+  assert.match(source, /productImageMode:\s*localStorage\.getItem\("plainProductImageMode"\)\s*\|\|\s*"ktw"/);
+  assert.match(source, /function tableCoverImageFor/);
+  assert.match(source, /assetsFor\(product,\s*"product_images"\)\[0\]/);
+  assert.match(source, /plainProductImageMode/);
+  assert.match(tableBlock, /const coverImage\s*=\s*tableCoverImageFor\(product\)/);
+  assert.match(tableBlock, /src="\$\{escapeHtml\(coverImage\.src\)\}"/);
+  assert.match(tableBlock, /data-image-mode="\$\{escapeHtml\(coverImage\.mode\)\}"/);
+  assert.match(eventsBlock, /data-product-image-mode/);
+  assert.match(eventsBlock, /renderProductImageModeToggle/);
+  assert.match(eventsBlock, /renderTrackerTable\(\)/);
+});

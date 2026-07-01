@@ -335,6 +335,27 @@ test("Designer Expert can switch and upload Plain product image versions per KTW
   assert.match(css, /\.plain-version-upload/);
 });
 
+test("Designer Expert can switch every Plain angle in a row to the same version", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const pairBlock = functionBlock(source, "renderProductImagePairs", "renderAccountingProductRow");
+  const rowVersionBlock = functionBlock(source, "renderRowPlainVersionControls", "renderPlainImageVersionControls");
+  const saveRowBlock = functionBlock(source, "savePlainImageRowVersionSelection", "savePlainImageVersionSelection");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(source, /function renderRowPlainVersionControls/);
+  assert.match(pairBlock, /renderRowPlainVersionControls\(product\)/);
+  assert.match(rowVersionBlock, /data-row-plain-version=/);
+  assert.match(rowVersionBlock, /plain-row-version-controls/);
+  assert.match(saveRowBlock, /assetTarget\(product,\s*"product_images"\)/);
+  assert.match(saveRowBlock, /Array\.from\(\{\s*length:\s*angleCount\s*\}/);
+  assert.match(saveRowBlock, /plainImageVersionSelections/);
+  assert.match(saveRowBlock, /updateProduct\(sku,\s*\{\s*plainImageVersionSelections\s*\}\)/);
+  assert.match(eventsBlock, /data-row-plain-version/);
+  assert.match(eventsBlock, /savePlainImageRowVersionSelection/);
+  assert.match(css, /\.plain-row-version-controls/);
+});
+
 test("Designer Expert can send AI edit commands for the selected Plain image version", () => {
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");

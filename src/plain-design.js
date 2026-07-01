@@ -609,6 +609,15 @@
       .sort((a, b) => a - b);
   }
 
+  function plainImageRowVersions(product) {
+    const baseVersions = Array.from({ length: PLAIN_IMAGE_VERSION_COUNT }, (_, itemIndex) => itemIndex + 1);
+    const assetVersions = assetsFor(product, "product_images")
+      .filter((asset) => asset?.publicUrl && assetAngleIndex(asset) > 0)
+      .map((asset) => assetVersion(asset));
+    return [...new Set([...baseVersions, ...assetVersions])]
+      .sort((a, b) => a - b);
+  }
+
   function assetAngleIndex(asset) {
     return normalizePlainImageAngleIndex(asset?.angleIndex);
   }
@@ -809,6 +818,27 @@
         aria-label="ดูรูป ${escapeHtml(title)}">
         <img src="${escapeHtml(src)}" alt="${escapeHtml(alt)}" loading="lazy" />
       </button>`;
+  }
+
+  function renderRowPlainVersionControls(product) {
+    const angleCount = Math.max(1, assetTarget(product, "product_images"));
+    const selections = normalizePlainImageVersionSelections(product.plainImageVersionSelections);
+    return `
+      <div class="plain-row-version-controls" role="group" aria-label="Plain row image version ${escapeHtml(product.sku)}">
+        <span>ทุกมุม</span>
+        ${plainImageRowVersions(product).map((version) => {
+          const active = Array.from({ length: angleCount })
+            .every((_, index) => normalizePlainImageVersion(selections[index + 1] || 1) === version);
+          return `
+            <button class="plain-row-version-button ${active ? "active" : ""}" type="button"
+              data-row-plain-version="${escapeHtml(product.sku)}"
+              data-version="${escapeHtml(version)}"
+              aria-pressed="${active ? "true" : "false"}"
+              title="เปลี่ยนรูป PLAIN ทุกมุมเป็น V${escapeHtml(plainVersionLabel(version))}">
+              V${escapeHtml(plainVersionLabel(version))}
+            </button>`;
+        }).join("")}
+      </div>`;
   }
 
   function renderPlainImageVersionControls(product, index) {
@@ -1207,6 +1237,7 @@
     const pairCount = Math.max(1, ktwImages.length, legacyProductImageAssets(product).length, highestVersionedAngle);
     return `
       <div class="product-image-pairs">
+        ${renderRowPlainVersionControls(product)}
         ${Array.from({ length: pairCount }).map((_, index) => {
           const ktwImage = ktwImages[index] || ktwImages[0] || {};
           const plainImage = plainImageAssetFor(product, index);
@@ -1659,6 +1690,21 @@
 
   function updateLocalProduct(sku, updates) {
     state.products = state.products.map((product) => product.sku === sku ? normalizeProduct({ ...product, ...updates }) : product);
+  }
+
+  async function savePlainImageRowVersionSelection(sku, version) {
+    const product = state.products.find((item) => item.sku === sku);
+    if (!product) return;
+    const normalizedVersion = normalizePlainImageVersion(version);
+    const angleCount = Math.max(1, assetTarget(product, "product_images"));
+    const plainImageVersionSelections = {
+      ...normalizePlainImageVersionSelections(product.plainImageVersionSelections),
+      ...Object.fromEntries(Array.from({ length: angleCount }, (_, index) => [index + 1, normalizedVersion])),
+    };
+    updateLocalProduct(sku, { plainImageVersionSelections });
+    renderTrackerTable();
+    renderDesignDetail();
+    await updateProduct(sku, { plainImageVersionSelections });
   }
 
   async function savePlainImageVersionSelection(sku, angleIndex, version) {
@@ -2703,6 +2749,14 @@
           title: imageButton.dataset.imageTitle,
           caption: imageButton.dataset.imageCaption,
         });
+        return;
+      }
+      const rowVersionButton = event.target.closest("[data-row-plain-version]");
+      if (rowVersionButton) {
+        savePlainImageRowVersionSelection(
+          rowVersionButton.dataset.rowPlainVersion,
+          rowVersionButton.dataset.version
+        );
         return;
       }
       const versionButton = event.target.closest("[data-plain-image-version]");

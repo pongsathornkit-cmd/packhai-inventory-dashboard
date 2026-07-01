@@ -1259,53 +1259,53 @@ h2 {
 }
 
 .product-table {
-  min-width: 1080px;
+  min-width: 920px;
   table-layout: fixed;
 }
 
 .product-table th:nth-child(1),
 .product-table td:nth-child(1) {
-  width: 32px;
+  width: 30px;
 }
 
 .product-table th:nth-child(2),
 .product-table td:nth-child(2) {
-  width: 54px;
+  width: 48px;
 }
 
 .product-table th:nth-child(3),
 .product-table td:nth-child(3) {
-  width: 190px;
+  width: 150px;
 }
 
 .product-table th:nth-child(4),
 .product-table td:nth-child(4) {
-  width: 64px;
+  width: 58px;
 }
 
 .product-table th:nth-child(5),
 .product-table td:nth-child(5) {
-  width: 96px;
+  width: 80px;
 }
 
 .product-table th:nth-child(6),
 .product-table td:nth-child(6) {
-  width: 82px;
+  width: 72px;
 }
 
 .product-table th:nth-child(7),
 .product-table td:nth-child(7) {
-  width: 82px;
+  width: 76px;
 }
 
 .product-table th:nth-child(8),
 .product-table td:nth-child(8) {
-  width: 66px;
+  width: 58px;
 }
 
 .product-table th:nth-child(9),
 .product-table td:nth-child(9) {
-  width: 82px;
+  width: 72px;
 }
 
 .product-table th:nth-child(10),
@@ -1314,13 +1314,13 @@ h2 {
 .product-table td:nth-child(11),
 .product-table th:nth-child(12),
 .product-table td:nth-child(12) {
-  width: 46px;
+  width: 44px;
 }
 
 .product-table th,
 .po-table th {
   height: 44px;
-  padding: 0 8px;
+  padding: 0 6px;
   background: #fbfaf7;
   border-bottom: 1px solid #e7dfd5;
   color: #756c63;
@@ -1331,7 +1331,7 @@ h2 {
 .product-table td,
 .po-table td {
   height: 58px;
-  padding: 8px;
+  padding: 7px 6px;
   border-top: 1px solid #eee7df;
   color: #2e2924;
 }
@@ -1361,8 +1361,8 @@ h2 {
 }
 
 .table-product-image {
-  width: 48px;
-  height: 48px;
+  width: 42px;
+  height: 42px;
   object-fit: contain;
   border: 1px solid #ded8d1;
   border-radius: 999px;
@@ -1372,7 +1372,7 @@ h2 {
 
 .table-product-name {
   display: block;
-  max-width: 210px;
+  max-width: 145px;
   overflow: hidden;
   color: #2d2925;
   font-weight: 650;
@@ -1398,7 +1398,7 @@ h2 {
 }
 
 .table-cost-input {
-  width: 78px;
+  width: 72px;
   height: 28px;
   border: 1px solid #d8cec3;
   border-radius: 6px;

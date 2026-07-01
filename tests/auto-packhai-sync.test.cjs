@@ -85,22 +85,22 @@ test("public auto sync state hides timer handles and exposes next run metadata",
   });
 });
 
-test("Render enables Packhai auto sync for the cloud service", () => {
+test("Render enables hourly inventory, platform payment, and seller price auto sync", () => {
   const renderSource = fs.readFileSync(path.join(projectRoot, "render.yaml"), "utf8");
 
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC\s*\n\s*value:\s*"1"/);
-  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
-  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"300"/);
+  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"60"/);
+  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC\s*\n\s*value:\s*"1"/);
-  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
-  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
+  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"60"/);
+  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"180"/);
   assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC\s*\n\s*value:\s*"1"/);
-  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"15"/);
-  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
+  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"60"/);
+  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"300"/);
   assert.match(renderSource, /key:\s*SELLER_COMPARE_DIR\s*\n\s*value:\s*\/app\/storage\/data\/seller_compare/);
   assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*AUTO_SYNC_BUSY_RETRY_SECONDS\s*\n\s*value:\s*"120"/);
-  assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"0"/);
+  assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"1"/);
 });
 
 test("sync server prioritizes seller price auto sync and exposes paused secondary jobs", () => {

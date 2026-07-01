@@ -942,7 +942,8 @@
             </button>`;
         }).join("")}
         <label class="plain-version-upload" title="Upload PLAIN image for selected version">
-          +
+          <span class="plain-version-upload-icon" aria-hidden="true">+</span>
+          <span>อัพโหลดรูป</span>
           <input type="file" accept="image/*"
             data-plain-image-version-upload="${escapeHtml(product.sku)}"
             data-angle-index="${escapeHtml(angleIndex)}"

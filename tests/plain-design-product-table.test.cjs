@@ -471,7 +471,9 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(css, /\.product-table\.accounting-mode/);
   assert.match(css, /\.product-table\.accounting-mode th:nth-child\(10\)/);
   assert.match(css, /\.product-table\.designer-mode/);
+  assert.match(css, /\.product-table\.designer-mode \.image-pairs-cell\s*\{[\s\S]*?overflow:\s*hidden;/);
   assert.match(css, /\.product-image-pairs/);
+  assert.match(css, /\.product-image-pairs\s*\{[\s\S]*?width:\s*100%;[\s\S]*?overflow-x:\s*auto;/);
   assert.match(css, /\.table-mode-emoji\s*\{[\s\S]*?background:\s*#efe6dc;[\s\S]*?color:\s*#9f7658;/);
   assert.match(css, /\.product-table-mode-toggle \.table-mode-emoji\s*\{[\s\S]*?color:\s*#9f7658;/);
   assert.match(css, /\.product-table-mode-toggle button\.active \.table-mode-emoji\s*\{[\s\S]*?color:\s*#fff;/);
@@ -493,6 +495,8 @@ test("Designer Expert can switch and upload Plain product image versions per KTW
   assert.match(paneBlock, /renderPlainImageVersionControls\(product,\s*index\)/);
   assert.match(source, /data-plain-image-version=/);
   assert.match(source, /data-plain-image-version-upload=/);
+  assert.match(source, /plain-version-upload-icon/);
+  assert.match(source, /อัพโหลดรูป/);
   assert.match(eventsBlock, /data-plain-image-version/);
   assert.match(eventsBlock, /savePlainImageVersionSelection/);
   assert.match(eventsBlock, /data-plain-image-version-upload/);
@@ -500,6 +504,9 @@ test("Designer Expert can switch and upload Plain product image versions per KTW
   assert.match(uploadBlock, /version/);
   assert.match(css, /\.plain-image-version-selector/);
   assert.match(css, /\.plain-version-upload/);
+  assert.match(css, /\.plain-image-version-selector\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/);
+  assert.match(css, /\.plain-version-upload\s*\{[\s\S]*?grid-column:\s*1\s*\/\s*-1/);
+  assert.match(css, /\.plain-version-upload input\s*\{[\s\S]*?width:\s*100%;[\s\S]*?height:\s*100%;/);
 });
 
 test("Designer Expert can switch every Plain angle in a row to the same version", () => {

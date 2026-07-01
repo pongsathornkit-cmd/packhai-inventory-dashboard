@@ -1567,7 +1567,7 @@ h2 {
 
 .product-table th:nth-child(9),
 .product-table td:nth-child(9) {
-  width: 72px;
+  width: 128px;
 }
 
 .product-table th:nth-child(10),
@@ -2001,6 +2001,19 @@ h2 {
 .status-badge.dark {
   background: #eee9e3;
   color: #55483c;
+}
+
+.product-table .status-badge,
+.po-table .status-badge {
+  justify-content: center;
+  min-width: 84px;
+  max-width: 128px;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.2;
+  text-align: center;
+  padding: 4px 8px;
 }
 
 .detail-panel {

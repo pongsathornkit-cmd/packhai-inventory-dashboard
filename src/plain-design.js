@@ -979,7 +979,7 @@
 
   function renderStats() {
     const bill = billCalc();
-    const ready = state.products.filter((product) => product.status === "factory_ready").length;
+    const ready = state.products.filter((product) => product.status === "passed").length;
     const linked = state.products.filter((product) => product.packhai?.matched).length;
     $("linkedCount").textContent = `${linked}/${state.products.length} SKU matched`;
     $("summary").innerHTML = [
@@ -988,7 +988,7 @@
       ["ยอดสั่งซื้อทั้งบิล", fmtMoney.format(bill.totalCost)],
       ["ยอดขายคาดการณ์", fmtMoney.format(bill.revenueTotal)],
       ["กำไรรวมทั้งบิล", fmtMoney.format(bill.profitTotal)],
-      ["พร้อมส่งโรงงาน", `${fmtQty.format(ready)} SKU`],
+      ["ผ่าน", `${fmtQty.format(ready)} SKU`],
     ]
       .map(([label, value]) => `<article class="stat-card"><span>${label}</span><strong>${value}</strong></article>`)
       .join("");

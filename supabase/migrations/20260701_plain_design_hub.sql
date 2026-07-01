@@ -2,8 +2,8 @@ create extension if not exists pgcrypto with schema extensions;
 
 create table if not exists public.plain_design_products (
   sku text primary key,
-  status text not null default 'not_started'
-    check (status in ('not_started', 'designing', 'review', 'approved', 'factory_ready')),
+  status text not null default 'waiting_ai_images'
+    check (status in ('passed', 'ai_done_waiting_review', 'needs_ai_revision', 'waiting_ai_images')),
   notes text not null default '',
   payload jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),

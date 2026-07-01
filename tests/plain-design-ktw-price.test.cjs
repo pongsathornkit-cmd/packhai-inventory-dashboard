@@ -111,7 +111,7 @@ test("stored default cost follows a corrected KTW website price", () => {
     assert.equal(product.ktwPrice, 155);
     assert.equal(product.saleUnitPrice, 155);
     assert.equal(product.purchaseUnitCost, 155);
-    assert.equal(product.status, "review");
+    assert.equal(product.status, "ai_done_waiting_review");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

@@ -18,6 +18,20 @@ const COMMERCIAL_NUMBER_FIELDS = [
 const COMMERCIAL_BOOLEAN_FIELDS = [
   "purchaseUnitCostCleared",
 ];
+const REDESIGN_STATUS_OPTIONS = [
+  { id: "passed", label: "ผ่าน", tone: "green" },
+  { id: "ai_done_waiting_review", label: "AIทำรูปเสร็จแล้วรอตรวจสอบ", tone: "orange" },
+  { id: "needs_ai_revision", label: "ต้องการให้AIแก้รูป", tone: "blue" },
+  { id: "waiting_ai_images", label: "รอรูปภาพจากAI", tone: "neutral" },
+];
+const REDESIGN_STATUS_IDS = new Set(REDESIGN_STATUS_OPTIONS.map((item) => item.id));
+const LEGACY_REDESIGN_STATUS_MAP = {
+  not_started: "waiting_ai_images",
+  designing: "waiting_ai_images",
+  review: "ai_done_waiting_review",
+  approved: "passed",
+  factory_ready: "passed",
+};
 
 function readJson(file, fallback = null) {
   try {
@@ -45,6 +59,25 @@ function numberValue(value) {
 
 function moneyValue(value) {
   return Math.round((Number(value || 0) + Number.EPSILON) * 100) / 100;
+}
+
+function normalizeRedesignStatus(value, fallback = "waiting_ai_images") {
+  const rawStatus = String(value || "").trim();
+  const mappedStatus = LEGACY_REDESIGN_STATUS_MAP[rawStatus] || rawStatus;
+  if (REDESIGN_STATUS_IDS.has(mappedStatus)) return mappedStatus;
+  return fallback;
+}
+
+function redesignStatusFromPayload(value) {
+  const rawStatus = String(value || "").trim();
+  const mappedStatus = LEGACY_REDESIGN_STATUS_MAP[rawStatus] || rawStatus;
+  if (REDESIGN_STATUS_IDS.has(mappedStatus)) return mappedStatus;
+  throw new Error(`Invalid redesign status: ${rawStatus || "(blank)"}`);
+}
+
+function normalizeStatusOptions(options) {
+  const ids = new Set((options || []).map((item) => item?.id));
+  return REDESIGN_STATUS_OPTIONS.every((item) => ids.has(item.id)) ? options : REDESIGN_STATUS_OPTIONS;
 }
 
 function safeSegment(value, fallback = "file") {
@@ -239,7 +272,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       cargoType: product.cargoType || "A",
       sourceImageUrl: product.sourceImageUrl || logistics?.ktwImages?.[0]?.url || packhai.imageUrl || "",
       sourceUrl: product.sourceUrl || "",
-      status: product.status || "not_started",
+      status: normalizeRedesignStatus(product.status),
       notes: product.notes || "",
       sortOrder: index + 1,
       updatedAt: new Date().toISOString(),
@@ -253,7 +286,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
   return {
     version: STATE_VERSION,
     updatedAt: new Date().toISOString(),
-    statusOptions: seed?.statusOptions || [],
+    statusOptions: normalizeStatusOptions(seed?.statusOptions),
     categoryOptions: seed?.categoryOptions || [],
     assetGroups: seed?.assetGroups || [],
     products,
@@ -272,7 +305,7 @@ function mergeStoredState(initialState, storedState) {
       if (!stored) return product;
       return {
         ...product,
-        status: stored.status || product.status,
+        status: normalizeRedesignStatus(stored.status || product.status, product.status),
         notes: Object.prototype.hasOwnProperty.call(stored, "notes") ? String(stored.notes || "") : product.notes,
         orderQuantity: Object.prototype.hasOwnProperty.call(stored, "orderQuantity")
           ? numberValue(stored.orderQuantity)
@@ -318,6 +351,11 @@ function savePlainDesignState(options, state) {
     ...state,
     version: STATE_VERSION,
     updatedAt: new Date().toISOString(),
+    statusOptions: normalizeStatusOptions(state.statusOptions),
+    products: (state.products || []).map((product) => ({
+      ...product,
+      status: normalizeRedesignStatus(product.status),
+    })),
   };
   writeJsonAtomic(options.stateFile, nextState);
   return nextState;
@@ -332,7 +370,9 @@ function updatePlainDesignProduct(options, payload) {
     if (product.sku !== sku) return product;
     found = {
       ...product,
-      status: payload.status || product.status,
+      status: Object.prototype.hasOwnProperty.call(payload, "status")
+        ? redesignStatusFromPayload(payload.status)
+        : normalizeRedesignStatus(product.status),
       notes: Object.prototype.hasOwnProperty.call(payload, "notes") ? String(payload.notes || "") : product.notes,
       updatedAt: new Date().toISOString(),
     };

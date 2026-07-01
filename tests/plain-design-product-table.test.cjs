@@ -278,8 +278,9 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(template, /data-product-table-mode="combined"/);
   assert.match(template, /Accounting Expert/);
   assert.match(template, /Designer Expert/);
-  assert.match(template, /<span class="table-mode-emoji" aria-hidden="true">💰<\/span>\s*Accounting Expert/);
-  assert.match(template, /<span class="table-mode-emoji" aria-hidden="true">🎨<\/span>\s*Designer Expert/);
+  assert.doesNotMatch(template, /💰|🎨/);
+  assert.match(template, /<span class="table-mode-emoji table-mode-emoji-accounting" aria-hidden="true">฿<\/span>\s*Accounting Expert/);
+  assert.match(template, /<span class="table-mode-emoji table-mode-emoji-designer" aria-hidden="true">✎<\/span>\s*Designer Expert/);
   assert.match(template, /Accounting&Design Mode/);
   assert.match(source, /productTableMode:\s*localStorage\.getItem\("plainProductTableMode"\)\s*\|\|\s*"combined"/);
   assert.match(source, /function normalizeProductTableMode/);
@@ -304,4 +305,6 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(css, /\.product-table\.accounting-mode th:nth-child\(10\)/);
   assert.match(css, /\.product-table\.designer-mode/);
   assert.match(css, /\.product-image-pairs/);
+  assert.match(css, /\.table-mode-emoji\s*\{[\s\S]*?background:\s*#efe6dc;[\s\S]*?color:\s*#9f7658;/);
+  assert.match(css, /\.product-table-mode-toggle button\.active \.table-mode-emoji\s*\{[\s\S]*?color:\s*#fff;/);
 });

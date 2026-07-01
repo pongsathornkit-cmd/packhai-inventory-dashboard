@@ -1387,7 +1387,17 @@ h2 {
 }
 
 .table-mode-emoji {
-  font-size: 13px;
+  display: inline-grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border: 1px solid #dfd0c2;
+  border-radius: 50%;
+  background: #efe6dc;
+  color: #9f7658;
+  font-family: "Segoe UI Symbol", "Noto Sans Symbols", sans-serif;
+  font-size: 11px;
+  font-weight: 900;
   line-height: 1;
 }
 
@@ -1396,6 +1406,12 @@ h2 {
   background: #9f7658;
   color: #fff;
   box-shadow: 0 6px 14px rgba(159, 118, 88, 0.18);
+}
+
+.product-table-mode-toggle button.active .table-mode-emoji {
+  border-color: rgba(255, 255, 255, 0.42);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
 }
 
 .product-image-mode-toggle[hidden] {

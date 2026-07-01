@@ -532,11 +532,19 @@
       mode: "ktw",
     };
     const plainAsset = assetsFor(product, "product_images")[0];
-    if (state.productImageMode === "plain" && plainAsset?.publicUrl) {
+    if (state.productImageMode === "plain") {
+      if (plainAsset?.publicUrl) {
+        return {
+          src: plainAsset.publicUrl,
+          alt: plainAsset.fileName || product.name || product.sku || "",
+          mode: "plain",
+        };
+      }
       return {
-        src: plainAsset.publicUrl,
-        alt: plainAsset.fileName || product.name || product.sku || "",
+        src: "",
+        alt: product.name || product.sku || "",
         mode: "plain",
+        empty: true,
       };
     }
     return ktwImage;
@@ -1041,7 +1049,9 @@
       <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
-          <img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />
+          ${coverImage.src
+            ? `<img class="table-product-image" src="${escapeHtml(coverImage.src)}" alt="${escapeHtml(coverImage.alt)}" data-image-mode="${escapeHtml(coverImage.mode)}" loading="lazy" />`
+            : `<span class="table-product-image-empty" data-image-mode="${escapeHtml(coverImage.mode)}" aria-label="ยังไม่มีรูปสินค้า Plain"></span>`}
         </td>
         <td>
           <span class="table-product-name">${escapeHtml(product.name)}</span>

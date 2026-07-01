@@ -110,6 +110,20 @@ test("product list can switch cover images between KTW Mode and Plain Mode", () 
   assert.match(eventsBlock, /renderTrackerTable\(\)/);
 });
 
+test("Plain Mode shows no table cover image when a product has no Plain image", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const coverBlock = functionBlock(source, "tableCoverImageFor", "assetTarget");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
+
+  assert.match(coverBlock, /if \(state\.productImageMode === "plain"\)\s*\{/);
+  assert.match(coverBlock, /src:\s*""/);
+  assert.match(coverBlock, /empty:\s*true/);
+  assert.match(combinedRowBlock, /coverImage\.src\s*\?/);
+  assert.match(combinedRowBlock, /table-product-image-empty/);
+  assert.match(css, /\.table-product-image-empty/);
+});
+
 test("product detail sidebar can collapse and expand from the product table", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");

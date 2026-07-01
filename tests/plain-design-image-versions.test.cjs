@@ -189,3 +189,10 @@ test("AI image edit sends attached reference images with the source image", asyn
   assert.equal(openAiRequestBody.images[2].image_url, "data:image/webp;base64,cmVmZXJlbmNlLXR3bw==");
   assert.equal(result.asset.metadata.referenceImageCount, 2);
 });
+
+test("Render exposes OpenAI image editing environment variables", () => {
+  const renderSource = fs.readFileSync(path.join(__dirname, "..", "render.yaml"), "utf8");
+
+  assert.match(renderSource, /key:\s*OPENAI_API_KEY\s*\n\s*sync:\s*false/);
+  assert.match(renderSource, /key:\s*OPENAI_IMAGE_MODEL\s*\n\s*value:\s*gpt-image-2/);
+});

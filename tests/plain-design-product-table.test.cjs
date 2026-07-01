@@ -178,6 +178,28 @@ test("Designer Expert AI commands accept reference image uploads", () => {
   assert.match(css, /\.ai-reference-summary/);
 });
 
+test("Designer Expert AI commands accept pasted reference images from clipboard", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+  const detailEventsBlock = functionBlock(source, "bindDetailEvents", "renderUploadGroup");
+  const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
+  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
+
+  assert.match(source, /function clipboardImageFiles/);
+  assert.match(source, /async function pasteBulkAiReferenceImages/);
+  assert.match(source, /async function pasteAiReferenceImages/);
+  assert.match(aiCommandBlock, /data-ai-image-prompt=/);
+  assert.match(bulkBarBlock, /data-bulk-ai-prompt/);
+  assert.match(eventsBlock, /addEventListener\("paste"/);
+  assert.match(eventsBlock, /event\.target\.closest\("\[data-bulk-ai-prompt\]"\)/);
+  assert.match(eventsBlock, /event\.target\.closest\("\[data-ai-image-prompt\]"\)/);
+  assert.match(eventsBlock, /pasteBulkAiReferenceImages\(event\)/);
+  assert.match(eventsBlock, /pasteAiReferenceImages\(event,\s*aiPrompt\)/);
+  assert.match(detailEventsBlock, /data-ai-image-prompt/);
+  assert.match(detailEventsBlock, /addEventListener\("paste"/);
+  assert.match(detailEventsBlock, /pasteAiReferenceImages\(event,\s*prompt\)/);
+});
+
 test("product list can bulk clear selected USD costs after confirmation", () => {
   const source = readRepoFile("src/plain-design.js");
   const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");

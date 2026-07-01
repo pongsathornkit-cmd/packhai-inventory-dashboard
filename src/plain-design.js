@@ -900,6 +900,7 @@
     return `
       <div class="ai-image-command ${busy ? "working" : ""}">
         <textarea data-ai-image-command="${escapeHtml(product.sku)}"
+          data-ai-image-prompt="${escapeHtml(product.sku)}"
           data-angle-index="${escapeHtml(angleIndex)}"
           data-version="${escapeHtml(selectedVersion)}"
           rows="2"
@@ -2097,6 +2098,11 @@
     detailRoot?.querySelectorAll("[data-ai-image-reference-upload]").forEach((input) => {
       input.addEventListener("change", () => setAiReferenceUploadFromInput(input));
     });
+    detailRoot?.querySelectorAll("[data-ai-image-prompt]").forEach((prompt) => {
+      prompt.addEventListener("paste", (event) => {
+        pasteAiReferenceImages(event, prompt).catch((error) => showMessage(`วางรูปอ้างอิงไม่ได้: ${error.message}`, true));
+      });
+    });
     detailRoot?.querySelectorAll("[data-ai-image-reference-clear]").forEach((button) => {
       button.addEventListener("click", () => clearAiReferenceUpload(
         button.dataset.aiImageReferenceClear,
@@ -2765,6 +2771,73 @@
     return Promise.all(limitedFiles.map(readFileAsDataUrl));
   }
 
+  function clipboardImageFiles(event) {
+    const clipboard = event?.clipboardData;
+    const itemFiles = Array.from(clipboard?.items || [])
+      .map((item) => (item.kind === "file" ? item.getAsFile() : null))
+      .filter(Boolean);
+    const directFiles = Array.from(clipboard?.files || []);
+    const seen = new Set();
+    return [...itemFiles, ...directFiles].filter((file) => {
+      const key = `${file.name || ""}:${file.type || ""}:${file.size || 0}:${file.lastModified || 0}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+
+  function mergeAiReferenceImages(existing, incoming) {
+    const merged = [...(Array.isArray(existing) ? existing : []), ...(Array.isArray(incoming) ? incoming : [])];
+    if (merged.length > MAX_AI_REFERENCE_IMAGES) {
+      showMessage(`แนบรูปอ้างอิงได้สูงสุด ${MAX_AI_REFERENCE_IMAGES} รูปต่อคำสั่ง`, true);
+    }
+    return merged.slice(0, MAX_AI_REFERENCE_IMAGES);
+  }
+
+  async function pasteBulkAiReferenceImages(event) {
+    const files = clipboardImageFiles(event);
+    if (!files.length) return false;
+    event.preventDefault();
+    const prompt = event.target.closest("[data-bulk-ai-prompt]");
+    if (prompt) state.bulkAiPrompt = prompt.value;
+    const referenceImages = await readAiReferenceFiles(files);
+    if (!referenceImages.length) return true;
+    state.bulkAiReferenceImages = mergeAiReferenceImages(state.bulkAiReferenceImages, referenceImages);
+    showMessage(`วางรูปอ้างอิง Bulk ${fmtQty.format(referenceImages.length)} รูปแล้ว`);
+    renderBulkStatusBar(filteredProducts());
+    document.querySelector("[data-bulk-ai-prompt]")?.focus();
+    return true;
+  }
+
+  async function pasteAiReferenceImages(event, prompt) {
+    const files = clipboardImageFiles(event);
+    if (!files.length) return false;
+    event.preventDefault();
+    const sku = prompt.dataset.aiImagePrompt || prompt.dataset.aiImageCommand;
+    const angleIndex = prompt.dataset.angleIndex;
+    const version = prompt.dataset.version;
+    const requestKey = aiImageRequestKey(sku, angleIndex, version);
+    const promptValue = prompt.value;
+    const referenceImages = await readAiReferenceFiles(files);
+    if (referenceImages.length) {
+      state.aiImageReferenceUploads.set(
+        requestKey,
+        mergeAiReferenceImages(state.aiImageReferenceUploads.get(requestKey), referenceImages)
+      );
+      showMessage(`วางรูปอ้างอิง ${fmtQty.format(referenceImages.length)} รูปแล้ว`);
+    }
+    renderTrackerTable();
+    renderDesignDetail();
+    const restoredPrompt = document.querySelector(
+      `[data-ai-image-command="${escapeCss(sku)}"][data-angle-index="${escapeCss(normalizePlainImageAngleIndex(angleIndex))}"][data-version="${escapeCss(normalizePlainImageVersion(version))}"]`
+    );
+    if (restoredPrompt) {
+      restoredPrompt.value = promptValue;
+      restoredPrompt.focus();
+    }
+    return true;
+  }
+
   async function setAiReferenceUploadFromInput(input) {
     const requestKey = aiImageRequestKey(
       input.dataset.aiImageReferenceUpload,
@@ -2921,6 +2994,11 @@
       state.bulkAiPrompt = prompt.value;
       refreshBulkAiDesignStartButton();
     });
+    $("bulkStatusBar")?.addEventListener("paste", (event) => {
+      const prompt = event.target.closest("[data-bulk-ai-prompt]");
+      if (!prompt) return;
+      pasteBulkAiReferenceImages(event).catch((error) => showMessage(`วางรูปอ้างอิงไม่ได้: ${error.message}`, true));
+    });
     $("bulkStatusBar")?.addEventListener("click", (event) => {
       if (event.target.closest("[data-bulk-status-apply]")) {
         applyBulkRedesignStatus();
@@ -2983,6 +3061,11 @@
       }
       const tableCostInput = event.target.closest("[data-table-usd]");
       if (tableCostInput) updateProduct(tableCostInput.dataset.tableUsd, poUsdCostUpdates(tableCostInput.dataset.tableUsd, tableCostInput.value));
+    });
+    $("productRows").addEventListener("paste", (event) => {
+      const aiPrompt = event.target.closest("[data-ai-image-prompt]");
+      if (!aiPrompt) return;
+      pasteAiReferenceImages(event, aiPrompt).catch((error) => showMessage(`วางรูปอ้างอิงไม่ได้: ${error.message}`, true));
     });
     $("productRows").addEventListener("click", (event) => {
       const galleryButton = event.target.closest("[data-open-gallery-sku]");

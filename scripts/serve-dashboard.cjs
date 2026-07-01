@@ -27,6 +27,7 @@ const {
   publicAutoSyncState,
 } = require("./auto-sync-core.cjs");
 const {
+  createPlainDesignAiImageRevision,
   deletePlainDesignAsset,
   loadPlainDesignState,
   resolvePlainDesignAssetPath,
@@ -1304,6 +1305,21 @@ const server = http.createServer((req, res) => {
       .then((body) => savePlainDesignAssetFiles(plainDesignOptions(), body))
       .then((result) => sendJson(res, 201, result))
       .catch((error) => sendJson(res, /required|invalid|payload|not found/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/ai-image-edit" && req.method === "POST") {
+    readJsonBody(req, 2 * 1024 * 1024)
+      .then((body) => createPlainDesignAiImageRevision(plainDesignOptions(), body))
+      .then((result) => sendJson(res, 201, result))
+      .catch((error) => {
+        const status = /OPENAI_API_KEY|OpenAI/i.test(error.message)
+          ? 503
+          : /required|not found|source image|sub-version/i.test(error.message)
+          ? 400
+          : 500;
+        sendJson(res, status, { ok: false, message: error.message });
+      });
     return;
   }
 

@@ -334,3 +334,27 @@ test("Designer Expert can switch and upload Plain product image versions per KTW
   assert.match(css, /\.plain-image-version-selector/);
   assert.match(css, /\.plain-version-upload/);
 });
+
+test("Designer Expert can send AI edit commands for the selected Plain image version", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const server = readRepoFile("scripts/serve-dashboard.cjs");
+  const paneBlock = functionBlock(source, "renderPlainImagePane", "renderImageComparison");
+  const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(source, /aiImageRequests:\s*new Map\(\)/);
+  assert.match(source, /function aiImageRequestKey/);
+  assert.match(source, /async function requestPlainImageAiEdit/);
+  assert.match(paneBlock, /renderAiImageCommand\(product,\s*index,\s*selectedVersion\)/);
+  assert.match(aiCommandBlock, /data-ai-image-command=/);
+  assert.match(aiCommandBlock, /data-ai-image-submit=/);
+  assert.match(aiCommandBlock, /ai-image-spinner/);
+  assert.match(source, /\/api\/plain-design\/ai-image-edit/);
+  assert.match(eventsBlock, /data-ai-image-submit/);
+  assert.match(eventsBlock, /requestPlainImageAiEdit/);
+  assert.match(server, /createPlainDesignAiImageRevision/);
+  assert.match(server, /\/api\/plain-design\/ai-image-edit/);
+  assert.match(css, /\.ai-image-command/);
+  assert.match(css, /@keyframes ai-image-spin/);
+});

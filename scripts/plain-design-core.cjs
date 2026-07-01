@@ -87,8 +87,18 @@ function normalizePlainImageAngleIndex(value) {
 }
 
 function normalizePlainImageVersion(value) {
-  const version = Math.trunc(numberValue(value));
-  return version >= 1 && version <= PLAIN_IMAGE_VERSION_COUNT ? version : 1;
+  const version = Math.round(numberValue(value) * 10) / 10;
+  const baseVersion = Math.trunc(version);
+  if (
+    Number.isFinite(version) &&
+    baseVersion >= 1 &&
+    baseVersion <= PLAIN_IMAGE_VERSION_COUNT &&
+    version >= baseVersion &&
+    version < baseVersion + 1
+  ) {
+    return version;
+  }
+  return 1;
 }
 
 function normalizePlainImageVersionSelections(value) {
@@ -449,6 +459,14 @@ function publicAssetUrl(assetPath) {
   return `/api/plain-design/assets/${assetPath.split("/").map(encodeURIComponent).join("/")}`;
 }
 
+function mimeTypeForFilePath(filePath) {
+  const ext = path.extname(String(filePath || "")).toLowerCase();
+  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+  if (ext === ".webp") return "image/webp";
+  if (ext === ".png") return "image/png";
+  return "application/octet-stream";
+}
+
 function decodeDataUrl(dataUrl) {
   const match = String(dataUrl || "").match(/^data:([^;,]+)?(;base64)?,(.*)$/);
   if (!match) throw new Error("File payload must be a data URL.");
@@ -461,12 +479,143 @@ function decodeDataUrl(dataUrl) {
   };
 }
 
+function sanitizeAssetMetadata(metadata) {
+  const source = metadata && typeof metadata === "object" && !Array.isArray(metadata) ? metadata : {};
+  const next = {};
+  for (const [key, value] of Object.entries(source).slice(0, 24)) {
+    const safeKey = safeSegment(key, "metadata").slice(0, 80);
+    if (!safeKey) continue;
+    if (typeof value === "boolean") next[safeKey] = value;
+    else if (typeof value === "number" && Number.isFinite(value)) next[safeKey] = value;
+    else if (value != null) next[safeKey] = String(value).slice(0, 1200);
+  }
+  return next;
+}
+
+function plainImageAssetsForAngle(product, angleIndex) {
+  const normalizedAngleIndex = normalizePlainImageAngleIndex(angleIndex);
+  return (product?.assets || []).filter((asset) => (
+    asset?.group === "product_images" &&
+    normalizePlainImageAngleIndex(asset.angleIndex) === normalizedAngleIndex
+  ));
+}
+
+function legacyPlainImageAssetFor(product, angleIndex) {
+  return (product?.assets || [])
+    .filter((asset) => asset?.group === "product_images" && !normalizePlainImageAngleIndex(asset.angleIndex))
+    [normalizePlainImageAngleIndex(angleIndex) - 1] || null;
+}
+
+function plainImageAssetFor(product, angleIndex, version) {
+  const normalizedVersion = normalizePlainImageVersion(version);
+  const slotted = plainImageAssetsForAngle(product, angleIndex).find((asset) => (
+    normalizePlainImageVersion(asset.version) === normalizedVersion
+  ));
+  if (slotted) return slotted;
+  return normalizedVersion === 1 ? legacyPlainImageAssetFor(product, angleIndex) : null;
+}
+
+function nextPlainImageSubVersion(product, angleIndex, sourceVersion) {
+  const normalizedSourceVersion = normalizePlainImageVersion(sourceVersion);
+  const baseVersion = Math.trunc(normalizedSourceVersion);
+  const used = new Set(
+    plainImageAssetsForAngle(product, angleIndex)
+      .map((asset) => normalizePlainImageVersion(asset.version))
+      .filter((version) => Math.trunc(version) === baseVersion)
+      .map((version) => Math.round((version - baseVersion) * 10))
+      .filter((suffix) => suffix > 0)
+  );
+  for (let suffix = 1; suffix <= 9; suffix += 1) {
+    if (!used.has(suffix)) return Number(`${baseVersion}.${suffix}`);
+  }
+  throw new Error(`No AI sub-version slot is available for V${baseVersion}.`);
+}
+
+function dataUrlFromAsset(options, asset) {
+  if (!asset?.filePath) return "";
+  const assetRoot = path.resolve(options.assetDir);
+  const fullPath = path.resolve(assetRoot, asset.filePath);
+  const relativePath = path.relative(assetRoot, fullPath);
+  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) throw new Error("Invalid asset path.");
+  const mimeType = asset.mimeType || mimeTypeForFilePath(asset.filePath);
+  return `data:${mimeType};base64,${fs.readFileSync(fullPath).toString("base64")}`;
+}
+
+async function dataUrlFromRemoteImage(url, fetchImpl = fetch) {
+  if (!/^https?:\/\//i.test(String(url || ""))) return "";
+  if (typeof fetchImpl !== "function") throw new Error("Fetch is not available for remote source images.");
+  const response = await fetchImpl(url);
+  if (!response.ok) throw new Error(`Source image fetch failed (${response.status}).`);
+  const contentType = response.headers.get("content-type") || mimeTypeForFilePath(new URL(url).pathname);
+  const buffer = Buffer.from(await response.arrayBuffer());
+  if (buffer.length > 20 * 1024 * 1024) throw new Error("Source image is larger than the OpenAI image edit limit.");
+  return `data:${contentType.split(";")[0] || "image/png"};base64,${buffer.toString("base64")}`;
+}
+
+async function sourceImageDataUrlFor(options, product, angleIndex, version, fetchImpl) {
+  const sourceAsset = plainImageAssetFor(product, angleIndex, version);
+  if (sourceAsset) return { dataUrl: dataUrlFromAsset(options, sourceAsset), asset: sourceAsset, source: "plain" };
+  const ktwImage = (product.ktwImages || [])[normalizePlainImageAngleIndex(angleIndex) - 1] ||
+    (normalizePlainImageAngleIndex(angleIndex) === 1 && product.sourceImageUrl ? { url: product.sourceImageUrl } : null);
+  if (ktwImage?.url) {
+    return {
+      dataUrl: await dataUrlFromRemoteImage(ktwImage.url, fetchImpl),
+      asset: null,
+      source: "ktw",
+    };
+  }
+  throw new Error("No source image is available for this angle/version.");
+}
+
+async function createOpenAIImageEdit(request) {
+  const apiKey = String(request.apiKey || process.env.OPENAI_API_KEY || "").trim();
+  if (!apiKey) throw new Error("OPENAI_API_KEY is required for AI image editing.");
+  const model = request.model || process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const response = await (request.fetchImpl || fetch)("https://api.openai.com/v1/images/edits", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model,
+      prompt: request.prompt,
+      images: [{ image_url: request.sourceImageDataUrl }],
+      n: 1,
+      output_format: "png",
+      quality: "auto",
+      size: "1024x1024",
+      input_fidelity: "high",
+    }),
+  });
+  const text = await response.text();
+  let data = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = {};
+  }
+  if (!response.ok) {
+    const message = data?.error?.message || data?.message || text || `OpenAI image edit failed (${response.status})`;
+    throw new Error(message);
+  }
+  const image = data?.data?.[0] || {};
+  if (!image.b64_json) throw new Error("OpenAI did not return image data.");
+  return {
+    dataUrl: `data:image/png;base64,${image.b64_json}`,
+    mimeType: "image/png",
+    model,
+    revisedPrompt: image.revised_prompt || "",
+  };
+}
+
 function savePlainDesignAssetFiles(options, payload) {
   const sku = normalizeSku(payload.sku);
   const group = String(payload.group || "");
   const files = Array.isArray(payload.files) ? payload.files : [];
   const angleIndex = group === "product_images" ? normalizePlainImageAngleIndex(payload.angleIndex) : 0;
   const version = group === "product_images" && angleIndex > 0 ? normalizePlainImageVersion(payload.version) : 0;
+  const metadata = sanitizeAssetMetadata(payload.metadata);
   if (!sku) throw new Error("SKU is required.");
   if (!ASSET_GROUPS.has(group)) throw new Error("Asset group is invalid.");
   if (!files.length) return [];
@@ -500,6 +649,7 @@ function savePlainDesignAssetFiles(options, payload) {
       asset.version = version;
       asset.slotKey = `angle-${angleIndex}-v${version}`;
     }
+    if (Object.keys(metadata).length) asset.metadata = metadata;
     return asset;
   });
 
@@ -507,6 +657,75 @@ function savePlainDesignAssetFiles(options, payload) {
   product.updatedAt = new Date().toISOString();
   savePlainDesignState(options, state);
   return created;
+}
+
+async function createPlainDesignAiImageRevision(options, payload, deps = {}) {
+  const sku = normalizeSku(payload.sku);
+  const angleIndex = normalizePlainImageAngleIndex(payload.angleIndex);
+  const sourceVersion = normalizePlainImageVersion(payload.version);
+  const prompt = String(payload.prompt || "").trim();
+  if (!sku) throw new Error("SKU is required.");
+  if (!angleIndex) throw new Error("Angle index is required.");
+  if (!prompt) throw new Error("AI edit prompt is required.");
+
+  const state = loadPlainDesignState(options);
+  const product = state.products.find((item) => item.sku === sku);
+  if (!product) throw new Error(`Product ${sku} was not found.`);
+  const newVersion = nextPlainImageSubVersion(product, angleIndex, sourceVersion);
+  const sourceImage = await sourceImageDataUrlFor(options, product, angleIndex, sourceVersion, deps.fetchImpl);
+  const editPrompt = [
+    `Product SKU: ${product.sku}`,
+    `Product name: ${product.name}`,
+    `Angle: ${angleIndex}`,
+    `Create a refined PLAIN redesign image based on the source image.`,
+    `Keep the same product angle and make a commercially usable product design image.`,
+    `User instruction: ${prompt}`,
+  ].join("\n");
+  const imageResult = await (deps.generateImageEdit || createOpenAIImageEdit)({
+    sku,
+    angleIndex,
+    sourceVersion,
+    newVersion,
+    prompt: editPrompt,
+    sourceImageDataUrl: sourceImage.dataUrl,
+    model: deps.model || process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
+    apiKey: deps.apiKey,
+    fetchImpl: deps.fetchImpl,
+  });
+  const fileName = `${sku}-angle-${angleIndex}-v${String(newVersion).replace(".", "-")}-ai.png`;
+  const [asset] = savePlainDesignAssetFiles(options, {
+    sku,
+    group: "product_images",
+    angleIndex,
+    version: newVersion,
+    files: [{
+      name: fileName,
+      type: imageResult.mimeType || "image/png",
+      dataUrl: imageResult.dataUrl,
+    }],
+    metadata: {
+      aiGenerated: true,
+      aiPrompt: prompt,
+      aiModel: imageResult.model || deps.model || process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
+      sourceVersion,
+      sourceType: sourceImage.source,
+      parentAssetId: sourceImage.asset?.id || "",
+      revisedPrompt: imageResult.revisedPrompt || "",
+    },
+  });
+  const productWithSelection = updatePlainDesignProduct(options, {
+    sku,
+    plainImageVersionSelections: { [angleIndex]: newVersion },
+  });
+  return {
+    ok: true,
+    sku,
+    angleIndex,
+    sourceVersion,
+    newVersion,
+    asset,
+    product: productWithSelection,
+  };
 }
 
 function deletePlainDesignAsset(options, payload) {
@@ -546,6 +765,7 @@ function resolvePlainDesignAssetPath(options, urlPath) {
 
 module.exports = {
   buildPlainDesignInitialState,
+  createPlainDesignAiImageRevision,
   deletePlainDesignAsset,
   loadPlainDesignState,
   resolvePlainDesignAssetPath,

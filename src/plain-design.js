@@ -42,6 +42,7 @@
     productTableMode: localStorage.getItem("plainProductTableMode") || "combined",
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
+    aiImageRequests: new Map(),
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -84,6 +85,10 @@
       .replace(/"/g, "&quot;");
   }
 
+  function escapeCss(value) {
+    return window.CSS?.escape ? window.CSS.escape(String(value)) : String(value).replace(/["\\]/g, "\\$&");
+  }
+
   function numberValue(value) {
     const parsed = typeof value === "number" ? value : Number(String(value ?? "").replace(/[,\s]|THB|%/gi, ""));
     return Number.isFinite(parsed) ? parsed : 0;
@@ -103,8 +108,18 @@
   }
 
   function normalizePlainImageVersion(value) {
-    const version = Math.trunc(numberValue(value));
-    return version >= 1 && version <= PLAIN_IMAGE_VERSION_COUNT ? version : 1;
+    const version = Math.round(numberValue(value) * 10) / 10;
+    const baseVersion = Math.trunc(version);
+    if (
+      Number.isFinite(version) &&
+      baseVersion >= 1 &&
+      baseVersion <= PLAIN_IMAGE_VERSION_COUNT &&
+      version >= baseVersion &&
+      version < baseVersion + 1
+    ) {
+      return version;
+    }
+    return 1;
   }
 
   function normalizePlainImageVersionSelections(value) {
@@ -579,8 +594,19 @@
     return (product?.assets || []).filter((asset) => asset.group === group);
   }
 
-  function plainImageVersions() {
-    return Array.from({ length: PLAIN_IMAGE_VERSION_COUNT }, (_, index) => index + 1);
+  function plainVersionLabel(version) {
+    const normalized = normalizePlainImageVersion(version);
+    return Number.isInteger(normalized) ? String(normalized) : normalized.toFixed(1);
+  }
+
+  function plainImageVersions(product, index) {
+    const angleIndex = normalizePlainImageAngleIndex(index + 1);
+    const baseVersions = Array.from({ length: PLAIN_IMAGE_VERSION_COUNT }, (_, itemIndex) => itemIndex + 1);
+    const assetVersions = assetsFor(product, "product_images")
+      .filter((asset) => asset?.publicUrl && assetAngleIndex(asset) === angleIndex)
+      .map((asset) => assetVersion(asset));
+    return [...new Set([...baseVersions, ...assetVersions])]
+      .sort((a, b) => a - b);
   }
 
   function assetAngleIndex(asset) {
@@ -610,6 +636,10 @@
     ));
     if (slottedAsset) return slottedAsset;
     return normalizePlainImageVersion(version) === 1 ? legacyProductImageAssets(product)[index] || null : null;
+  }
+
+  function aiImageRequestKey(sku, angleIndex, version) {
+    return `${sku}|${normalizePlainImageAngleIndex(angleIndex)}|${plainVersionLabel(version)}`;
   }
 
   function plainProductImageCompletionCount(product) {
@@ -786,7 +816,7 @@
     const selectedVersion = plainImageVersionSelection(product, index);
     return `
       <div class="plain-image-version-selector" role="group" aria-label="Plain image version angle ${fmtQty.format(angleIndex)}">
-        ${plainImageVersions().map((version) => {
+        ${plainImageVersions(product, index).map((version) => {
           const asset = plainImageAssetFor(product, index, version);
           const active = version === selectedVersion;
           return `
@@ -795,8 +825,8 @@
               data-angle-index="${escapeHtml(angleIndex)}"
               data-version="${escapeHtml(version)}"
               aria-pressed="${active ? "true" : "false"}"
-              title="PLAIN angle ${fmtQty.format(angleIndex)} version ${fmtQty.format(version)}">
-              V${fmtQty.format(version)}
+              title="PLAIN angle ${fmtQty.format(angleIndex)} version ${escapeHtml(plainVersionLabel(version))}">
+              V${escapeHtml(plainVersionLabel(version))}
             </button>`;
         }).join("")}
         <label class="plain-version-upload" title="Upload PLAIN image for selected version">
@@ -809,6 +839,29 @@
       </div>`;
   }
 
+  function renderAiImageCommand(product, index, selectedVersion) {
+    const angleIndex = normalizePlainImageAngleIndex(index + 1);
+    const versionLabel = plainVersionLabel(selectedVersion);
+    const requestKey = aiImageRequestKey(product.sku, angleIndex, selectedVersion);
+    const busy = state.aiImageRequests.has(requestKey);
+    return `
+      <div class="ai-image-command ${busy ? "working" : ""}">
+        <textarea data-ai-image-command="${escapeHtml(product.sku)}"
+          data-angle-index="${escapeHtml(angleIndex)}"
+          data-version="${escapeHtml(selectedVersion)}"
+          rows="2"
+          placeholder="สั่ง AI แก้ V${escapeHtml(versionLabel)}..."></textarea>
+        <button type="button"
+          data-ai-image-submit="${escapeHtml(product.sku)}"
+          data-angle-index="${escapeHtml(angleIndex)}"
+          data-version="${escapeHtml(selectedVersion)}"
+          ${busy ? "disabled" : ""}>
+          <span class="ai-image-spinner" aria-hidden="true"></span>
+          <span>${busy ? "กำลังออกแบบ" : "สั่ง AI"}</span>
+        </button>
+      </div>`;
+  }
+
   function renderPlainImagePane(product, index) {
     const selectedVersion = plainImageVersionSelection(product, index);
     const asset = plainImageAssetFor(product, index, selectedVersion);
@@ -817,16 +870,18 @@
       return `
         <div class="plain-image-preview">
           <div class="image-compare-empty">
-            <strong>รอรูป PLAIN V${fmtQty.format(selectedVersion)}</strong>
+            <strong>รอรูป PLAIN V${escapeHtml(plainVersionLabel(selectedVersion))}</strong>
             <span>มุมที่ ${fmtQty.format(index + 1)}</span>
           </div>
           ${versionControls}
+          ${renderAiImageCommand(product, index, selectedVersion)}
         </div>`;
     }
     return `
       <div class="plain-image-preview">
-        ${imagePreviewButton(asset.publicUrl, asset.fileName, `PLAIN มุมที่ ${fmtQty.format(index + 1)} V${fmtQty.format(selectedVersion)}`, asset.fileName)}
+        ${imagePreviewButton(asset.publicUrl, asset.fileName, `PLAIN มุมที่ ${fmtQty.format(index + 1)} V${plainVersionLabel(selectedVersion)}`, asset.fileName)}
         ${versionControls}
+        ${renderAiImageCommand(product, index, selectedVersion)}
         <button class="image-delete-button" type="button" data-delete-asset="${escapeHtml(asset.id)}" aria-label="ลบรูป PLAIN ${escapeHtml(asset.fileName)}">ลบรูป PLAIN</button>
       </div>`;
   }
@@ -1620,6 +1675,49 @@
     await updateProduct(sku, { plainImageVersionSelections });
   }
 
+  async function requestPlainImageAiEdit(sku, angleIndex, version) {
+    const normalizedAngleIndex = normalizePlainImageAngleIndex(angleIndex);
+    const normalizedVersion = normalizePlainImageVersion(version);
+    const command = document.querySelector(
+      `[data-ai-image-command="${escapeCss(sku)}"][data-angle-index="${escapeCss(normalizedAngleIndex)}"][data-version="${escapeCss(normalizedVersion)}"]`
+    );
+    const prompt = String(command?.value || "").trim();
+    if (!prompt) {
+      showMessage("ใส่คำสั่งให้ AI ก่อน", true);
+      command?.focus();
+      return;
+    }
+    const requestKey = aiImageRequestKey(sku, normalizedAngleIndex, normalizedVersion);
+    if (state.aiImageRequests.has(requestKey)) return;
+    state.aiImageRequests.set(requestKey, true);
+    renderTrackerTable();
+    renderDesignDetail();
+    try {
+      showMessage("รับคำสั่งแล้ว กำลังให้ AI ออกแบบรูป");
+      const result = await api("/api/plain-design/ai-image-edit", {
+        method: "POST",
+        body: JSON.stringify({ sku, angleIndex: normalizedAngleIndex, version: normalizedVersion, prompt }),
+      });
+      state.products = state.products.map((product) => {
+        if (product.sku !== sku) return product;
+        return normalizeProduct({
+          ...product,
+          ...result.product,
+          assets: result.product?.assets || [result.asset, ...(product.assets || [])].filter(Boolean),
+        });
+      });
+      showMessage(`AI สร้างรูป PLAIN V${plainVersionLabel(result.newVersion)} แล้ว`);
+      render();
+    } catch (error) {
+      showMessage(`AI ยังสร้างรูปไม่ได้: ${error.message}`, true);
+      render();
+    } finally {
+      state.aiImageRequests.delete(requestKey);
+      renderTrackerTable();
+      renderDesignDetail();
+    }
+  }
+
   function queueProductCommercialSave(sku, updates) {
     if (!queueProductCommercialSave.timers) queueProductCommercialSave.timers = new Map();
     const timers = queueProductCommercialSave.timers;
@@ -1794,6 +1892,13 @@
         });
         input.value = "";
       });
+    });
+    detailRoot?.querySelectorAll("[data-ai-image-submit]").forEach((button) => {
+      button.addEventListener("click", () => requestPlainImageAiEdit(
+        button.dataset.aiImageSubmit,
+        button.dataset.angleIndex,
+        button.dataset.version
+      ));
     });
     document.querySelectorAll("[data-delete-asset]").forEach((button) => {
       button.addEventListener("click", () => deleteAsset(product.sku, button.dataset.deleteAsset));
@@ -2606,6 +2711,15 @@
           versionButton.dataset.plainImageVersion,
           versionButton.dataset.angleIndex,
           versionButton.dataset.version
+        );
+        return;
+      }
+      const aiImageSubmit = event.target.closest("[data-ai-image-submit]");
+      if (aiImageSubmit) {
+        requestPlainImageAiEdit(
+          aiImageSubmit.dataset.aiImageSubmit,
+          aiImageSubmit.dataset.angleIndex,
+          aiImageSubmit.dataset.version
         );
         return;
       }

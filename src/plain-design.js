@@ -223,9 +223,13 @@
 
   function hasActiveCodexAiWork(sku) {
     const normalizedSku = String(sku || "").trim().toUpperCase();
+    const bulkActiveSkus = Array.isArray(state.bulkAiRequest?.activeSkus)
+      ? state.bulkAiRequest.activeSkus.map((item) => String(item || "").trim().toUpperCase())
+      : [];
     return state.codexAiJobs
       .map(normalizeCodexAiJob)
-      .some((job) => job.sku === normalizedSku && ["pending", "working"].includes(job.status));
+      .some((job) => job.sku === normalizedSku && ["pending", "working"].includes(job.status)) ||
+      bulkActiveSkus.includes(normalizedSku);
   }
 
   function productRowClass(product, extra = "") {
@@ -1203,8 +1207,9 @@
       ${isDesignerMode ? `
         <div class="bulk-ai-design ${aiBusy ? "working" : ""}">
           <div>
-            <strong>Codex Bulk Design</strong>
+            <strong>ChatGPT Bulk Design</strong>
             <span>${escapeHtml(aiProgress)}</span>
+            <small class="bulk-ai-chatgpt-note">ChatGPT/Image only - no local mockup generator</small>
           </div>
           <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
           <div class="bulk-ai-reference-tools">
@@ -1217,7 +1222,7 @@
           </div>
           <button class="secondary-button" data-bulk-ai-design-start type="button" ${canStartBulkAiDesign() ? "" : "disabled"}>
             <span class="bulk-ai-spinner" aria-hidden="true"></span>
-            <span>${aiBusy ? "กำลังส่งคิว Bulk" : "ส่งคิว Codex Bulk"}</span>
+            <span>${aiBusy ? "ChatGPT designing Bulk" : "Design with ChatGPT Bulk"}</span>
           </button>
           ${state.bulkAiRequest?.current ? `<small>กำลังทำ: ${escapeHtml(state.bulkAiRequest.current)}</small>` : ""}
         </div>` : ""}`;
@@ -1883,45 +1888,73 @@
       });
   }
 
+  function chatGptBulkDesignPrompt(prompt) {
+    return [
+      "Use ChatGPT / OpenAI image generation only for this bulk design request.",
+      "Do not use local scripted overlays, template compositing, or mockup generators.",
+      "Create a polished commercial PLAIN product image that looks ready for a premium Shopify product page.",
+      "Preserve the source product angle and core product geometry from KTW.",
+      `User instruction: ${prompt}`,
+    ].join("\n");
+  }
+
+  function activeBulkAiSkusFrom(targets, startIndex = 0) {
+    return [...new Set(targets.slice(startIndex).map((target) => target.sku))];
+  }
+
   async function requestBulkAiDesign() {
     const prompt = String(state.bulkAiPrompt || "").trim();
     const targets = bulkAiDesignTargets();
     if (!targets.length) {
-      showMessage("เลือก SKU ที่ต้องการส่งคิว Codex Bulk ก่อน", true);
+      showMessage("เลือก SKU ที่ต้องการส่งคิว ChatGPT Bulk ก่อน", true);
       return;
     }
     if (!prompt) {
-      showMessage("ใส่คำสั่ง Codex Bulk ก่อน", true);
+      showMessage("ใส่คำสั่ง ChatGPT Bulk ก่อน", true);
       document.querySelector("[data-bulk-ai-prompt]")?.focus();
       return;
     }
     if (state.bulkAiRequest?.running) return;
-    const confirmText = `จะส่งคิว Codex ออกแบบ ${fmtQty.format(targets.length)} รูป จาก ${fmtQty.format(state.bulkStatusSelectedSkus.size)} SKU ที่เลือก ต้องการเริ่มไหม?`;
+    const confirmText = `จะส่งคิว ChatGPT ออกแบบ ${fmtQty.format(targets.length)} รูป จาก ${fmtQty.format(state.bulkStatusSelectedSkus.size)} SKU ที่เลือก ต้องการเริ่มไหม?`;
     if (typeof window.confirm === "function" && !window.confirm(confirmText)) return;
 
-    state.bulkAiRequest = { running: true, total: targets.length, done: 0, failed: 0, current: "", errors: [] };
+    const chatGptPrompt = chatGptBulkDesignPrompt(prompt);
+    state.bulkAiRequest = {
+      running: true,
+      total: targets.length,
+      done: 0,
+      failed: 0,
+      current: "",
+      errors: [],
+      activeSkus: activeBulkAiSkusFrom(targets),
+    };
+    renderTrackerTable();
     renderBulkStatusBar();
     try {
-      for (const target of targets) {
+      for (const [index, target] of targets.entries()) {
+        state.bulkAiRequest.activeSkus = activeBulkAiSkusFrom(targets, index);
         state.bulkAiRequest.current = `${target.sku} มุม ${fmtQty.format(target.angleIndex)}`;
         renderBulkStatusBar();
         try {
-          const result = await api("/api/plain-design/codex-ai-jobs", {
+          const result = await api("/api/plain-design/ai-image-edit", {
             method: "POST",
             body: JSON.stringify({
               sku: target.sku,
               angleIndex: target.angleIndex,
               version: target.version,
-              prompt,
+              prompt: chatGptPrompt,
               referenceImages: state.bulkAiReferenceImages,
+              chatGptOnly: true,
+              generator: "chatgpt",
             }),
           });
-          mergeCodexAiJobQueueResult(result);
+          mergeAiImageRevisionResult(result);
           state.bulkAiRequest.done += 1;
         } catch (error) {
           state.bulkAiRequest.failed += 1;
           state.bulkAiRequest.errors.push(`${target.sku} มุม ${fmtQty.format(target.angleIndex)}: ${error.message}`);
         }
+        state.bulkAiRequest.activeSkus = activeBulkAiSkusFrom(targets, index + 1);
         renderTrackerTable();
         renderDesignDetail();
       }

@@ -120,26 +120,37 @@ test("Designer Expert can send one AI design command for selected products in bu
   const css = readRepoFile("src/plain-design.css");
   const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
   const targetsBlock = functionBlock(source, "bulkAiDesignTargets", "requestBulkAiDesign");
-  const requestBlock = functionBlock(source, "requestBulkAiDesign", "queueProductCommercialSave");
+  const requestBlock = functionBlock(source, "requestBulkAiDesign", "requestPlainImageAiEdit");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
   assert.match(source, /bulkAiPrompt:\s*""/);
   assert.match(source, /bulkAiRequest:\s*null/);
   assert.match(bulkBarBlock, /normalizeProductTableMode\(state\.productTableMode\)\s*===\s*"designer"/);
+  assert.match(bulkBarBlock, /ChatGPT Bulk Design/);
+  assert.match(bulkBarBlock, /bulk-ai-chatgpt-note/);
   assert.match(bulkBarBlock, /data-bulk-ai-prompt/);
   assert.match(bulkBarBlock, /data-bulk-ai-design-start/);
   assert.match(bulkBarBlock, /bulk-ai-design/);
   assert.match(targetsBlock, /state\.bulkStatusSelectedSkus/);
   assert.match(targetsBlock, /assetTarget\(product,\s*"product_images"\)/);
   assert.match(targetsBlock, /plainImageVersionSelection\(product,\s*index\)/);
-  assert.match(requestBlock, /for \(const target of targets\)/);
-  assert.match(requestBlock, /\/api\/plain-design\/codex-ai-jobs/);
+  assert.match(source, /function chatGptBulkDesignPrompt/);
+  assert.match(source, /Use ChatGPT \/ OpenAI image generation only/);
+  assert.match(requestBlock, /for \(const \[index,\s*target\] of targets\.entries\(\)\)/);
+  assert.match(requestBlock, /activeBulkAiSkusFrom\(targets,\s*index\)/);
+  assert.match(requestBlock, /\/api\/plain-design\/ai-image-edit/);
+  assert.doesNotMatch(requestBlock, /\/api\/plain-design\/codex-ai-jobs/);
+  assert.match(requestBlock, /prompt:\s*chatGptPrompt/);
+  assert.match(requestBlock, /chatGptOnly:\s*true/);
+  assert.match(requestBlock, /generator:\s*"chatgpt"/);
   assert.match(requestBlock, /bulkAiRequest/);
-  assert.match(requestBlock, /mergeCodexAiJobQueueResult/);
+  assert.match(requestBlock, /mergeAiImageRevisionResult/);
+  assert.doesNotMatch(requestBlock, /mergeCodexAiJobQueueResult/);
   assert.match(eventsBlock, /data-bulk-ai-prompt/);
   assert.match(eventsBlock, /data-bulk-ai-design-start/);
   assert.match(eventsBlock, /requestBulkAiDesign/);
   assert.match(css, /\.bulk-ai-design/);
+  assert.match(css, /\.bulk-ai-chatgpt-note/);
   assert.match(css, /\.bulk-ai-spinner/);
   assert.match(css, /@keyframes bulk-ai-spin/);
 });
@@ -342,7 +353,7 @@ test("selected product row shows a continuous animated arrow indicator", () => {
   assert.match(css, /@keyframes selected-row-arrow/);
 });
 
-test("product rows with active Codex AI jobs show a luxury looping work animation", () => {
+test("product rows with active AI jobs show a luxury looping work animation", () => {
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");
   const activeJobBlock = functionBlock(source, "hasActiveCodexAiWork", "productRowClass");
@@ -351,6 +362,8 @@ test("product rows with active Codex AI jobs show a luxury looping work animatio
   const designerRowBlock = functionBlock(source, "renderDesignerProductRow", "renderCombinedProductRow");
   const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
 
+  assert.match(activeJobBlock, /state\.bulkAiRequest\?\.activeSkus/);
+  assert.match(activeJobBlock, /bulkActiveSkus\.includes\(normalizedSku\)/);
   assert.match(activeJobBlock, /\["pending",\s*"working"\]\.includes\(job\.status\)/);
   assert.doesNotMatch(activeJobBlock, /\["pending",\s*"working",\s*"failed"\]/);
   assert.match(rowClassBlock, /hasActiveCodexAiWork\(product\.sku\) \? "ai-working-row" : ""/);

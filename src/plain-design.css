@@ -1538,6 +1538,12 @@ h2 {
   font-size: 11px;
 }
 
+.bulk-ai-chatgpt-note {
+  margin-top: 2px;
+  color: #9f7658 !important;
+  font-weight: 700;
+}
+
 .bulk-ai-design textarea {
   min-height: 38px;
   max-height: 82px;

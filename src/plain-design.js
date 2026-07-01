@@ -1207,9 +1207,9 @@
       ${isDesignerMode ? `
         <div class="bulk-ai-design ${aiBusy ? "working" : ""}">
           <div>
-            <strong>ChatGPT Bulk Design</strong>
+            <strong>Codex Bulk Design</strong>
             <span>${escapeHtml(aiProgress)}</span>
-            <small class="bulk-ai-chatgpt-note">ChatGPT/Image only - no local mockup generator</small>
+            <small class="bulk-ai-chatgpt-note">Website -> Codex -> ChatGPT/Image tool -> Upload</small>
           </div>
           <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
           <div class="bulk-ai-reference-tools">
@@ -1222,7 +1222,7 @@
           </div>
           <button class="secondary-button" data-bulk-ai-design-start type="button" ${canStartBulkAiDesign() ? "" : "disabled"}>
             <span class="bulk-ai-spinner" aria-hidden="true"></span>
-            <span>${aiBusy ? "ChatGPT designing Bulk" : "Design with ChatGPT Bulk"}</span>
+            <span>${aiBusy ? "Queueing Codex Bulk" : "Queue Codex Bulk"}</span>
           </button>
           ${state.bulkAiRequest?.current ? `<small>กำลังทำ: ${escapeHtml(state.bulkAiRequest.current)}</small>` : ""}
         </div>` : ""}`;
@@ -1890,7 +1890,8 @@
 
   function chatGptBulkDesignPrompt(prompt) {
     return [
-      "Use ChatGPT / OpenAI image generation only for this bulk design request.",
+      "Route this bulk design through Website -> Codex on this computer -> ChatGPT/Image tool -> Upload back.",
+      "Codex must use the built-in ChatGPT/Image tool only for the image generation step.",
       "Do not use local scripted overlays, template compositing, or mockup generators.",
       "Create a polished commercial PLAIN product image that looks ready for a premium Shopify product page.",
       "Preserve the source product angle and core product geometry from KTW.",
@@ -1936,7 +1937,7 @@
         state.bulkAiRequest.current = `${target.sku} มุม ${fmtQty.format(target.angleIndex)}`;
         renderBulkStatusBar();
         try {
-          const result = await api("/api/plain-design/ai-image-edit", {
+          const result = await api("/api/plain-design/codex-ai-jobs", {
             method: "POST",
             body: JSON.stringify({
               sku: target.sku,
@@ -1945,10 +1946,10 @@
               prompt: chatGptPrompt,
               referenceImages: state.bulkAiReferenceImages,
               chatGptOnly: true,
-              generator: "chatgpt",
+              generator: "codex-chatgpt-image-tool",
             }),
           });
-          mergeAiImageRevisionResult(result);
+          mergeCodexAiJobQueueResult(result);
           state.bulkAiRequest.done += 1;
         } catch (error) {
           state.bulkAiRequest.failed += 1;

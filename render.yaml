@@ -15,26 +15,28 @@ services:
         value: "1"
       - key: SYNC_REQUIRE_KEY
         value: "0"
+      - key: HOURLY_CLOUD_AUTO_SYNC
+        value: "0"
       - key: SYNC_PUBLISH_SUPABASE
-        value: "1"
+        value: "0"
       - key: AUTO_SYNC_BUSY_RETRY_SECONDS
         value: "120"
       - key: AUTO_SYNC_SECONDARY_JOBS
-        value: "1"
+        value: "0"
       - key: PACKHAI_AUTO_SYNC
-        value: "1"
+        value: "0"
       - key: PACKHAI_AUTO_SYNC_INTERVAL_MINUTES
         value: "60"
       - key: PACKHAI_AUTO_SYNC_START_DELAY_SECONDS
         value: "60"
       - key: SELLER_PRICES_AUTO_SYNC
-        value: "1"
+        value: "0"
       - key: SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES
         value: "60"
       - key: SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS
         value: "300"
       - key: SELLER_PAYMENTS_AUTO_SYNC
-        value: "1"
+        value: "0"
       - key: SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES
         value: "60"
       - key: SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS

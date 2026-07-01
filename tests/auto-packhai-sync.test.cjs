@@ -86,28 +86,30 @@ test("public auto sync state hides timer handles and exposes next run metadata",
   });
 });
 
-test("Render enables hourly inventory, platform payment, and seller price auto sync", () => {
+test("Render keeps the web service in web-only mode by default", () => {
   const renderSource = fs.readFileSync(path.join(projectRoot, "render.yaml"), "utf8");
 
-  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*HOURLY_CLOUD_AUTO_SYNC\s*\n\s*value:\s*"0"/);
+  assert.match(renderSource, /key:\s*SYNC_PUBLISH_SUPABASE\s*\n\s*value:\s*"0"/);
+  assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*PACKHAI_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"60"/);
-  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"180"/);
-  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES\s*\n\s*value:\s*"60"/);
   assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"300"/);
   assert.match(renderSource, /key:\s*SELLER_COMPARE_DIR\s*\n\s*value:\s*\/app\/storage\/data\/seller_compare/);
   assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
   assert.match(renderSource, /key:\s*AUTO_SYNC_BUSY_RETRY_SECONDS\s*\n\s*value:\s*"120"/);
-  assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"1"/);
+  assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"0"/);
 });
 
-test("Render runtime overrides stale dashboard env to hourly sync for all data jobs", () => {
+test("Render runtime disables heavy automatic sync jobs unless explicitly re-enabled", () => {
   const env = withHourlyCloudAutoSyncEnv({
     RENDER_GIT_COMMIT: "abc123",
-    AUTO_SYNC_SECONDARY_JOBS: "0",
+    AUTO_SYNC_SECONDARY_JOBS: "1",
     PACKHAI_AUTO_SYNC: "1",
     PACKHAI_AUTO_SYNC_INTERVAL_MINUTES: "15",
     PACKHAI_AUTO_SYNC_START_DELAY_SECONDS: "300",
@@ -119,13 +121,16 @@ test("Render runtime overrides stale dashboard env to hourly sync for all data j
     SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS: "60",
   });
 
-  assert.equal(env.AUTO_SYNC_SECONDARY_JOBS, "1");
+  assert.equal(env.AUTO_SYNC_SECONDARY_JOBS, "0");
+  assert.equal(env.PACKHAI_AUTO_SYNC, "0");
   assert.equal(env.PACKHAI_AUTO_SYNC_INTERVAL_MINUTES, "60");
   assert.equal(env.PACKHAI_AUTO_SYNC_START_DELAY_SECONDS, "60");
+  assert.equal(env.SELLER_PAYMENTS_AUTO_SYNC, "0");
   assert.equal(env.SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES, "60");
   assert.equal(env.SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS, "180");
   assert.equal(env.SELLER_ORDER_PAYMENT_MAX_NEW, "0");
   assert.equal(env.SELLER_PAYMENTS_TIMEOUT_MS, "21600000");
+  assert.equal(env.SELLER_PRICES_AUTO_SYNC, "0");
   assert.equal(env.SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES, "60");
   assert.equal(env.SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS, "300");
 });

@@ -1509,8 +1509,13 @@
     bindPoEvents();
   }
 
+  function activePlainHash() {
+    const hash = window.location.hash || "#products";
+    return hash === "#purchase-order" ? "#purchase-order" : "#products";
+  }
+
   function syncActiveNav() {
-    const activeHash = window.location.hash || "#products";
+    const activeHash = activePlainHash();
     document.querySelectorAll(".plain-nav a").forEach((link) => {
       link.classList.toggle("active", link.getAttribute("href") === activeHash);
     });
@@ -1518,7 +1523,7 @@
   }
 
   function syncActiveView() {
-    const activeHash = window.location.hash || "#products";
+    const activeHash = activePlainHash();
     const isPurchaseOrderView = activeHash === "#purchase-order";
     $("purchase-order").hidden = !isPurchaseOrderView;
     $("products").hidden = isPurchaseOrderView;
@@ -1528,7 +1533,7 @@
   function applyReferenceCopy() {
     const title = document.querySelector(".topbar h1");
     if (title) title.textContent = "งานออกแบบรีดีไซน์สินค้า PLAIN (KTW Source)";
-    const navLabels = ["รายการสินค้า", "งานออกแบบ", "ใบสั่งซื้อ", "ไฟล์โรงงาน", "สรุปสถานะ"];
+    const navLabels = ["รายการสินค้า", "ใบสั่งซื้อ"];
     document.querySelectorAll(".plain-nav a").forEach((link, index) => {
       if (navLabels[index]) link.textContent = navLabels[index];
     });

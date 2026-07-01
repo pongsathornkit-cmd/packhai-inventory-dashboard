@@ -23,6 +23,7 @@ const {
   createAutoSyncSettings,
   createSellerPriceAutoSyncSettings,
   createSellerPaymentsAutoSyncSettings,
+  withHourlyCloudAutoSyncEnv,
   publicAutoSyncState,
 } = require("./auto-sync-core.cjs");
 const {
@@ -81,13 +82,15 @@ const syncState = {
   message: "พร้อม Sync",
   steps: [],
 };
-function envEnabled(name, fallback = false) {
-  const value = process.env[name];
+const autoSyncEnv = withHourlyCloudAutoSyncEnv(process.env);
+
+function envEnabled(name, fallback = false, env = process.env) {
+  const value = env[name];
   if (value == null || value === "") return fallback;
   return /^(1|true|yes|on)$/i.test(String(value));
 }
-const autoSyncSettings = createAutoSyncSettings(process.env);
-const autoSyncBusyRetryMs = Math.max(30, Number(process.env.AUTO_SYNC_BUSY_RETRY_SECONDS || 120)) * 1000;
+const autoSyncSettings = createAutoSyncSettings(autoSyncEnv);
+const autoSyncBusyRetryMs = Math.max(30, Number(autoSyncEnv.AUTO_SYNC_BUSY_RETRY_SECONDS || 120)) * 1000;
 const autoSyncState = {
   timer: null,
   nextRunAt: null,
@@ -97,7 +100,7 @@ const autoSyncState = {
   lastSkipReason: "",
   lastOk: null,
 };
-const sellerPriceAutoSyncSettings = createSellerPriceAutoSyncSettings(process.env);
+const sellerPriceAutoSyncSettings = createSellerPriceAutoSyncSettings(autoSyncEnv);
 const sellerPriceAutoSyncState = {
   timer: null,
   nextRunAt: null,
@@ -107,7 +110,7 @@ const sellerPriceAutoSyncState = {
   lastSkipReason: "",
   lastOk: null,
 };
-const sellerPaymentsAutoSyncSettings = createSellerPaymentsAutoSyncSettings(process.env);
+const sellerPaymentsAutoSyncSettings = createSellerPaymentsAutoSyncSettings(autoSyncEnv);
 const sellerPaymentsAutoSyncState = {
   timer: null,
   nextRunAt: null,
@@ -118,7 +121,7 @@ const sellerPaymentsAutoSyncState = {
   lastOk: null,
 };
 const secondaryAutoSyncJobsScheduled =
-  envEnabled("AUTO_SYNC_SECONDARY_JOBS", false) || !sellerPriceAutoSyncSettings.enabled;
+  envEnabled("AUTO_SYNC_SECONDARY_JOBS", false, autoSyncEnv) || !sellerPriceAutoSyncSettings.enabled;
 const secondaryAutoSyncPauseReason = "Paused while Seller price auto sync is prioritized.";
 
 const contentTypes = {
@@ -686,12 +689,12 @@ function commandTimeoutMs(name) {
   const sellerPayments = /seller order payments/i.test(name);
   const specific =
     sellerPayments
-      ? process.env.SELLER_PAYMENTS_TIMEOUT_MS
+      ? autoSyncEnv.SELLER_PAYMENTS_TIMEOUT_MS
       : /shopee|lazada/i.test(name)
-      ? process.env.SELLER_SYNC_TIMEOUT_MS
+      ? autoSyncEnv.SELLER_SYNC_TIMEOUT_MS
       : "";
   const defaultMs = sellerPayments ? 6 * 60 * 60 * 1000 : 10 * 60 * 1000;
-  const parsed = Number(specific || process.env.SYNC_COMMAND_TIMEOUT_MS || defaultMs);
+  const parsed = Number(specific || autoSyncEnv.SYNC_COMMAND_TIMEOUT_MS || defaultMs);
   const resolved = Number.isFinite(parsed) && parsed > 0 ? parsed : defaultMs;
   return sellerPayments ? Math.max(resolved, defaultMs) : resolved;
 }
@@ -745,7 +748,7 @@ function runCommand(name, command, args, cwd) {
     trackLiveStep(step);
     const child = spawn(command, args, {
       cwd,
-      env: process.env,
+      env: autoSyncEnv,
       detached: process.platform !== "win32",
       windowsHide: true,
     });

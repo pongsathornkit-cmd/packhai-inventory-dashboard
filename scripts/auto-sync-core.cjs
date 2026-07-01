@@ -2,9 +2,45 @@ const DEFAULT_INTERVAL_MINUTES = 15;
 const DEFAULT_SELLER_PRICES_START_DELAY_SECONDS = 60;
 const DEFAULT_SELLER_PAYMENTS_START_DELAY_SECONDS = 240;
 const MIN_INTERVAL_MINUTES = 5;
+const HOURLY_CLOUD_AUTO_SYNC_OVERRIDES = {
+  AUTO_SYNC_BUSY_RETRY_SECONDS: "120",
+  AUTO_SYNC_SECONDARY_JOBS: "1",
+  PACKHAI_AUTO_SYNC: "1",
+  PACKHAI_AUTO_SYNC_INTERVAL_MINUTES: "60",
+  PACKHAI_AUTO_SYNC_START_DELAY_SECONDS: "60",
+  SELLER_PAYMENTS_AUTO_SYNC: "1",
+  SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES: "60",
+  SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS: "180",
+  SELLER_ORDER_PAYMENT_MAX_NEW: "0",
+  SELLER_ORDER_PAYMENT_PROGRESS_EVERY: "25",
+  SELLER_PAYMENTS_TIMEOUT_MS: "21600000",
+  SELLER_PRICES_AUTO_SYNC: "1",
+  SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES: "60",
+  SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS: "300",
+};
 
 function enabledValue(value) {
   return /^(1|true|yes|on)$/i.test(String(value || "").trim());
+}
+
+function explicitBoolean(value) {
+  if (value == null || value === "") return null;
+  const text = String(value).trim();
+  if (/^(1|true|yes|on)$/i.test(text)) return true;
+  if (/^(0|false|no|off)$/i.test(text)) return false;
+  return null;
+}
+
+function shouldUseHourlyCloudAutoSync(env = process.env) {
+  const explicit = explicitBoolean(env.HOURLY_CLOUD_AUTO_SYNC);
+  if (explicit !== null) return explicit;
+  return Boolean(env.RENDER_GIT_COMMIT || env.RENDER_GIT_COMMIT_SHA || env.RENDER_EXTERNAL_URL || env.RENDER_SERVICE_ID);
+}
+
+function withHourlyCloudAutoSyncEnv(env = process.env) {
+  const source = { ...(env || {}) };
+  if (!shouldUseHourlyCloudAutoSync(source)) return source;
+  return { ...source, ...HOURLY_CLOUD_AUTO_SYNC_OVERRIDES };
 }
 
 function positiveNumber(value, fallback) {
@@ -74,5 +110,6 @@ module.exports = {
   createAutoSyncSettings,
   createSellerPriceAutoSyncSettings,
   createSellerPaymentsAutoSyncSettings,
+  withHourlyCloudAutoSyncEnv,
   publicAutoSyncState,
 };

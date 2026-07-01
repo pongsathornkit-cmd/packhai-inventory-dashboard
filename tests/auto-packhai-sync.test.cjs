@@ -8,6 +8,7 @@ const {
   createSellerPriceAutoSyncSettings,
   createSellerPaymentsAutoSyncSettings,
   publicAutoSyncState,
+  withHourlyCloudAutoSyncEnv,
 } = require("../scripts/auto-sync-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -103,12 +104,39 @@ test("Render enables hourly inventory, platform payment, and seller price auto s
   assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"1"/);
 });
 
+test("Render runtime overrides stale dashboard env to hourly sync for all data jobs", () => {
+  const env = withHourlyCloudAutoSyncEnv({
+    RENDER_GIT_COMMIT: "abc123",
+    AUTO_SYNC_SECONDARY_JOBS: "0",
+    PACKHAI_AUTO_SYNC: "1",
+    PACKHAI_AUTO_SYNC_INTERVAL_MINUTES: "15",
+    PACKHAI_AUTO_SYNC_START_DELAY_SECONDS: "300",
+    SELLER_PAYMENTS_AUTO_SYNC: "1",
+    SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES: "15",
+    SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS: "60",
+    SELLER_PRICES_AUTO_SYNC: "1",
+    SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES: "15",
+    SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS: "60",
+  });
+
+  assert.equal(env.AUTO_SYNC_SECONDARY_JOBS, "1");
+  assert.equal(env.PACKHAI_AUTO_SYNC_INTERVAL_MINUTES, "60");
+  assert.equal(env.PACKHAI_AUTO_SYNC_START_DELAY_SECONDS, "60");
+  assert.equal(env.SELLER_PAYMENTS_AUTO_SYNC_INTERVAL_MINUTES, "60");
+  assert.equal(env.SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS, "180");
+  assert.equal(env.SELLER_ORDER_PAYMENT_MAX_NEW, "0");
+  assert.equal(env.SELLER_PAYMENTS_TIMEOUT_MS, "21600000");
+  assert.equal(env.SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES, "60");
+  assert.equal(env.SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS, "300");
+});
+
 test("sync server prioritizes seller price auto sync and exposes paused secondary jobs", () => {
   const serverSource = fs.readFileSync(path.join(projectRoot, "scripts", "serve-dashboard.cjs"), "utf8");
 
   assert.match(serverSource, /createAutoSyncSettings/);
   assert.match(serverSource, /createSellerPriceAutoSyncSettings/);
   assert.match(serverSource, /createSellerPaymentsAutoSyncSettings/);
+  assert.match(serverSource, /withHourlyCloudAutoSyncEnv\(process\.env\)/);
   assert.match(serverSource, /publicAutoSyncState/);
   assert.match(serverSource, /function\s+scheduleNextAutoSync/);
   assert.match(serverSource, /function\s+runAutoSync/);

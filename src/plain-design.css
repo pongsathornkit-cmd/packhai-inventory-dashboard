@@ -847,7 +847,8 @@ h2 {
   background: #fffdf9;
 }
 
-.po-qty-input {
+.po-qty-input,
+.po-usd-input {
   width: 86px;
   min-height: 34px;
   border: 1px solid #d8d0c8;
@@ -857,6 +858,12 @@ h2 {
   padding: 0 9px;
   text-align: right;
   font-weight: 780;
+}
+
+.po-usd-input {
+  width: 104px;
+  border-color: #d7c2ad;
+  background: #fffaf4;
 }
 
 .po-summary-good strong,

@@ -298,6 +298,16 @@
     refreshPoRealtime();
   }
 
+  function poUsdCostUpdates(sku, value) {
+    const product = state.products.find((item) => item.sku === sku) || {};
+    const purchaseUnitCostUsd = numberValue(value);
+    const purchaseUnitCost =
+      state.exchangeRate.rate > 0 && purchaseUnitCostUsd > 0
+        ? moneyValue(purchaseUnitCostUsd * state.exchangeRate.rate)
+        : numberValue(product.purchaseUnitCost || product.ktwPrice);
+    return { purchaseUnitCostUsd, purchaseUnitCost };
+  }
+
   async function loadExchangeRate(force = false) {
     state.exchangeRate.loading = true;
     try {
@@ -1070,6 +1080,27 @@
     state.products = state.products.map((product) => product.sku === sku ? normalizeProduct({ ...product, ...updates }) : product);
   }
 
+  function queueProductCommercialSave(sku, updates) {
+    if (!queueProductCommercialSave.timers) queueProductCommercialSave.timers = new Map();
+    const timers = queueProductCommercialSave.timers;
+    window.clearTimeout(timers.get(sku));
+    timers.set(sku, window.setTimeout(async () => {
+      try {
+        const updated = await api("/api/plain-design/product", {
+          method: "POST",
+          body: JSON.stringify({ sku, ...updates }),
+        });
+        state.products = state.products.map((product) => product.sku === sku ? normalizeProduct({ ...product, ...updated }) : product);
+        showMessage("บันทึกแล้ว");
+        refreshPoRealtime();
+      } catch (error) {
+        showMessage(error.message, true);
+      } finally {
+        timers.delete(sku);
+      }
+    }, 550));
+  }
+
   function ensureImageLightbox() {
     let modal = $("imageLightbox");
     if (modal) return modal;
@@ -1389,7 +1420,9 @@
         <td class="num">
           <input class="po-qty-input" data-po-qty="${escapeHtml(product.sku)}" type="number" min="0" step="1" inputmode="numeric" value="${calc.qty > 0 ? escapeHtml(calc.qty) : ""}" placeholder="0" />
         </td>
-        <td class="num" data-po-cell="purchaseUnitCostUsd">${fmtUsd.format(calc.purchaseUnitCostUsd)}</td>
+        <td class="num">
+          <input class="po-usd-input" data-po-usd="${escapeHtml(product.sku)}" type="number" min="0" step="0.0001" inputmode="decimal" value="${calc.purchaseUnitCostUsd > 0 ? escapeHtml(calc.purchaseUnitCostUsd) : ""}" placeholder="0.0000" />
+        </td>
         <td class="num" data-po-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</td>
         <td class="num" data-po-cell="shippingUnit">${fmtMoney.format(calc.shippingUnit)}</td>
         <td class="num" data-po-cell="totalCost">${fmtMoney.format(calc.totalCost)}</td>
@@ -1419,8 +1452,9 @@
       row.classList.toggle("line-muted", calc.qty <= 0);
       const qtyInput = row.querySelector("[data-po-qty]");
       if (qtyInput && document.activeElement !== qtyInput) qtyInput.value = calc.qty > 0 ? String(calc.qty) : "";
+      const usdInput = row.querySelector("[data-po-usd]");
+      if (usdInput && document.activeElement !== usdInput) usdInput.value = calc.purchaseUnitCostUsd > 0 ? String(calc.purchaseUnitCostUsd) : "";
       const cells = {
-        purchaseUnitCostUsd: fmtUsd.format(calc.purchaseUnitCostUsd),
         purchaseUnitCost: fmtMoney.format(calc.purchaseUnitCost),
         shippingUnit: fmtMoney.format(calc.shippingUnit),
         totalCost: fmtMoney.format(calc.totalCost),
@@ -1544,7 +1578,24 @@
     });
     $("poTableBody")?.addEventListener("input", (event) => {
       const input = event.target.closest("[data-po-qty]");
-      if (input) updateActivePurchaseOrderLine(input.dataset.poQty, input.value);
+      if (input) {
+        updateActivePurchaseOrderLine(input.dataset.poQty, input.value);
+        return;
+      }
+      const usdInput = event.target.closest("[data-po-usd]");
+      if (usdInput) {
+        const updates = poUsdCostUpdates(usdInput.dataset.poUsd, usdInput.value);
+        updateLocalProduct(usdInput.dataset.poUsd, updates);
+        queueProductCommercialSave(usdInput.dataset.poUsd, updates);
+        renderStats();
+        renderTrackerTable();
+        renderDesignDetail();
+        refreshPoRealtime();
+      }
+    });
+    $("poTableBody")?.addEventListener("change", (event) => {
+      const input = event.target.closest("[data-po-usd]");
+      if (input) updateProduct(input.dataset.poUsd, poUsdCostUpdates(input.dataset.poUsd, input.value));
     });
   }
 

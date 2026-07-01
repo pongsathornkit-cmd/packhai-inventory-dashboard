@@ -306,5 +306,6 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(css, /\.product-table\.designer-mode/);
   assert.match(css, /\.product-image-pairs/);
   assert.match(css, /\.table-mode-emoji\s*\{[\s\S]*?background:\s*#efe6dc;[\s\S]*?color:\s*#9f7658;/);
+  assert.match(css, /\.product-table-mode-toggle \.table-mode-emoji\s*\{[\s\S]*?color:\s*#9f7658;/);
   assert.match(css, /\.product-table-mode-toggle button\.active \.table-mode-emoji\s*\{[\s\S]*?color:\s*#fff;/);
 });

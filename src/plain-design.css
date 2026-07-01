@@ -1401,6 +1401,11 @@ h2 {
   line-height: 1;
 }
 
+.product-table-mode-toggle .table-mode-emoji {
+  color: #9f7658;
+  font-size: 11px;
+}
+
 .product-table-mode-toggle button.active,
 .product-image-mode-toggle button.active {
   background: #9f7658;

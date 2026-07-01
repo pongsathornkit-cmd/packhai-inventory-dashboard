@@ -5,6 +5,9 @@ const crypto = require("crypto");
 const STATE_VERSION = 1;
 const ASSET_GROUPS = new Set(["product_images", "packaging_images", "factory_files"]);
 const PLAIN_IMAGE_VERSION_COUNT = 3;
+const MAX_AI_REFERENCE_IMAGES = 3;
+const MAX_AI_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
+const AI_REFERENCE_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
 const COMMERCIAL_NUMBER_FIELDS = [
   "orderQuantity",
   "purchaseUnitCostUsd",
@@ -464,6 +467,7 @@ function mimeTypeForFilePath(filePath) {
   if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
   if (ext === ".webp") return "image/webp";
   if (ext === ".png") return "image/png";
+  if (ext === ".gif") return "image/gif";
   return "application/octet-stream";
 }
 
@@ -477,6 +481,30 @@ function decodeDataUrl(dataUrl) {
     mimeType,
     buffer: isBase64 ? Buffer.from(data, "base64") : Buffer.from(decodeURIComponent(data), "utf8"),
   };
+}
+
+function sanitizeAiReferenceImages(value) {
+  const images = Array.isArray(value) ? value : [];
+  if (images.length > MAX_AI_REFERENCE_IMAGES) {
+    throw new Error(`AI reference images are limited to ${MAX_AI_REFERENCE_IMAGES} files.`);
+  }
+  return images.map((image, index) => {
+    const dataUrl = String(image?.dataUrl || image?.imageUrl || image?.image_url || "").trim();
+    const decoded = decodeDataUrl(dataUrl);
+    const mimeType = String(decoded.mimeType || image?.type || "").split(";")[0].toLowerCase();
+    if (!AI_REFERENCE_IMAGE_MIME_TYPES.has(mimeType)) {
+      throw new Error(`AI reference image ${index + 1} must be PNG, JPG, WEBP, or GIF.`);
+    }
+    if (decoded.buffer.length > MAX_AI_REFERENCE_IMAGE_BYTES) {
+      throw new Error(`AI reference image ${index + 1} is larger than 5 MB.`);
+    }
+    return {
+      name: safeSegment(image?.name || `reference-${index + 1}.png`, `reference-${index + 1}.png`),
+      type: mimeType,
+      size: decoded.buffer.length,
+      dataUrl,
+    };
+  });
 }
 
 function sanitizeAssetMetadata(metadata) {
@@ -571,6 +599,11 @@ async function createOpenAIImageEdit(request) {
   const apiKey = String(request.apiKey || process.env.OPENAI_API_KEY || "").trim();
   if (!apiKey) throw new Error("OPENAI_API_KEY is required for AI image editing.");
   const model = request.model || process.env.OPENAI_IMAGE_MODEL || "gpt-image-2";
+  const referenceImages = sanitizeAiReferenceImages(request.referenceImages);
+  const images = [
+    { image_url: request.sourceImageDataUrl },
+    ...referenceImages.map((image) => ({ image_url: image.dataUrl })),
+  ];
   const response = await (request.fetchImpl || fetch)("https://api.openai.com/v1/images/edits", {
     method: "POST",
     headers: {
@@ -580,7 +613,7 @@ async function createOpenAIImageEdit(request) {
     body: JSON.stringify({
       model,
       prompt: request.prompt,
-      images: [{ image_url: request.sourceImageDataUrl }],
+      images,
       n: 1,
       output_format: "png",
       quality: "auto",
@@ -667,6 +700,7 @@ async function createPlainDesignAiImageRevision(options, payload, deps = {}) {
   if (!sku) throw new Error("SKU is required.");
   if (!angleIndex) throw new Error("Angle index is required.");
   if (!prompt) throw new Error("AI edit prompt is required.");
+  const referenceImages = sanitizeAiReferenceImages(payload.referenceImages);
 
   const state = loadPlainDesignState(options);
   const product = state.products.find((item) => item.sku === sku);
@@ -679,8 +713,9 @@ async function createPlainDesignAiImageRevision(options, payload, deps = {}) {
     `Angle: ${angleIndex}`,
     `Create a refined PLAIN redesign image based on the source image.`,
     `Keep the same product angle and make a commercially usable product design image.`,
+    referenceImages.length ? `Use the ${referenceImages.length} attached reference image(s) as visual direction.` : "",
     `User instruction: ${prompt}`,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
   const imageResult = await (deps.generateImageEdit || createOpenAIImageEdit)({
     sku,
     angleIndex,
@@ -688,6 +723,7 @@ async function createPlainDesignAiImageRevision(options, payload, deps = {}) {
     newVersion,
     prompt: editPrompt,
     sourceImageDataUrl: sourceImage.dataUrl,
+    referenceImages,
     model: deps.model || process.env.OPENAI_IMAGE_MODEL || "gpt-image-2",
     apiKey: deps.apiKey,
     fetchImpl: deps.fetchImpl,
@@ -710,6 +746,7 @@ async function createPlainDesignAiImageRevision(options, payload, deps = {}) {
       sourceVersion,
       sourceType: sourceImage.source,
       parentAssetId: sourceImage.asset?.id || "",
+      referenceImageCount: referenceImages.length,
       revisedPrompt: imageResult.revisedPrompt || "",
     },
   });

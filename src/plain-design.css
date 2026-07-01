@@ -1512,7 +1512,7 @@ h2 {
 .bulk-ai-design {
   flex: 1 1 100%;
   display: grid;
-  grid-template-columns: minmax(142px, 0.6fr) minmax(260px, 1.8fr) auto;
+  grid-template-columns: minmax(142px, 0.55fr) minmax(260px, 1.55fr) minmax(190px, 0.75fr) auto;
   align-items: center;
   gap: 8px;
   padding: 8px;
@@ -1552,7 +1552,7 @@ h2 {
   padding: 7px 8px;
 }
 
-.bulk-ai-design button {
+.bulk-ai-design > button {
   min-width: 118px;
   min-height: 36px;
   display: inline-flex;
@@ -1563,6 +1563,12 @@ h2 {
 
 .bulk-ai-design small {
   grid-column: 2 / -1;
+}
+
+.bulk-ai-reference-tools {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
 }
 
 .bulk-ai-spinner {
@@ -2126,7 +2132,60 @@ h2 {
   padding: 6px;
 }
 
-.ai-image-command button {
+.ai-reference-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+}
+
+.ai-reference-picker {
+  position: relative;
+  min-height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed #d6bca6;
+  border-radius: 6px;
+  background: #fffaf4;
+  color: #8a6b52;
+  padding: 0 8px;
+  font-size: 10px;
+  font-weight: 840;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ai-reference-picker input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.ai-reference-summary {
+  display: block;
+  min-width: 0;
+  color: #76685d;
+  font-size: 10px;
+  font-weight: 760;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ai-reference-summary.muted {
+  color: #a1968b;
+}
+
+.ai-reference-clear {
+  min-height: 24px;
+  padding: 0 7px;
+  font-size: 10px;
+}
+
+.ai-image-command > button {
   min-height: 26px;
   display: inline-flex;
   align-items: center;
@@ -2141,7 +2200,7 @@ h2 {
   font-weight: 840;
 }
 
-.ai-image-command button:disabled {
+.ai-image-command > button:disabled {
   cursor: wait;
   opacity: 0.8;
 }
@@ -2959,6 +3018,18 @@ body.image-lightbox-open {
 
   .exchange-card {
     grid-column: auto;
+  }
+
+  .bulk-ai-design {
+    grid-template-columns: 1fr;
+  }
+
+  .bulk-ai-design small {
+    grid-column: auto;
+  }
+
+  .bulk-ai-design > button {
+    width: 100%;
   }
 
   .designer-chip {

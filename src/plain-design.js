@@ -3,6 +3,8 @@
   const EXCHANGE_RATE_REFRESH_MS = 5 * 60 * 1000;
   const PURCHASE_ORDERS_STORAGE_KEY = "plainPurchaseOrdersV2";
   const PLAIN_IMAGE_VERSION_COUNT = 3;
+  const MAX_AI_REFERENCE_IMAGES = 3;
+  const MAX_AI_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
   const MOMO_RATES = {
     truck: {
       label: "ทางรถ 7-14 วัน",
@@ -41,10 +43,12 @@
     bulkStatusTarget: "",
     bulkAiPrompt: "",
     bulkAiRequest: null,
+    bulkAiReferenceImages: [],
     productTableMode: localStorage.getItem("plainProductTableMode") || "combined",
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
     aiImageRequests: new Map(),
+    aiImageReferenceUploads: new Map(),
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -653,6 +657,22 @@
     return `${sku}|${normalizePlainImageAngleIndex(angleIndex)}|${plainVersionLabel(version)}`;
   }
 
+  function renderAiReferenceSummary(files = []) {
+    const items = Array.isArray(files) ? files : [];
+    if (!items.length) return `<small class="ai-reference-summary muted">ยังไม่ได้แนบรูปอ้างอิง</small>`;
+    const names = items.map((file) => file.name || "reference image").slice(0, MAX_AI_REFERENCE_IMAGES);
+    return `<small class="ai-reference-summary">${fmtQty.format(items.length)} รูปอ้างอิง: ${escapeHtml(names.join(", "))}</small>`;
+  }
+
+  function referenceImagesForAiRequest(requestKey) {
+    return (state.aiImageReferenceUploads.get(requestKey) || []).map((file) => ({
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      dataUrl: file.dataUrl,
+    }));
+  }
+
   function plainProductImageCompletionCount(product) {
     const target = assetTarget(product, "product_images");
     return Array.from({ length: target })
@@ -876,6 +896,7 @@
     const versionLabel = plainVersionLabel(selectedVersion);
     const requestKey = aiImageRequestKey(product.sku, angleIndex, selectedVersion);
     const busy = state.aiImageRequests.has(requestKey);
+    const referenceImages = state.aiImageReferenceUploads.get(requestKey) || [];
     return `
       <div class="ai-image-command ${busy ? "working" : ""}">
         <textarea data-ai-image-command="${escapeHtml(product.sku)}"
@@ -883,6 +904,20 @@
           data-version="${escapeHtml(selectedVersion)}"
           rows="2"
           placeholder="สั่ง AI แก้ V${escapeHtml(versionLabel)}..."></textarea>
+        <div class="ai-reference-tools">
+          <label class="ai-reference-picker" title="แนบรูปอ้างอิงให้ AI">
+            <span>แนบรูปอ้างอิง</span>
+            <input type="file" accept="image/*" multiple
+              data-ai-image-reference-upload="${escapeHtml(product.sku)}"
+              data-angle-index="${escapeHtml(angleIndex)}"
+              data-version="${escapeHtml(selectedVersion)}" />
+          </label>
+          ${referenceImages.length ? `<button class="ghost-button ai-reference-clear" type="button"
+            data-ai-image-reference-clear="${escapeHtml(product.sku)}"
+            data-angle-index="${escapeHtml(angleIndex)}"
+            data-version="${escapeHtml(selectedVersion)}">ล้าง</button>` : ""}
+        </div>
+        ${renderAiReferenceSummary(state.aiImageReferenceUploads.get(requestKey))}
         <button type="button"
           data-ai-image-submit="${escapeHtml(product.sku)}"
           data-angle-index="${escapeHtml(angleIndex)}"
@@ -1098,6 +1133,14 @@
             <span>${escapeHtml(aiProgress)}</span>
           </div>
           <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
+          <div class="bulk-ai-reference-tools">
+            <label class="ai-reference-picker" title="แนบรูปอ้างอิงให้ AI Bulk">
+              <span>แนบรูปอ้างอิง</span>
+              <input type="file" accept="image/*" multiple data-bulk-ai-reference-upload />
+            </label>
+            ${state.bulkAiReferenceImages.length ? `<button class="ghost-button ai-reference-clear" data-bulk-ai-reference-clear type="button">ล้าง</button>` : ""}
+            ${renderAiReferenceSummary(state.bulkAiReferenceImages)}
+          </div>
           <button class="secondary-button" data-bulk-ai-design-start type="button" ${selectedCount && state.bulkAiPrompt.trim() && !aiBusy ? "" : "disabled"}>
             <span class="bulk-ai-spinner" aria-hidden="true"></span>
             <span>${aiBusy ? "กำลังออกแบบ Bulk" : "สั่ง AI Bulk"}</span>
@@ -1798,6 +1841,7 @@
               angleIndex: target.angleIndex,
               version: target.version,
               prompt,
+              referenceImages: state.bulkAiReferenceImages,
             }),
           });
           mergeAiImageRevisionResult(result);
@@ -1839,9 +1883,16 @@
       showMessage("รับคำสั่งแล้ว กำลังให้ AI ออกแบบรูป");
       const result = await api("/api/plain-design/ai-image-edit", {
         method: "POST",
-        body: JSON.stringify({ sku, angleIndex: normalizedAngleIndex, version: normalizedVersion, prompt }),
+        body: JSON.stringify({
+          sku,
+          angleIndex: normalizedAngleIndex,
+          version: normalizedVersion,
+          prompt,
+          referenceImages: referenceImagesForAiRequest(requestKey),
+        }),
       });
       mergeAiImageRevisionResult(result);
+      state.aiImageReferenceUploads.delete(requestKey);
       showMessage(`AI สร้างรูป PLAIN V${plainVersionLabel(result.newVersion)} แล้ว`);
       render();
     } catch (error) {
@@ -2028,6 +2079,16 @@
         });
         input.value = "";
       });
+    });
+    detailRoot?.querySelectorAll("[data-ai-image-reference-upload]").forEach((input) => {
+      input.addEventListener("change", () => setAiReferenceUploadFromInput(input));
+    });
+    detailRoot?.querySelectorAll("[data-ai-image-reference-clear]").forEach((button) => {
+      button.addEventListener("click", () => clearAiReferenceUpload(
+        button.dataset.aiImageReferenceClear,
+        button.dataset.angleIndex,
+        button.dataset.version
+      ));
     });
     detailRoot?.querySelectorAll("[data-ai-image-submit]").forEach((button) => {
       button.addEventListener("click", () => requestPlainImageAiEdit(
@@ -2669,6 +2730,64 @@
     });
   }
 
+  async function readAiReferenceFiles(files) {
+    const candidates = Array.from(files || []);
+    const imageFiles = candidates.filter((file) => {
+      const type = String(file.type || "").toLowerCase();
+      return type.startsWith("image/") || /\.(png|jpe?g|webp|gif)$/i.test(file.name || "");
+    });
+    if (imageFiles.length !== candidates.length) {
+      showMessage("แนบได้เฉพาะไฟล์รูปภาพสำหรับคำสั่ง AI", true);
+    }
+    const limitedFiles = imageFiles.slice(0, MAX_AI_REFERENCE_IMAGES);
+    if (imageFiles.length > MAX_AI_REFERENCE_IMAGES) {
+      showMessage(`แนบรูปอ้างอิงได้สูงสุด ${MAX_AI_REFERENCE_IMAGES} รูปต่อคำสั่ง`, true);
+    }
+    const tooLarge = limitedFiles.find((file) => file.size > MAX_AI_REFERENCE_IMAGE_BYTES);
+    if (tooLarge) {
+      showMessage(`รูปอ้างอิง ${tooLarge.name} ใหญ่เกิน 5 MB`, true);
+      return [];
+    }
+    return Promise.all(limitedFiles.map(readFileAsDataUrl));
+  }
+
+  async function setAiReferenceUploadFromInput(input) {
+    const requestKey = aiImageRequestKey(
+      input.dataset.aiImageReferenceUpload,
+      input.dataset.angleIndex,
+      input.dataset.version
+    );
+    const referenceImages = await readAiReferenceFiles(input.files);
+    if (referenceImages.length) {
+      state.aiImageReferenceUploads.set(requestKey, referenceImages);
+      showMessage(`แนบรูปอ้างอิง ${fmtQty.format(referenceImages.length)} รูปแล้ว`);
+    } else {
+      state.aiImageReferenceUploads.delete(requestKey);
+    }
+    input.value = "";
+    renderTrackerTable();
+    renderDesignDetail();
+  }
+
+  async function setBulkAiReferenceUploadFromInput(input) {
+    const referenceImages = await readAiReferenceFiles(input.files);
+    state.bulkAiReferenceImages = referenceImages;
+    input.value = "";
+    if (referenceImages.length) showMessage(`แนบรูปอ้างอิง Bulk ${fmtQty.format(referenceImages.length)} รูปแล้ว`);
+    renderBulkStatusBar(filteredProducts());
+  }
+
+  function clearAiReferenceUpload(sku, angleIndex, version) {
+    state.aiImageReferenceUploads.delete(aiImageRequestKey(sku, angleIndex, version));
+    renderTrackerTable();
+    renderDesignDetail();
+  }
+
+  function clearBulkAiReferenceUpload() {
+    state.bulkAiReferenceImages = [];
+    renderBulkStatusBar(filteredProducts());
+  }
+
   async function uploadFiles(sku, group, files, metadata = {}) {
     if (!files.length) return;
     try {
@@ -2772,6 +2891,11 @@
       renderTrackerTable();
     });
     $("bulkStatusBar")?.addEventListener("change", (event) => {
+      const referenceUpload = event.target.closest("[data-bulk-ai-reference-upload]");
+      if (referenceUpload) {
+        setBulkAiReferenceUploadFromInput(referenceUpload);
+        return;
+      }
       const select = event.target.closest("[data-bulk-status-select]");
       if (!select) return;
       state.bulkStatusTarget = select.value;
@@ -2800,6 +2924,10 @@
       }
       if (event.target.closest("[data-bulk-ai-design-start]")) {
         requestBulkAiDesign();
+        return;
+      }
+      if (event.target.closest("[data-bulk-ai-reference-clear]")) {
+        clearBulkAiReferenceUpload();
         return;
       }
     });
@@ -2833,6 +2961,11 @@
           version: versionUpload.dataset.version,
         });
         versionUpload.value = "";
+        return;
+      }
+      const aiReferenceUpload = event.target.closest("[data-ai-image-reference-upload]");
+      if (aiReferenceUpload) {
+        setAiReferenceUploadFromInput(aiReferenceUpload);
         return;
       }
       const tableCostInput = event.target.closest("[data-table-usd]");
@@ -2876,6 +3009,15 @@
           aiImageSubmit.dataset.aiImageSubmit,
           aiImageSubmit.dataset.angleIndex,
           aiImageSubmit.dataset.version
+        );
+        return;
+      }
+      const aiReferenceClear = event.target.closest("[data-ai-image-reference-clear]");
+      if (aiReferenceClear) {
+        clearAiReferenceUpload(
+          aiReferenceClear.dataset.aiImageReferenceClear,
+          aiReferenceClear.dataset.angleIndex,
+          aiReferenceClear.dataset.version
         );
         return;
       }

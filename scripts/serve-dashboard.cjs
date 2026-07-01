@@ -1309,7 +1309,7 @@ const server = http.createServer((req, res) => {
   }
 
   if (url.pathname === "/api/plain-design/ai-image-edit" && req.method === "POST") {
-    readJsonBody(req, 2 * 1024 * 1024)
+    readJsonBody(req, 32 * 1024 * 1024)
       .then((body) => createPlainDesignAiImageRevision(plainDesignOptions(), body))
       .then((result) => sendJson(res, 201, result))
       .catch((error) => {

@@ -124,3 +124,68 @@ test("AI image edit creates the next sub-version and selects it for that angle",
   assert.equal(product.plainImageVersionSelections[1], 2.1);
   assert.equal(product.assets[0].version, 2.1);
 });
+
+test("AI image edit sends attached reference images with the source image", async () => {
+  const options = makePlainDesignOptions({
+    statusOptions: [],
+    categoryOptions: [],
+    assetGroups: [],
+    products: [{ sku: "SKU-1", name: "Blade", status: "waiting_ai_images" }],
+  });
+  savePlainDesignAssetFiles(options, {
+    sku: "SKU-1",
+    group: "product_images",
+    angleIndex: 1,
+    version: 1,
+    files: [
+      {
+        name: "plain-angle-1-v1.jpg",
+        type: "image/jpeg",
+        dataUrl: "data:image/jpeg;base64,c291cmNlLWltYWdl",
+      },
+    ],
+  });
+
+  let openAiRequestBody = null;
+  const result = await createPlainDesignAiImageRevision(
+    options,
+    {
+      sku: "SKU-1",
+      angleIndex: 1,
+      version: 1,
+      prompt: "match the attached brown package reference",
+      referenceImages: [
+        {
+          name: "package-front.png",
+          type: "image/png",
+          dataUrl: "data:image/png;base64,cmVmZXJlbmNlLW9uZQ==",
+        },
+        {
+          name: "style-board.webp",
+          type: "image/webp",
+          dataUrl: "data:image/webp;base64,cmVmZXJlbmNlLXR3bw==",
+        },
+      ],
+    },
+    {
+      apiKey: "test-key",
+      model: "gpt-image-test",
+      fetchImpl: async (_url, request) => {
+        openAiRequestBody = JSON.parse(request.body);
+        return {
+          ok: true,
+          text: async () => JSON.stringify({
+            data: [{ b64_json: "YWktZWRpdGVkLXdpdGgtcmVmZXJlbmNlcw==" }],
+          }),
+        };
+      },
+    }
+  );
+
+  assert.equal(openAiRequestBody.model, "gpt-image-test");
+  assert.equal(openAiRequestBody.images.length, 3);
+  assert.match(openAiRequestBody.images[0].image_url, /^data:image\/jpeg;base64,/);
+  assert.equal(openAiRequestBody.images[1].image_url, "data:image/png;base64,cmVmZXJlbmNlLW9uZQ==");
+  assert.equal(openAiRequestBody.images[2].image_url, "data:image/webp;base64,cmVmZXJlbmNlLXR3bw==");
+  assert.equal(result.asset.metadata.referenceImageCount, 2);
+});

@@ -131,6 +131,36 @@ test("Designer Expert can send one AI design command for selected products in bu
   assert.match(css, /@keyframes bulk-ai-spin/);
 });
 
+test("Designer Expert AI commands accept reference image uploads", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const server = readRepoFile("scripts/serve-dashboard.cjs");
+  const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
+  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
+  const singleRequestBlock = functionBlock(source, "requestPlainImageAiEdit", "queueProductCommercialSave");
+  const bulkRequestBlock = functionBlock(source, "requestBulkAiDesign", "requestPlainImageAiEdit");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(source, /aiImageReferenceUploads:\s*new Map\(\)/);
+  assert.match(source, /bulkAiReferenceImages:\s*\[\]/);
+  assert.match(source, /function renderAiReferenceSummary/);
+  assert.match(source, /async function readAiReferenceFiles/);
+  assert.match(source, /function referenceImagesForAiRequest/);
+  assert.match(aiCommandBlock, /data-ai-image-reference-upload=/);
+  assert.match(aiCommandBlock, /renderAiReferenceSummary\(state\.aiImageReferenceUploads\.get\(requestKey\)/);
+  assert.match(bulkBarBlock, /data-bulk-ai-reference-upload/);
+  assert.match(bulkBarBlock, /renderAiReferenceSummary\(state\.bulkAiReferenceImages/);
+  assert.match(singleRequestBlock, /referenceImages:\s*referenceImagesForAiRequest\(requestKey\)/);
+  assert.match(bulkRequestBlock, /referenceImages:\s*state\.bulkAiReferenceImages/);
+  assert.match(eventsBlock, /data-ai-image-reference-upload/);
+  assert.match(eventsBlock, /data-bulk-ai-reference-upload/);
+  assert.match(eventsBlock, /setAiReferenceUploadFromInput/);
+  assert.match(eventsBlock, /setBulkAiReferenceUploadFromInput/);
+  assert.match(server, /readJsonBody\(req,\s*32\s*\*\s*1024\s*\*\s*1024\)/);
+  assert.match(css, /\.ai-reference-picker/);
+  assert.match(css, /\.ai-reference-summary/);
+});
+
 test("product list can bulk clear selected USD costs after confirmation", () => {
   const source = readRepoFile("src/plain-design.js");
   const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");

@@ -178,6 +178,23 @@ test("Designer Expert AI commands accept reference image uploads", () => {
   assert.match(css, /\.ai-reference-summary/);
 });
 
+test("AI reference upload controls use a paperclip icon instead of text labels", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
+  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
+
+  assert.match(source, /PAPERCLIP_ICON/);
+  assert.match(aiCommandBlock, /ai-reference-picker icon-only/);
+  assert.match(aiCommandBlock, /\$\{PAPERCLIP_ICON\}/);
+  assert.match(bulkBarBlock, /ai-reference-picker icon-only/);
+  assert.match(bulkBarBlock, /\$\{PAPERCLIP_ICON\}/);
+  assert.doesNotMatch(aiCommandBlock, /<span>\s*แนบรูปอ้างอิง\s*<\/span>/);
+  assert.doesNotMatch(bulkBarBlock, /<span>\s*แนบรูปอ้างอิง\s*<\/span>/);
+  assert.match(css, /\.ai-reference-picker\.icon-only/);
+  assert.match(css, /\.ai-reference-paperclip/);
+});
+
 test("Designer Expert AI commands accept pasted reference images from clipboard", () => {
   const source = readRepoFile("src/plain-design.js");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");

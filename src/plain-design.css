@@ -2160,6 +2160,32 @@ h2 {
   cursor: pointer;
 }
 
+.ai-reference-picker.icon-only {
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+  border-style: solid;
+  color: #9f7658;
+}
+
+.ai-reference-picker.icon-only:hover {
+  border-color: #b79375;
+  background: #f8efe6;
+  color: #7a553b;
+}
+
+.ai-reference-paperclip {
+  width: 15px;
+  height: 15px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.15;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .ai-reference-picker input {
   position: absolute;
   inset: 0;

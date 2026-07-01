@@ -5,6 +5,10 @@
   const PLAIN_IMAGE_VERSION_COUNT = 3;
   const MAX_AI_REFERENCE_IMAGES = 3;
   const MAX_AI_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
+  const PAPERCLIP_ICON = `
+    <svg class="ai-reference-paperclip" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+      <path d="m21.4 11.1-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9 9a2 2 0 0 1-2.8-2.8l8.5-8.5"></path>
+    </svg>`;
   const MOMO_RATES = {
     truck: {
       label: "ทางรถ 7-14 วัน",
@@ -906,8 +910,8 @@
           rows="2"
           placeholder="สั่ง AI แก้ V${escapeHtml(versionLabel)}..."></textarea>
         <div class="ai-reference-tools">
-          <label class="ai-reference-picker" title="แนบรูปอ้างอิงให้ AI">
-            <span>แนบรูปอ้างอิง</span>
+          <label class="ai-reference-picker icon-only" title="แนบรูปอ้างอิงให้ AI" aria-label="แนบรูปอ้างอิงให้ AI">
+            ${PAPERCLIP_ICON}
             <input type="file" accept="image/*" multiple
               data-ai-image-reference-upload="${escapeHtml(product.sku)}"
               data-angle-index="${escapeHtml(angleIndex)}"
@@ -1149,8 +1153,8 @@
           </div>
           <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
           <div class="bulk-ai-reference-tools">
-            <label class="ai-reference-picker" title="แนบรูปอ้างอิงให้ AI Bulk">
-              <span>แนบรูปอ้างอิง</span>
+            <label class="ai-reference-picker icon-only" title="แนบรูปอ้างอิงให้ AI Bulk" aria-label="แนบรูปอ้างอิงให้ AI Bulk">
+              ${PAPERCLIP_ICON}
               <input type="file" accept="image/*" multiple data-bulk-ai-reference-upload />
             </label>
             ${state.bulkAiReferenceImages.length ? `<button class="ghost-button ai-reference-clear" data-bulk-ai-reference-clear type="button">ล้าง</button>` : ""}

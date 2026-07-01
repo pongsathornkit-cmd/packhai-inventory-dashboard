@@ -125,12 +125,14 @@
 
   function normalizeProduct(product) {
     const ktwPrice = numberValue(product.ktwPrice);
+    const purchaseUnitCostCleared = Boolean(product.purchaseUnitCostCleared);
     return {
       ...product,
       ktwPrice,
       orderQuantity: numberValue(product.orderQuantity),
       purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
-      purchaseUnitCost: numberValue(product.purchaseUnitCost || ktwPrice),
+      purchaseUnitCost: purchaseUnitCostCleared ? 0 : numberValue(product.purchaseUnitCost || ktwPrice),
+      purchaseUnitCostCleared,
       saleUnitPrice: ktwPrice,
       widthCm: numberValue(product.widthCm),
       lengthCm: numberValue(product.lengthCm),
@@ -366,13 +368,12 @@
   }
 
   function poUsdCostUpdates(sku, value) {
-    const product = state.products.find((item) => item.sku === sku) || {};
     const purchaseUnitCostUsd = numberValue(value);
     const purchaseUnitCost =
       state.exchangeRate.rate > 0 && purchaseUnitCostUsd > 0
         ? moneyValue(purchaseUnitCostUsd * state.exchangeRate.rate)
-        : numberValue(product.purchaseUnitCost || product.ktwPrice);
-    return { purchaseUnitCostUsd, purchaseUnitCost };
+        : 0;
+    return { purchaseUnitCostUsd, purchaseUnitCost, purchaseUnitCostCleared: purchaseUnitCostUsd <= 0 };
   }
 
   async function loadExchangeRate(force = false) {
@@ -438,6 +439,7 @@
   }
 
   function effectivePurchaseUnitCost(product) {
+    if (product.purchaseUnitCostCleared) return 0;
     const usd = numberValue(product.purchaseUnitCostUsd);
     const rate = numberValue(state.exchangeRate.rate);
     if (usd > 0 && rate > 0) return moneyValue(usd * rate);
@@ -445,6 +447,7 @@
   }
 
   function displayPurchaseUnitCostUsd(product) {
+    if (product.purchaseUnitCostCleared) return 0;
     const usd = numberValue(product.purchaseUnitCostUsd);
     if (usd > 0) return usd;
     const thb = numberValue(product.purchaseUnitCost || product.ktwPrice);
@@ -894,6 +897,7 @@
           </select>
         </label>
         <button class="secondary-button" data-bulk-status-apply type="button" ${canApply ? "" : "disabled"}>ใช้กับที่เลือก</button>
+        <button class="danger-button" data-bulk-cost-clear type="button" ${selectedCount ? "" : "disabled"}>ลบราคาต้นทุน</button>
         <button class="ghost-button" data-bulk-status-clear type="button" ${selectedCount ? "" : "disabled"}>ล้างที่เลือก</button>
       </div>`;
   }
@@ -1481,11 +1485,12 @@
     const purchaseUnitCost =
       state.exchangeRate.rate > 0 && purchaseUnitCostUsd > 0
         ? moneyValue(purchaseUnitCostUsd * state.exchangeRate.rate)
-        : numberValue(product.purchaseUnitCost || product.ktwPrice);
+        : 0;
     return {
       orderQuantity: numberValue($("orderQuantity")?.value),
       purchaseUnitCostUsd,
       purchaseUnitCost,
+      purchaseUnitCostCleared: purchaseUnitCostUsd <= 0,
       packagingUnitCost: numberValue($("packagingUnitCost")?.value),
       otherUnitCost: numberValue($("otherUnitCost")?.value),
       widthCm: numberValue($("widthCm")?.value),
@@ -2180,6 +2185,43 @@
     });
   }
 
+  async function clearBulkSelectedCosts() {
+    const skus = [...state.bulkStatusSelectedSkus].filter((sku) => state.products.some((product) => product.sku === sku));
+    if (!skus.length) {
+      showMessage("เลือก SKU ที่ต้องการลบราคาต้นทุนก่อน", true);
+      return;
+    }
+    if (window.confirm && !window.confirm(`ลบราคาต้นทุนสินค้า ${fmtQty.format(skus.length)} SKU ที่เลือกใช่ไหม?`)) return;
+    const previousProducts = state.products;
+    const previousSelection = new Set(state.bulkStatusSelectedSkus);
+    try {
+      state.saving = true;
+      state.products = state.products.map((product) => (
+        skus.includes(product.sku) ? normalizeProduct({ ...product, purchaseUnitCostUsd: 0, purchaseUnitCost: 0, purchaseUnitCostCleared: true }) : product
+      ));
+      state.bulkStatusSelectedSkus.clear();
+      render();
+      showMessage(`กำลังลบราคาต้นทุน ${fmtQty.format(skus.length)} SKU`);
+      const updatedProducts = await Promise.all(
+        skus.map((sku) => api("/api/plain-design/product", {
+          method: "POST",
+          body: JSON.stringify({ sku, purchaseUnitCostUsd: 0, purchaseUnitCost: 0, purchaseUnitCostCleared: true }),
+        }))
+      );
+      const updatedBySku = new Map(updatedProducts.map((product) => [product.sku, normalizeProduct(product)]));
+      state.products = state.products.map((product) => updatedBySku.get(product.sku) || product);
+      render();
+      showMessage(`ลบราคาต้นทุน ${fmtQty.format(skus.length)} SKU แล้ว`);
+    } catch (error) {
+      state.products = previousProducts;
+      state.bulkStatusSelectedSkus = previousSelection;
+      render();
+      showMessage(`ลบราคาต้นทุนไม่สำเร็จ: ${error.message}`, true);
+    } finally {
+      state.saving = false;
+    }
+  }
+
   async function applyBulkRedesignStatus() {
     const status = state.bulkStatusTarget;
     const skus = [...state.bulkStatusSelectedSkus].filter((sku) => state.products.some((product) => product.sku === sku));
@@ -2352,6 +2394,10 @@
     $("bulkStatusBar")?.addEventListener("click", (event) => {
       if (event.target.closest("[data-bulk-status-apply]")) {
         applyBulkRedesignStatus();
+        return;
+      }
+      if (event.target.closest("[data-bulk-cost-clear]")) {
+        clearBulkSelectedCosts();
         return;
       }
       if (event.target.closest("[data-bulk-status-clear]")) {

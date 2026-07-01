@@ -150,3 +150,46 @@ test("stored edited cost is preserved when it differs from the old KTW website p
     fs.rmSync(dir, { recursive: true, force: true });
   }
 });
+
+test("stored cleared cost stays zero instead of falling back to the KTW website price", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-cleared-cost-"));
+  const files = {
+    seedFile: path.join(dir, "seed.json"),
+    dashboardFile: path.join(dir, "dashboard.json"),
+    ktwLogisticsFile: path.join(dir, "ktw.json"),
+    stateFile: path.join(dir, "state.json"),
+  };
+  fs.writeFileSync(files.seedFile, JSON.stringify({ products: [{ sku: "P525-1310", name: "Blade" }] }), "utf8");
+  fs.writeFileSync(files.dashboardFile, JSON.stringify({ rows: [] }), "utf8");
+  fs.writeFileSync(
+    files.ktwLogisticsFile,
+    JSON.stringify({
+      sourceLabel: "shop.ktw.co.th",
+      items: [{ sku: "P525-1310", sourceLabel: "shop.ktw.co.th", sourceUrl: "https://shop.ktw.co.th/p/P525-1310", sourcePrice: 155 }],
+    }),
+    "utf8"
+  );
+  fs.writeFileSync(
+    files.stateFile,
+    JSON.stringify({
+      products: [{
+        sku: "P525-1310",
+        ktwPrice: 203.36,
+        saleUnitPrice: 203.36,
+        purchaseUnitCost: 0,
+        purchaseUnitCostUsd: 0,
+        purchaseUnitCostCleared: true,
+      }],
+    }),
+    "utf8"
+  );
+
+  try {
+    const state = loadPlainDesignState(files);
+    assert.equal(state.products[0].purchaseUnitCost, 0);
+    assert.equal(state.products[0].purchaseUnitCostUsd, 0);
+    assert.equal(state.products[0].purchaseUnitCostCleared, true);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});

@@ -102,6 +102,25 @@ test("product list supports bulk redesign status updates from selected rows", ()
   assert.match(eventsBlock, /data-bulk-status-apply/);
 });
 
+test("product list can bulk clear selected USD costs after confirmation", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
+  const clearBlock = functionBlock(source, "clearBulkSelectedCosts", "applyBulkRedesignStatus");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(bulkBarBlock, /data-bulk-cost-clear/);
+  assert.match(bulkBarBlock, /selectedCount \? "" : "disabled"/);
+  assert.match(source, /function clearBulkSelectedCosts/);
+  assert.match(clearBlock, /window\.confirm/);
+  assert.match(clearBlock, /purchaseUnitCostUsd:\s*0/);
+  assert.match(clearBlock, /purchaseUnitCost:\s*0/);
+  assert.match(clearBlock, /purchaseUnitCostCleared:\s*true/);
+  assert.match(clearBlock, /Promise\.all\(\s*skus\.map/);
+  assert.match(clearBlock, /body:\s*JSON\.stringify\(\{\s*sku,\s*purchaseUnitCostUsd:\s*0,\s*purchaseUnitCost:\s*0,\s*purchaseUnitCostCleared:\s*true\s*\}\)/);
+  assert.match(eventsBlock, /data-bulk-cost-clear/);
+  assert.match(eventsBlock, /clearBulkSelectedCosts\(\)/);
+});
+
 test("product list can switch cover images between KTW Mode and Plain Mode", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");

@@ -15,6 +15,9 @@ const COMMERCIAL_NUMBER_FIELDS = [
   "packagingUnitCost",
   "otherUnitCost",
 ];
+const COMMERCIAL_BOOLEAN_FIELDS = [
+  "purchaseUnitCostCleared",
+];
 
 function readJson(file, fallback = null) {
   try {
@@ -98,6 +101,7 @@ function storedOrKtwLogisticsValue(stored, product, field) {
 }
 
 function storedPurchaseUnitCost(stored, product) {
+  if (stored?.purchaseUnitCostCleared) return 0;
   if (!Object.prototype.hasOwnProperty.call(stored || {}, "purchaseUnitCost")) return product.purchaseUnitCost;
   const storedCost = numberValue(stored.purchaseUnitCost);
   const oldKtwPrice = numberValue(stored.ktwPrice || stored.saleUnitPrice);
@@ -223,6 +227,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       orderQuantity: numberValue(product.orderQuantity),
       purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
       purchaseUnitCost: numberValue(product.purchaseUnitCost || ktwPrice),
+      purchaseUnitCostCleared: Boolean(product.purchaseUnitCostCleared),
       saleUnitPrice: ktwPrice,
       widthCm: logisticsValue(product, logistics, "widthCm"),
       lengthCm: logisticsValue(product, logistics, "lengthCm"),
@@ -273,9 +278,12 @@ function mergeStoredState(initialState, storedState) {
           ? numberValue(stored.orderQuantity)
           : product.orderQuantity,
         purchaseUnitCost: storedPurchaseUnitCost(stored, product),
-        purchaseUnitCostUsd: Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCostUsd")
+        purchaseUnitCostUsd: stored.purchaseUnitCostCleared
+          ? 0
+          : Object.prototype.hasOwnProperty.call(stored, "purchaseUnitCostUsd")
           ? numberValue(stored.purchaseUnitCostUsd)
           : product.purchaseUnitCostUsd,
+        purchaseUnitCostCleared: Boolean(stored.purchaseUnitCostCleared),
         saleUnitPrice: product.ktwPrice,
         widthCm: storedOrKtwLogisticsValue(stored, product, "widthCm"),
         lengthCm: storedOrKtwLogisticsValue(stored, product, "lengthCm"),
@@ -331,6 +339,11 @@ function updatePlainDesignProduct(options, payload) {
     for (const field of COMMERCIAL_NUMBER_FIELDS) {
       if (Object.prototype.hasOwnProperty.call(payload, field)) {
         found[field] = numberValue(payload[field]);
+      }
+    }
+    for (const field of COMMERCIAL_BOOLEAN_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(payload, field)) {
+        found[field] = Boolean(payload[field]);
       }
     }
     if (Object.prototype.hasOwnProperty.call(payload, "cargoMode")) {

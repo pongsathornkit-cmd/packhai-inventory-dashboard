@@ -651,6 +651,148 @@ h2 {
   background: var(--surface);
 }
 
+.po-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.po-system-layout {
+  display: grid;
+  grid-template-columns: 286px minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  background: #fbfaf7;
+}
+
+.po-bill-sidebar,
+.po-workspace {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: white;
+}
+
+.po-bill-sidebar {
+  padding: 12px;
+}
+
+.po-bill-sidebar-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.po-bill-sidebar-head strong,
+.po-workspace-head h3 {
+  margin: 0;
+  color: var(--ink);
+}
+
+.po-bill-sidebar-head span,
+.po-workspace-head span,
+.po-workspace-head small {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 740;
+}
+
+.po-bill-list {
+  display: grid;
+  gap: 8px;
+  max-height: 620px;
+  overflow: auto;
+}
+
+.po-bill-card {
+  width: 100%;
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid #e5ddd4;
+  border-radius: 7px;
+  background: #fffdf9;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.po-bill-card.active {
+  border-color: #a98566;
+  background: #f8efe7;
+  box-shadow: inset 3px 0 0 #9b7659;
+}
+
+.po-bill-card strong {
+  font-size: 13px;
+  line-height: 1.2;
+}
+
+.po-bill-card small,
+.po-bill-index {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 720;
+}
+
+.po-bill-meta,
+.po-live-strip {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.po-bill-meta b,
+.po-bill-meta em {
+  font-size: 12px;
+  font-style: normal;
+}
+
+.po-workspace {
+  overflow: hidden;
+}
+
+.po-workspace-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+  background: #fffdfb;
+}
+
+.po-workspace-head h3 {
+  margin-top: 4px;
+  font-size: 18px;
+}
+
+.po-live-strip {
+  justify-content: flex-end;
+}
+
+.po-live-strip span {
+  min-width: 124px;
+  padding: 7px 9px;
+  border: 1px solid #e6ded4;
+  border-radius: 7px;
+  background: white;
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.po-live-strip b {
+  display: block;
+  margin-top: 2px;
+  color: var(--ink);
+  font-size: 13px;
+}
+
 .po-controls {
   display: grid;
   grid-template-columns: minmax(280px, 1.35fr) 170px 160px minmax(220px, 1fr) 190px;
@@ -685,6 +827,33 @@ h2 {
   border-top: 1px solid var(--line);
   font-size: 13px;
   vertical-align: top;
+}
+
+.po-table tr.line-muted td {
+  color: #9a9189;
+  background: #fffdf9;
+}
+
+.po-qty-input {
+  width: 86px;
+  min-height: 34px;
+  border: 1px solid #d8d0c8;
+  border-radius: 7px;
+  background: white;
+  color: var(--ink);
+  padding: 0 9px;
+  text-align: right;
+  font-weight: 780;
+}
+
+.po-summary-good strong,
+.po-summary-good span {
+  color: var(--good);
+}
+
+.po-summary-danger strong,
+.po-summary-danger span {
+  color: var(--danger);
 }
 
 .upload-stack {
@@ -1748,6 +1917,23 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .po-system-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .po-bill-list {
+    max-height: none;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .po-workspace-head {
+    display: grid;
+  }
+
+  .po-live-strip {
+    justify-content: stretch;
+  }
+
   .detail-panel {
     position: static;
   }
@@ -1788,6 +1974,24 @@ h2 {
     grid-template-columns: 1fr;
   }
 
+  .po-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .po-actions button,
+  .po-live-strip span {
+    flex: 1 1 100%;
+  }
+
+  .po-system-layout {
+    padding: 8px;
+  }
+
+  .po-qty-input {
+    width: 72px;
+  }
+
   .detail-product-card {
     grid-template-columns: 72px minmax(0, 1fr);
   }
@@ -1808,7 +2012,10 @@ h2 {
   .controls,
   .main-grid,
   .status-line,
-  #printPo {
+  #printPo,
+  #newPurchaseOrder,
+  .po-bill-sidebar,
+  .po-live-strip {
     display: none !important;
   }
 
@@ -1822,6 +2029,16 @@ h2 {
   }
 
   .po-panel {
+    border: 0;
+  }
+
+  .po-system-layout {
+    display: block;
+    padding: 0;
+    background: white;
+  }
+
+  .po-workspace {
     border: 0;
   }
 

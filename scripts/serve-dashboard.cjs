@@ -31,6 +31,7 @@ const {
   loadPlainDesignState,
   resolvePlainDesignAssetPath,
   savePlainDesignAssetFiles,
+  savePlainDesignPurchaseOrders,
   updatePlainDesignProduct,
 } = require("./plain-design-core.cjs");
 
@@ -1287,6 +1288,14 @@ const server = http.createServer((req, res) => {
       .then((body) => updatePlainDesignProduct(plainDesignOptions(), body))
       .then((result) => sendJson(res, 200, result))
       .catch((error) => sendJson(res, /required|not found|status/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  if (url.pathname === "/api/plain-design/purchase-orders" && req.method === "POST") {
+    readJsonBody(req, 4 * 1024 * 1024)
+      .then((body) => savePlainDesignPurchaseOrders(plainDesignOptions(), body))
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, /invalid|required/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
     return;
   }
 

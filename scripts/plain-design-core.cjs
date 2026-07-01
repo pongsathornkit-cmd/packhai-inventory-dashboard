@@ -94,6 +94,31 @@ function storedOrKtwLogisticsValue(stored, product, field) {
   return storedValue > 0 ? storedValue : numberValue(product[field]);
 }
 
+function normalizePurchaseOrder(order) {
+  const id = String(order?.id || crypto.randomUUID());
+  const lines = {};
+  for (const [sku, qty] of Object.entries(order?.lines || {})) {
+    const normalizedSku = normalizeSku(sku);
+    if (!normalizedSku) continue;
+    lines[normalizedSku] = numberValue(qty);
+  }
+  return {
+    id,
+    number: String(order?.number || "").trim() || `PLAIN-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
+    poDate: String(order?.poDate || "").slice(0, 10) || new Date().toISOString().slice(0, 10),
+    supplierName: String(order?.supplierName || "PLAIN Redesign Supplier"),
+    fastCargoDiscount: numberValue(order?.fastCargoDiscount ?? 30),
+    status: String(order?.status || "draft"),
+    createdAt: order?.createdAt || new Date().toISOString(),
+    updatedAt: order?.updatedAt || new Date().toISOString(),
+    lines,
+  };
+}
+
+function normalizePurchaseOrders(orders) {
+  return (Array.isArray(orders) ? orders : []).map(normalizePurchaseOrder);
+}
+
 function buildPackhaiIndex(dashboard) {
   const bySku = new Map();
   for (const row of dashboard?.rows || []) {
@@ -200,6 +225,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
     categoryOptions: seed?.categoryOptions || [],
     assetGroups: seed?.assetGroups || [],
     products,
+    purchaseOrders: [],
   };
 }
 
@@ -208,6 +234,7 @@ function mergeStoredState(initialState, storedState) {
   return {
     ...initialState,
     updatedAt: storedState?.updatedAt || initialState.updatedAt,
+    purchaseOrders: normalizePurchaseOrders(storedState?.purchaseOrders),
     products: initialState.products.map((product) => {
       const stored = storedBySku.get(product.sku);
       if (!stored) return product;
@@ -296,6 +323,16 @@ function updatePlainDesignProduct(options, payload) {
   if (!found) throw new Error(`Product ${sku} was not found.`);
   savePlainDesignState(options, state);
   return found;
+}
+
+function savePlainDesignPurchaseOrders(options, payload) {
+  if (!Array.isArray(payload?.purchaseOrders)) {
+    throw new Error("purchaseOrders is required.");
+  }
+  const state = loadPlainDesignState(options);
+  state.purchaseOrders = normalizePurchaseOrders(payload.purchaseOrders);
+  savePlainDesignState(options, state);
+  return { purchaseOrders: state.purchaseOrders };
 }
 
 function publicAssetUrl(assetPath) {
@@ -395,5 +432,6 @@ module.exports = {
   loadPlainDesignState,
   resolvePlainDesignAssetPath,
   savePlainDesignAssetFiles,
+  savePlainDesignPurchaseOrders,
   updatePlainDesignProduct,
 };

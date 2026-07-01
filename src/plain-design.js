@@ -1,6 +1,7 @@
 (function () {
   const embedded = window.__PLAIN_DESIGN__ || {};
   const EXCHANGE_RATE_REFRESH_MS = 5 * 60 * 1000;
+  const PURCHASE_ORDERS_STORAGE_KEY = "plainPurchaseOrdersV2";
   const MOMO_RATES = {
     truck: {
       label: "ทางรถ 7-14 วัน",
@@ -33,6 +34,8 @@
     poNumber: localStorage.getItem("plainPoNumber") || `PLAIN-${new Date().toISOString().slice(0, 10).replace(/-/g, "")}`,
     supplierName: localStorage.getItem("plainSupplierName") || "PLAIN Redesign Supplier",
     poDate: localStorage.getItem("plainPoDate") || new Date().toISOString().slice(0, 10),
+    purchaseOrders: [],
+    activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
     exchangeRate: {
       rate: numberValue(localStorage.getItem("plainUsdThbRate") || 0),
       fetchedAt: localStorage.getItem("plainUsdThbFetchedAt") || "",
@@ -133,6 +136,166 @@
     };
   }
 
+  function todayDate() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  function makeClientId(prefix = "po") {
+    return window.crypto?.randomUUID?.() || `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  }
+
+  function makePurchaseOrderNumber(index = state.purchaseOrders.length + 1) {
+    return `PLAIN-${todayDate().replace(/-/g, "")}-${String(index).padStart(2, "0")}`;
+  }
+
+  function plannedOrderLines() {
+    return Object.fromEntries(
+      state.products
+        .map((product) => [product.sku, numberValue(product.orderQuantity)])
+        .filter(([, qty]) => qty > 0)
+    );
+  }
+
+  function normalizePurchaseOrder(order = {}, index = 0) {
+    const lines = {};
+    Object.entries(order.lines || {}).forEach(([sku, qty]) => {
+      const normalizedSku = String(sku || "").trim();
+      if (normalizedSku) lines[normalizedSku] = numberValue(qty);
+    });
+    const now = new Date().toISOString();
+    return {
+      id: String(order.id || makeClientId("po")),
+      number: String(order.number || "").trim() || makePurchaseOrderNumber(index + 1),
+      poDate: String(order.poDate || "").slice(0, 10) || todayDate(),
+      supplierName: String(order.supplierName || state.supplierName || "PLAIN Redesign Supplier"),
+      fastCargoDiscount: clamp(order.fastCargoDiscount ?? state.fastCargoDiscount ?? 30, 0, 100),
+      status: String(order.status || "draft"),
+      createdAt: order.createdAt || now,
+      updatedAt: order.updatedAt || now,
+      lines,
+    };
+  }
+
+  function readLocalPurchaseOrders() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(PURCHASE_ORDERS_STORAGE_KEY) || "[]");
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+
+  function makePurchaseOrder(lines = {}) {
+    return normalizePurchaseOrder({
+      id: makeClientId("po"),
+      number: makePurchaseOrderNumber(state.purchaseOrders.length + 1),
+      poDate: todayDate(),
+      supplierName: state.supplierName,
+      fastCargoDiscount: state.fastCargoDiscount,
+      status: "draft",
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      lines,
+    });
+  }
+
+  function activePurchaseOrder() {
+    return state.purchaseOrders.find((order) => order.id === state.activePurchaseOrderId) || state.purchaseOrders[0] || null;
+  }
+
+  function savePurchaseOrdersLocal() {
+    localStorage.setItem(PURCHASE_ORDERS_STORAGE_KEY, JSON.stringify(state.purchaseOrders));
+    localStorage.setItem("plainActivePurchaseOrderId", state.activePurchaseOrderId || "");
+    localStorage.setItem("plainPoNumber", state.poNumber || "");
+    localStorage.setItem("plainPoDate", state.poDate || "");
+    localStorage.setItem("plainSupplierName", state.supplierName || "");
+    localStorage.setItem("plainFastCargoDiscount", String(state.fastCargoDiscount));
+  }
+
+  function syncActivePurchaseOrderState() {
+    const order = activePurchaseOrder();
+    if (!order) return;
+    state.activePurchaseOrderId = order.id;
+    state.poNumber = order.number;
+    state.poDate = order.poDate;
+    state.supplierName = order.supplierName;
+    state.fastCargoDiscount = clamp(order.fastCargoDiscount, 0, 100);
+    savePurchaseOrdersLocal();
+  }
+
+  function initializePurchaseOrders(serverOrders = []) {
+    const source = Array.isArray(serverOrders) && serverOrders.length ? serverOrders : readLocalPurchaseOrders();
+    const orders = source.map((order, index) => normalizePurchaseOrder(order, index));
+    state.purchaseOrders = orders.length ? orders : [makePurchaseOrder(plannedOrderLines())];
+    if (!state.purchaseOrders.some((order) => order.id === state.activePurchaseOrderId)) {
+      state.activePurchaseOrderId = state.purchaseOrders[0]?.id || "";
+    }
+    syncActivePurchaseOrderState();
+  }
+
+  function persistPurchaseOrders() {
+    savePurchaseOrdersLocal();
+    window.clearTimeout(persistPurchaseOrders.timer);
+    persistPurchaseOrders.timer = window.setTimeout(async () => {
+      try {
+        const payload = await api("/api/plain-design/purchase-orders", {
+          method: "POST",
+          body: JSON.stringify({ purchaseOrders: state.purchaseOrders }),
+        });
+        if (Array.isArray(payload.purchaseOrders)) {
+          state.purchaseOrders = payload.purchaseOrders.map((order, index) => normalizePurchaseOrder(order, index));
+          if (!state.purchaseOrders.some((order) => order.id === state.activePurchaseOrderId)) {
+            state.activePurchaseOrderId = state.purchaseOrders[0]?.id || "";
+          }
+          syncActivePurchaseOrderState();
+        }
+      } catch (error) {
+        showMessage(`บันทึกบิลไม่สำเร็จ: ${error.message}`, true);
+      }
+    }, 450);
+  }
+
+  function createPurchaseOrder() {
+    const order = makePurchaseOrder({});
+    state.purchaseOrders = [order, ...state.purchaseOrders];
+    state.activePurchaseOrderId = order.id;
+    syncActivePurchaseOrderState();
+    persistPurchaseOrders();
+    renderPoPanel();
+    showMessage("สร้างบิลใหม่แล้ว");
+  }
+
+  function setActivePurchaseOrder(id) {
+    if (!state.purchaseOrders.some((order) => order.id === id)) return;
+    state.activePurchaseOrderId = id;
+    syncActivePurchaseOrderState();
+    renderPoPanel();
+  }
+
+  function updateActivePurchaseOrder(updates) {
+    const order = activePurchaseOrder();
+    if (!order) return;
+    Object.assign(order, updates);
+    if (Object.prototype.hasOwnProperty.call(updates, "fastCargoDiscount")) {
+      order.fastCargoDiscount = clamp(updates.fastCargoDiscount, 0, 100);
+    }
+    order.updatedAt = new Date().toISOString();
+    syncActivePurchaseOrderState();
+    persistPurchaseOrders();
+  }
+
+  function updateActivePurchaseOrderLine(sku, qty) {
+    const order = activePurchaseOrder();
+    if (!order) return;
+    const normalizedQty = Math.max(0, numberValue(qty));
+    if (normalizedQty > 0) order.lines[sku] = normalizedQty;
+    else delete order.lines[sku];
+    order.updatedAt = new Date().toISOString();
+    syncActivePurchaseOrderState();
+    persistPurchaseOrders();
+    refreshPoRealtime();
+  }
+
   async function loadExchangeRate(force = false) {
     state.exchangeRate.loading = true;
     try {
@@ -167,10 +330,12 @@
       state.categoryOptions = payload.categoryOptions || state.categoryOptions;
       state.assetGroups = payload.assetGroups || state.assetGroups;
       state.selectedSku = state.selectedSku || state.products[0]?.sku || "";
+      initializePurchaseOrders(payload.purchaseOrders || []);
     } catch (error) {
       showMessage(`ใช้ข้อมูล fallback: ${error.message}`, true);
       state.products = state.products.map(normalizeProduct);
       state.selectedSku = state.selectedSku || state.products[0]?.sku || "";
+      initializePurchaseOrders([]);
     }
     render();
   }
@@ -265,12 +430,23 @@
     };
   }
 
-  function billCalc() {
-    const lines = state.products
-      .map((product) => ({ product, calc: lineCalc(product) }))
-      .filter((line) => line.calc.qty > 0);
-    return lines.reduce(
+  function purchaseOrderQuantity(order, sku) {
+    return numberValue(order?.lines?.[sku]);
+  }
+
+  function poLineRows(order = activePurchaseOrder()) {
+    const discount = numberValue(order?.fastCargoDiscount ?? state.fastCargoDiscount);
+    return state.products.map((product) => ({
+      product,
+      calc: lineCalc({ ...product, orderQuantity: purchaseOrderQuantity(order, product.sku) }, discount),
+    }));
+  }
+
+  function billCalc(order = activePurchaseOrder()) {
+    const tableRows = poLineRows(order);
+    return tableRows.reduce(
       (total, line) => {
+        if (line.calc.qty <= 0) return total;
         total.qty += line.calc.qty;
         total.revenueTotal += line.calc.revenueTotal;
         total.productCostTotal += line.calc.productCostTotal;
@@ -283,6 +459,7 @@
         return total;
       },
       {
+        tableRows,
         lines: [],
         qty: 0,
         revenueTotal: 0,
@@ -975,7 +1152,7 @@
       </section>`;
   }
 
-  function renderPoPanel() {
+  function renderPoPanelLegacy() {
     const bill = billCalc();
     const margin = bill.revenueTotal > 0 ? bill.profitTotal / bill.revenueTotal : 0;
     $("purchase-order").innerHTML = `
@@ -1070,7 +1247,7 @@
     if (search) search.placeholder = "ค้นหา SKU หรือชื่อสินค้า...";
   }
 
-  function bindPoEvents() {
+  function bindPoEventsLegacy() {
     $("printPo")?.addEventListener("click", () => window.print());
     document.querySelectorAll("#purchase-order [data-refresh-exchange]").forEach((button) => {
       button.addEventListener("click", () => loadExchangeRate(true));
@@ -1088,6 +1265,204 @@
         state[id] = event.target.value;
         localStorage.setItem(key, event.target.value);
       });
+    });
+  }
+
+  function renderPoSummaryCards(bill) {
+    const margin = bill.revenueTotal > 0 ? bill.profitTotal / bill.revenueTotal : 0;
+    return [
+      ["จำนวนรวม", `${fmtQty.format(bill.qty)} ชิ้น`],
+      ["ยอดขายรวม", fmtMoney.format(bill.revenueTotal)],
+      ["ต้นทุนสินค้า", fmtMoney.format(bill.productCostTotal)],
+      ["แพคเกจ + อื่น ๆ", fmtMoney.format(bill.packagingTotal + bill.otherTotal)],
+      ["ค่าขนส่งหลังลด", fmtMoney.format(bill.shippingTotal)],
+      ["ยอดสั่งซื้อทั้งบิล", fmtMoney.format(bill.totalCost)],
+      ["กำไรรวม", fmtMoney.format(bill.profitTotal), bill.profitTotal < 0 ? "danger" : "good"],
+      ["Margin", fmtPercent.format(margin), margin < 0 ? "danger" : "good"],
+    ].map(([label, value, tone]) => `<article class="${tone ? `po-summary-${tone}` : ""}"><span>${label}</span><strong>${value}</strong></article>`).join("");
+  }
+
+  function renderPoBillList() {
+    return state.purchaseOrders.map((order, index) => {
+      const bill = billCalc(order);
+      const active = order.id === state.activePurchaseOrderId;
+      return `
+        <button class="po-bill-card ${active ? "active" : ""}" data-po-bill="${escapeHtml(order.id)}" type="button">
+          <span class="po-bill-index">บิลที่ ${fmtQty.format(index + 1)}</span>
+          <strong>${escapeHtml(order.number)}</strong>
+          <small>${escapeHtml(order.poDate)} | ${fmtQty.format(bill.qty)} ชิ้น</small>
+          <span class="po-bill-meta">
+            <b>${fmtMoney.format(bill.totalCost)}</b>
+            <em class="${bill.profitTotal < 0 ? "danger-text" : "good-text"}">${fmtMoney.format(bill.profitTotal)}</em>
+          </span>
+        </button>`;
+    }).join("");
+  }
+
+  function renderPoRows(bill) {
+    return bill.tableRows.map(({ product, calc }) => `
+      <tr data-po-row="${escapeHtml(product.sku)}" class="${calc.qty <= 0 ? "line-muted" : ""}">
+        <td><strong>${escapeHtml(product.sku)}</strong></td>
+        <td>${escapeHtml(product.name)}<small>${escapeHtml(calc.rate.modeLabel)} | ${escapeHtml(calc.rate.label)} | ฐาน ${calc.chargeBasis}</small></td>
+        <td class="num">
+          <input class="po-qty-input" data-po-qty="${escapeHtml(product.sku)}" type="number" min="0" step="1" inputmode="numeric" value="${calc.qty > 0 ? escapeHtml(calc.qty) : ""}" placeholder="0" />
+        </td>
+        <td class="num" data-po-cell="purchaseUnitCostUsd">${fmtUsd.format(calc.purchaseUnitCostUsd)}</td>
+        <td class="num" data-po-cell="purchaseUnitCost">${fmtMoney.format(calc.purchaseUnitCost)}</td>
+        <td class="num" data-po-cell="shippingUnit">${fmtMoney.format(calc.shippingUnit)}</td>
+        <td class="num" data-po-cell="totalCost">${fmtMoney.format(calc.totalCost)}</td>
+        <td class="num" data-po-cell="revenueTotal">${fmtMoney.format(calc.revenueTotal)}</td>
+        <td class="num ${calc.profitTotal < 0 ? "danger-text" : "good-text"}" data-po-cell="profitTotal">${fmtMoney.format(calc.profitTotal)}</td>
+      </tr>`).join("");
+  }
+
+  function refreshPoRealtime() {
+    const order = activePurchaseOrder();
+    const bill = billCalc(order);
+    if ($("poSummary")) $("poSummary").innerHTML = renderPoSummaryCards(bill);
+    if ($("poBillList")) $("poBillList").innerHTML = renderPoBillList();
+    if ($("activeBillTitle")) $("activeBillTitle").textContent = order?.number || "-";
+    if ($("activeBillMeta")) $("activeBillMeta").textContent = `${fmtQty.format(bill.qty)} ชิ้น | ยอดสั่งซื้อ ${fmtMoney.format(bill.totalCost)} | กำไร ${fmtMoney.format(bill.profitTotal)}`;
+    if ($("activeBillQty")) $("activeBillQty").textContent = `${fmtQty.format(bill.qty)} ชิ้น`;
+    if ($("activeBillCost")) $("activeBillCost").textContent = fmtMoney.format(bill.totalCost);
+    if ($("activeBillProfit")) {
+      $("activeBillProfit").textContent = fmtMoney.format(bill.profitTotal);
+      $("activeBillProfit").className = bill.profitTotal < 0 ? "danger-text" : "good-text";
+    }
+    const rowsBySku = new Map(bill.tableRows.map((line) => [line.product.sku, line]));
+    document.querySelectorAll("#purchase-order [data-po-row]").forEach((row) => {
+      const line = rowsBySku.get(row.dataset.poRow);
+      if (!line) return;
+      const { calc } = line;
+      row.classList.toggle("line-muted", calc.qty <= 0);
+      const qtyInput = row.querySelector("[data-po-qty]");
+      if (qtyInput && document.activeElement !== qtyInput) qtyInput.value = calc.qty > 0 ? String(calc.qty) : "";
+      const cells = {
+        purchaseUnitCostUsd: fmtUsd.format(calc.purchaseUnitCostUsd),
+        purchaseUnitCost: fmtMoney.format(calc.purchaseUnitCost),
+        shippingUnit: fmtMoney.format(calc.shippingUnit),
+        totalCost: fmtMoney.format(calc.totalCost),
+        revenueTotal: fmtMoney.format(calc.revenueTotal),
+        profitTotal: fmtMoney.format(calc.profitTotal),
+      };
+      Object.entries(cells).forEach(([name, value]) => {
+        const cell = row.querySelector(`[data-po-cell="${name}"]`);
+        if (cell) cell.textContent = value;
+      });
+      const profitCell = row.querySelector('[data-po-cell="profitTotal"]');
+      if (profitCell) {
+        profitCell.classList.toggle("danger-text", calc.profitTotal < 0);
+        profitCell.classList.toggle("good-text", calc.profitTotal >= 0);
+      }
+    });
+  }
+
+  function renderPoPanel() {
+    const order = activePurchaseOrder() || makePurchaseOrder(plannedOrderLines());
+    const bill = billCalc(order);
+    $("purchase-order").innerHTML = `
+      <div class="section-heading">
+        <div>
+          <h2>ระบบใบสั่งซื้อ</h2>
+          <span>แยกเป็นแต่ละบิล แก้จำนวนแล้วคำนวณยอดรวม ต้นทุน ค่าขนส่ง และกำไรแบบ Realtime</span>
+        </div>
+        <div class="po-actions">
+          <button class="secondary-button" id="newPurchaseOrder" type="button">+ สร้างบิลใหม่</button>
+          <button class="primary-button" id="printPo" type="button">พิมพ์ใบสั่งซื้อ</button>
+        </div>
+      </div>
+      <div class="po-system-layout">
+        <aside class="po-bill-sidebar">
+          <div class="po-bill-sidebar-head">
+            <div>
+              <strong>รายการบิล</strong>
+              <span>${fmtQty.format(state.purchaseOrders.length)} บิล</span>
+            </div>
+          </div>
+          <div class="po-bill-list" id="poBillList">${renderPoBillList()}</div>
+        </aside>
+        <div class="po-workspace">
+          <div class="po-workspace-head">
+            <div>
+              <span>บิลที่เลือก</span>
+              <h3 id="activeBillTitle">${escapeHtml(order.number)}</h3>
+              <small id="activeBillMeta">${fmtQty.format(bill.qty)} ชิ้น | ยอดสั่งซื้อ ${fmtMoney.format(bill.totalCost)} | กำไร ${fmtMoney.format(bill.profitTotal)}</small>
+            </div>
+            <div class="po-live-strip">
+              <span>จำนวน <b id="activeBillQty">${fmtQty.format(bill.qty)} ชิ้น</b></span>
+              <span>ยอดบิล <b id="activeBillCost">${fmtMoney.format(bill.totalCost)}</b></span>
+              <span>กำไร <b id="activeBillProfit" class="${bill.profitTotal < 0 ? "danger-text" : "good-text"}">${fmtMoney.format(bill.profitTotal)}</b></span>
+            </div>
+          </div>
+          <div class="po-controls">
+            ${renderExchangeCard()}
+            <label class="field">
+              <span>เลขที่ PO</span>
+              <input id="poNumber" type="text" value="${escapeHtml(order.number)}" />
+            </label>
+            <label class="field">
+              <span>วันที่</span>
+              <input id="poDate" type="date" value="${escapeHtml(order.poDate)}" />
+            </label>
+            <label class="field">
+              <span>ผู้ขาย/โรงงาน</span>
+              <input id="supplierName" type="text" value="${escapeHtml(order.supplierName)}" />
+            </label>
+            <label class="field">
+              <span>ส่วนลด Fast Cargo (%)</span>
+              <input id="fastCargoDiscount" type="number" min="0" max="100" step="1" value="${escapeHtml(order.fastCargoDiscount)}" />
+            </label>
+          </div>
+          <div class="po-summary" id="poSummary">${renderPoSummaryCards(bill)}</div>
+          <div class="table-wrap">
+            <table class="po-table">
+              <thead>
+                <tr>
+                  <th>SKU</th>
+                  <th>รายการ</th>
+                  <th class="num">จำนวนในบิล</th>
+                  <th class="num">ต้นทุน USD</th>
+                  <th class="num">ต้นทุน THB</th>
+                  <th class="num">ขนส่ง/ชิ้น</th>
+                  <th class="num">ต้นทุนรวม</th>
+                  <th class="num">ยอดขายรวม</th>
+                  <th class="num">กำไรรวม</th>
+                </tr>
+              </thead>
+              <tbody id="poTableBody">${renderPoRows(bill)}</tbody>
+            </table>
+          </div>
+        </div>
+      </div>`;
+    bindPoEvents();
+  }
+
+  function bindPoEvents() {
+    $("printPo")?.addEventListener("click", () => window.print());
+    $("newPurchaseOrder")?.addEventListener("click", createPurchaseOrder);
+    document.querySelectorAll("#purchase-order [data-refresh-exchange]").forEach((button) => {
+      button.addEventListener("click", () => loadExchangeRate(true));
+    });
+    $("poBillList")?.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-po-bill]");
+      if (button) setActivePurchaseOrder(button.dataset.poBill);
+    });
+    $("fastCargoDiscount")?.addEventListener("input", (event) => {
+      updateActivePurchaseOrder({ fastCargoDiscount: clamp(event.target.value, 0, 100) });
+      renderStats();
+      renderTrackerTable();
+      renderDesignDetail();
+      refreshPoRealtime();
+    });
+    [["poNumber", "number"], ["poDate", "poDate"], ["supplierName", "supplierName"]].forEach(([id, field]) => {
+      $(id)?.addEventListener("input", (event) => {
+        updateActivePurchaseOrder({ [field]: event.target.value });
+        refreshPoRealtime();
+      });
+    });
+    $("poTableBody")?.addEventListener("input", (event) => {
+      const input = event.target.closest("[data-po-qty]");
+      if (input) updateActivePurchaseOrderLine(input.dataset.poQty, input.value);
     });
   }
 

@@ -164,10 +164,11 @@ function parseVisibleKtwSalePrice(html) {
   return 0;
 }
 
-function parseKtwSourcePrice(html, sku) {
+function parseKtwSourcePrice(html, sku, options = {}) {
   const page = String(html || "");
   const visibleSalePrice = parseVisibleKtwSalePrice(page);
   if (visibleSalePrice > 0) return visibleSalePrice;
+  if (options.discountOnly) return 0;
 
   const normalizedSku = normalizeSku(sku);
   const skuPattern = escapeRegExp(normalizedSku);
@@ -249,7 +250,8 @@ async function fetchProductKtwData(product) {
   const html = await response.text();
   const parsed = parseConversionUnitTable(html);
   const ktwImages = parseProductImages(html, sourceUrl);
-  const sourcePrice = parseKtwSourcePrice(html, sku);
+  const visibleSourcePrice = parseKtwSourcePrice(html, sku, { discountOnly: true });
+  const sourcePrice = visibleSourcePrice || moneyValue(numberValue(product.ktwPrice)) || parseKtwSourcePrice(html, sku);
   const logisticsValid = Boolean(parsed?.widthCm && parsed?.lengthCm && parsed?.heightCm && parsed?.unitWeightKg);
   const logisticsIssue = !parsed
     ? "conversion-unit table was not found"

@@ -59,6 +59,20 @@ test("KTW price parser can compute a discounted website price from list price an
   assert.equal(parseKtwSourcePrice(html, "P525-1310"), 155);
 });
 
+test("KTW price parser can ignore public tracking price when a discounted price is required", () => {
+  const { parseKtwSourcePrice } = loadSyncHelpers();
+  const html = `
+    <script>
+      dataLayer.push({
+        ecommerce: { items: [{ "item_id": "P525-1310", "price": 203.36 }] }
+      });
+    </script>
+  `;
+
+  assert.equal(parseKtwSourcePrice(html, "P525-1310"), 203.36);
+  assert.equal(parseKtwSourcePrice(html, "P525-1310", { discountOnly: true }), 0);
+});
+
 test("stored default cost follows a corrected KTW website price", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-price-"));
   const files = {

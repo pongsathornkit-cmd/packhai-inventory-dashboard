@@ -309,3 +309,28 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(css, /\.product-table-mode-toggle \.table-mode-emoji\s*\{[\s\S]*?color:\s*#9f7658;/);
   assert.match(css, /\.product-table-mode-toggle button\.active \.table-mode-emoji\s*\{[\s\S]*?color:\s*#fff;/);
 });
+
+test("Designer Expert can switch and upload Plain product image versions per KTW angle", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
+  const pairBlock = functionBlock(source, "renderProductImagePairs", "renderAccountingProductRow");
+  const paneBlock = functionBlock(source, "renderPlainImagePane", "renderImageComparison");
+  const uploadBlock = functionBlock(source, "uploadFiles", "deleteAsset");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+
+  assert.match(source, /const PLAIN_IMAGE_VERSION_COUNT = 3;/);
+  assert.match(source, /function plainImageVersionSelection/);
+  assert.match(source, /function plainImageAssetFor/);
+  assert.match(source, /function renderPlainImageVersionControls/);
+  assert.match(pairBlock, /renderPlainImageVersionControls\(product,\s*index\)/);
+  assert.match(paneBlock, /renderPlainImageVersionControls\(product,\s*index\)/);
+  assert.match(source, /data-plain-image-version=/);
+  assert.match(source, /data-plain-image-version-upload=/);
+  assert.match(eventsBlock, /data-plain-image-version/);
+  assert.match(eventsBlock, /savePlainImageVersionSelection/);
+  assert.match(eventsBlock, /data-plain-image-version-upload/);
+  assert.match(uploadBlock, /angleIndex/);
+  assert.match(uploadBlock, /version/);
+  assert.match(css, /\.plain-image-version-selector/);
+  assert.match(css, /\.plain-version-upload/);
+});

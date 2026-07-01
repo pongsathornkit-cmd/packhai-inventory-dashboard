@@ -4,6 +4,7 @@ const crypto = require("crypto");
 
 const STATE_VERSION = 1;
 const ASSET_GROUPS = new Set(["product_images", "packaging_images", "factory_files"]);
+const PLAIN_IMAGE_VERSION_COUNT = 3;
 const COMMERCIAL_NUMBER_FIELDS = [
   "orderQuantity",
   "purchaseUnitCostUsd",
@@ -78,6 +79,24 @@ function redesignStatusFromPayload(value) {
 function normalizeStatusOptions(options) {
   const ids = new Set((options || []).map((item) => item?.id));
   return REDESIGN_STATUS_OPTIONS.every((item) => ids.has(item.id)) ? options : REDESIGN_STATUS_OPTIONS;
+}
+
+function normalizePlainImageAngleIndex(value) {
+  const angleIndex = Math.trunc(numberValue(value));
+  return angleIndex > 0 ? angleIndex : 0;
+}
+
+function normalizePlainImageVersion(value) {
+  const version = Math.trunc(numberValue(value));
+  return version >= 1 && version <= PLAIN_IMAGE_VERSION_COUNT ? version : 1;
+}
+
+function normalizePlainImageVersionSelections(value) {
+  return Object.fromEntries(
+    Object.entries(value || {})
+      .map(([angleIndex, version]) => [normalizePlainImageAngleIndex(angleIndex), normalizePlainImageVersion(version)])
+      .filter(([angleIndex]) => angleIndex > 0)
+  );
 }
 
 function safeSegment(value, fallback = "file") {
@@ -273,6 +292,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       sourceImageUrl: product.sourceImageUrl || logistics?.ktwImages?.[0]?.url || packhai.imageUrl || "",
       sourceUrl: product.sourceUrl || "",
       status: normalizeRedesignStatus(product.status),
+      plainImageVersionSelections: normalizePlainImageVersionSelections(product.plainImageVersionSelections),
       notes: product.notes || "",
       sortOrder: index + 1,
       updatedAt: new Date().toISOString(),
@@ -330,6 +350,11 @@ function mergeStoredState(initialState, storedState) {
           : product.otherUnitCost,
         cargoMode: stored.cargoMode || product.cargoMode,
         cargoType: stored.cargoType || product.cargoType,
+        plainImageVersionSelections: normalizePlainImageVersionSelections(
+          Object.prototype.hasOwnProperty.call(stored, "plainImageVersionSelections")
+            ? stored.plainImageVersionSelections
+            : product.plainImageVersionSelections
+        ),
         assets: Array.isArray(stored.assets) ? stored.assets : [],
         updatedAt: stored.updatedAt || product.updatedAt,
       };
@@ -355,6 +380,7 @@ function savePlainDesignState(options, state) {
     products: (state.products || []).map((product) => ({
       ...product,
       status: normalizeRedesignStatus(product.status),
+      plainImageVersionSelections: normalizePlainImageVersionSelections(product.plainImageVersionSelections),
     })),
   };
   writeJsonAtomic(options.stateFile, nextState);
@@ -385,6 +411,13 @@ function updatePlainDesignProduct(options, payload) {
       if (Object.prototype.hasOwnProperty.call(payload, field)) {
         found[field] = Boolean(payload[field]);
       }
+    }
+    found.plainImageVersionSelections = normalizePlainImageVersionSelections(product.plainImageVersionSelections);
+    if (Object.prototype.hasOwnProperty.call(payload, "plainImageVersionSelections")) {
+      found.plainImageVersionSelections = {
+        ...found.plainImageVersionSelections,
+        ...normalizePlainImageVersionSelections(payload.plainImageVersionSelections),
+      };
     }
     if (Object.prototype.hasOwnProperty.call(payload, "cargoMode")) {
       found.cargoMode = ["truck", "sea"].includes(String(payload.cargoMode)) ? String(payload.cargoMode) : product.cargoMode;
@@ -432,6 +465,8 @@ function savePlainDesignAssetFiles(options, payload) {
   const sku = normalizeSku(payload.sku);
   const group = String(payload.group || "");
   const files = Array.isArray(payload.files) ? payload.files : [];
+  const angleIndex = group === "product_images" ? normalizePlainImageAngleIndex(payload.angleIndex) : 0;
+  const version = group === "product_images" && angleIndex > 0 ? normalizePlainImageVersion(payload.version) : 0;
   if (!sku) throw new Error("SKU is required.");
   if (!ASSET_GROUPS.has(group)) throw new Error("Asset group is invalid.");
   if (!files.length) return [];
@@ -449,7 +484,7 @@ function savePlainDesignAssetFiles(options, payload) {
     if (!fullPath.startsWith(path.resolve(options.assetDir))) throw new Error("Invalid asset path.");
     fs.mkdirSync(path.dirname(fullPath), { recursive: true });
     fs.writeFileSync(fullPath, decoded.buffer);
-    return {
+    const asset = {
       id,
       sku,
       group,
@@ -460,6 +495,12 @@ function savePlainDesignAssetFiles(options, payload) {
       publicUrl: publicAssetUrl(relativePath.replace(/\\/g, "/")),
       uploadedAt: new Date().toISOString(),
     };
+    if (angleIndex > 0) {
+      asset.angleIndex = angleIndex;
+      asset.version = version;
+      asset.slotKey = `angle-${angleIndex}-v${version}`;
+    }
+    return asset;
   });
 
   product.assets = [...created, ...(product.assets || [])];

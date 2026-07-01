@@ -2,6 +2,7 @@
   const embedded = window.__PLAIN_DESIGN__ || {};
   const EXCHANGE_RATE_REFRESH_MS = 5 * 60 * 1000;
   const PURCHASE_ORDERS_STORAGE_KEY = "plainPurchaseOrdersV2";
+  const PLAIN_IMAGE_VERSION_COUNT = 3;
   const MOMO_RATES = {
     truck: {
       label: "ทางรถ 7-14 วัน",
@@ -96,6 +97,24 @@
     return Math.min(max, Math.max(min, numberValue(value)));
   }
 
+  function normalizePlainImageAngleIndex(value) {
+    const angleIndex = Math.trunc(numberValue(value));
+    return angleIndex > 0 ? angleIndex : 0;
+  }
+
+  function normalizePlainImageVersion(value) {
+    const version = Math.trunc(numberValue(value));
+    return version >= 1 && version <= PLAIN_IMAGE_VERSION_COUNT ? version : 1;
+  }
+
+  function normalizePlainImageVersionSelections(value) {
+    return Object.fromEntries(
+      Object.entries(value || {})
+        .map(([angleIndex, version]) => [normalizePlainImageAngleIndex(angleIndex), normalizePlainImageVersion(version)])
+        .filter(([angleIndex]) => angleIndex > 0)
+    );
+  }
+
   function showMessage(message, isError = false) {
     const el = $("statusLine");
     el.hidden = false;
@@ -144,6 +163,7 @@
       cargoType: product.cargoType || "A",
       ktwLogistics: product.ktwLogistics || null,
       ktwImages: Array.isArray(product.ktwImages) ? product.ktwImages : [],
+      plainImageVersionSelections: normalizePlainImageVersionSelections(product.plainImageVersionSelections),
     };
   }
 
@@ -559,6 +579,46 @@
     return (product?.assets || []).filter((asset) => asset.group === group);
   }
 
+  function plainImageVersions() {
+    return Array.from({ length: PLAIN_IMAGE_VERSION_COUNT }, (_, index) => index + 1);
+  }
+
+  function assetAngleIndex(asset) {
+    return normalizePlainImageAngleIndex(asset?.angleIndex);
+  }
+
+  function assetVersion(asset) {
+    return normalizePlainImageVersion(asset?.version);
+  }
+
+  function legacyProductImageAssets(product) {
+    return assetsFor(product, "product_images").filter((asset) => asset?.publicUrl && !assetAngleIndex(asset));
+  }
+
+  function plainImageVersionSelection(product, index) {
+    const angleIndex = normalizePlainImageAngleIndex(index + 1);
+    return normalizePlainImageVersion(product?.plainImageVersionSelections?.[angleIndex] || 1);
+  }
+
+  function plainImageAssetFor(product, index, version = plainImageVersionSelection(product, index)) {
+    const angleIndex = normalizePlainImageAngleIndex(index + 1);
+    if (!angleIndex) return null;
+    const slottedAsset = assetsFor(product, "product_images").find((asset) => (
+      asset?.publicUrl &&
+      assetAngleIndex(asset) === angleIndex &&
+      assetVersion(asset) === normalizePlainImageVersion(version)
+    ));
+    if (slottedAsset) return slottedAsset;
+    return normalizePlainImageVersion(version) === 1 ? legacyProductImageAssets(product)[index] || null : null;
+  }
+
+  function plainProductImageCompletionCount(product) {
+    const target = assetTarget(product, "product_images");
+    return Array.from({ length: target })
+      .filter((_, index) => plainImageAssetFor(product, index)?.publicUrl)
+      .length;
+  }
+
   function completion(product) {
     const completed = state.assetGroups.filter((group) => {
       const progress = assetProgress(product, group.id);
@@ -581,7 +641,7 @@
       alt: ktwCover.alt || product.name || product.sku || "",
       mode: "ktw",
     };
-    const plainAsset = assetsFor(product, "product_images")[0];
+    const plainAsset = plainImageAssetFor(product, 0) || assetsFor(product, "product_images")[0];
     if (state.productImageMode === "plain") {
       if (plainAsset?.publicUrl) {
         return {
@@ -603,7 +663,11 @@
   function tableImageGalleryFor(product, mode = state.productImageMode) {
     const normalizedMode = mode === "plain" ? "plain" : "ktw";
     if (normalizedMode === "plain") {
-      return assetsFor(product, "product_images")
+      const plainImages = assetsFor(product, "product_images");
+      const highestVersionedAngle = Math.max(0, ...plainImages.map(assetAngleIndex));
+      const galleryCount = Math.max(1, ktwImagesFor(product).length, legacyProductImageAssets(product).length, highestVersionedAngle);
+      return Array.from({ length: galleryCount })
+        .map((_, index) => plainImageAssetFor(product, index))
         .filter((asset) => asset?.publicUrl)
         .map((asset, index) => ({
           src: asset.publicUrl,
@@ -642,7 +706,7 @@
   }
 
   function assetProgress(product, groupId) {
-    const count = assetsFor(product, groupId).length;
+    const count = groupId === "product_images" ? plainProductImageCompletionCount(product) : assetsFor(product, groupId).length;
     const target = assetTarget(product, groupId);
     const tone = count >= target ? "green" : count > 0 ? "orange" : "red";
     return { count, target, tone };
@@ -717,27 +781,61 @@
       </button>`;
   }
 
-  function renderPlainImagePane(asset, index) {
+  function renderPlainImageVersionControls(product, index) {
+    const angleIndex = normalizePlainImageAngleIndex(index + 1);
+    const selectedVersion = plainImageVersionSelection(product, index);
+    return `
+      <div class="plain-image-version-selector" role="group" aria-label="Plain image version angle ${fmtQty.format(angleIndex)}">
+        ${plainImageVersions().map((version) => {
+          const asset = plainImageAssetFor(product, index, version);
+          const active = version === selectedVersion;
+          return `
+            <button class="plain-image-version-button ${active ? "active" : ""} ${asset ? "has-file" : "missing-file"}" type="button"
+              data-plain-image-version="${escapeHtml(product.sku)}"
+              data-angle-index="${escapeHtml(angleIndex)}"
+              data-version="${escapeHtml(version)}"
+              aria-pressed="${active ? "true" : "false"}"
+              title="PLAIN angle ${fmtQty.format(angleIndex)} version ${fmtQty.format(version)}">
+              V${fmtQty.format(version)}
+            </button>`;
+        }).join("")}
+        <label class="plain-version-upload" title="Upload PLAIN image for selected version">
+          +
+          <input type="file" accept="image/*"
+            data-plain-image-version-upload="${escapeHtml(product.sku)}"
+            data-angle-index="${escapeHtml(angleIndex)}"
+            data-version="${escapeHtml(selectedVersion)}" />
+        </label>
+      </div>`;
+  }
+
+  function renderPlainImagePane(product, index) {
+    const selectedVersion = plainImageVersionSelection(product, index);
+    const asset = plainImageAssetFor(product, index, selectedVersion);
+    const versionControls = renderPlainImageVersionControls(product, index);
     if (!asset) {
       return `
-        <label class="image-compare-empty" for="product_images-input">
-          <strong>รอรูป PLAIN</strong>
-          <span>อัปโหลดรูปมุมที่ ${fmtQty.format(index + 1)}</span>
-        </label>`;
+        <div class="plain-image-preview">
+          <div class="image-compare-empty">
+            <strong>รอรูป PLAIN V${fmtQty.format(selectedVersion)}</strong>
+            <span>มุมที่ ${fmtQty.format(index + 1)}</span>
+          </div>
+          ${versionControls}
+        </div>`;
     }
     return `
       <div class="plain-image-preview">
-        ${imagePreviewButton(asset.publicUrl, asset.fileName, `PLAIN มุมที่ ${fmtQty.format(index + 1)}`, asset.fileName)}
+        ${imagePreviewButton(asset.publicUrl, asset.fileName, `PLAIN มุมที่ ${fmtQty.format(index + 1)} V${fmtQty.format(selectedVersion)}`, asset.fileName)}
+        ${versionControls}
         <button class="image-delete-button" type="button" data-delete-asset="${escapeHtml(asset.id)}" aria-label="ลบรูป PLAIN ${escapeHtml(asset.fileName)}">ลบรูป PLAIN</button>
       </div>`;
   }
 
   function renderImageComparison(product) {
     const ktwImages = ktwImagesFor(product);
-    const plainImages = assetsFor(product, "product_images");
     const progress = assetProgress(product, "product_images");
-    const pairs = ktwImages.map((ktwImage, index) => ({ ktwImage, plainImage: plainImages[index] || null }));
-    const extraPlain = plainImages.slice(ktwImages.length);
+    const pairs = ktwImages.map((ktwImage, index) => ({ ktwImage, plainImage: plainImageAssetFor(product, index) }));
+    const extraPlain = legacyProductImageAssets(product).slice(ktwImages.length);
     return `
       <section class="image-compare-card" id="image-compare">
         <div class="mini-heading">
@@ -761,7 +859,7 @@
                 </div>
                 <div class="compare-pane">
                   <span>PLAIN</span>
-                  ${renderPlainImagePane(plainImage, index)}
+                  ${renderPlainImagePane(product, index)}
                 </div>
               </div>
             </article>`).join("")}
@@ -1050,12 +1148,13 @@
   function renderProductImagePairs(product) {
     const ktwImages = ktwImagesFor(product);
     const plainImages = assetsFor(product, "product_images");
-    const pairCount = Math.max(1, ktwImages.length, plainImages.length);
+    const highestVersionedAngle = Math.max(0, ...plainImages.map(assetAngleIndex));
+    const pairCount = Math.max(1, ktwImages.length, legacyProductImageAssets(product).length, highestVersionedAngle);
     return `
       <div class="product-image-pairs">
         ${Array.from({ length: pairCount }).map((_, index) => {
           const ktwImage = ktwImages[index] || ktwImages[0] || {};
-          const plainImage = plainImages[index] || null;
+          const plainImage = plainImageAssetFor(product, index);
           return `
             <article class="product-image-pair ${plainImage ? "matched" : "missing"}">
               <strong>มุม ${fmtQty.format(index + 1)}</strong>
@@ -1071,6 +1170,7 @@
                   ${plainImage?.publicUrl
                     ? imagePreviewButton(plainImage.publicUrl, plainImage.fileName, `PLAIN มุม ${fmtQty.format(index + 1)}`, plainImage.fileName)
                     : `<div class="product-image-missing"><b>รอรูป PLAIN</b><em>${fmtQty.format(index + 1)}</em></div>`}
+                  ${renderPlainImageVersionControls(product, index)}
                 </div>
               </div>
             </article>`;
@@ -1506,6 +1606,20 @@
     state.products = state.products.map((product) => product.sku === sku ? normalizeProduct({ ...product, ...updates }) : product);
   }
 
+  async function savePlainImageVersionSelection(sku, angleIndex, version) {
+    const product = state.products.find((item) => item.sku === sku);
+    const normalizedAngleIndex = normalizePlainImageAngleIndex(angleIndex);
+    if (!product || !normalizedAngleIndex) return;
+    const plainImageVersionSelections = {
+      ...normalizePlainImageVersionSelections(product.plainImageVersionSelections),
+      [normalizedAngleIndex]: normalizePlainImageVersion(version),
+    };
+    updateLocalProduct(sku, { plainImageVersionSelections });
+    renderTrackerTable();
+    renderDesignDetail();
+    await updateProduct(sku, { plainImageVersionSelections });
+  }
+
   function queueProductCommercialSave(sku, updates) {
     if (!queueProductCommercialSave.timers) queueProductCommercialSave.timers = new Map();
     const timers = queueProductCommercialSave.timers;
@@ -1661,6 +1775,23 @@
       const input = $(`${group.id}-input`);
       input?.addEventListener("change", () => {
         uploadFiles(product.sku, group.id, Array.from(input.files || []));
+        input.value = "";
+      });
+    });
+    const detailRoot = $("design");
+    detailRoot?.querySelectorAll("[data-plain-image-version]").forEach((button) => {
+      button.addEventListener("click", () => savePlainImageVersionSelection(
+        button.dataset.plainImageVersion,
+        button.dataset.angleIndex,
+        button.dataset.version
+      ));
+    });
+    detailRoot?.querySelectorAll("[data-plain-image-version-upload]").forEach((input) => {
+      input.addEventListener("change", () => {
+        uploadFiles(input.dataset.plainImageVersionUpload, "product_images", Array.from(input.files || []), {
+          angleIndex: input.dataset.angleIndex,
+          version: input.dataset.version,
+        });
         input.value = "";
       });
     });
@@ -2297,18 +2428,28 @@
     });
   }
 
-  async function uploadFiles(sku, group, files) {
+  async function uploadFiles(sku, group, files, metadata = {}) {
     if (!files.length) return;
     try {
       showMessage(`กำลังอัปโหลด ${files.length} ไฟล์`);
       const payloadFiles = await Promise.all(files.map(readFileAsDataUrl));
+      const angleIndex = normalizePlainImageAngleIndex(metadata.angleIndex);
+      const version = normalizePlainImageVersion(metadata.version);
+      const payload = { sku, group, files: payloadFiles };
+      if (group === "product_images" && angleIndex > 0) {
+        payload.angleIndex = angleIndex;
+        payload.version = version;
+      }
       const created = await api("/api/plain-design/upload", {
         method: "POST",
-        body: JSON.stringify({ sku, group, files: payloadFiles }),
+        body: JSON.stringify(payload),
       });
       state.products = state.products.map((product) => {
         if (product.sku !== sku) return product;
-        return { ...product, assets: [...created, ...(product.assets || [])] };
+        const plainImageVersionSelections = angleIndex > 0
+          ? { ...normalizePlainImageVersionSelections(product.plainImageVersionSelections), [angleIndex]: version }
+          : product.plainImageVersionSelections;
+        return normalizeProduct({ ...product, plainImageVersionSelections, assets: [...created, ...(product.assets || [])] });
       });
       showMessage(`อัปโหลด ${created.length} ไฟล์แล้ว`);
       render();
@@ -2432,6 +2573,15 @@
       refreshPoRealtime();
     });
     $("productRows").addEventListener("change", (event) => {
+      const versionUpload = event.target.closest("[data-plain-image-version-upload]");
+      if (versionUpload) {
+        uploadFiles(versionUpload.dataset.plainImageVersionUpload, "product_images", Array.from(versionUpload.files || []), {
+          angleIndex: versionUpload.dataset.angleIndex,
+          version: versionUpload.dataset.version,
+        });
+        versionUpload.value = "";
+        return;
+      }
       const tableCostInput = event.target.closest("[data-table-usd]");
       if (tableCostInput) updateProduct(tableCostInput.dataset.tableUsd, poUsdCostUpdates(tableCostInput.dataset.tableUsd, tableCostInput.value));
     });
@@ -2448,6 +2598,15 @@
           title: imageButton.dataset.imageTitle,
           caption: imageButton.dataset.imageCaption,
         });
+        return;
+      }
+      const versionButton = event.target.closest("[data-plain-image-version]");
+      if (versionButton) {
+        savePlainImageVersionSelection(
+          versionButton.dataset.plainImageVersion,
+          versionButton.dataset.angleIndex,
+          versionButton.dataset.version
+        );
         return;
       }
       if (event.target.closest("[data-table-usd], button, a, input, select, textarea, label")) return;

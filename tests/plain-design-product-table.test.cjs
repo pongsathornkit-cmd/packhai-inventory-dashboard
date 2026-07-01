@@ -131,6 +131,23 @@ test("Designer Expert can send one AI design command for selected products in bu
   assert.match(css, /@keyframes bulk-ai-spin/);
 });
 
+test("AI Bulk prompt typing does not rerender the bulk bar", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
+  const promptInputBlock = blockUntil(
+    eventsBlock,
+    'const prompt = event.target.closest("[data-bulk-ai-prompt]");',
+    '$("bulkStatusBar")?.addEventListener("click"'
+  );
+
+  assert.match(source, /function canStartBulkAiDesign/);
+  assert.match(source, /function refreshBulkAiDesignStartButton/);
+  assert.match(promptInputBlock, /state\.bulkAiPrompt\s*=\s*prompt\.value/);
+  assert.match(promptInputBlock, /refreshBulkAiDesignStartButton\(\)/);
+  assert.doesNotMatch(promptInputBlock, /renderBulkStatusBar/);
+  assert.doesNotMatch(promptInputBlock, /\.focus\(\)/);
+});
+
 test("Designer Expert AI commands accept reference image uploads", () => {
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");

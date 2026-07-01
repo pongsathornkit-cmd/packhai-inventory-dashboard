@@ -1095,6 +1095,20 @@
     state.bulkStatusSelectedSkus = new Set([...state.bulkStatusSelectedSkus].filter((sku) => visibleSkus.has(sku)));
   }
 
+  function canStartBulkAiDesign() {
+    return (
+      normalizeProductTableMode(state.productTableMode) === "designer" &&
+      state.bulkStatusSelectedSkus.size > 0 &&
+      Boolean(String(state.bulkAiPrompt || "").trim()) &&
+      !state.bulkAiRequest?.running
+    );
+  }
+
+  function refreshBulkAiDesignStartButton() {
+    const button = document.querySelector("[data-bulk-ai-design-start]");
+    if (button) button.disabled = !canStartBulkAiDesign();
+  }
+
   function renderBulkStatusBar(rows = filteredProducts()) {
     const bar = $("bulkStatusBar");
     if (!bar) return;
@@ -1141,7 +1155,7 @@
             ${state.bulkAiReferenceImages.length ? `<button class="ghost-button ai-reference-clear" data-bulk-ai-reference-clear type="button">ล้าง</button>` : ""}
             ${renderAiReferenceSummary(state.bulkAiReferenceImages)}
           </div>
-          <button class="secondary-button" data-bulk-ai-design-start type="button" ${selectedCount && state.bulkAiPrompt.trim() && !aiBusy ? "" : "disabled"}>
+          <button class="secondary-button" data-bulk-ai-design-start type="button" ${canStartBulkAiDesign() ? "" : "disabled"}>
             <span class="bulk-ai-spinner" aria-hidden="true"></span>
             <span>${aiBusy ? "กำลังออกแบบ Bulk" : "สั่ง AI Bulk"}</span>
           </button>
@@ -2905,8 +2919,7 @@
       const prompt = event.target.closest("[data-bulk-ai-prompt]");
       if (!prompt) return;
       state.bulkAiPrompt = prompt.value;
-      renderBulkStatusBar(filteredProducts());
-      document.querySelector("[data-bulk-ai-prompt]")?.focus();
+      refreshBulkAiDesignStartButton();
     });
     $("bulkStatusBar")?.addEventListener("click", (event) => {
       if (event.target.closest("[data-bulk-status-apply]")) {

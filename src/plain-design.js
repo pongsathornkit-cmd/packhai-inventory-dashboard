@@ -2191,7 +2191,11 @@
       showMessage("เลือก SKU ที่ต้องการลบราคาต้นทุนก่อน", true);
       return;
     }
-    if (window.confirm && !window.confirm(`ลบราคาต้นทุนสินค้า ${fmtQty.format(skus.length)} SKU ที่เลือกใช่ไหม?`)) return;
+    if (typeof window.confirm !== "function") {
+      showMessage("ไม่สามารถเปิดหน้าต่างยืนยันได้ กรุณาลองใหม่ในเบราว์เซอร์", true);
+      return;
+    }
+    if (!window.confirm(`ลบราคาต้นทุนสินค้า ${fmtQty.format(skus.length)} SKU ที่เลือกใช่ไหม?`)) return;
     const previousProducts = state.products;
     const previousSelection = new Set(state.bulkStatusSelectedSkus);
     try {

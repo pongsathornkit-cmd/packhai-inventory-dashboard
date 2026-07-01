@@ -111,7 +111,8 @@ test("product list can bulk clear selected USD costs after confirmation", () => 
   assert.match(bulkBarBlock, /data-bulk-cost-clear/);
   assert.match(bulkBarBlock, /selectedCount \? "" : "disabled"/);
   assert.match(source, /function clearBulkSelectedCosts/);
-  assert.match(clearBlock, /window\.confirm/);
+  assert.match(clearBlock, /typeof window\.confirm !== "function"/);
+  assert.match(clearBlock, /!window\.confirm/);
   assert.match(clearBlock, /purchaseUnitCostUsd:\s*0/);
   assert.match(clearBlock, /purchaseUnitCost:\s*0/);
   assert.match(clearBlock, /purchaseUnitCostCleared:\s*true/);

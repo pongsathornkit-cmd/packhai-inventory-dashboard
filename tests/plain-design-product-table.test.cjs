@@ -160,6 +160,21 @@ test("product detail sidebar shows image comparison before upload groups", () =>
   assert.ok(compareIndex < uploadStackIndex, "image comparison appears before upload groups");
 });
 
+test("product detail sidebar places the KTW source link beside the top SKU", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const detailBlock = functionBlock(source, "renderDesignDetail", "numberInput");
+  const productCardBlock = blockUntil(detailBlock, '<section class="detail-product-card">', '<section class="detail-kpis">');
+  const ktwReferenceBlock = blockUntil(detailBlock, '<section class="source-card ktw-reference">', '<section class="packhai-card">');
+  const skuIndex = productCardBlock.indexOf("<strong>${escapeHtml(product.sku)}</strong>");
+  const sourceLinkIndex = productCardBlock.indexOf('class="detail-ktw-source-link"');
+
+  assert.ok(skuIndex >= 0, "top product card shows the selected SKU");
+  assert.ok(sourceLinkIndex > skuIndex, "KTW source link appears after the top SKU");
+  assert.match(productCardBlock, /href="\$\{escapeHtml\(product\.sourceUrl\)\}"/);
+  assert.match(productCardBlock, /target="_blank"\s+rel="noreferrer"/);
+  assert.doesNotMatch(ktwReferenceBlock, /href="\$\{escapeHtml\(product\.sourceUrl\)\}"/);
+});
+
 test("product list supports Accounting, Designer, and combined table modes", () => {
   const source = readRepoFile("src/plain-design.js");
   const template = readRepoFile("src/plain-design.template.html");

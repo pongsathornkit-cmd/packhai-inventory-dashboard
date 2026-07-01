@@ -1276,7 +1276,10 @@
         <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" />
         <div>
           <span>SKU</span>
-          <strong>${escapeHtml(product.sku)}</strong>
+          <div class="detail-sku-line">
+            <strong>${escapeHtml(product.sku)}</strong>
+            <a class="detail-ktw-source-link" href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">ดูต้นฉบับจาก KTW</a>
+          </div>
           <span>ชื่อสินค้า</span>
           <p>${escapeHtml(product.name)}</p>
         </div>
@@ -1308,7 +1311,6 @@
           <strong>${fmtMoney.format(product.ktwPrice || 0)}</strong>
           <small>จำนวนสั่งซื้อ ${fmtQty.format(product.orderQuantity || 0)} ใบ</small>
           <small>${escapeHtml(shippingMeasureSummary(product))}</small>
-          <a href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">ดูต้นฉบับจาก KTW</a>
         </div>
       </section>
       <section class="packhai-card">

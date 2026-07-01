@@ -1373,6 +1373,9 @@ h2 {
 
 .product-table-mode-toggle button,
 .product-image-mode-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   min-height: 28px;
   border: 0;
   border-radius: 5px;
@@ -1381,6 +1384,11 @@ h2 {
   padding: 0 10px;
   font-size: 12px;
   font-weight: 780;
+}
+
+.table-mode-emoji {
+  font-size: 13px;
+  line-height: 1;
 }
 
 .product-table-mode-toggle button.active,

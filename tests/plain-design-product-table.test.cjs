@@ -278,6 +278,8 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(template, /data-product-table-mode="combined"/);
   assert.match(template, /Accounting Expert/);
   assert.match(template, /Designer Expert/);
+  assert.match(template, /<span class="table-mode-emoji" aria-hidden="true">💰<\/span>\s*Accounting Expert/);
+  assert.match(template, /<span class="table-mode-emoji" aria-hidden="true">🎨<\/span>\s*Designer Expert/);
   assert.match(template, /Accounting&Design Mode/);
   assert.match(source, /productTableMode:\s*localStorage\.getItem\("plainProductTableMode"\)\s*\|\|\s*"combined"/);
   assert.match(source, /function normalizeProductTableMode/);

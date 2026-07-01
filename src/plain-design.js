@@ -304,6 +304,38 @@
     return { completed, total, percent: Math.round((completed / total) * 100) };
   }
 
+  function assetTarget(groupId) {
+    return groupId === "factory_files" ? 2 : 2;
+  }
+
+  function assetProgress(product, groupId) {
+    const count = assetsFor(product, groupId).length;
+    const target = assetTarget(groupId);
+    const tone = count >= target ? "green" : count > 0 ? "orange" : "red";
+    return { count, target, tone };
+  }
+
+  function assetPill(product, groupId) {
+    const progress = assetProgress(product, groupId);
+    return `<span class="asset-pill ${progress.tone}">${fmtQty.format(progress.count)}/${fmtQty.format(progress.target)}</span>`;
+  }
+
+  function renderProductTableHead() {
+    const header = document.querySelector(".product-table thead tr");
+    if (!header) return;
+    header.innerHTML = `
+      <th>ลำดับ</th>
+      <th>รูปสินค้า</th>
+      <th>SKU</th>
+      <th>ชื่อสินค้า</th>
+      <th class="num">ราคา KTW</th>
+      <th class="num">จำนวนสั่งซื้อ</th>
+      <th>สถานะรีดีไซน์</th>
+      <th class="num">รูปสินค้า</th>
+      <th class="num">รูปแพคเกจจิ้ง</th>
+      <th class="num">ไฟล์โรงงาน</th>`;
+  }
+
   function filteredProducts() {
     const q = state.query.trim().toLowerCase();
     return state.products.filter((product) => {
@@ -385,6 +417,36 @@
             </tr>`;
         }).join("")
       : `<tr><td class="empty-state" colspan="7">ไม่พบสินค้า</td></tr>`;
+  }
+
+  function renderTrackerTable() {
+    const rows = filteredProducts();
+    renderProductTableHead();
+    $("tableSubtitle").textContent = `รวม ${fmtQty.format(rows.length)} จาก ${fmtQty.format(state.products.length)} รายการ`;
+    $("productRows").innerHTML = rows.length
+      ? rows.map((product, index) => {
+          const status = statusMeta(product.status);
+          const calc = lineCalc(product);
+          return `
+            <tr class="${product.sku === state.selectedSku ? "selected" : ""}" data-sku="${escapeHtml(product.sku)}">
+              <td class="row-index">${fmtQty.format(index + 1)}</td>
+              <td class="product-image-cell">
+                <img class="table-product-image" src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" />
+              </td>
+              <td><strong class="sku-code">${escapeHtml(product.sku)}</strong></td>
+              <td>
+                <span class="table-product-name">${escapeHtml(product.name)}</span>
+                <small>${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
+              </td>
+              <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
+              <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
+              <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
+              <td class="num">${assetPill(product, "product_images")}</td>
+              <td class="num">${assetPill(product, "packaging_images")}</td>
+              <td class="num">${assetPill(product, "factory_files")}</td>
+            </tr>`;
+        }).join("")
+      : `<tr><td class="empty-state" colspan="10">ไม่พบสินค้า</td></tr>`;
   }
 
   function fileSize(value) {
@@ -480,8 +542,115 @@
       </label>
       <button class="ghost-button" id="saveNotes" type="button">บันทึกหมายเหตุ</button>
       <div class="upload-stack" id="factory">
-        ${state.assetGroups.map((group) => renderUploadGroup(product, group)).join("")}
+        ${state.assetGroups.map((group) => renderDesignUploadGroup(product, group)).join("")}
       </div>`;
+    bindDetailEvents(product);
+  }
+
+  function renderDesignDetail() {
+    const product = selectedProduct();
+    if (!product) {
+      $("design").innerHTML = `<div class="empty-state">เลือกสินค้าเพื่อดูรายละเอียด</div>`;
+      return;
+    }
+    const status = statusMeta(product.status);
+    const packhai = product.packhai || {};
+    const calc = lineCalc(product);
+    $("design").innerHTML = `
+      <div class="detail-toolbar">
+        <strong>รายละเอียดสินค้า</strong>
+        <span>${escapeHtml(status.label)}</span>
+      </div>
+      <section class="detail-product-card">
+        <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" />
+        <div>
+          <span>SKU</span>
+          <strong>${escapeHtml(product.sku)}</strong>
+          <span>ชื่อสินค้า</span>
+          <p>${escapeHtml(product.name)}</p>
+        </div>
+      </section>
+      <section class="detail-kpis">
+        <article>
+          <span>ราคา KTW</span>
+          <strong>${fmtMoney.format(product.ktwPrice || 0)}</strong>
+        </article>
+        <article>
+          <span>จำนวนสั่งซื้อ</span>
+          <strong>${fmtQty.format(product.orderQuantity || 0)} ใบ</strong>
+        </article>
+        <label class="field">
+          <span>สถานะรีดีไซน์</span>
+          <select id="detailStatus">
+            ${state.statusOptions.map((item) => `<option value="${escapeHtml(item.id)}" ${item.id === product.status ? "selected" : ""}>${escapeHtml(item.label)}</option>`).join("")}
+          </select>
+        </label>
+      </section>
+      <div class="upload-stack" id="factory">
+        ${state.assetGroups.map((group) => renderDesignUploadGroup(product, group)).join("")}
+      </div>
+      <section class="source-card ktw-reference">
+        <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" />
+        <div>
+          <span>ข้อมูลอ้างอิงจาก KTW</span>
+          <strong>${fmtMoney.format(product.ktwPrice || 0)}</strong>
+          <small>จำนวนสั่งซื้อ ${fmtQty.format(product.orderQuantity || 0)} ใบ</small>
+          <a href="${escapeHtml(product.sourceUrl)}" target="_blank" rel="noreferrer">ดูต้นฉบับจาก KTW</a>
+        </div>
+      </section>
+      <section class="packhai-card">
+        <div>
+          <span>Packhai Stock Link</span>
+          <strong>${packhai.matched ? `${fmtQty.format(packhai.quantity || 0)} ชิ้น` : "ไม่พบ SKU"}</strong>
+          <small>${packhai.matched ? `${fmtQty.format(packhai.stockRows || 0)} แถวคลัง · ${fmtMoney.format(packhai.inventoryValue || 0)}` : "พร้อมเชื่อมเมื่อ Packhai มี SKU นี้"}</small>
+          <a href="${escapeHtml(packhai.url || `../#inventory-detail?sku=${encodeURIComponent(product.sku)}`)}">ค้นใน Packhai</a>
+        </div>
+      </section>
+      <section class="calc-card" id="itemCalculator">
+        <div class="mini-heading">
+          <div>
+            <h3>คำนวณต้นทุนรายชิ้น</h3>
+            <span>ต้นทุน USD แปลงเป็นบาทด้วยเรต Google Finance</span>
+          </div>
+          <button class="ghost-button" id="saveCommercial" type="button">บันทึก</button>
+        </div>
+        ${renderExchangeCard("compact")}
+        <div class="calc-grid">
+          ${numberInput("orderQuantity", "จำนวนสั่ง", fieldValue(product, "orderQuantity"), "1")}
+          ${numberInput("purchaseUnitCostUsd", "ต้นทุน USD/ชิ้น", displayPurchaseUnitCostUsd(product), "0.0001")}
+          ${numberInput("saleUnitPrice", "ราคาขาย/ชิ้น", fieldValue(product, "saleUnitPrice"), "0.01")}
+          ${numberInput("packagingUnitCost", "แพคเกจ/ชิ้น", fieldValue(product, "packagingUnitCost"), "0.01")}
+          ${numberInput("otherUnitCost", "ค่าอื่น/ชิ้น", fieldValue(product, "otherUnitCost"), "0.01")}
+          <label class="field">
+            <span>ขนส่ง</span>
+            <select id="cargoMode">
+              <option value="truck" ${product.cargoMode === "truck" ? "selected" : ""}>ทางรถ</option>
+              <option value="sea" ${product.cargoMode === "sea" ? "selected" : ""}>ทางเรือ</option>
+            </select>
+          </label>
+          <label class="field">
+            <span>ประเภทสินค้า</span>
+            <select id="cargoType">
+              ${["A", "M", "O", "X", "Z"].map((type) => {
+                const mode = MOMO_RATES[product.cargoMode] ? product.cargoMode : "truck";
+                return `<option value="${type}" ${product.cargoType === type ? "selected" : ""}>${escapeHtml(MOMO_RATES[mode][type].label)}</option>`;
+              }).join("")}
+            </select>
+          </label>
+          ${numberInput("widthCm", "กว้าง/ชิ้น (ซม.)", fieldValue(product, "widthCm"), "0.01")}
+          ${numberInput("lengthCm", "ยาว/ชิ้น (ซม.)", fieldValue(product, "lengthCm"), "0.01")}
+          ${numberInput("heightCm", "สูง/ชิ้น (ซม.)", fieldValue(product, "heightCm"), "0.01")}
+          ${numberInput("unitWeightKg", "น้ำหนัก/ชิ้น (กก.)", fieldValue(product, "unitWeightKg"), "0.01")}
+        </div>
+        <div class="calc-result" id="itemCalcResult">
+          ${renderCalcResult(calc)}
+        </div>
+      </section>
+      <label class="field">
+        <span>หมายเหตุทีม/โรงงาน</span>
+        <textarea id="detailNotes" rows="4">${escapeHtml(product.notes || "")}</textarea>
+      </label>
+      <button class="ghost-button" id="saveNotes" type="button">บันทึกหมายเหตุ</button>`;
     bindDetailEvents(product);
   }
 
@@ -580,14 +749,14 @@
       const nextProduct = selectedProduct();
       $("itemCalcResult").innerHTML = renderCalcResult(lineCalc(nextProduct));
       renderStats();
-      renderTable();
+      renderTrackerTable();
       renderPoPanel();
     });
     $("cargoMode").addEventListener("change", () => {
       updateLocalProduct(product.sku, collectCommercialFields());
-      renderDetail();
+      renderDesignDetail();
       renderStats();
-      renderTable();
+      renderTrackerTable();
       renderPoPanel();
     });
     state.assetGroups.forEach((group) => {
@@ -629,6 +798,45 @@
               </div>
               <button type="button" data-delete-asset="${escapeHtml(asset.id)}" aria-label="ลบไฟล์">x</button>
             </article>`).join("")}
+        </div>
+      </section>`;
+  }
+
+  function renderDesignUploadGroup(product, group) {
+    const assets = assetsFor(product, group.id);
+    const progress = assetProgress(product, group.id);
+    return `
+      <section class="upload-group design-upload-group">
+        <div class="upload-title">
+          <div>
+            <strong>${escapeHtml(group.label)}</strong>
+            <span>${escapeHtml(group.description)}</span>
+          </div>
+          <span class="upload-count">${fmtQty.format(progress.count)}/${fmtQty.format(progress.target)} ไฟล์</span>
+        </div>
+        <div class="upload-grid">
+          <label class="drop-zone" for="${escapeHtml(group.id)}-input">
+            <strong>ลากไฟล์มาวางที่นี่</strong>
+            <span>หรือ</span>
+            <b>เลือกไฟล์</b>
+          </label>
+          <input id="${escapeHtml(group.id)}-input" type="file" multiple accept="${escapeHtml(group.accept || "")}" />
+          <div class="asset-list">
+            ${assets.length
+              ? assets.map((asset) => `
+                <article class="asset-chip">
+                  ${String(asset.mimeType || "").startsWith("image/")
+                    ? `<img src="${escapeHtml(asset.publicUrl)}" alt="${escapeHtml(asset.fileName)}" loading="lazy" />`
+                    : `<span class="file-icon">FILE</span>`}
+                  <div>
+                    <a href="${escapeHtml(asset.publicUrl)}" target="_blank" rel="noreferrer">${escapeHtml(asset.fileName)}</a>
+                    <small>${fileSize(asset.fileSize)}</small>
+                  </div>
+                  <span class="asset-status ok">OK</span>
+                  <button type="button" data-delete-asset="${escapeHtml(asset.id)}" aria-label="ลบไฟล์">ลบ</button>
+                </article>`).join("")
+              : `<div class="asset-empty">ยังไม่มีไฟล์</div>`}
+          </div>
         </div>
       </section>`;
   }
@@ -708,6 +916,26 @@
     bindPoEvents();
   }
 
+  function syncActiveNav() {
+    const activeHash = window.location.hash || "#products";
+    document.querySelectorAll(".plain-nav a").forEach((link) => {
+      link.classList.toggle("active", link.getAttribute("href") === activeHash);
+    });
+  }
+
+  function applyReferenceCopy() {
+    const title = document.querySelector(".topbar h1");
+    if (title) title.textContent = "งานออกแบบรีดีไซน์สินค้า PLAIN (KTW Source)";
+    const navLabels = ["รายการสินค้า", "งานออกแบบ", "ใบสั่งซื้อ", "ไฟล์โรงงาน", "สรุปสถานะ"];
+    document.querySelectorAll(".plain-nav a").forEach((link, index) => {
+      if (navLabels[index]) link.textContent = navLabels[index];
+    });
+    const productHeading = document.querySelector(".product-panel .section-heading h2");
+    if (productHeading) productHeading.textContent = "รายการสินค้า";
+    const search = $("searchInput");
+    if (search) search.placeholder = "ค้นหา SKU หรือชื่อสินค้า...";
+  }
+
   function bindPoEvents() {
     $("printPo")?.addEventListener("click", () => window.print());
     document.querySelectorAll("#purchase-order [data-refresh-exchange]").forEach((button) => {
@@ -717,8 +945,8 @@
       state.fastCargoDiscount = clamp(event.target.value, 0, 100);
       localStorage.setItem("plainFastCargoDiscount", String(state.fastCargoDiscount));
       renderStats();
-      renderTable();
-      renderDetail();
+      renderTrackerTable();
+      renderDesignDetail();
       renderPoPanel();
     });
     [["poNumber", "plainPoNumber"], ["poDate", "plainPoDate"], ["supplierName", "plainSupplierName"]].forEach(([id, key]) => {
@@ -800,16 +1028,24 @@
   function render() {
     renderFilters();
     renderStats();
-    renderTable();
-    renderDetail();
+    renderTrackerTable();
+    renderDesignDetail();
     renderPoPanel();
   }
 
   function bindEvents() {
     $("refreshState").addEventListener("click", loadState);
+    window.addEventListener("hashchange", syncActiveNav);
     $("searchInput").addEventListener("input", (event) => {
       state.query = event.target.value;
-      renderTable();
+      renderTrackerTable();
+    });
+    $("clearFilters")?.addEventListener("click", () => {
+      state.query = "";
+      state.category = "all";
+      state.status = "all";
+      $("searchInput").value = "";
+      render();
     });
     $("categoryFilter").addEventListener("change", (event) => {
       state.category = event.target.value;
@@ -828,7 +1064,9 @@
     });
   }
 
+  applyReferenceCopy();
   bindEvents();
+  syncActiveNav();
   loadState();
   loadExchangeRate(false);
   window.setInterval(() => loadExchangeRate(false), EXCHANGE_RATE_REFRESH_MS);

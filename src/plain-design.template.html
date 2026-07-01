@@ -35,12 +35,16 @@
       <main class="plain-workspace">
         <header class="topbar">
           <div>
-            <p>PLAIN Redesign Workflow</p>
             <h1>งานรีดีไซน์สินค้า PLAIN</h1>
           </div>
           <div class="topbar-actions">
             <a class="secondary-button" href="../#inventory-detail">Packhai Stock</a>
             <button class="primary-button" id="refreshState" type="button">Refresh</button>
+            <div class="designer-chip">
+              <span>DS</span>
+              <strong>Designer</strong>
+              <small>ออกจากระบบ</small>
+            </div>
           </div>
         </header>
 
@@ -60,6 +64,7 @@
             <span>สถานะ</span>
             <select id="statusFilter"></select>
           </label>
+          <button class="ghost-button clear-filters" id="clearFilters" type="button">ล้างตัวกรอง</button>
         </section>
 
         <section class="main-grid">

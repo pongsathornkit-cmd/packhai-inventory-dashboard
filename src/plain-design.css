@@ -1509,94 +1509,6 @@ h2 {
   font-size: 12px;
 }
 
-.bulk-ai-design {
-  flex: 1 1 100%;
-  display: grid;
-  grid-template-columns: minmax(142px, 0.55fr) minmax(260px, 1.55fr) minmax(190px, 0.75fr) auto;
-  align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: 1px solid #eadfd4;
-  border-radius: 7px;
-  background: #fffaf4;
-}
-
-.bulk-ai-design > div strong,
-.bulk-ai-design > div span,
-.bulk-ai-design small {
-  display: block;
-}
-
-.bulk-ai-design > div strong {
-  color: #3a3029;
-  font-size: 12px;
-}
-
-.bulk-ai-design > div span,
-.bulk-ai-design small {
-  color: #7d7065;
-  font-size: 11px;
-}
-
-.bulk-ai-chatgpt-note {
-  margin-top: 2px;
-  color: #9f7658 !important;
-  font-weight: 700;
-}
-
-.bulk-ai-design textarea {
-  min-height: 38px;
-  max-height: 82px;
-  resize: vertical;
-  border: 1px solid #dfcfc0;
-  border-radius: 6px;
-  background: #fffdf9;
-  color: #302a24;
-  font: inherit;
-  font-size: 12px;
-  line-height: 1.25;
-  padding: 7px 8px;
-}
-
-.bulk-ai-design > button {
-  min-width: 118px;
-  min-height: 36px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 7px;
-}
-
-.bulk-ai-design small {
-  grid-column: 2 / -1;
-}
-
-.bulk-ai-reference-tools {
-  display: grid;
-  gap: 5px;
-  min-width: 0;
-}
-
-.bulk-ai-spinner {
-  width: 13px;
-  height: 13px;
-  display: none;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: #fff;
-  border-radius: 999px;
-}
-
-.bulk-ai-design.working .bulk-ai-spinner {
-  display: inline-block;
-  animation: bulk-ai-spin 0.8s linear infinite;
-}
-
-@keyframes bulk-ai-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .product-table {
   min-width: 920px;
   table-layout: fixed;
@@ -1760,78 +1672,6 @@ h2 {
   box-shadow: inset 0 0 0 1px #b99170;
 }
 
-#productRows tr.ai-working-row > td {
-  position: relative;
-  background:
-    linear-gradient(90deg, rgba(255, 250, 244, 0.97), rgba(255, 255, 255, 0.99)) padding-box,
-    linear-gradient(100deg, rgba(159, 118, 88, 0.22), rgba(201, 164, 99, 0.5), rgba(255, 246, 218, 0.2), rgba(201, 164, 99, 0.56), rgba(159, 118, 88, 0.24)) border-box;
-  background-size: 100% 100%, 260% 100%;
-  background-position: 0 0, -160% 0;
-  border-top-color: rgba(201, 164, 99, 0.34);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 246, 218, 0.9),
-    inset 0 -1px 0 rgba(201, 164, 99, 0.34);
-  animation: ai-row-gold-sweep 2.8s linear infinite;
-}
-
-#productRows tr.ai-working-row > td:first-child {
-  border-left: 1px solid rgba(201, 164, 99, 0.72);
-  border-radius: 10px 0 0 10px;
-}
-
-#productRows tr.ai-working-row > td:last-child {
-  border-right: 1px solid rgba(201, 164, 99, 0.72);
-  border-radius: 0 10px 10px 0;
-}
-
-#productRows tr.ai-working-row .bulk-row-check {
-  position: relative;
-}
-
-#productRows tr.ai-working-row .bulk-row-check::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: -14px;
-  z-index: 4;
-  width: 18px;
-  height: 18px;
-  border: 1px solid rgba(159, 118, 88, 0.18);
-  border-radius: 999px;
-  background:
-    radial-gradient(circle at center, rgba(255, 250, 244, 0.92) 0 42%, transparent 44%),
-    conic-gradient(from 120deg, transparent 0deg, rgba(159, 118, 88, 0.1) 62deg, #c9a463 112deg, #fff2c8 154deg, #8b765f 220deg, transparent 306deg);
-  filter: drop-shadow(0 2px 6px rgba(116, 83, 50, 0.25));
-  pointer-events: none;
-  transform: translateY(-50%) rotate(0deg);
-  animation: ai-row-loop-spin 1.45s linear infinite;
-}
-
-#productRows tr.ai-working-row .bulk-row-check span {
-  color: #6f523b;
-  font-weight: 700;
-}
-
-@keyframes ai-row-gold-sweep {
-  0% {
-    background-position: 0 0, -160% 0;
-  }
-
-  100% {
-    background-position: 0 0, 160% 0;
-  }
-}
-
-@keyframes ai-row-loop-spin {
-  0% {
-    transform: translateY(-50%) rotate(0deg);
-  }
-
-  100% {
-    transform: translateY(-50%) rotate(360deg);
-  }
-}
-
 #productRows tr.selected > td:first-child {
   position: relative;
   overflow: visible;
@@ -1868,8 +1708,7 @@ h2 {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  #productRows tr.ai-working-row > td,
-  #productRows tr.ai-working-row .bulk-row-check::after {
+  #productRows tr.selected > td:first-child::before {
     animation: none;
   }
 }
@@ -3175,18 +3014,6 @@ body.image-lightbox-open {
 
   .exchange-card {
     grid-column: auto;
-  }
-
-  .bulk-ai-design {
-    grid-template-columns: 1fr;
-  }
-
-  .bulk-ai-design small {
-    grid-column: auto;
-  }
-
-  .bulk-ai-design > button {
-    width: 100%;
   }
 
   .designer-chip {

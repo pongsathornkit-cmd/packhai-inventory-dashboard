@@ -45,9 +45,6 @@
     activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
     bulkStatusSelectedSkus: new Set(),
     bulkStatusTarget: "",
-    bulkAiPrompt: "",
-    bulkAiRequest: null,
-    bulkAiReferenceImages: [],
     productTableMode: localStorage.getItem("plainProductTableMode") || "combined",
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
@@ -221,22 +218,10 @@
       )) || null;
   }
 
-  function hasActiveCodexAiWork(sku) {
-    const normalizedSku = String(sku || "").trim().toUpperCase();
-    const bulkActiveSkus = Array.isArray(state.bulkAiRequest?.activeSkus)
-      ? state.bulkAiRequest.activeSkus.map((item) => String(item || "").trim().toUpperCase())
-      : [];
-    return state.codexAiJobs
-      .map(normalizeCodexAiJob)
-      .some((job) => job.sku === normalizedSku && ["pending", "working"].includes(job.status)) ||
-      bulkActiveSkus.includes(normalizedSku);
-  }
-
   function productRowClass(product, extra = "") {
     return [
       extra,
       product.sku === state.selectedSku ? "selected" : "",
-      hasActiveCodexAiWork(product.sku) ? "ai-working-row" : "",
     ].filter(Boolean).join(" ");
   }
 
@@ -1160,20 +1145,6 @@
     state.bulkStatusSelectedSkus = new Set([...state.bulkStatusSelectedSkus].filter((sku) => visibleSkus.has(sku)));
   }
 
-  function canStartBulkAiDesign() {
-    return (
-      normalizeProductTableMode(state.productTableMode) === "designer" &&
-      state.bulkStatusSelectedSkus.size > 0 &&
-      Boolean(String(state.bulkAiPrompt || "").trim()) &&
-      !state.bulkAiRequest?.running
-    );
-  }
-
-  function refreshBulkAiDesignStartButton() {
-    const button = document.querySelector("[data-bulk-ai-design-start]");
-    if (button) button.disabled = !canStartBulkAiDesign();
-  }
-
   function renderBulkStatusBar(rows = filteredProducts()) {
     const bar = $("bulkStatusBar");
     if (!bar) return;
@@ -1182,12 +1153,6 @@
     }
     const selectedCount = state.bulkStatusSelectedSkus.size;
     const canApply = selectedCount > 0 && statusOptionExists(state.bulkStatusTarget);
-    const isDesignerMode = normalizeProductTableMode(state.productTableMode) === "designer";
-    const aiTargets = isDesignerMode && selectedCount ? bulkAiDesignTargets() : [];
-    const aiBusy = Boolean(state.bulkAiRequest?.running);
-    const aiProgress = state.bulkAiRequest
-      ? `${fmtQty.format(state.bulkAiRequest.done)}/${fmtQty.format(state.bulkAiRequest.total)} รูป${state.bulkAiRequest.failed ? ` · พลาด ${fmtQty.format(state.bulkAiRequest.failed)}` : ""}`
-      : `${fmtQty.format(aiTargets.length)} รูปจาก ${fmtQty.format(selectedCount)} SKU`;
     bar.innerHTML = `
       <div class="bulk-status-summary">
         <strong>${selectedCount ? `เลือก ${fmtQty.format(selectedCount)} SKU` : "ยังไม่ได้เลือก SKU"}</strong>
@@ -1204,29 +1169,7 @@
         <button class="secondary-button" data-bulk-status-apply type="button" ${canApply ? "" : "disabled"}>ใช้กับที่เลือก</button>
         <button class="danger-button" data-bulk-cost-clear type="button" ${selectedCount ? "" : "disabled"}>ลบราคาต้นทุน</button>
         <button class="ghost-button" data-bulk-status-clear type="button" ${selectedCount ? "" : "disabled"}>ล้างที่เลือก</button>
-      </div>
-      ${isDesignerMode ? `
-        <div class="bulk-ai-design ${aiBusy ? "working" : ""}">
-          <div>
-            <strong>Codex Bulk Design</strong>
-            <span>${escapeHtml(aiProgress)}</span>
-            <small class="bulk-ai-chatgpt-note">Website -> Codex -> ChatGPT/Image tool -> Upload</small>
-          </div>
-          <textarea data-bulk-ai-prompt rows="2" placeholder="พิมพ์คำสั่งออกแบบสำหรับสินค้า PLAIN ที่เลือก...">${escapeHtml(state.bulkAiPrompt)}</textarea>
-          <div class="bulk-ai-reference-tools">
-            <label class="ai-reference-picker icon-only" title="แนบรูปอ้างอิงให้ AI Bulk" aria-label="แนบรูปอ้างอิงให้ AI Bulk">
-              ${PAPERCLIP_ICON}
-              <input type="file" accept="image/*" multiple data-bulk-ai-reference-upload />
-            </label>
-            ${state.bulkAiReferenceImages.length ? `<button class="ghost-button ai-reference-clear" data-bulk-ai-reference-clear type="button">ล้าง</button>` : ""}
-            ${renderAiReferenceSummary(state.bulkAiReferenceImages)}
-          </div>
-          <button class="secondary-button" data-bulk-ai-design-start type="button" ${canStartBulkAiDesign() ? "" : "disabled"}>
-            <span class="bulk-ai-spinner" aria-hidden="true"></span>
-            <span>${aiBusy ? "Queueing Codex Bulk" : "Queue Codex Bulk"}</span>
-          </button>
-          ${state.bulkAiRequest?.current ? `<small>กำลังทำ: ${escapeHtml(state.bulkAiRequest.current)}</small>` : ""}
-        </div>` : ""}`;
+      </div>`;
   }
 
   function renderProductImageModeToggle() {
@@ -1319,7 +1262,7 @@
           const status = statusMeta(product.status);
           const calc = lineCalc(product);
           return `
-            <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
+            <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}">
               <td>
                 <div class="product-cell">
                   <img src="${escapeHtml(product.sourceImageUrl)}" alt="${escapeHtml(product.name)}" loading="lazy" />
@@ -1400,7 +1343,7 @@
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
     return `
-      <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
+      <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
           ${renderTableCoverImage(product)}
@@ -1437,7 +1380,7 @@
     const status = statusMeta(product.status);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
     return `
-      <tr class="${escapeHtml(productRowClass(product, "designer-product-row"))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
+      <tr class="${escapeHtml(productRowClass(product, "designer-product-row"))}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td>
           <span class="table-product-name">${escapeHtml(product.name)}</span>
@@ -1458,7 +1401,7 @@
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
     return `
-      <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}" data-ai-work-active="${hasActiveCodexAiWork(product.sku) ? "true" : "false"}">
+      <tr class="${escapeHtml(productRowClass(product))}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td class="product-image-cell">
           ${renderTableCoverImage(product)}
@@ -1873,100 +1816,6 @@
       job,
       ...state.codexAiJobs.map(normalizeCodexAiJob).filter((item) => item.id !== job.id),
     ];
-  }
-
-  function bulkAiDesignTargets() {
-    return state.products
-      .filter((product) => state.bulkStatusSelectedSkus.has(product.sku))
-      .flatMap((product) => {
-        const angleCount = Math.max(1, assetTarget(product, "product_images"));
-        return Array.from({ length: angleCount }, (_, index) => ({
-          sku: product.sku,
-          name: product.name,
-          angleIndex: index + 1,
-          version: plainImageVersionSelection(product, index),
-        }));
-      });
-  }
-
-  function chatGptBulkDesignPrompt(prompt) {
-    return [
-      "Route this bulk design through Website -> Codex on this computer -> ChatGPT/Image tool -> Upload back.",
-      "Codex must use the built-in ChatGPT/Image tool only for the image generation step.",
-      "Do not use local scripted overlays, template compositing, or mockup generators.",
-      "Create a polished commercial PLAIN product image that looks ready for a premium Shopify product page.",
-      "Preserve the source product angle and core product geometry from KTW.",
-      `User instruction: ${prompt}`,
-    ].join("\n");
-  }
-
-  function activeBulkAiSkusFrom(targets, startIndex = 0) {
-    return [...new Set(targets.slice(startIndex).map((target) => target.sku))];
-  }
-
-  async function requestBulkAiDesign() {
-    const prompt = String(state.bulkAiPrompt || "").trim();
-    const targets = bulkAiDesignTargets();
-    if (!targets.length) {
-      showMessage("เลือก SKU ที่ต้องการส่งคิว ChatGPT Bulk ก่อน", true);
-      return;
-    }
-    if (!prompt) {
-      showMessage("ใส่คำสั่ง ChatGPT Bulk ก่อน", true);
-      document.querySelector("[data-bulk-ai-prompt]")?.focus();
-      return;
-    }
-    if (state.bulkAiRequest?.running) return;
-    const confirmText = `จะส่งคิว ChatGPT ออกแบบ ${fmtQty.format(targets.length)} รูป จาก ${fmtQty.format(state.bulkStatusSelectedSkus.size)} SKU ที่เลือก ต้องการเริ่มไหม?`;
-    if (typeof window.confirm === "function" && !window.confirm(confirmText)) return;
-
-    const chatGptPrompt = chatGptBulkDesignPrompt(prompt);
-    state.bulkAiRequest = {
-      running: true,
-      total: targets.length,
-      done: 0,
-      failed: 0,
-      current: "",
-      errors: [],
-      activeSkus: activeBulkAiSkusFrom(targets),
-    };
-    renderTrackerTable();
-    renderBulkStatusBar();
-    try {
-      for (const [index, target] of targets.entries()) {
-        state.bulkAiRequest.activeSkus = activeBulkAiSkusFrom(targets, index);
-        state.bulkAiRequest.current = `${target.sku} มุม ${fmtQty.format(target.angleIndex)}`;
-        renderBulkStatusBar();
-        try {
-          const result = await api("/api/plain-design/codex-ai-jobs", {
-            method: "POST",
-            body: JSON.stringify({
-              sku: target.sku,
-              angleIndex: target.angleIndex,
-              version: target.version,
-              prompt: chatGptPrompt,
-              referenceImages: state.bulkAiReferenceImages,
-              chatGptOnly: true,
-              generator: "codex-chatgpt-image-tool",
-            }),
-          });
-          mergeCodexAiJobQueueResult(result);
-          state.bulkAiRequest.done += 1;
-        } catch (error) {
-          state.bulkAiRequest.failed += 1;
-          state.bulkAiRequest.errors.push(`${target.sku} มุม ${fmtQty.format(target.angleIndex)}: ${error.message}`);
-        }
-        state.bulkAiRequest.activeSkus = activeBulkAiSkusFrom(targets, index + 1);
-        renderTrackerTable();
-        renderDesignDetail();
-      }
-      const { done, failed } = state.bulkAiRequest;
-      showMessage(`ส่งคิว Codex แล้ว ${fmtQty.format(done)} รูป${failed ? `, ส่งไม่สำเร็จ ${fmtQty.format(failed)} รูป` : ""}`, failed > 0);
-    } finally {
-      state.bulkAiRequest = null;
-      renderTrackerTable();
-      renderDesignDetail();
-    }
   }
 
   async function requestPlainImageAiEdit(sku, angleIndex, version) {
@@ -2887,21 +2736,6 @@
     return merged.slice(0, MAX_AI_REFERENCE_IMAGES);
   }
 
-  async function pasteBulkAiReferenceImages(event) {
-    const files = clipboardImageFiles(event);
-    if (!files.length) return false;
-    event.preventDefault();
-    const prompt = event.target.closest("[data-bulk-ai-prompt]");
-    if (prompt) state.bulkAiPrompt = prompt.value;
-    const referenceImages = await readAiReferenceFiles(files);
-    if (!referenceImages.length) return true;
-    state.bulkAiReferenceImages = mergeAiReferenceImages(state.bulkAiReferenceImages, referenceImages);
-    showMessage(`วางรูปอ้างอิง Bulk ${fmtQty.format(referenceImages.length)} รูปแล้ว`);
-    renderBulkStatusBar(filteredProducts());
-    document.querySelector("[data-bulk-ai-prompt]")?.focus();
-    return true;
-  }
-
   async function pasteAiReferenceImages(event, prompt) {
     const files = clipboardImageFiles(event);
     if (!files.length) return false;
@@ -2949,23 +2783,10 @@
     renderDesignDetail();
   }
 
-  async function setBulkAiReferenceUploadFromInput(input) {
-    const referenceImages = await readAiReferenceFiles(input.files);
-    state.bulkAiReferenceImages = referenceImages;
-    input.value = "";
-    if (referenceImages.length) showMessage(`แนบรูปอ้างอิง Bulk ${fmtQty.format(referenceImages.length)} รูปแล้ว`);
-    renderBulkStatusBar(filteredProducts());
-  }
-
   function clearAiReferenceUpload(sku, angleIndex, version) {
     state.aiImageReferenceUploads.delete(aiImageRequestKey(sku, angleIndex, version));
     renderTrackerTable();
     renderDesignDetail();
-  }
-
-  function clearBulkAiReferenceUpload() {
-    state.bulkAiReferenceImages = [];
-    renderBulkStatusBar(filteredProducts());
   }
 
   async function uploadFiles(sku, group, files, metadata = {}) {
@@ -3071,26 +2892,10 @@
       renderTrackerTable();
     });
     $("bulkStatusBar")?.addEventListener("change", (event) => {
-      const referenceUpload = event.target.closest("[data-bulk-ai-reference-upload]");
-      if (referenceUpload) {
-        setBulkAiReferenceUploadFromInput(referenceUpload);
-        return;
-      }
       const select = event.target.closest("[data-bulk-status-select]");
       if (!select) return;
       state.bulkStatusTarget = select.value;
       renderBulkStatusBar(filteredProducts());
-    });
-    $("bulkStatusBar")?.addEventListener("input", (event) => {
-      const prompt = event.target.closest("[data-bulk-ai-prompt]");
-      if (!prompt) return;
-      state.bulkAiPrompt = prompt.value;
-      refreshBulkAiDesignStartButton();
-    });
-    $("bulkStatusBar")?.addEventListener("paste", (event) => {
-      const prompt = event.target.closest("[data-bulk-ai-prompt]");
-      if (!prompt) return;
-      pasteBulkAiReferenceImages(event).catch((error) => showMessage(`วางรูปอ้างอิงไม่ได้: ${error.message}`, true));
     });
     $("bulkStatusBar")?.addEventListener("click", (event) => {
       if (event.target.closest("[data-bulk-status-apply]")) {
@@ -3104,14 +2909,6 @@
       if (event.target.closest("[data-bulk-status-clear]")) {
         state.bulkStatusSelectedSkus.clear();
         renderTrackerTable();
-        return;
-      }
-      if (event.target.closest("[data-bulk-ai-design-start]")) {
-        requestBulkAiDesign();
-        return;
-      }
-      if (event.target.closest("[data-bulk-ai-reference-clear]")) {
-        clearBulkAiReferenceUpload();
         return;
       }
     });

@@ -115,62 +115,35 @@ test("product list supports bulk redesign status updates from selected rows", ()
   assert.match(eventsBlock, /data-bulk-status-apply/);
 });
 
-test("Designer Expert can send one AI design command for selected products in bulk", () => {
+test("Designer Expert no longer renders Codex Bulk Design controls", () => {
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");
   const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
-  const targetsBlock = functionBlock(source, "bulkAiDesignTargets", "requestBulkAiDesign");
-  const requestBlock = functionBlock(source, "requestBulkAiDesign", "requestPlainImageAiEdit");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
-  assert.match(source, /bulkAiPrompt:\s*""/);
-  assert.match(source, /bulkAiRequest:\s*null/);
-  assert.match(bulkBarBlock, /normalizeProductTableMode\(state\.productTableMode\)\s*===\s*"designer"/);
-  assert.match(bulkBarBlock, /Codex Bulk Design/);
-  assert.match(bulkBarBlock, /bulk-ai-chatgpt-note/);
-  assert.match(bulkBarBlock, /data-bulk-ai-prompt/);
-  assert.match(bulkBarBlock, /data-bulk-ai-design-start/);
-  assert.match(bulkBarBlock, /bulk-ai-design/);
-  assert.match(targetsBlock, /state\.bulkStatusSelectedSkus/);
-  assert.match(targetsBlock, /assetTarget\(product,\s*"product_images"\)/);
-  assert.match(targetsBlock, /plainImageVersionSelection\(product,\s*index\)/);
-  assert.match(source, /function chatGptBulkDesignPrompt/);
-  assert.match(source, /Website -> Codex on this computer -> ChatGPT\/Image tool -> Upload back/);
-  assert.match(source, /built-in ChatGPT\/Image tool only/);
-  assert.match(requestBlock, /for \(const \[index,\s*target\] of targets\.entries\(\)\)/);
-  assert.match(requestBlock, /activeBulkAiSkusFrom\(targets,\s*index\)/);
-  assert.match(requestBlock, /\/api\/plain-design\/codex-ai-jobs/);
-  assert.doesNotMatch(requestBlock, /\/api\/plain-design\/ai-image-edit/);
-  assert.match(requestBlock, /prompt:\s*chatGptPrompt/);
-  assert.match(requestBlock, /chatGptOnly:\s*true/);
-  assert.match(requestBlock, /generator:\s*"codex-chatgpt-image-tool"/);
-  assert.match(requestBlock, /bulkAiRequest/);
-  assert.match(requestBlock, /mergeCodexAiJobQueueResult/);
-  assert.doesNotMatch(requestBlock, /mergeAiImageRevisionResult/);
-  assert.match(eventsBlock, /data-bulk-ai-prompt/);
-  assert.match(eventsBlock, /data-bulk-ai-design-start/);
-  assert.match(eventsBlock, /requestBulkAiDesign/);
-  assert.match(css, /\.bulk-ai-design/);
-  assert.match(css, /\.bulk-ai-chatgpt-note/);
-  assert.match(css, /\.bulk-ai-spinner/);
-  assert.match(css, /@keyframes bulk-ai-spin/);
-});
-
-test("AI Bulk prompt typing does not rerender the bulk bar", () => {
-  const source = readRepoFile("src/plain-design.js");
-  const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
-  const promptInputBlock = blockUntil(
-    eventsBlock,
-    'const prompt = event.target.closest("[data-bulk-ai-prompt]");',
-    '$("bulkStatusBar")?.addEventListener("click"'
-  );
-
-  assert.match(source, /function canStartBulkAiDesign/);
-  assert.match(source, /function refreshBulkAiDesignStartButton/);
-  assert.match(promptInputBlock, /state\.bulkAiPrompt\s*=\s*prompt\.value/);
-  assert.match(promptInputBlock, /refreshBulkAiDesignStartButton\(\)/);
-  assert.doesNotMatch(promptInputBlock, /renderBulkStatusBar/);
-  assert.doesNotMatch(promptInputBlock, /\.focus\(\)/);
+  assert.doesNotMatch(source, /bulkAiPrompt:\s*""/);
+  assert.doesNotMatch(source, /bulkAiRequest:\s*null/);
+  assert.doesNotMatch(source, /bulkAiReferenceImages:\s*\[\]/);
+  assert.doesNotMatch(source, /function bulkAiDesignTargets/);
+  assert.doesNotMatch(source, /function requestBulkAiDesign/);
+  assert.doesNotMatch(source, /function chatGptBulkDesignPrompt/);
+  assert.doesNotMatch(source, /function canStartBulkAiDesign/);
+  assert.doesNotMatch(source, /function refreshBulkAiDesignStartButton/);
+  assert.doesNotMatch(bulkBarBlock, /Codex Bulk Design/);
+  assert.doesNotMatch(bulkBarBlock, /bulk-ai-chatgpt-note/);
+  assert.doesNotMatch(bulkBarBlock, /data-bulk-ai-prompt/);
+  assert.doesNotMatch(bulkBarBlock, /data-bulk-ai-design-start/);
+  assert.doesNotMatch(bulkBarBlock, /data-bulk-ai-reference-upload/);
+  assert.doesNotMatch(bulkBarBlock, /bulk-ai-design/);
+  assert.doesNotMatch(eventsBlock, /data-bulk-ai-prompt/);
+  assert.doesNotMatch(eventsBlock, /data-bulk-ai-design-start/);
+  assert.doesNotMatch(eventsBlock, /data-bulk-ai-reference-upload/);
+  assert.doesNotMatch(eventsBlock, /requestBulkAiDesign/);
+  assert.doesNotMatch(eventsBlock, /pasteBulkAiReferenceImages/);
+  assert.doesNotMatch(css, /\.bulk-ai-design/);
+  assert.doesNotMatch(css, /\.bulk-ai-chatgpt-note/);
+  assert.doesNotMatch(css, /\.bulk-ai-spinner/);
+  assert.doesNotMatch(css, /@keyframes bulk-ai-spin/);
 });
 
 test("Designer Expert AI commands accept reference image uploads", () => {
@@ -178,26 +151,18 @@ test("Designer Expert AI commands accept reference image uploads", () => {
   const css = readRepoFile("src/plain-design.css");
   const server = readRepoFile("scripts/serve-dashboard.cjs");
   const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
-  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
   const singleRequestBlock = functionBlock(source, "requestPlainImageAiEdit", "queueProductCommercialSave");
-  const bulkRequestBlock = functionBlock(source, "requestBulkAiDesign", "requestPlainImageAiEdit");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
   assert.match(source, /aiImageReferenceUploads:\s*new Map\(\)/);
-  assert.match(source, /bulkAiReferenceImages:\s*\[\]/);
   assert.match(source, /function renderAiReferenceSummary/);
   assert.match(source, /async function readAiReferenceFiles/);
   assert.match(source, /function referenceImagesForAiRequest/);
   assert.match(aiCommandBlock, /data-ai-image-reference-upload=/);
   assert.match(aiCommandBlock, /renderAiReferenceSummary\(state\.aiImageReferenceUploads\.get\(requestKey\)/);
-  assert.match(bulkBarBlock, /data-bulk-ai-reference-upload/);
-  assert.match(bulkBarBlock, /renderAiReferenceSummary\(state\.bulkAiReferenceImages/);
   assert.match(singleRequestBlock, /referenceImages:\s*referenceImagesForAiRequest\(requestKey\)/);
-  assert.match(bulkRequestBlock, /referenceImages:\s*state\.bulkAiReferenceImages/);
   assert.match(eventsBlock, /data-ai-image-reference-upload/);
-  assert.match(eventsBlock, /data-bulk-ai-reference-upload/);
   assert.match(eventsBlock, /setAiReferenceUploadFromInput/);
-  assert.match(eventsBlock, /setBulkAiReferenceUploadFromInput/);
   assert.match(server, /readJsonBody\(req,\s*32\s*\*\s*1024\s*\*\s*1024\)/);
   assert.match(css, /\.ai-reference-picker/);
   assert.match(css, /\.ai-reference-summary/);
@@ -207,15 +172,11 @@ test("AI reference upload controls use a paperclip icon instead of text labels",
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");
   const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
-  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
 
   assert.match(source, /PAPERCLIP_ICON/);
   assert.match(aiCommandBlock, /ai-reference-picker icon-only/);
   assert.match(aiCommandBlock, /\$\{PAPERCLIP_ICON\}/);
-  assert.match(bulkBarBlock, /ai-reference-picker icon-only/);
-  assert.match(bulkBarBlock, /\$\{PAPERCLIP_ICON\}/);
   assert.doesNotMatch(aiCommandBlock, /<span>\s*แนบรูปอ้างอิง\s*<\/span>/);
-  assert.doesNotMatch(bulkBarBlock, /<span>\s*แนบรูปอ้างอิง\s*<\/span>/);
   assert.match(css, /\.ai-reference-picker\.icon-only/);
   assert.match(css, /\.ai-reference-paperclip/);
 });
@@ -225,17 +186,12 @@ test("Designer Expert AI commands accept pasted reference images from clipboard"
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
   const detailEventsBlock = functionBlock(source, "bindDetailEvents", "renderUploadGroup");
   const aiCommandBlock = functionBlock(source, "renderAiImageCommand", "renderPlainImagePane");
-  const bulkBarBlock = functionBlock(source, "renderBulkStatusBar", "renderProductImageModeToggle");
 
   assert.match(source, /function clipboardImageFiles/);
-  assert.match(source, /async function pasteBulkAiReferenceImages/);
   assert.match(source, /async function pasteAiReferenceImages/);
   assert.match(aiCommandBlock, /data-ai-image-prompt=/);
-  assert.match(bulkBarBlock, /data-bulk-ai-prompt/);
   assert.match(eventsBlock, /addEventListener\("paste"/);
-  assert.match(eventsBlock, /event\.target\.closest\("\[data-bulk-ai-prompt\]"\)/);
   assert.match(eventsBlock, /event\.target\.closest\("\[data-ai-image-prompt\]"\)/);
-  assert.match(eventsBlock, /pasteBulkAiReferenceImages\(event\)/);
   assert.match(eventsBlock, /pasteAiReferenceImages\(event,\s*aiPrompt\)/);
   assert.match(detailEventsBlock, /data-ai-image-prompt/);
   assert.match(detailEventsBlock, /addEventListener\("paste"/);
@@ -354,28 +310,26 @@ test("selected product row shows a continuous animated arrow indicator", () => {
   assert.match(css, /@keyframes selected-row-arrow/);
 });
 
-test("product rows with active AI jobs show a luxury looping work animation", () => {
+test("product rows no longer show stuck Codex bulk work animations", () => {
   const source = readRepoFile("src/plain-design.js");
   const css = readRepoFile("src/plain-design.css");
-  const activeJobBlock = functionBlock(source, "hasActiveCodexAiWork", "productRowClass");
   const rowClassBlock = functionBlock(source, "productRowClass", "codexAiJobLabel");
   const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
   const designerRowBlock = functionBlock(source, "renderDesignerProductRow", "renderCombinedProductRow");
   const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
 
-  assert.match(activeJobBlock, /state\.bulkAiRequest\?\.activeSkus/);
-  assert.match(activeJobBlock, /bulkActiveSkus\.includes\(normalizedSku\)/);
-  assert.match(activeJobBlock, /\["pending",\s*"working"\]\.includes\(job\.status\)/);
-  assert.doesNotMatch(activeJobBlock, /\["pending",\s*"working",\s*"failed"\]/);
-  assert.match(rowClassBlock, /hasActiveCodexAiWork\(product\.sku\) \? "ai-working-row" : ""/);
+  assert.doesNotMatch(source, /function hasActiveCodexAiWork/);
+  assert.doesNotMatch(rowClassBlock, /hasActiveCodexAiWork/);
+  assert.doesNotMatch(rowClassBlock, /ai-working-row/);
   assert.match(accountingRowBlock, /productRowClass\(product\)/);
   assert.match(designerRowBlock, /productRowClass\(product,\s*"designer-product-row"\)/);
   assert.match(combinedRowBlock, /productRowClass\(product\)/);
-  assert.match(accountingRowBlock, /data-ai-work-active="\$\{hasActiveCodexAiWork\(product\.sku\) \? "true" : "false"\}"/);
-  assert.match(css, /#productRows tr\.ai-working-row > td\s*\{[\s\S]*?animation:\s*ai-row-gold-sweep 2\.8s linear infinite;/);
-  assert.match(css, /#productRows tr\.ai-working-row \.bulk-row-check::after\s*\{[\s\S]*?conic-gradient/);
-  assert.match(css, /@keyframes ai-row-gold-sweep/);
-  assert.match(css, /@keyframes ai-row-loop-spin/);
+  assert.doesNotMatch(accountingRowBlock, /data-ai-work-active/);
+  assert.doesNotMatch(designerRowBlock, /data-ai-work-active/);
+  assert.doesNotMatch(combinedRowBlock, /data-ai-work-active/);
+  assert.doesNotMatch(css, /ai-working-row/);
+  assert.doesNotMatch(css, /@keyframes ai-row-gold-sweep/);
+  assert.doesNotMatch(css, /@keyframes ai-row-loop-spin/);
   assert.match(css, /@media \(prefers-reduced-motion:\s*reduce\)/);
 });
 

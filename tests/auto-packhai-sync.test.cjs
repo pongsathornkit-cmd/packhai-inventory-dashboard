@@ -102,6 +102,7 @@ test("Render enables hourly inventory, platform payment, and seller price auto s
   assert.match(renderSource, /key:\s*SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS\s*\n\s*value:\s*"300"/);
   assert.match(renderSource, /key:\s*SELLER_COMPARE_DIR\s*\n\s*value:\s*\/app\/storage\/data\/seller_compare/);
   assert.match(renderSource, /key:\s*SELLER_ORDER_PAYMENT_MAX_NEW\s*\n\s*value:\s*"0"/);
+  assert.match(renderSource, /key:\s*LAZADA_ORDER_PAYMENT_BROWSER_FALLBACK\s*\n\s*value:\s*"1"/);
   assert.match(renderSource, /key:\s*AUTO_SYNC_BUSY_RETRY_SECONDS\s*\n\s*value:\s*"120"/);
   assert.match(renderSource, /key:\s*AUTO_SYNC_SECONDARY_JOBS\s*\n\s*value:\s*"1"/);
 });
@@ -130,6 +131,7 @@ test("Render runtime overrides stale dashboard env to hourly sync for all data j
   assert.equal(env.SELLER_PAYMENTS_AUTO_SYNC_START_DELAY_SECONDS, "180");
   assert.equal(env.SELLER_ORDER_PAYMENT_MAX_NEW, "0");
   assert.equal(env.SELLER_PAYMENTS_TIMEOUT_MS, "21600000");
+  assert.equal(env.LAZADA_ORDER_PAYMENT_BROWSER_FALLBACK, "1");
   assert.equal(env.SELLER_PRICES_AUTO_SYNC, "1");
   assert.equal(env.SELLER_PRICES_AUTO_SYNC_INTERVAL_MINUTES, "60");
   assert.equal(env.SELLER_PRICES_AUTO_SYNC_START_DELAY_SECONDS, "300");

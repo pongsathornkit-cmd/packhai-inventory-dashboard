@@ -100,6 +100,9 @@ test("seller payment export uses Shopee and Lazada direct APIs before browser fa
   assert.match(payments, /SELLER_ORDER_PAYMENT_BROWSER_FALLBACK/);
   assert.match(payments, /LAZADA_ORDER_PAYMENT_DIRECT_API/);
   assert.match(payments, /LAZADA_ORDER_PAYMENT_BROWSER_FALLBACK/);
+  assert.match(payments, /function\s+lazadaPlatformSkipError/);
+  assert.match(payments, /error\.code\s*=\s*"LAZADA_PLATFORM_SKIP"/);
+  assert.match(payments, /throw\s+lazadaPlatformSkipError\(message\)/);
   assert.match(payments, /PACKHAI_DATA_DIR/);
   assert.match(payments, /path\.join\(dataDir,\s*"seller_compare"\)/);
   assert.ok(

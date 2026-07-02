@@ -47,6 +47,8 @@ services:
         value: "25"
       - key: SELLER_PAYMENTS_TIMEOUT_MS
         value: "21600000"
+      - key: LAZADA_ORDER_PAYMENT_BROWSER_FALLBACK
+        value: "1"
       - key: PACKHAI_CLOUD_ENV_FILE
         value: /etc/secrets/cloud-sync.env
       - key: PACKHAI_SYNC_ENV_PASSPHRASE

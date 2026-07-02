@@ -938,6 +938,12 @@ function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:d
   };
 }
 
+function lazadaPlatformSkipError(message) {
+  const error = new Error(message);
+  error.code = "LAZADA_PLATFORM_SKIP";
+  return error;
+}
+
 async function exportLazadaPaymentsDirect(orderNos, existingMap, errors, onRecord) {
   if (!orderNos.length) return [];
   const context = lazadaDirectContext();
@@ -973,7 +979,7 @@ async function exportLazadaPaymentsDirect(orderNos, existingMap, errors, onRecor
         errors: errors.length,
         reason: message,
       });
-      break;
+      throw lazadaPlatformSkipError(message);
     }
     await sleep(lazadaDelayMs);
   }
@@ -1169,16 +1175,16 @@ async function exportLazadaPaymentsBrowser(orderNos, existingMap, errors, onReco
       if (records.length === 0 && current >= lazadaEmptyAbortAfter && platformErrors >= current) {
         const message = `Lazada skipped after ${current} consecutive payment lookup failures. Refresh Lazada seller auth before retrying Lazada payments.`;
         errors.push(message);
-        logProgress({
-          event: "seller-payment-platform-skip",
-          platform: "Lazada",
+      logProgress({
+        event: "seller-payment-platform-skip",
+        platform: "Lazada",
           current,
           total: orderNos.length,
           fetched: records.length,
           errors: errors.length,
           reason: message,
         });
-        break;
+        throw lazadaPlatformSkipError(message);
       }
       await sleep(lazadaDelayMs);
     }

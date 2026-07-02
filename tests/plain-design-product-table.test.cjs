@@ -441,7 +441,8 @@ test("Designer Expert can switch and upload Plain product image versions per KTW
   const uploadBlock = functionBlock(source, "uploadFiles", "deleteAsset");
   const eventsBlock = blockUntil(source, "function bindEvents", "applyReferenceCopy();");
 
-  assert.match(source, /const PLAIN_IMAGE_VERSION_COUNT = 3;/);
+  assert.match(source, /const PLAIN_IMAGE_VERSION_COUNT = 2;/);
+  assert.doesNotMatch(source, /const PLAIN_IMAGE_VERSION_COUNT = 3;/);
   assert.match(source, /function plainImageVersionSelection/);
   assert.match(source, /function plainImageAssetFor/);
   assert.match(source, /function renderPlainImageVersionControls/);

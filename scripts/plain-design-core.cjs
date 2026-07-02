@@ -4,7 +4,7 @@ const crypto = require("crypto");
 
 const STATE_VERSION = 1;
 const ASSET_GROUPS = new Set(["product_images", "packaging_images", "factory_files"]);
-const PLAIN_IMAGE_VERSION_COUNT = 3;
+const PLAIN_IMAGE_VERSION_COUNT = 2;
 const MAX_AI_REFERENCE_IMAGES = 3;
 const MAX_AI_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
 const AI_REFERENCE_IMAGE_MIME_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
@@ -90,16 +90,21 @@ function normalizePlainImageAngleIndex(value) {
   return angleIndex > 0 ? angleIndex : 0;
 }
 
-function normalizePlainImageVersion(value) {
+function parsePlainImageVersion(value) {
   const version = Math.round(numberValue(value) * 10) / 10;
   const baseVersion = Math.trunc(version);
-  if (
+  const valid =
     Number.isFinite(version) &&
     baseVersion >= 1 &&
     baseVersion <= PLAIN_IMAGE_VERSION_COUNT &&
     version >= baseVersion &&
-    version < baseVersion + 1
-  ) {
+    version < baseVersion + 1;
+  return valid ? version : 0;
+}
+
+function normalizePlainImageVersion(value) {
+  const version = parsePlainImageVersion(value);
+  if (version) {
     return version;
   }
   return 1;
@@ -632,7 +637,7 @@ function legacyPlainImageAssetFor(product, angleIndex) {
 function plainImageAssetFor(product, angleIndex, version) {
   const normalizedVersion = normalizePlainImageVersion(version);
   const slotted = plainImageAssetsForAngle(product, angleIndex).find((asset) => (
-    normalizePlainImageVersion(asset.version) === normalizedVersion
+    parsePlainImageVersion(asset.version) === normalizedVersion
   ));
   if (slotted) return slotted;
   return normalizedVersion === 1 ? legacyPlainImageAssetFor(product, angleIndex) : null;
@@ -643,7 +648,7 @@ function nextPlainImageSubVersion(product, angleIndex, sourceVersion, reservedVe
   const baseVersion = Math.trunc(normalizedSourceVersion);
   const used = new Set(
     [
-      ...plainImageAssetsForAngle(product, angleIndex).map((asset) => normalizePlainImageVersion(asset.version)),
+      ...plainImageAssetsForAngle(product, angleIndex).map((asset) => parsePlainImageVersion(asset.version)),
       ...reservedVersions.map(normalizePlainImageVersion),
     ]
       .filter((version) => Math.trunc(version) === baseVersion)
@@ -768,10 +773,11 @@ function savePlainDesignAssetFiles(options, payload) {
   const group = String(payload.group || "");
   const files = Array.isArray(payload.files) ? payload.files : [];
   const angleIndex = group === "product_images" ? normalizePlainImageAngleIndex(payload.angleIndex) : 0;
-  const version = group === "product_images" && angleIndex > 0 ? normalizePlainImageVersion(payload.version) : 0;
+  const version = group === "product_images" && angleIndex > 0 ? parsePlainImageVersion(payload.version ?? 1) : 0;
   const metadata = sanitizeAssetMetadata(payload.metadata);
   if (!sku) throw new Error("SKU is required.");
   if (!ASSET_GROUPS.has(group)) throw new Error("Asset group is invalid.");
+  if (group === "product_images" && angleIndex > 0 && !version) throw new Error("Plain image version is invalid.");
   if (!files.length) return [];
 
   const state = loadPlainDesignState(options);
@@ -893,7 +899,8 @@ function pendingCodexVersionsFor(state, sku, angleIndex) {
       normalizePlainImageAngleIndex(job.angleIndex) === normalizePlainImageAngleIndex(angleIndex) &&
       ["pending", "working"].includes(normalizeCodexAiJobStatus(job.status))
     ))
-    .map((job) => normalizePlainImageVersion(job.newVersion));
+    .map((job) => parsePlainImageVersion(job.newVersion))
+    .filter(Boolean);
 }
 
 function queuePlainDesignCodexImageJob(options, payload) {

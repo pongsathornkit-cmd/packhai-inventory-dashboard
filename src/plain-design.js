@@ -2,7 +2,7 @@
   const embedded = window.__PLAIN_DESIGN__ || {};
   const EXCHANGE_RATE_REFRESH_MS = 5 * 60 * 1000;
   const PURCHASE_ORDERS_STORAGE_KEY = "plainPurchaseOrdersV2";
-  const PLAIN_IMAGE_VERSION_COUNT = 3;
+  const PLAIN_IMAGE_VERSION_COUNT = 2;
   const MAX_AI_REFERENCE_IMAGES = 3;
   const MAX_AI_REFERENCE_IMAGE_BYTES = 5 * 1024 * 1024;
   const PAPERCLIP_ICON = `
@@ -115,16 +115,21 @@
     return angleIndex > 0 ? angleIndex : 0;
   }
 
-  function normalizePlainImageVersion(value) {
+  function parsePlainImageVersion(value) {
     const version = Math.round(numberValue(value) * 10) / 10;
     const baseVersion = Math.trunc(version);
-    if (
+    const valid =
       Number.isFinite(version) &&
       baseVersion >= 1 &&
       baseVersion <= PLAIN_IMAGE_VERSION_COUNT &&
       version >= baseVersion &&
-      version < baseVersion + 1
-    ) {
+      version < baseVersion + 1;
+    return valid ? version : 0;
+  }
+
+  function normalizePlainImageVersion(value) {
+    const version = parsePlainImageVersion(value);
+    if (version) {
       return version;
     }
     return 1;
@@ -674,7 +679,7 @@
   }
 
   function assetVersion(asset) {
-    return normalizePlainImageVersion(asset?.version);
+    return parsePlainImageVersion(asset?.version);
   }
 
   function legacyProductImageAssets(product) {

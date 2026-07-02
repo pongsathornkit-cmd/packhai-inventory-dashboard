@@ -40,10 +40,10 @@ test("Plain product image uploads can target a KTW angle and selectable version"
     sku: "sku-1",
     group: "product_images",
     angleIndex: 2,
-    version: 3,
+    version: 2,
     files: [
       {
-        name: "plain-angle-2-v3.jpg",
+        name: "plain-angle-2-v2.jpg",
         type: "image/jpeg",
         dataUrl: "data:image/jpeg;base64,ZmFrZS1pbWFnZQ==",
       },
@@ -52,19 +52,32 @@ test("Plain product image uploads can target a KTW angle and selectable version"
 
   assert.equal(created.length, 1);
   assert.equal(created[0].angleIndex, 2);
-  assert.equal(created[0].version, 3);
+  assert.equal(created[0].version, 2);
+  assert.throws(() => savePlainDesignAssetFiles(options, {
+    sku: "sku-1",
+    group: "product_images",
+    angleIndex: 2,
+    version: 3,
+    files: [
+      {
+        name: "plain-angle-2-v3.jpg",
+        type: "image/jpeg",
+        dataUrl: "data:image/jpeg;base64,ZmFrZS1pbWFnZQ==",
+      },
+    ],
+  }), /Plain image version is invalid/);
 
   const updated = updatePlainDesignProduct(options, {
     sku: "SKU-1",
     plainImageVersionSelections: { 1: 2, 2: 3 },
   });
-  assert.deepEqual(updated.plainImageVersionSelections, { 1: 2, 2: 3 });
+  assert.deepEqual(updated.plainImageVersionSelections, { 1: 2, 2: 1 });
 
   const state = loadPlainDesignState(options);
   const product = state.products.find((item) => item.sku === "SKU-1");
-  assert.deepEqual(product.plainImageVersionSelections, { 1: 2, 2: 3 });
+  assert.deepEqual(product.plainImageVersionSelections, { 1: 2, 2: 1 });
   assert.equal(product.assets[0].angleIndex, 2);
-  assert.equal(product.assets[0].version, 3);
+  assert.equal(product.assets[0].version, 2);
 });
 
 test("AI image edit creates the next sub-version and selects it for that angle", async () => {

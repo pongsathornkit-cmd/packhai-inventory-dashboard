@@ -1166,8 +1166,70 @@ svg {
   font-size: 12px;
 }
 
+.alibaba-status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 14px 0 16px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ffffff, var(--blue-soft));
+}
+
+.alibaba-status-tab {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 11px;
+  border: 1px solid var(--strong-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 860;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+.alibaba-status-tab strong {
+  min-width: 28px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 12px;
+  text-align: center;
+}
+
+.alibaba-status-tab:not(.active):hover {
+  border-color: var(--pink);
+  color: var(--pink);
+  box-shadow: 0 10px 24px rgba(236, 31, 127, 0.1);
+}
+
+.alibaba-status-tab.active {
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--blue), var(--sidebar-2));
+  color: #ffffff;
+  box-shadow: 0 12px 28px rgba(38, 47, 107, 0.18);
+}
+
+.alibaba-status-tab.active strong {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
+.alibaba-status-tab.empty {
+  color: var(--muted);
+  opacity: 0.72;
+}
+
 .alibaba-orders-actions {
-  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.9fr) 120px;
+  grid-template-columns: minmax(220px, 1fr) 120px;
 }
 
 .alibaba-orders-table {
@@ -4085,7 +4147,7 @@ tbody tr:hover {
   }
 
   .alibaba-orders-actions {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) 120px;
   }
 
   .platform-sales-heading,

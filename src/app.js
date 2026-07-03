@@ -4045,6 +4045,64 @@
     return labels[status] || status || "-";
   }
 
+  function alibabaStatusTabItems(report) {
+    const counts = new Map();
+    (report.rows || []).forEach((row) => {
+      if (!row.status) return;
+      counts.set(row.status, (counts.get(row.status) || 0) + 1);
+    });
+
+    const statusOrder = [
+      ...(Array.isArray(report.metadata?.allowedStatuses) ? report.metadata.allowedStatuses : []),
+      ...(Array.isArray(report.statusBreakdown) ? report.statusBreakdown.map((item) => item.status) : []),
+      ...counts.keys(),
+    ];
+    const seen = new Set();
+    const statuses = statusOrder.filter((status) => {
+      if (!status || seen.has(status)) return false;
+      seen.add(status);
+      return true;
+    });
+
+    if (alibabaOrderState.status !== "All" && !statuses.includes(alibabaOrderState.status)) {
+      alibabaOrderState.status = "All";
+      alibabaOrderState.page = 1;
+    }
+
+    return [
+      { status: "All", label: "\u0e17\u0e38\u0e01\u0e2a\u0e16\u0e32\u0e19\u0e30", count: (report.rows || []).length },
+      ...statuses.map((status) => ({
+        status,
+        label: alibabaStatusLabel(status),
+        count: counts.get(status) || 0,
+      })),
+    ];
+  }
+
+  function renderAlibabaStatusTabs(report) {
+    const tabs = alibabaStatusTabItems(report);
+    return `
+      <div class="alibaba-status-tabs" id="alibabaStatusTabs" role="tablist" aria-label="Alibaba order status tabs">
+        ${tabs
+          .map((tab) => {
+            const active = alibabaOrderState.status === tab.status;
+            const classes = ["alibaba-status-tab", active ? "active" : "", tab.count ? "" : "empty"].filter(Boolean).join(" ");
+            return `
+          <button
+            type="button"
+            class="${classes}"
+            data-alibaba-status-tab="${escapeHtml(tab.status)}"
+            role="tab"
+            aria-selected="${active ? "true" : "false"}"
+          >
+            <span>${escapeHtml(tab.label)}</span>
+            <strong>${fmtInt.format(tab.count || 0)}</strong>
+          </button>`;
+          })
+          .join("")}
+      </div>`;
+  }
+
   function alibabaStatusBadgeClass(statusGroup) {
     if (statusGroup === "completed") return "matched";
     if (statusGroup === "shipment" || statusGroup === "supplier-ship") return "warning";
@@ -4294,10 +4352,12 @@
       alibabaOrderState.page = 1;
       renderAlibabaRows();
     });
-    $("alibabaStatusFilter")?.addEventListener("change", (event) => {
-      alibabaOrderState.status = event.target.value;
+    $("alibabaStatusTabs")?.addEventListener("click", (event) => {
+      const tab = event.target.closest("[data-alibaba-status-tab]");
+      if (!tab) return;
+      alibabaOrderState.status = tab.dataset.alibabaStatusTab || "All";
       alibabaOrderState.page = 1;
-      renderAlibabaRows();
+      renderAlibabaPurchaseOrders();
     });
     $("alibabaOrderPrev")?.addEventListener("click", () => {
       alibabaOrderState.page -= 1;
@@ -4340,10 +4400,6 @@
         sub: `${fmtInt.format(summary.waitingSupplierShip || 0)} รอ ship · ${fmtInt.format(summary.shipmentActive || 0)} shipment`,
       },
     ];
-    const statusOptions = report.metadata.allowedStatuses.length
-      ? report.metadata.allowedStatuses
-      : [...new Set(report.rows.map((row) => row.status).filter(Boolean))];
-
     el.innerHTML = `
       <div class="alibaba-meta-row">
         <span>${escapeHtml(sourceLabel)}</span>
@@ -4384,18 +4440,10 @@
           </div>
           <div class="payment-orders-actions alibaba-orders-actions">
             <input id="alibabaOrderSearch" type="search" value="${escapeHtml(alibabaOrderState.query)}" placeholder="ค้นหา Order / Supplier / Tracking / SKU" />
-            <select id="alibabaStatusFilter" aria-label="Alibaba status">
-              <option value="All"${alibabaOrderState.status === "All" ? " selected" : ""}>ทุกสถานะ</option>
-              ${statusOptions
-                .map(
-                  (status) =>
-                    `<option value="${escapeHtml(status)}"${alibabaOrderState.status === status ? " selected" : ""}>${escapeHtml(alibabaStatusLabel(status))}</option>`
-                )
-                .join("")}
-            </select>
             <button id="exportAlibabaOrdersCsv" type="button">Export CSV</button>
           </div>
         </div>
+        ${renderAlibabaStatusTabs(report)}
         <div class="payment-orders-table-wrap alibaba-orders-table-wrap">
           <table class="payment-orders-table alibaba-orders-table">
             <thead>

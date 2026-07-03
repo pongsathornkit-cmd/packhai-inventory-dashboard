@@ -122,31 +122,9 @@ function lazadaProductSubtotal(row) {
 }
 
 function lazadaItemLineAmount(sku) {
-  const quantity = firstPositive(sku?.quantity, sku?.amount, sku?.qty) || 1;
   const receivedAmount = lazadaAmountReceived(sku);
   if (receivedAmount > 0) return roundMoney(receivedAmount);
-  const lineAmount = firstPositive(
-    sku?.lineAmount,
-    sku?.netSalesAmount,
-    sku?.totalAmount,
-    sku?.totalPrice,
-    sku?.totalUnitPrice,
-    sku?.totalRetailPrice,
-    sku?.paidAmount,
-    sku?.paidPriceTotal,
-    sku?.itemTotalPrice,
-    sku?.actualAmount
-  );
-  if (lineAmount > 0) return roundMoney(lineAmount);
-  const unitPrice = firstPositive(
-    sku?.unitPrice,
-    sku?.itemPrice,
-    sku?.paidPrice,
-    sku?.actualPrice,
-    sku?.retailPrice,
-    sku?.price
-  );
-  return roundMoney(unitPrice > 0 ? unitPrice * quantity : 0);
+  return 0;
 }
 
 function lazadaItemsFromOrder(row) {
@@ -170,10 +148,10 @@ function lazadaItemsFromOrder(row) {
 
 function lazadaCollectedAmount(row) {
   const itemAmounts = lazadaItemsFromOrder(row)
-    .map((item) => numberValue(item.amountReceived || item.lineAmount))
+    .map((item) => numberValue(item.amountReceived))
     .filter((amount) => amount > 0);
   if (itemAmounts.length) return roundMoney(itemAmounts.reduce((sum, amount) => sum + amount, 0));
-  return roundMoney(lazadaAmountReceived(row) || lazadaBuyerPaidAmount(row) || lazadaProductSubtotal(row));
+  return roundMoney(lazadaAmountReceived(row));
 }
 
 function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:direct-api") {
@@ -182,7 +160,7 @@ function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:d
   const itemAmountReceived = sumItemField("amountReceived");
   const rowAmountReceived = roundMoney(lazadaAmountReceived(row));
   const hasAmountReceived = itemAmountReceived > 0 || rowAmountReceived > 0;
-  const amountReceived = roundMoney(itemAmountReceived || rowAmountReceived || lazadaCollectedAmount(row));
+  const amountReceived = roundMoney(itemAmountReceived || rowAmountReceived);
   return {
     platform: "Lazada",
     orderNo,
@@ -286,6 +264,8 @@ function normalizePaymentRecord(record) {
 
   const rawPayment = record.payment_info || record.paymentInfo || {};
   const paymentBreakdown = record.paymentBreakdown || record.payment_breakdown || {};
+  const lazadaCapturedAmount = firstPositive(lazadaAmountReceived(record), paymentBreakdown.amountReceived);
+  if (platform === "Lazada" && lazadaCapturedAmount <= 0 && record.amountReceivedCaptured !== true) return null;
   const shopeeTotal = rawPayment.total_price ? shopeeMinorMoney(rawPayment.total_price) : 0;
   const orderIncomeAmount = firstNumberOrNull(
     record.orderIncomeAmount,
@@ -299,8 +279,7 @@ function normalizePaymentRecord(record) {
     platform === "Shopee" && orderIncomeAmount != null
       ? orderIncomeAmount
       : firstPositive(
-          platform === "Lazada" ? lazadaAmountReceived(record) : 0,
-          platform === "Lazada" ? paymentBreakdown.amountReceived : 0,
+          platform === "Lazada" ? lazadaCapturedAmount : 0,
           record.collectedAmount,
           platform === "Shopee" ? 0 : orderIncomeAmount,
           record.collected,

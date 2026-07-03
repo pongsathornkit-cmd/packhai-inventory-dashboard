@@ -1,0 +1,41 @@
+{
+  "exportedAt": "2026-07-03T12:20:00.000Z",
+  "source": "Manual Lazada payment-detail overrides",
+  "rule": "Use Lazada payment detail column amount received. These rows override Lazada order-list totals when Seller Center payment detail has been verified.",
+  "orders": [
+    {
+      "platform": "Lazada",
+      "orderNo": "1104333687787722",
+      "collectedAmount": 540.12,
+      "currency": "THB",
+      "paymentMethod": "",
+      "status": "payment-detail-verified",
+      "source": "Lazada Seller Center payment detail",
+      "capturedAt": "2026-07-03T12:20:00.000Z",
+      "orderLineId": "1104333687887722",
+      "amountReceived": 540.12,
+      "amountReceivedCaptured": true,
+      "paymentBreakdown": {
+        "amountReceived": 540.12,
+        "buyerPaidAmount": 711,
+        "productSubtotal": 669,
+        "salesFee": -93.06,
+        "paymentFee": -22.82,
+        "wrongWeightAdjustment": -13
+      },
+      "items": [
+        {
+          "name": "MARATHON รอกมือหมุน ผ้า 540KGS(1200 LBS) FD-S1200",
+          "skuText": "M327-2025",
+          "amount": 1,
+          "unitPrice": 669,
+          "amountReceived": 540.12,
+          "buyerPaidAmount": 711,
+          "productSubtotal": 669,
+          "lineAmount": 540.12,
+          "orderLineId": "1104333687887722"
+        }
+      ]
+    }
+  ]
+}

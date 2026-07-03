@@ -1098,19 +1098,7 @@ async function exportLazadaPaymentsBrowser(orderNos, existingMap, errors, onReco
         if (!row) {
           errors.push(`Lazada ${orderNo}: order not found`);
         } else {
-          const record = {
-            platform: "Lazada",
-            orderNo,
-            collectedAmount: lazadaCollectedAmount(row),
-            currency: "THB",
-            paymentMethod: row.paymentMethod || "",
-            status: row.tabStatus || row.packages?.[0]?.packageStatusName || "",
-            source: "Lazada Seller Center",
-            capturedAt: new Date().toISOString(),
-            orderId: row.orderNumber || "",
-            sessionMode: session.mode || "browser",
-            items: lazadaItemsFromOrder(row),
-          };
+          const record = lazadaPaymentRecordFromRow(orderNo, row, session.mode || "browser");
           records.push(record);
           if (onRecord) onRecord(record, { platform: "Lazada", current: current + 1, total: orderNos.length });
         }

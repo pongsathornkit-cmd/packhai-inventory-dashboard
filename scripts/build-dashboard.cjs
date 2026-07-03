@@ -54,6 +54,10 @@ const inputFiles = {
     path.join(dataDir, "seller_compare", "seller_order_payments.json"),
     path.join(workspaceRoot, "outputs", "seller_compare", "seller_order_payments.json")
   ),
+  sellerPaymentOverrides: preferExisting(
+    path.join(dataDir, "seller_compare", "seller_payment_overrides.json"),
+    path.join(workspaceRoot, "outputs", "seller_compare", "seller_payment_overrides.json")
+  ),
   alibabaPurchaseOrders: preferExisting(
     path.join(dataDir, "alibaba_purchase_orders.json"),
     path.join(workspaceRoot, "outputs", "alibaba_purchase_orders.json")
@@ -103,6 +107,24 @@ function readPublicSupabaseConfig() {
     url,
     anonKey,
     directWebsiteStock: Boolean(url && anonKey),
+  };
+}
+
+function sellerPaymentRecords(data) {
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.orders)) return data.orders;
+  if (Array.isArray(data?.payments)) return data.payments;
+  if (Array.isArray(data?.data)) return data.data;
+  return [];
+}
+
+function mergeSellerPaymentOverrides(sellerPayments, overrides) {
+  const overrideRows = sellerPaymentRecords(overrides);
+  if (!overrideRows.length) return sellerPayments;
+  return {
+    ...sellerPayments,
+    overridesExportedAt: overrides.exportedAt || "",
+    orders: [...sellerPaymentRecords(sellerPayments), ...overrideRows],
   };
 }
 
@@ -780,7 +802,9 @@ function build() {
   const shopee = readJson(inputFiles.shopee);
   const lazada = readJson(inputFiles.lazada);
   const ktw = readJson(inputFiles.ktw);
-  const sellerPayments = readOptionalJson(inputFiles.sellerPayments, emptySellerPayments());
+  const sellerPaymentsRaw = readOptionalJson(inputFiles.sellerPayments, emptySellerPayments());
+  const sellerPaymentOverrides = readOptionalJson(inputFiles.sellerPaymentOverrides, { orders: [] });
+  const sellerPayments = mergeSellerPaymentOverrides(sellerPaymentsRaw, sellerPaymentOverrides);
   const alibabaPurchaseOrders = buildAlibabaPurchaseOrders(
     readOptionalJson(inputFiles.alibabaPurchaseOrders, { source: "Alibaba paid purchase orders export", orders: [] })
   );

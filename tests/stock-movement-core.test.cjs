@@ -329,9 +329,54 @@ test("Lazada payment without amount received stays refreshable instead of trusti
     ],
   });
 
-  assert.equal(record.collectedAmount, 669);
+  assert.equal(record.collectedAmount, 0);
   assert.equal(record.amountReceivedCaptured, false);
-  assert.equal(record.items[0].lineAmount, 669);
+  assert.equal(record.paymentBreakdown.buyerPaidAmount, 711);
+  assert.equal(record.paymentBreakdown.productSubtotal, 669);
+  assert.equal(record.items[0].lineAmount, 0);
+
+  const paymentIndex = buildSellerPaymentIndex({ orders: [record] });
+  const movement = enrichMovementWithSellerPayment(
+    { channelName: "Lazada", platformOrderNo: "110433687887722", sku: "M327-2025", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(paymentIndex.rowCount, 0);
+  assert.equal(movement.platformPaymentStatus, "missing-seller-data");
+  assert.equal(movement.platformPaymentAmount, 0);
+});
+
+test("Lazada payment-detail override beats stale order-list retail totals", () => {
+  const paymentIndex = buildSellerPaymentIndex({
+    orders: [
+      {
+        platform: "Lazada",
+        orderNo: "1104333687787722",
+        collectedAmount: 669,
+        paymentBreakdown: { buyerPaidAmount: 711, productSubtotal: 669 },
+        items: [{ skuText: "M327-2025", amount: 1, lineAmount: 669 }],
+      },
+      {
+        platform: "Lazada",
+        orderNo: "1104333687787722",
+        collectedAmount: 540.12,
+        amountReceived: 540.12,
+        amountReceivedCaptured: true,
+        paymentBreakdown: { amountReceived: 540.12, buyerPaidAmount: 711, productSubtotal: 669 },
+        items: [{ skuText: "M327-2025", amount: 1, amountReceived: 540.12, lineAmount: 540.12 }],
+      },
+    ],
+  });
+
+  const movement = enrichMovementWithSellerPayment(
+    { channelName: "Lazada", platformOrderNo: "1104333687787722", sku: "M327-2025", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(paymentIndex.rowCount, 1);
+  assert.equal(movement.platformPaymentStatus, "matched");
+  assert.equal(movement.platformPaymentAmount, 540.12);
+  assert.equal(movement.platformPaymentOrderAmount, 540.12);
 });
 
 test("seller platform payment is not assigned to a SKU when multi-item order has no item amounts", () => {
@@ -363,7 +408,7 @@ test("platform payment summary counts unique platform sale orders and matched se
   const paymentIndex = buildSellerPaymentIndex({
     orders: [
       { platform: "Shopee", orderNo: "SP-001", collectedAmount: 500 },
-      { platform: "Lazada", orderNo: "LZ-001", collectedAmount: 300 },
+      { platform: "Lazada", orderNo: "LZ-001", collectedAmount: 300, amountReceived: 300, amountReceivedCaptured: true },
     ],
   });
   const movements = [

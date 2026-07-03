@@ -188,6 +188,22 @@ test("Alibaba receiving can post stock-in transactions to Website Stock only", (
   assert.match(app, /บันทึกสถานะ On Order/);
   assert.match(app, /รับเข้า stock/);
 });
+
+test("Alibaba receiving SKU search shows product image results while typing", () => {
+  const app = readRepoFile("src/app.js");
+  const css = readRepoFile("src/styles.css");
+
+  assert.match(app, /function\s+filterAlibabaSkuOptions/);
+  assert.match(app, /function\s+renderAlibabaSkuSearchResults/);
+  assert.match(app, /data-alibaba-sku-results/);
+  assert.match(app, /data-alibaba-sku-option/);
+  assert.match(app, /class="alibaba-sku-result-thumb/);
+  assert.match(app, /renderAlibabaSkuSuggestionsForInput\(target\)/);
+  assert.match(css, /\.alibaba-sku-picker/);
+  assert.match(css, /\.alibaba-sku-results/);
+  assert.match(css, /\.alibaba-sku-result-thumb/);
+});
+
 test("Alibaba order rows render compact by default with expandable details", () => {
   const app = readRepoFile("src/app.js");
   const css = readRepoFile("src/styles.css");

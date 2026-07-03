@@ -4145,6 +4145,60 @@
       </datalist>`;
   }
 
+  function filterAlibabaSkuOptions(query = "", limit = 8) {
+    const needle = compactText(query);
+    const compactNeedle = compactSkuValue(query);
+    const options = buildAlibabaSkuOptions();
+    if (!needle && !compactNeedle) return options.slice(0, limit);
+    return options
+      .filter((option) => {
+        const text = compactText([option.sku, option.name, option.warehouseSummary, option.priceSource].filter(Boolean).join(" "));
+        const skuText = compactSkuValue(option.sku);
+        return text.includes(needle) || Boolean(compactNeedle && skuText.includes(compactNeedle));
+      })
+      .slice(0, limit);
+  }
+
+  function renderAlibabaSkuResultThumb(option) {
+    if (!option?.imageUrl) return `<span class="alibaba-sku-result-thumb missing" aria-hidden="true"></span>`;
+    return `
+      <span class="alibaba-sku-result-thumb">
+        <img src="${escapeHtml(option.imageUrl)}" alt="${escapeHtml(option.sku || "SKU")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('missing'); this.remove();" />
+      </span>`;
+  }
+
+  function renderAlibabaSkuSearchResults(query = "", lineKey = "") {
+    const options = filterAlibabaSkuOptions(query, 8);
+    if (!options.length) {
+      return `<div class="alibaba-sku-empty" data-alibaba-sku-empty>ไม่พบ SKU ที่ตรงกับคำค้นหา</div>`;
+    }
+    return options
+      .map(
+        (option) => `
+          <button
+            type="button"
+            class="alibaba-sku-result"
+            data-alibaba-sku-option="${escapeHtml(option.sku)}"
+            data-alibaba-line-key="${escapeHtml(lineKey)}"
+          >
+            ${renderAlibabaSkuResultThumb(option)}
+            <span class="alibaba-sku-result-copy">
+              <strong>${escapeHtml(option.sku)}</strong>
+              <span>${escapeHtml(option.name || "-")}</span>
+              <small>${escapeHtml([option.warehouseSummary, option.price ? fmtBaht2.format(option.price) : ""].filter(Boolean).join(" · "))}</small>
+            </span>
+          </button>`
+      )
+      .join("");
+  }
+
+  function renderAlibabaSkuSuggestionsForInput(input) {
+    const picker = input.closest(".alibaba-sku-picker");
+    const results = picker?.querySelector("[data-alibaba-sku-results]");
+    if (!results) return;
+    results.innerHTML = renderAlibabaSkuSearchResults(input.value, input.dataset.alibabaLineKey || "");
+  }
+
   function calculateAlibabaReceivingRows(orderRows = getAlibabaPurchaseOrders().rows) {
     const lotQuantity = Math.max(1, alibabaLotQuantity(orderRows));
     const lotShippingCost = moneyValue(alibabaReceivingState.lotShippingCost);
@@ -4295,16 +4349,19 @@
               </span>
             </div>
             <div class="alibaba-stock-in-grid">
-              <label>
+              <label class="alibaba-sku-picker">
                 SKU รับเข้า
                 <input
                   type="text"
-                  list="alibabaSkuOptions"
                   value="${escapeHtml(sku)}"
                   placeholder="เลือก SKU หรือพิมพ์ SKU ใหม่"
+                  autocomplete="off"
                   data-alibaba-sku-input
                   data-alibaba-line-key="${escapeHtml(line.lineKey)}"
                 />
+                <div class="alibaba-sku-results" data-alibaba-sku-results data-alibaba-line-key="${escapeHtml(line.lineKey)}">
+                  ${renderAlibabaSkuSearchResults(sku, line.lineKey)}
+                </div>
               </label>
               <label>
                 คลังรับเข้า
@@ -4901,6 +4958,7 @@
         const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
         draft.sku = normalizeSkuValue(target.value);
         saveAlibabaReceivingDrafts();
+        renderAlibabaSkuSuggestionsForInput(target);
         return;
       }
       if (target.matches("[data-alibaba-stock-in-qty]")) {
@@ -4955,7 +5013,19 @@
     });
 
     root.addEventListener("click", async (event) => {
-      const button = event.target.closest("[data-alibaba-receiving-save]");
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const skuOption = target.closest("[data-alibaba-sku-option]");
+      if (skuOption) {
+        const lineKey = skuOption.dataset.alibabaLineKey || "";
+        const draft = alibabaReceivingDraft(lineKey);
+        draft.sku = normalizeSkuValue(skuOption.dataset.alibabaSkuOption || "");
+        draft.createSku = false;
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+        return;
+      }
+      const button = target.closest("[data-alibaba-receiving-save]");
       if (!button) return;
       const lineKey = button.dataset.alibabaLineKey || "";
       await postAlibabaReceivingStock(lineKey, button);

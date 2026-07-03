@@ -1303,14 +1303,51 @@ svg {
 }
 
 .alibaba-orders-table {
-  min-width: 2140px;
+  min-width: 0;
+  table-layout: fixed;
+}
+
+.payment-orders-table.alibaba-orders-table {
+  min-width: 0;
+  table-layout: fixed;
 }
 
 .alibaba-orders-table tr.alibaba-order-main-row td {
   height: 54px;
   padding-top: 6px;
   padding-bottom: 6px;
+  overflow: hidden;
   white-space: nowrap;
+}
+
+.alibaba-orders-table th:nth-child(1),
+.alibaba-orders-table td:nth-child(1) {
+  width: 21%;
+}
+
+.alibaba-orders-table th:nth-child(2),
+.alibaba-orders-table td:nth-child(2) {
+  width: 17%;
+}
+
+.alibaba-orders-table th:nth-child(3),
+.alibaba-orders-table td:nth-child(3) {
+  width: 19%;
+}
+
+.alibaba-orders-table th:nth-child(4),
+.alibaba-orders-table td:nth-child(4) {
+  width: 18%;
+}
+
+.alibaba-orders-table th:nth-child(5),
+.alibaba-orders-table td:nth-child(5) {
+  width: 13%;
+}
+
+.alibaba-orders-table th:nth-child(6),
+.alibaba-orders-table td:nth-child(6) {
+  width: 12%;
 }
 
 .alibaba-orders-table tr.alibaba-order-main-row.expanded td {
@@ -1329,9 +1366,69 @@ svg {
   max-width: 160px;
 }
 
-.alibaba-orders-table tr.alibaba-order-main-row td:nth-child(6) > strong,
-.alibaba-orders-table tr.alibaba-order-main-row td:nth-child(6) > span {
-  max-width: 150px;
+.alibaba-order-identity {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+  align-items: center;
+}
+
+.alibaba-order-identity .alibaba-capture-card.compact {
+  width: 64px;
+  min-height: 46px;
+  grid-template-columns: 1fr;
+}
+
+.alibaba-order-identity .alibaba-capture-card.compact .alibaba-capture-meta {
+  display: none;
+}
+
+.alibaba-order-identity-text,
+.alibaba-supplier-status,
+.alibaba-timeline-summary,
+.alibaba-money-summary {
+  min-width: 0;
+}
+
+.alibaba-order-identity-text strong,
+.alibaba-order-identity-text span,
+.alibaba-supplier-status strong,
+.alibaba-supplier-status small,
+.alibaba-timeline-summary strong,
+.alibaba-timeline-summary span,
+.alibaba-timeline-summary small,
+.alibaba-money-summary strong,
+.alibaba-money-summary span,
+.alibaba-money-summary small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alibaba-order-identity-text .alibaba-order-link {
+  display: inline-flex;
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.alibaba-supplier-status .payment-badge {
+  max-width: 100%;
+  margin: 4px 0 2px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alibaba-supplier-status small,
+.alibaba-timeline-summary small,
+.alibaba-money-summary small {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
+  line-height: 1.35;
 }
 
 .alibaba-row-tools {
@@ -1339,7 +1436,7 @@ svg {
   gap: 8px;
   align-items: center;
   justify-content: space-between;
-  min-width: 280px;
+  min-width: 0;
 }
 
 .alibaba-row-toggle {
@@ -1387,13 +1484,15 @@ svg {
 .alibaba-order-detail-row td {
   height: auto;
   padding: 12px;
+  overflow: visible;
   background: linear-gradient(135deg, rgba(248, 250, 255, 0.96), rgba(255, 241, 248, 0.55));
   border-bottom: 1px solid rgba(35, 44, 101, 0.18);
+  white-space: normal;
 }
 
 .alibaba-order-detail-panel {
   display: grid;
-  grid-template-columns: 240px minmax(520px, 1.2fr) minmax(360px, 0.9fr);
+  grid-template-columns: minmax(160px, 0.7fr) minmax(0, 1.25fr) minmax(0, 1fr);
   gap: 12px;
   align-items: start;
 }
@@ -1515,8 +1614,14 @@ svg {
   min-width: 360px;
 }
 
+.alibaba-order-detail-panel .alibaba-product-list {
+  width: 100%;
+  min-width: 0;
+}
+
 .alibaba-product-list.compact {
-  min-width: 280px;
+  width: 100%;
+  min-width: 0;
   gap: 3px;
 }
 
@@ -1525,6 +1630,11 @@ svg {
   grid-template-columns: 42px minmax(0, 1fr);
   gap: 9px;
   align-items: center;
+  min-width: 0;
+}
+
+.alibaba-product-line > div {
+  min-width: 0;
 }
 
 .alibaba-product-list.compact .alibaba-product-line {
@@ -1608,7 +1718,7 @@ svg {
 .alibaba-receiving-card-list {
   display: grid;
   gap: 8px;
-  min-width: 460px;
+  min-width: 0;
 }
 
 .alibaba-receiving-card {
@@ -1627,7 +1737,7 @@ svg {
 }
 
 .alibaba-receiving-card-title strong {
-  max-width: 420px;
+  max-width: 100%;
   overflow: hidden;
   color: var(--ink-2);
   font-size: 12px;

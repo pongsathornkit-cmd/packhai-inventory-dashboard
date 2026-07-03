@@ -202,3 +202,18 @@ test("Alibaba order rows render compact by default with expandable details", () 
   assert.match(css, /\.alibaba-row-toggle/);
   assert.match(css, /\.alibaba-order-detail-panel/);
 });
+
+test("Alibaba order table fits the page with consolidated columns", () => {
+  const app = readRepoFile("src/app.js");
+  const css = readRepoFile("src/styles.css");
+
+  assert.match(app, /function\s+renderAlibabaOrderIdentity/);
+  assert.match(app, /function\s+renderAlibabaSupplierStatus/);
+  assert.match(app, /function\s+renderAlibabaTimelineSummary/);
+  assert.match(app, /function\s+renderAlibabaMoneySummary/);
+  assert.match(app, /colspan="6"/);
+  assert.match(css, /\.alibaba-orders-table\s*\{[\s\S]*?table-layout:\s*fixed;/);
+  assert.match(css, /\.alibaba-orders-table\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(css, /\.alibaba-order-detail-panel \.alibaba-product-list\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.doesNotMatch(css, /\.alibaba-orders-table\s*\{[\s\S]*?min-width:\s*2140px;/);
+});

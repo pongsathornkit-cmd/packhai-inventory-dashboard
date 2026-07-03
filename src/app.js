@@ -4705,6 +4705,50 @@
       </div>`;
   }
 
+  function renderAlibabaOrderIdentity(row) {
+    const orderLink = row.orderUrl
+      ? `<a class="alibaba-order-link" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener">เปิด Alibaba</a>`
+      : "";
+    return `
+      <div class="alibaba-order-identity">
+        ${renderAlibabaOrderCapture(row, { compact: true })}
+        <div class="alibaba-order-identity-text">
+          <strong>${escapeHtml(row.orderNo || "-")}</strong>
+          <span>${escapeHtml(row.buyerAccount || row.supplierName || "")}</span>
+          ${orderLink}
+        </div>
+      </div>`;
+  }
+
+  function renderAlibabaSupplierStatus(row) {
+    return `
+      <div class="alibaba-supplier-status">
+        <strong>${escapeHtml(row.supplierName || "-")}</strong>
+        <span class="payment-badge ${alibabaStatusBadgeClass(row.statusGroup)}">${escapeHtml(alibabaStatusLabel(row.status))}</span>
+        <small>${escapeHtml(row.status || "-")}</small>
+      </div>`;
+  }
+
+  function renderAlibabaTimelineSummary(row) {
+    const expected = row.expectedShipDateLabel || formatDateTime(row.expectedShipDate) || "-";
+    const tracking = [row.logisticsProvider, row.trackingNo].filter(Boolean).join(" · ");
+    return `
+      <div class="alibaba-timeline-summary">
+        <strong>${escapeHtml(row.orderDateLabel || formatDateTime(row.orderDate) || "-")}</strong>
+        <span>ส่ง ${escapeHtml(expected)}</span>
+        <small>${escapeHtml(tracking || `อัปเดต ${row.updatedAtLabel || formatDateTime(row.updatedAt) || "-"}`)}</small>
+      </div>`;
+  }
+
+  function renderAlibabaMoneySummary(row) {
+    return `
+      <div class="alibaba-money-summary">
+        <strong>${escapeHtml(fmtCurrency(row.paidAmount || 0, row.currency || "USD"))}</strong>
+        <span>Order ${escapeHtml(fmtCurrency(row.orderAmount || 0, row.currency || "USD"))}</span>
+        <small>คงเหลือ ${escapeHtml(fmtCurrency(row.balanceAmount || 0, row.currency || "USD"))}</small>
+      </div>`;
+  }
+
   function renderAlibabaRows() {
     const body = $("alibabaOrderRows");
     if (!body) return;
@@ -4721,17 +4765,13 @@
             const rowKey = alibabaOrderRowKey(row, absoluteIndex);
             const detailId = `alibaba-order-detail-${absoluteIndex}`;
             const expanded = alibabaOrderState.expandedOrderKeys.has(rowKey);
-            const orderLink = row.orderUrl
-              ? `<a class="alibaba-order-link" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener">เปิด Alibaba</a>`
-              : "";
             return `
           <tr class="alibaba-order-main-row${expanded ? " expanded" : ""}">
-            <td class="alibaba-capture-cell">
-              ${renderAlibabaOrderCapture(row, { compact: true })}
+            <td>
+              ${renderAlibabaOrderIdentity(row)}
             </td>
             <td>
-              <strong>${escapeHtml(row.orderNo || "-")}</strong>
-              <span>${escapeHtml(row.buyerAccount || row.supplierName || "")}</span>
+              ${renderAlibabaSupplierStatus(row)}
             </td>
             <td>
               <div class="alibaba-row-tools">
@@ -4748,37 +4788,19 @@
               </div>
             </td>
             <td>
-              <strong>${escapeHtml(row.supplierName || "-")}</strong>
-              <span>${orderLink || escapeHtml(row.note || "")}</span>
-            </td>
-            <td>
-              <span class="payment-badge ${alibabaStatusBadgeClass(row.statusGroup)}">${escapeHtml(alibabaStatusLabel(row.status))}</span>
-              <span>${escapeHtml(row.status || "-")}</span>
-            </td>
-            <td>
-              <strong>${escapeHtml(row.orderDateLabel || formatDateTime(row.orderDate) || "-")}</strong>
-              <span>อัปเดต ${escapeHtml(row.updatedAtLabel || formatDateTime(row.updatedAt) || "-")}</span>
-            </td>
-            <td>
-              <strong>${escapeHtml(row.expectedShipDateLabel || formatDateTime(row.expectedShipDate) || "-")}</strong>
-              <span>${escapeHtml([row.logisticsProvider, row.trackingNo].filter(Boolean).join(" · "))}</span>
-            </td>
-            <td>
               ${renderAlibabaProducts(row, { compact: true })}
             </td>
-            <td class="num">
-              <strong>${escapeHtml(fmtCurrency(row.paidAmount || 0, row.currency || "USD"))}</strong>
-              <span>Order ${escapeHtml(fmtCurrency(row.orderAmount || 0, row.currency || "USD"))}</span>
+            <td>
+              ${renderAlibabaTimelineSummary(row)}
             </td>
             <td class="num">
-              <strong>${escapeHtml(fmtCurrency(row.balanceAmount || 0, row.currency || "USD"))}</strong>
-              <span>${escapeHtml(row.currency || "USD")}</span>
+              ${renderAlibabaMoneySummary(row)}
             </td>
           </tr>
           ${
             expanded
               ? `<tr class="alibaba-order-detail-row" id="${escapeHtml(detailId)}">
-            <td colspan="10">
+            <td colspan="6">
               ${renderAlibabaOrderDetails(row)}
             </td>
           </tr>`
@@ -4786,7 +4808,7 @@
           }`;
           })
           .join("")
-      : `<tr><td colspan="10" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
+      : `<tr><td colspan="6" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
 
     const status = $("alibabaOrderPageStatus");
     if (status) {
@@ -5058,16 +5080,12 @@
           <table class="payment-orders-table alibaba-orders-table">
             <thead>
               <tr>
-                <th>Capture</th>
                 <th>Order</th>
+                <th>Supplier / Status</th>
                 <th>Process รับเข้า</th>
-                <th>Supplier</th>
-                <th>สถานะ</th>
-                <th>วันที่สั่ง</th>
-                <th>กำหนดจัดส่ง</th>
                 <th>สินค้า</th>
-                <th>จ่ายแล้ว</th>
-                <th>คงเหลือ</th>
+                <th>Timeline</th>
+                <th>ยอดเงิน</th>
               </tr>
             </thead>
             <tbody id="alibabaOrderRows"></tbody>

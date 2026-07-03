@@ -148,7 +148,7 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(css, /body\.alibaba-order-table-route main > section:not\(#alibaba-orders\)/);
   assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-kpis/);
   assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap/);
-  assert.match(css, /max-height:\s*max\(760px,\s*calc\(100vh - 260px\)\)/);
+  assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap\s*\{[\s\S]*?max-height:\s*none;/);
   assert.match(build, /alibabaPurchaseOrders/);
 });
 
@@ -246,4 +246,15 @@ test("Alibaba order table fits the page with consolidated columns", () => {
   assert.match(css, /\.alibaba-orders-table\s*\{[\s\S]*?min-width:\s*0;/);
   assert.match(css, /\.alibaba-order-detail-panel \.alibaba-product-list\s*\{[\s\S]*?min-width:\s*0;/);
   assert.doesNotMatch(css, /\.alibaba-orders-table\s*\{[\s\S]*?min-width:\s*2140px;/);
+});
+
+test("Alibaba table route uses readable page-scrolled sizing", () => {
+  const css = readRepoFile("src/styles.css");
+
+  assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap\s*\{[\s\S]*?max-height:\s*none;/);
+  assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap\s*\{[\s\S]*?overflow-x:\s*hidden;/);
+  assert.match(css, /body\.alibaba-order-table-route \.payment-orders-table\.alibaba-orders-table th\s*\{[\s\S]*?font-size:\s*13px;/);
+  assert.match(css, /body\.alibaba-order-table-route \.payment-orders-table\.alibaba-orders-table td\s*\{[\s\S]*?font-size:\s*14px;/);
+  assert.match(css, /body\.alibaba-order-table-route \.alibaba-orders-table tr\.alibaba-order-main-row td\s*\{[\s\S]*?height:\s*86px;/);
+  assert.match(css, /body\.alibaba-order-table-route \.alibaba-product-list\.compact \.alibaba-product-line strong/);
 });

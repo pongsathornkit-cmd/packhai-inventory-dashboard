@@ -56,3 +56,12 @@ test("inventory table route hides the dashboard shell content and keeps the lega
   assert.match(cssSource, /body\.inventory-table-route main > section:not\(#inventory-detail\)/);
   assert.match(cssSource, /body\.inventory-table-route #inventory-detail/);
 });
+
+test("inventory table route uses readable page-scrolled table sizing", () => {
+  assert.match(cssSource, /body\.inventory-table-route \.table-wrap\s*\{[\s\S]*?max-height:\s*none;/);
+  assert.match(cssSource, /body\.inventory-table-route \.table-wrap\s*\{[\s\S]*?overflow-x:\s*hidden;/);
+  assert.match(cssSource, /body\.inventory-table-route table\s*\{[\s\S]*?min-width:\s*0;/);
+  assert.match(cssSource, /body\.inventory-table-route table\s*\{[\s\S]*?table-layout:\s*fixed;/);
+  assert.match(cssSource, /body\.inventory-table-route thead th\s*\{[\s\S]*?font-size:\s*13px;/);
+  assert.match(cssSource, /body\.inventory-table-route tbody td\s*\{[\s\S]*?font-size:\s*14px;/);
+});

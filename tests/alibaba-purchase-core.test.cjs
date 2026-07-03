@@ -15,6 +15,16 @@ function readRepoFile(relativePath) {
   return fs.readFileSync(path.join(projectRoot, relativePath), "utf8");
 }
 
+function assertTextSequence(source, patterns) {
+  let cursor = 0;
+  for (const pattern of patterns) {
+    const haystack = source.slice(cursor);
+    const match = typeof pattern === "string" ? haystack.indexOf(pattern) : haystack.search(pattern);
+    assert.notEqual(match, -1, `Expected ${pattern} after offset ${cursor}`);
+    cursor += match + 1;
+  }
+}
+
 test("Alibaba paid order statuses match the requested workflow list", () => {
   assert.deepEqual(ALIBABA_PAID_ORDER_STATUSES, [
     "Waiting for remaining balance payment",
@@ -296,6 +306,27 @@ test("Alibaba order table fits the page with consolidated columns", () => {
   assert.match(css, /\.alibaba-orders-table\s*\{[\s\S]*?min-width:\s*0;/);
   assert.match(css, /\.alibaba-order-detail-panel \.alibaba-product-list\s*\{[\s\S]*?min-width:\s*0;/);
   assert.doesNotMatch(css, /\.alibaba-orders-table\s*\{[\s\S]*?min-width:\s*2140px;/);
+});
+
+test("Alibaba order table swaps product and order column positions", () => {
+  const app = readRepoFile("src/app.js");
+  const headerBlock = app.match(/<thead>[\s\S]*?<tbody id="alibabaOrderRows"><\/tbody>/)?.[0] || "";
+  const rowBlock = app.match(/<tr class="alibaba-order-main-row[\s\S]*?<\/tr>/)?.[0] || "";
+
+  assertTextSequence(headerBlock, [
+    /<th>\u0e2a\u0e34\u0e19\u0e04\u0e49\u0e32<\/th>/,
+    "<th>Supplier / Status</th>",
+    /<th>Process/,
+    "<th>Order</th>",
+    "<th>Timeline</th>",
+  ]);
+  assertTextSequence(rowBlock, [
+    "renderAlibabaProducts(row, { compact: true })",
+    "renderAlibabaSupplierStatus(row)",
+    "renderAlibabaReceivingSummary(row)",
+    "renderAlibabaOrderIdentity(row)",
+    "renderAlibabaTimelineSummary(row)",
+  ]);
 });
 
 test("Alibaba table route uses readable page-scrolled sizing", () => {

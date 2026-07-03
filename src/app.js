@@ -4885,7 +4885,7 @@
             return `
           <tr class="alibaba-order-main-row${expanded ? " expanded" : ""}">
             <td>
-              ${renderAlibabaOrderIdentity(row)}
+              ${renderAlibabaProducts(row, { compact: true })}
             </td>
             <td>
               ${renderAlibabaSupplierStatus(row)}
@@ -4905,7 +4905,7 @@
               </div>
             </td>
             <td>
-              ${renderAlibabaProducts(row, { compact: true })}
+              ${renderAlibabaOrderIdentity(row)}
             </td>
             <td>
               ${renderAlibabaTimelineSummary(row)}
@@ -5243,10 +5243,10 @@
           <table class="payment-orders-table alibaba-orders-table">
             <thead>
               <tr>
-                <th>Order</th>
+                <th>สินค้า</th>
                 <th>Supplier / Status</th>
                 <th>Process รับเข้า</th>
-                <th>สินค้า</th>
+                <th>Order</th>
                 <th>Timeline</th>
                 <th>ยอดเงิน</th>
               </tr>

@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generatedAt": "2026-07-03T07:51:06.648Z",
-    "generatedAtLabel": "03 ก.ค. 2569 14:51",
+    "generatedAt": "2026-07-03T08:03:59.296Z",
+    "generatedAtLabel": "03 ก.ค. 2569 15:03",
     "reportTitle": "สรุปมูลค่าสินค้าคงคลัง Packhai + Website Stock",
     "valuationRule": "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และ Website Stock เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
     "quantityRule": "ใช้ field quantity จาก Packhai และไฟล์ Website Stock เป็นจำนวนคงเหลือในคลัง โดย Website Stock เก็บเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์บนเว็บไซต์นี้ ไม่ต้อง sync จาก FlowAccount",
@@ -110,9 +110,9 @@
       },
       "alibabaPurchaseOrders": {
         "file": "data/alibaba_purchase_orders.json",
-        "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser)",
-        "exportedAt": "2026-07-03T06:41:22.168Z",
-        "exportedAtLabel": "03 ก.ค. 2569 13:41",
+        "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser with product thumbnails)",
+        "exportedAt": "2026-07-03T07:50:39.730Z",
+        "exportedAtLabel": "03 ก.ค. 2569 14:50",
         "rowCount": 50,
         "allowedStatuses": [
           "Waiting for remaining balance payment",
@@ -118743,9 +118743,9 @@
   ],
   "alibabaPurchaseOrders": {
     "metadata": {
-      "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser)",
-      "exportedAt": "2026-07-03T06:41:22.168Z",
-      "exportedAtLabel": "03 ก.ค. 2569 13:41",
+      "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser with product thumbnails)",
+      "exportedAt": "2026-07-03T07:50:39.730Z",
+      "exportedAtLabel": "03 ก.ค. 2569 14:50",
       "allowedStatuses": [
         "Waiting for remaining balance payment",
         "Waiting for supplier to ship",
@@ -307472,7 +307472,7 @@
     }
   ],
   "platformSalesDashboard": {
-    "generatedAt": "2026-07-03T07:51:06.461Z",
+    "generatedAt": "2026-07-03T08:03:59.097Z",
     "timeZone": "Asia/Bangkok",
     "nowKey": "2026-07-03",
     "windowDays": 14,

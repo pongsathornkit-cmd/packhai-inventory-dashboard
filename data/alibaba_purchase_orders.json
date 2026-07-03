@@ -1,6 +1,6 @@
 {
-  "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser)",
-  "exportedAt": "2026-07-03T06:41:22.168Z",
+  "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser with product thumbnails)",
+  "exportedAt": "2026-07-03T07:50:39.730Z",
   "capturedUrl": "https://biz.alibaba.com/ta/list/scene/mainList.htm?scene=order",
   "capturedRowCount": 64,
   "orders": [

@@ -65,6 +65,7 @@
     query: "",
     status: "All",
     page: 1,
+    expandedOrderKeys: new Set(),
   };
   const alibabaReceivingStorageKey = "packhaiAlibabaReceivingDrafts";
   const alibabaReceivingWarehouses = [
@@ -4256,11 +4257,7 @@
   }
 
   function renderAlibabaReceivingCards(row) {
-    const allReceiving = calculateAlibabaReceivingRows(getAlibabaPurchaseOrders().rows || []);
-    const lineByKey = new Map(allReceiving.lines.map((line) => [line.lineKey, line]));
-    const lines = alibabaOrderProducts(row)
-      .map((product) => lineByKey.get(alibabaReceivingLineKey(row, product)))
-      .filter(Boolean);
+    const lines = alibabaReceivingLinesForRow(row);
     return `
       <div class="alibaba-receiving-card-list">
         ${lines
@@ -4344,6 +4341,32 @@
           </article>`;
           })
           .join("")}
+      </div>`;
+  }
+
+  function alibabaReceivingLinesForRow(row) {
+    const allReceiving = calculateAlibabaReceivingRows(getAlibabaPurchaseOrders().rows || []);
+    const lineByKey = new Map(allReceiving.lines.map((line) => [line.lineKey, line]));
+    return alibabaOrderProducts(row)
+      .map((product) => lineByKey.get(alibabaReceivingLineKey(row, product)))
+      .filter(Boolean);
+  }
+
+  function renderAlibabaReceivingSummary(row) {
+    const lines = alibabaReceivingLinesForRow(row);
+    const totalQty = lines.reduce((sum, line) => sum + numberValue(line.quantity), 0);
+    const mappedCount = lines.filter((line) => normalizeSkuValue(line.draft.sku)).length;
+    const readyCount = lines.filter(
+      (line) =>
+        normalizeSkuValue(line.draft.sku) &&
+        alibabaReceivingWarehouse(line.draft.warehouseId)?.source === "website-stock" &&
+        numberValue(line.draft.stockInQty || line.quantity) > 0
+    ).length;
+    const onOrderCount = lines.filter((line) => alibabaReceivingWarehouse(line.draft.warehouseId)?.source === "on-order").length;
+    return `
+      <div class="alibaba-receiving-summary-pill">
+        <strong>${fmtInt.format(lines.length)} line · ${fmtQty.format(totalQty)} pcs</strong>
+        <span>${fmtInt.format(mappedCount)} SKU · ${fmtInt.format(readyCount)} ready · ${fmtInt.format(onOrderCount)} On Order</span>
       </div>`;
   }
 
@@ -4591,7 +4614,8 @@
       </div>`;
   }
 
-  function renderAlibabaProducts(row) {
+  function renderAlibabaProducts(row, options = {}) {
+    const compact = Boolean(options.compact);
     const products = Array.isArray(row.products) ? row.products : [];
     if (!products.length) {
       return `
@@ -4606,9 +4630,9 @@
         </div>`;
     }
 
-    const visibleProducts = products.slice(0, 3);
+    const visibleProducts = products.slice(0, compact ? 1 : 3);
     return `
-      <div class="alibaba-product-list">
+      <div class="alibaba-product-list${compact ? " compact" : ""}">
         ${visibleProducts
           .map((product) => {
             const title = product.title || product.skuText || "Alibaba product";
@@ -4636,10 +4660,11 @@
             ? `<span class="alibaba-product-more">+${fmtInt.format(products.length - visibleProducts.length)} รายการสินค้า</span>`
             : ""
         }
-      </div>`;
+        </div>`;
   }
 
-  function renderAlibabaOrderCapture(row) {
+  function renderAlibabaOrderCapture(row, options = {}) {
+    const compact = Boolean(options.compact);
     const capturedLabel = row.capturedAtLabel || formatDateTime(row.capturedAt) || row.updatedAtLabel || formatDateTime(row.updatedAt) || "";
     const capturedPage = row.capturedPage ? `Page ${fmtInt.format(row.capturedPage)}` : "Alibaba";
     const content = row.captureUrl
@@ -4653,9 +4678,31 @@
       </span>`;
 
     if (row.orderUrl) {
-      return `<a class="alibaba-capture-card" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener" title="เปิดออเดอร์ Alibaba">${inner}</a>`;
+      return `<a class="alibaba-capture-card${compact ? " compact" : ""}" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener" title="เปิดออเดอร์ Alibaba">${inner}</a>`;
     }
-    return `<div class="alibaba-capture-card">${inner}</div>`;
+    return `<div class="alibaba-capture-card${compact ? " compact" : ""}">${inner}</div>`;
+  }
+
+  function alibabaOrderRowKey(row, index) {
+    return [row.orderNo || "", row.supplierName || "", row.orderDate || "", index].join("|");
+  }
+
+  function renderAlibabaOrderDetails(row) {
+    return `
+      <div class="alibaba-order-detail-panel">
+        <section class="alibaba-order-detail-card capture">
+          <h4>Order capture</h4>
+          ${renderAlibabaOrderCapture(row)}
+        </section>
+        <section class="alibaba-order-detail-card receiving">
+          <h4>Process รับเข้า stock</h4>
+          ${renderAlibabaReceivingCards(row)}
+        </section>
+        <section class="alibaba-order-detail-card products">
+          <h4>สินค้าในออเดอร์</h4>
+          ${renderAlibabaProducts(row)}
+        </section>
+      </div>`;
   }
 
   function renderAlibabaRows() {
@@ -4669,21 +4716,36 @@
 
     body.innerHTML = pageRows.length
       ? pageRows
-          .map((row) => {
+          .map((row, pageIndex) => {
+            const absoluteIndex = start + pageIndex;
+            const rowKey = alibabaOrderRowKey(row, absoluteIndex);
+            const detailId = `alibaba-order-detail-${absoluteIndex}`;
+            const expanded = alibabaOrderState.expandedOrderKeys.has(rowKey);
             const orderLink = row.orderUrl
               ? `<a class="alibaba-order-link" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener">เปิด Alibaba</a>`
               : "";
             return `
-          <tr>
+          <tr class="alibaba-order-main-row${expanded ? " expanded" : ""}">
             <td class="alibaba-capture-cell">
-              ${renderAlibabaOrderCapture(row)}
+              ${renderAlibabaOrderCapture(row, { compact: true })}
             </td>
             <td>
               <strong>${escapeHtml(row.orderNo || "-")}</strong>
               <span>${escapeHtml(row.buyerAccount || row.supplierName || "")}</span>
             </td>
             <td>
-              ${renderAlibabaReceivingCards(row)}
+              <div class="alibaba-row-tools">
+                ${renderAlibabaReceivingSummary(row)}
+                <button
+                  type="button"
+                  class="alibaba-row-toggle"
+                  data-alibaba-order-toggle="${escapeHtml(rowKey)}"
+                  aria-expanded="${expanded ? "true" : "false"}"
+                  aria-controls="${escapeHtml(detailId)}"
+                >
+                  ${expanded ? "ย่อ" : "ขยาย"}
+                </button>
+              </div>
             </td>
             <td>
               <strong>${escapeHtml(row.supplierName || "-")}</strong>
@@ -4702,7 +4764,7 @@
               <span>${escapeHtml([row.logisticsProvider, row.trackingNo].filter(Boolean).join(" · "))}</span>
             </td>
             <td>
-              ${renderAlibabaProducts(row)}
+              ${renderAlibabaProducts(row, { compact: true })}
             </td>
             <td class="num">
               <strong>${escapeHtml(fmtCurrency(row.paidAmount || 0, row.currency || "USD"))}</strong>
@@ -4712,7 +4774,16 @@
               <strong>${escapeHtml(fmtCurrency(row.balanceAmount || 0, row.currency || "USD"))}</strong>
               <span>${escapeHtml(row.currency || "USD")}</span>
             </td>
-          </tr>`;
+          </tr>
+          ${
+            expanded
+              ? `<tr class="alibaba-order-detail-row" id="${escapeHtml(detailId)}">
+            <td colspan="10">
+              ${renderAlibabaOrderDetails(row)}
+            </td>
+          </tr>`
+              : ""
+          }`;
           })
           .join("")
       : `<tr><td colspan="10" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
@@ -4889,6 +4960,20 @@
     });
     $("alibabaOrderNext")?.addEventListener("click", () => {
       alibabaOrderState.page += 1;
+      renderAlibabaRows();
+    });
+    $("alibabaOrderRows")?.addEventListener("click", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      const button = target.closest("[data-alibaba-order-toggle]");
+      if (!button) return;
+      const rowKey = button.dataset.alibabaOrderToggle || "";
+      if (!rowKey) return;
+      if (alibabaOrderState.expandedOrderKeys.has(rowKey)) {
+        alibabaOrderState.expandedOrderKeys.delete(rowKey);
+      } else {
+        alibabaOrderState.expandedOrderKeys.add(rowKey);
+      }
       renderAlibabaRows();
     });
     $("exportAlibabaOrdersCsv")?.addEventListener("click", exportAlibabaOrdersCsv);

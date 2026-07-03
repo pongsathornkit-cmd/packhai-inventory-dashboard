@@ -188,3 +188,17 @@ test("Alibaba receiving can post stock-in transactions to Website Stock only", (
   assert.match(app, /บันทึกสถานะ On Order/);
   assert.match(app, /รับเข้า stock/);
 });
+test("Alibaba order rows render compact by default with expandable details", () => {
+  const app = readRepoFile("src/app.js");
+  const css = readRepoFile("src/styles.css");
+
+  assert.match(app, /expandedOrderKeys:\s*new Set\(\)/);
+  assert.match(app, /function\s+renderAlibabaReceivingSummary/);
+  assert.match(app, /data-alibaba-order-toggle/);
+  assert.match(app, /aria-expanded="\$\{expanded \? "true" : "false"\}"/);
+  assert.match(app, /class="alibaba-order-detail-row"/);
+  assert.match(app, /renderAlibabaOrderDetails/);
+  assert.match(css, /\.alibaba-order-main-row/);
+  assert.match(css, /\.alibaba-row-toggle/);
+  assert.match(css, /\.alibaba-order-detail-panel/);
+});

@@ -1385,6 +1385,64 @@ svg {
   text-align: center;
 }
 
+.alibaba-order-shipping-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(120px, 0.4fr);
+  gap: 8px;
+  align-items: end;
+  margin-bottom: 8px;
+  padding: 10px;
+  border: 1px solid var(--strong-border);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #ffffff, rgba(255, 240, 247, 0.74));
+}
+
+.alibaba-order-shipping-control label {
+  display: grid;
+  gap: 5px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 860;
+}
+
+.alibaba-order-shipping-control input {
+  width: 100%;
+  min-height: 36px;
+  padding: 7px 9px;
+  border: 1px solid var(--strong-border);
+  border-radius: 10px;
+  background: #ffffff;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 820;
+}
+
+.alibaba-order-shipping-control span {
+  min-width: 0;
+  text-align: right;
+}
+
+.alibaba-order-shipping-control strong,
+.alibaba-order-shipping-control small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.alibaba-order-shipping-control strong {
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 920;
+}
+
+.alibaba-order-shipping-control small {
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 760;
+}
+
 .alibaba-receiving-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

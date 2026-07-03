@@ -4026,13 +4026,13 @@
   }
 
   function readAlibabaReceivingDrafts() {
-    const fallback = { lotShippingCost: 0, exchangeRate: 36.5, lines: {} };
+    const fallback = { exchangeRate: 36.5, lines: {}, orders: {} };
     try {
       const parsed = JSON.parse(localStorage.getItem(alibabaReceivingStorageKey) || "{}");
       return {
-        lotShippingCost: numberValue(parsed.lotShippingCost),
         exchangeRate: numberValue(parsed.exchangeRate) || fallback.exchangeRate,
         lines: parsed.lines && typeof parsed.lines === "object" ? parsed.lines : {},
+        orders: parsed.orders && typeof parsed.orders === "object" ? parsed.orders : {},
       };
     } catch {
       return fallback;
@@ -4049,6 +4049,19 @@
 
   function alibabaReceivingLineKey(row, product) {
     return [row.orderNo || "order", product?.rowNo || 0, product?.skuText || "", product?.title || ""].join("|");
+  }
+
+  function alibabaReceivingOrderKey(row) {
+    return [row?.orderNo || "order", row?.supplierName || "", row?.orderDate || ""].join("|");
+  }
+
+  function alibabaReceivingOrderDraft(row) {
+    const orderKey = typeof row === "string" ? row : alibabaReceivingOrderKey(row);
+    if (!alibabaReceivingState.orders) alibabaReceivingState.orders = {};
+    if (!alibabaReceivingState.orders[orderKey]) {
+      alibabaReceivingState.orders[orderKey] = {};
+    }
+    return alibabaReceivingState.orders[orderKey];
   }
 
   function alibabaReceivingDraft(lineKey) {
@@ -4201,13 +4214,24 @@
 
   function calculateAlibabaReceivingRows(orderRows = getAlibabaPurchaseOrders().rows) {
     const lotQuantity = Math.max(1, alibabaLotQuantity(orderRows));
-    const lotShippingCost = moneyValue(alibabaReceivingState.lotShippingCost);
     const exchangeRate = numberValue(alibabaReceivingState.exchangeRate) || 1;
-    const shippingCostPerPiece = moneyValue(lotShippingCost / lotQuantity);
     const skuOptions = alibabaSkuOptionMap();
     const lines = [];
+    const orderSummaries = new Map();
 
     for (const row of orderRows) {
+      const orderKey = alibabaReceivingOrderKey(row);
+      const orderDraft = alibabaReceivingOrderDraft(row);
+      const orderQuantity = Math.max(1, alibabaLotQuantity([row]));
+      const orderShippingCost = moneyValue(orderDraft.shippingCost);
+      const shippingCostPerPiece = moneyValue(orderShippingCost / Math.max(1, orderQuantity));
+      orderSummaries.set(orderKey, {
+        orderKey,
+        orderNo: row.orderNo || "",
+        orderQuantity,
+        orderShippingCost,
+        shippingCostPerPiece,
+      });
       for (const product of alibabaOrderProducts(row)) {
         const lineKey = alibabaReceivingLineKey(row, product);
         const draft = alibabaReceivingDraft(lineKey);
@@ -4223,6 +4247,10 @@
           row,
           product,
           lineKey,
+          orderKey,
+          orderDraft,
+          orderQuantity,
+          orderShippingCost,
           draft,
           quantity,
           productCostForeign: moneyValue(productCostForeign),
@@ -4238,9 +4266,10 @@
 
     return {
       lotQuantity,
-      lotShippingCost,
       exchangeRate,
-      shippingCostPerPiece,
+      totalOrderShippingCost: [...orderSummaries.values()].reduce((sum, order) => sum + order.orderShippingCost, 0),
+      orderShippingCount: [...orderSummaries.values()].filter((order) => order.orderShippingCost > 0).length,
+      orderSummaries: [...orderSummaries.values()],
       lines,
     };
   }
@@ -4262,13 +4291,9 @@
           <div>
             <span>Receiving Process</span>
             <h3>เตรียมรับสินค้าเข้า stock จาก Alibaba</h3>
-            <p>ลงค่าขนส่งทั้ง Lot แล้วระบบคำนวณค่าขนส่งต่อชิ้น ต้นทุนสินค้าต่อชิ้น และกำไรต่อชิ้น พร้อมผูก SKU เข้าคลัง</p>
+            <p>ลงค่าขนส่งแยกตามแต่ละ Order แล้วระบบจะกระจายค่าขนส่งต่อชิ้นเฉพาะสินค้าใน Order นั้น พร้อมคำนวณต้นทุนและกำไรต่อชิ้น</p>
           </div>
           <div class="alibaba-receiving-inputs">
-            <label>
-              ค่าขนส่งทั้ง Lot (THB)
-              <input type="number" min="0" step="0.01" value="${escapeHtml(receiving.lotShippingCost)}" data-alibaba-lot-shipping-cost />
-            </label>
             <label>
               Rate THB/USD
               <input type="number" min="0" step="0.01" value="${escapeHtml(receiving.exchangeRate)}" data-alibaba-exchange-rate />
@@ -4277,14 +4302,14 @@
         </div>
         <div class="alibaba-receiving-grid">
           <article>
-            <span>จำนวนสินค้าใน Lot</span>
+            <span>จำนวนสินค้าในรายการ</span>
             <strong>${fmtQty.format(receiving.lotQuantity)}</strong>
-            <small>ใช้กระจายค่าขนส่งต่อชิ้น</small>
+            <small>รวมทุก Order ที่อยู่ในตารางนี้</small>
           </article>
           <article>
-            <span>ค่าขนส่งต่อชิ้น</span>
-            <strong>${fmtBaht2.format(receiving.shippingCostPerPiece)}</strong>
-            <small>ค่าขนส่งรวม / จำนวนสินค้า</small>
+            <span>ค่าขนส่งที่บันทึกแล้ว</span>
+            <strong>${fmtBaht2.format(receiving.totalOrderShippingCost)}</strong>
+            <small>${fmtInt.format(receiving.orderShippingCount)} Order · คำนวณแยก Order</small>
           </article>
           <article>
             <span>ผูก SKU แล้ว</span>
@@ -4744,6 +4769,32 @@
     return [row.orderNo || "", row.supplierName || "", row.orderDate || "", index].join("|");
   }
 
+  function renderAlibabaOrderShippingControl(row) {
+    const orderKey = alibabaReceivingOrderKey(row);
+    const orderDraft = alibabaReceivingOrderDraft(row);
+    const orderQuantity = Math.max(1, alibabaLotQuantity([row]));
+    const orderShippingCost = moneyValue(orderDraft.shippingCost);
+    const shippingCostPerPiece = moneyValue(orderShippingCost / Math.max(1, orderQuantity));
+    return `
+      <div class="alibaba-order-shipping-control">
+        <label>
+          ค่าขนส่ง Order นี้ (THB)
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value="${escapeHtml(orderShippingCost)}"
+            data-alibaba-order-shipping-cost
+            data-alibaba-order-key="${escapeHtml(orderKey)}"
+          />
+        </label>
+        <span>
+          <strong>${fmtBaht2.format(shippingCostPerPiece)}</strong>
+          <small>ต่อชิ้น · ${fmtQty.format(orderQuantity)} pcs ใน Order นี้</small>
+        </span>
+      </div>`;
+  }
+
   function renderAlibabaOrderDetails(row) {
     return `
       <div class="alibaba-order-detail-panel">
@@ -4753,6 +4804,7 @@
         </section>
         <section class="alibaba-order-detail-card receiving">
           <h4>Process รับเข้า stock</h4>
+          ${renderAlibabaOrderShippingControl(row)}
           ${renderAlibabaReceivingCards(row)}
         </section>
         <section class="alibaba-order-detail-card products">
@@ -4944,8 +4996,9 @@
     root.addEventListener("input", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      if (target.matches("[data-alibaba-lot-shipping-cost]")) {
-        alibabaReceivingState.lotShippingCost = moneyValue(target.value);
+      if (target.matches("[data-alibaba-order-shipping-cost]")) {
+        const draft = alibabaReceivingOrderDraft(target.dataset.alibabaOrderKey || "");
+        draft.shippingCost = moneyValue(target.value);
         saveAlibabaReceivingDrafts();
         return;
       }
@@ -4971,8 +5024,9 @@
     root.addEventListener("change", (event) => {
       const target = event.target;
       if (!(target instanceof HTMLElement)) return;
-      if (target.matches("[data-alibaba-lot-shipping-cost]")) {
-        alibabaReceivingState.lotShippingCost = moneyValue(target.value);
+      if (target.matches("[data-alibaba-order-shipping-cost]")) {
+        const draft = alibabaReceivingOrderDraft(target.dataset.alibabaOrderKey || "");
+        draft.shippingCost = moneyValue(target.value);
         saveAlibabaReceivingDrafts();
         renderAlibabaPurchaseOrders();
         return;
@@ -5011,6 +5065,20 @@
         renderAlibabaPurchaseOrders();
       }
     });
+
+    root.addEventListener(
+      "focusout",
+      (event) => {
+        const target = event.target;
+        if (!(target instanceof HTMLElement)) return;
+        if (!target.matches("[data-alibaba-order-shipping-cost]")) return;
+        const draft = alibabaReceivingOrderDraft(target.dataset.alibabaOrderKey || "");
+        draft.shippingCost = moneyValue(target.value);
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+      },
+      true
+    );
 
     root.addEventListener("click", async (event) => {
       const target = event.target;

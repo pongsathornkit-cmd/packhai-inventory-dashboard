@@ -159,7 +159,7 @@ test("dashboard exposes an Alibaba receiving workflow for landed cost and stock-
   assert.match(app, /alibabaReceivingStorageKey/);
   assert.match(app, /function\s+renderAlibabaReceivingWorkbench/);
   assert.match(app, /function\s+calculateAlibabaReceivingRows/);
-  assert.match(app, /data-alibaba-lot-shipping-cost/);
+  assert.match(app, /data-alibaba-order-shipping-cost/);
   assert.match(app, /data-alibaba-exchange-rate/);
   assert.match(app, /data-alibaba-sku-input/);
   assert.match(app, /data-alibaba-warehouse-select/);
@@ -175,6 +175,20 @@ test("dashboard exposes an Alibaba receiving workflow for landed cost and stock-
   assert.match(css, /\.alibaba-receiving-grid/);
   assert.match(css, /\.alibaba-receiving-card/);
   assert.match(css, /\.alibaba-cost-metric/);
+});
+
+test("Alibaba receiving shipping cost is entered per order, not across all orders", () => {
+  const app = readRepoFile("src/app.js");
+
+  assert.match(app, /orders:\s*parsed\.orders/);
+  assert.match(app, /function\s+alibabaReceivingOrderKey/);
+  assert.match(app, /function\s+alibabaReceivingOrderDraft/);
+  assert.match(app, /data-alibaba-order-shipping-cost/);
+  assert.match(app, /orderShippingCost/);
+  assert.match(app, /orderQuantity/);
+  assert.match(app, /root\.addEventListener\(\s*"focusout"/);
+  assert.match(app, /shippingCostPerPiece\s*=\s*moneyValue\(orderShippingCost \/ Math\.max\(1,\s*orderQuantity\)\)/);
+  assert.doesNotMatch(app, /shippingCostPerPiece\s*=\s*moneyValue\(lotShippingCost \/ lotQuantity\)/);
 });
 
 test("Alibaba receiving can post stock-in transactions to Website Stock only", () => {

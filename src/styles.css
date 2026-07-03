@@ -159,14 +159,6 @@ select {
   order: 5;
 }
 
-.sidebar-nav a[href="#executive"] {
-  order: 6;
-}
-
-.sidebar-nav a[href="#valuation"] {
-  order: 7;
-}
-
 .sidebar-nav a[href="#platform-sales"] {
   order: 3;
 }

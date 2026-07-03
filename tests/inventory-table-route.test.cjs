@@ -23,6 +23,16 @@ test("inventory table is exposed as a dedicated left-menu route", () => {
   assert.match(template, /<section class="table-section" id="inventory-detail"/);
 });
 
+test("executive summary and valuation are not shown in the left menu", () => {
+  const navBlock = sidebarNav();
+  assert.doesNotMatch(navBlock, /href="#executive"/);
+  assert.doesNotMatch(navBlock, /href="#valuation"/);
+  assert.match(template, /id="executive"/);
+  assert.match(template, /id="valuation"/);
+  assert.doesNotMatch(cssSource, /\.sidebar-nav a\[href="#executive"\]/);
+  assert.doesNotMatch(cssSource, /\.sidebar-nav a\[href="#valuation"\]/);
+});
+
 test("inventory table route hides the dashboard shell content and keeps the legacy hash as an alias", () => {
   assert.match(appSource, /function isInventoryTableRoute\(\)/);
   assert.match(appSource, /route === "inventory-table" \|\| route === "inventory-detail"/);

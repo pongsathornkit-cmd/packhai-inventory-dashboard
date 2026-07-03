@@ -226,10 +226,16 @@ test("Alibaba order rows render compact by default with expandable details", () 
   assert.match(app, /function\s+renderAlibabaReceivingSummary/);
   assert.match(app, /data-alibaba-order-toggle/);
   assert.match(app, /aria-expanded="\$\{expanded \? "true" : "false"\}"/);
+  assert.match(app, /class="alibaba-order-toggle-row\$\{expanded \? " expanded" : ""\}"/);
+  assert.match(app, /class="alibaba-row-toggle-edge"/);
+  assert.match(app, /if \(!\(target instanceof Element\)\) return;/);
   assert.match(app, /class="alibaba-order-detail-row"/);
   assert.match(app, /renderAlibabaOrderDetails/);
   assert.match(css, /\.alibaba-order-main-row/);
-  assert.match(css, /\.alibaba-row-toggle/);
+  assert.match(css, /\.alibaba-order-toggle-row td\s*\{[\s\S]*?height:\s*0;/);
+  assert.match(css, /\.payment-orders-table \.alibaba-order-toggle-row td\s*\{[\s\S]*?height:\s*0\s*!important;/);
+  assert.match(css, /\.alibaba-row-toggle-edge\s*\{[\s\S]*?position:\s*absolute;/);
+  assert.match(css, /\.alibaba-row-toggle-edge svg\s*\{[\s\S]*?transition:/);
   assert.match(css, /\.alibaba-order-detail-panel/);
 });
 

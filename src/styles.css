@@ -1647,6 +1647,7 @@ body.alibaba-order-table-route .alibaba-orders-table tr.alibaba-order-main-row t
 }
 
 .alibaba-row-toggle {
+  display: none;
   min-height: 34px;
   padding: 0 13px;
   border: 1px solid rgba(233, 30, 118, 0.24);
@@ -1661,6 +1662,56 @@ body.alibaba-order-table-route .alibaba-orders-table tr.alibaba-order-main-row t
 
 .alibaba-row-toggle:hover {
   background: var(--pink-soft);
+}
+
+.alibaba-order-toggle-row td {
+  position: relative;
+  height: 0;
+  padding: 0;
+  overflow: visible;
+  border-bottom: 0;
+  background: transparent;
+}
+
+.alibaba-row-toggle-edge {
+  position: absolute;
+  left: 50%;
+  top: -14px;
+  z-index: 4;
+  width: 38px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(233, 30, 118, 0.28);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--pink-strong);
+  box-shadow: 0 8px 22px rgba(35, 44, 101, 0.14);
+  cursor: pointer;
+  transform: translateX(-50%);
+}
+
+.alibaba-row-toggle-edge svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform 160ms ease;
+}
+
+.alibaba-row-toggle-edge:hover,
+.alibaba-row-toggle-edge:focus-visible {
+  border-color: rgba(233, 30, 118, 0.52);
+  background: var(--pink-soft);
+  outline: none;
+}
+
+.alibaba-order-toggle-row.expanded .alibaba-row-toggle-edge svg {
+  transform: rotate(180deg);
 }
 
 .alibaba-receiving-summary-pill {
@@ -2355,6 +2406,14 @@ body.alibaba-order-table-route .alibaba-product-list.compact .alibaba-product-li
   color: var(--ink);
   font-size: 14px;
   vertical-align: middle;
+}
+
+.payment-orders-table .alibaba-order-toggle-row td {
+  height: 0 !important;
+  padding: 0 !important;
+  overflow: visible;
+  border-bottom: 0;
+  line-height: 0;
 }
 
 .payment-orders-table td strong,

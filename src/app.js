@@ -4906,6 +4906,23 @@
               ${renderAlibabaMoneySummary(row)}
             </td>
           </tr>
+          <tr class="alibaba-order-toggle-row${expanded ? " expanded" : ""}">
+            <td colspan="6">
+              <button
+                type="button"
+                class="alibaba-row-toggle-edge"
+                data-alibaba-order-toggle="${escapeHtml(rowKey)}"
+                aria-expanded="${expanded ? "true" : "false"}"
+                aria-controls="${escapeHtml(detailId)}"
+                aria-label="${expanded ? "Collapse order details" : "Expand order details"}"
+                title="${expanded ? "Collapse details" : "Expand details"}"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6" />
+                </svg>
+              </button>
+            </td>
+          </tr>
           ${
             expanded
               ? `<tr class="alibaba-order-detail-row" id="${escapeHtml(detailId)}">
@@ -5124,7 +5141,7 @@
     });
     $("alibabaOrderRows")?.addEventListener("click", (event) => {
       const target = event.target;
-      if (!(target instanceof HTMLElement)) return;
+      if (!(target instanceof Element)) return;
       const button = target.closest("[data-alibaba-order-toggle]");
       if (!button) return;
       const rowKey = button.dataset.alibabaOrderToggle || "";

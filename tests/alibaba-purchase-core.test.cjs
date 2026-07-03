@@ -169,6 +169,7 @@ test("dashboard exposes an Alibaba receiving workflow for landed cost and stock-
   assert.match(app, /คลัง สุขสวัสดิ์/);
   assert.match(app, /คลัง ซ\.เจริญกิจ/);
   assert.match(app, /คลัง Packhai/);
+  assert.match(app, /On Order/);
   assert.match(app, /กำไรต่อชิ้น/);
   assert.match(css, /\.alibaba-receiving-workbench/);
   assert.match(css, /\.alibaba-receiving-grid/);
@@ -184,5 +185,6 @@ test("Alibaba receiving can post stock-in transactions to Website Stock only", (
   assert.match(app, /operation:\s*"add"/);
   assert.match(app, /actor:\s*"Alibaba Receiving UI"/);
   assert.match(app, /คลัง Packhai รับเข้าผ่าน Packhai/);
+  assert.match(app, /บันทึกสถานะ On Order/);
   assert.match(app, /รับเข้า stock/);
 });

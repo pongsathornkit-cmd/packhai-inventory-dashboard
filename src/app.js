@@ -71,6 +71,7 @@
     { id: "491662", label: "คลัง สุขสวัสดิ์", source: "website-stock" },
     { id: "491661", label: "คลัง ซ.เจริญกิจ", source: "website-stock" },
     { id: "packhai", label: "คลัง Packhai", source: "packhai" },
+    { id: "on-order", label: "On Order", source: "on-order" },
   ];
   const alibabaReceivingState = readAlibabaReceivingDrafts();
   const websiteStockEditWarehouses = [
@@ -4193,7 +4194,13 @@
     const receiving = calculateAlibabaReceivingRows(report.rows || []);
     const mappedCount = receiving.lines.filter((line) => normalizeSkuValue(line.draft.sku)).length;
     const createSkuCount = receiving.lines.filter((line) => Boolean(line.draft.createSku)).length;
-    const readyCount = receiving.lines.filter((line) => normalizeSkuValue(line.draft.sku) && line.draft.warehouseId && numberValue(line.draft.stockInQty) > 0).length;
+    const onOrderCount = receiving.lines.filter((line) => alibabaReceivingWarehouse(line.draft.warehouseId)?.source === "on-order").length;
+    const readyCount = receiving.lines.filter(
+      (line) =>
+        normalizeSkuValue(line.draft.sku) &&
+        alibabaReceivingWarehouse(line.draft.warehouseId)?.source === "website-stock" &&
+        numberValue(line.draft.stockInQty) > 0
+    ).length;
     return `
       <section class="alibaba-receiving-workbench" aria-label="Alibaba receiving workflow">
         <div class="alibaba-receiving-head">
@@ -4227,7 +4234,7 @@
           <article>
             <span>ผูก SKU แล้ว</span>
             <strong>${fmtInt.format(mappedCount)} / ${fmtInt.format(receiving.lines.length)}</strong>
-            <small>${fmtInt.format(createSkuCount)} รายการเป็น SKU ใหม่</small>
+            <small>${fmtInt.format(createSkuCount)} SKU ใหม่ · ${fmtInt.format(onOrderCount)} On Order</small>
           </article>
           <article>
             <span>พร้อมลง stock</span>
@@ -4377,7 +4384,12 @@
       setAlibabaReceivingStatus(draft, "failed", "กรุณาใส่จำนวนรับเข้าให้มากกว่า 0");
       return;
     }
-    if (warehouse.source !== "website-stock") {
+    if (warehouse.source === "on-order") {
+      draft.savedAt = new Date().toISOString();
+      setAlibabaReceivingStatus(draft, "warning", `บันทึกสถานะ On Order ${fmtQty.format(stockInQty)} หน่วยแล้ว ยังไม่รับเข้า stock จริง`);
+      return;
+    }
+    if (warehouse.source === "packhai") {
       setAlibabaReceivingStatus(draft, "warning", "คลัง Packhai รับเข้าผ่าน Packhai แล้ว sync กลับมาเท่านั้น ยังไม่เขียน stock ตรงจากเว็บนี้");
       return;
     }

@@ -19,9 +19,15 @@ function readJsonSafe(file) {
 
 function exportedAtMs(file) {
   const data = readJsonSafe(file);
-  const value = data?.exportedAt || data?.capturedAt || "";
-  const parsed = value ? new Date(value).getTime() : 0;
-  return Number.isFinite(parsed) ? parsed : 0;
+  const values = [
+    data?.exportedAt,
+    data?.capturedAt,
+    data?.productDetailEnrichedAt,
+  ];
+  return values.reduce((max, value) => {
+    const parsed = value ? new Date(value).getTime() : 0;
+    return Number.isFinite(parsed) ? Math.max(max, parsed) : max;
+  }, 0);
 }
 
 function shouldRefreshFromRepository(relativePath, source, target) {

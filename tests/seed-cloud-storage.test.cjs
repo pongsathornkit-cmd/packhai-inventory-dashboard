@@ -50,6 +50,27 @@ test("cloud storage seed refreshes Alibaba snapshot when repository data is newe
   assert.equal(readJson(path.join(target, "alibaba_purchase_orders.json")).capturedRowCount, 64);
 });
 
+test("cloud storage seed refreshes Alibaba snapshot when repository detail enrichment is newer", () => {
+  const root = makeTempDir();
+  const source = path.join(root, "source");
+  const target = path.join(root, "target");
+  writeJson(path.join(source, "alibaba_purchase_orders.json"), {
+    exportedAt: "2026-07-03T06:41:22.168Z",
+    productDetailEnrichedAt: "2026-07-03T16:55:00.000Z",
+    capturedRowCount: 64,
+    orders: [{ orderNo: "ENRICHED", products: [{ title: "A" }, { title: "B" }, { title: "C" }] }],
+  });
+  writeJson(path.join(target, "alibaba_purchase_orders.json"), {
+    exportedAt: "2026-07-03T06:41:22.168Z",
+    capturedRowCount: 64,
+    orders: [{ orderNo: "PREVIEW", products: [{ title: "A" }, { title: "B" }] }],
+  });
+
+  seedCloudStorage({ sourceDataDir: source, targetDataDir: target, log: () => {} });
+
+  assert.equal(readJson(path.join(target, "alibaba_purchase_orders.json")).orders[0].orderNo, "ENRICHED");
+});
+
 test("cloud storage seed keeps a newer Alibaba snapshot already on cloud storage", () => {
   const root = makeTempDir();
   const source = path.join(root, "source");

@@ -138,6 +138,7 @@ select {
   text-decoration: none;
 }
 
+.sidebar-nav a[href="#inventory-table"],
 .sidebar-nav a[href="#inventory-detail"] {
   order: 1;
 }
@@ -340,6 +341,23 @@ main > .panel {
 
 #methodology {
   order: 12;
+}
+
+body.inventory-table-route .report-header,
+body.inventory-table-route main > section:not(#inventory-detail),
+body.inventory-table-route main > .insight-layout,
+body.inventory-table-route main > .panel {
+  display: none !important;
+}
+
+body.inventory-table-route .app-shell {
+  padding-top: 0;
+}
+
+body.inventory-table-route #inventory-detail {
+  order: 0;
+  margin-top: 18px;
+  min-height: calc(100vh - 36px);
 }
 
 .report-header {

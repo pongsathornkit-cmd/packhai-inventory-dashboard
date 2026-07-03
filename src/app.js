@@ -2258,18 +2258,26 @@
     return currentHashRoute() === "expenses";
   }
 
+  function isInventoryTableRoute() {
+    const route = currentHashRoute();
+    return route === "inventory-table" || route === "inventory-detail";
+  }
+
   function updateRouteState() {
     const routeHash = `#${currentHashRoute()}`;
     const expensesPage = isExpenseRoute();
+    const inventoryTableRoute = isInventoryTableRoute();
+    const activeRouteHash = inventoryTableRoute ? "#inventory-table" : routeHash;
     const assistantPage = routeHash === "#ai-command";
     const expensesSection = $("expenses");
+    document.body.classList.toggle("inventory-table-route", inventoryTableRoute);
     if (expensesSection) {
       expensesSection.hidden = !expensesPage;
     }
     document.querySelectorAll(".sidebar-nav a").forEach((link) => {
-      link.classList.toggle("active", link.getAttribute("href") === routeHash);
+      link.classList.toggle("active", link.getAttribute("href") === activeRouteHash);
     });
-    if (routeHash === "#inventory-detail") {
+    if (inventoryTableRoute) {
       const sku = normalizeSkuValue(currentHashParams().get("sku") || "");
       if (sku && $("searchInput")?.value !== sku) {
         state.query = sku;

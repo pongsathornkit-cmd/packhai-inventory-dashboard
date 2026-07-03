@@ -10,6 +10,12 @@ const {
   createLazadaMtopUrl,
   lazadaMtopEndpoint,
 } = require("./seller-direct-api.cjs");
+const {
+  lazadaCollectedAmount: coreLazadaCollectedAmount,
+  lazadaItemLineAmount: coreLazadaItemLineAmount,
+  lazadaItemsFromOrder: coreLazadaItemsFromOrder,
+  lazadaPaymentRecordFromRow: coreLazadaPaymentRecordFromRow,
+} = require("./seller-order-payment-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -303,28 +309,7 @@ function shopeeItemsFromIncomeComponents(data) {
 }
 
 function lazadaItemLineAmount(sku) {
-  const quantity = firstPositive(sku.quantity, sku.amount, sku.qty) || 1;
-  const lineAmount = firstPositive(
-    sku.lineAmount,
-    sku.totalAmount,
-    sku.totalPrice,
-    sku.totalUnitPrice,
-    sku.totalRetailPrice,
-    sku.paidAmount,
-    sku.paidPriceTotal,
-    sku.itemTotalPrice,
-    sku.actualAmount
-  );
-  if (lineAmount > 0) return lineAmount;
-  const unitPrice = firstPositive(
-    sku.unitPrice,
-    sku.itemPrice,
-    sku.paidPrice,
-    sku.actualPrice,
-    sku.retailPrice,
-    sku.price
-  );
-  return unitPrice > 0 ? unitPrice * quantity : 0;
+  return coreLazadaItemLineAmount(sku);
 }
 
 function mergeByOrder(records) {
@@ -355,6 +340,7 @@ function mergeByOrder(records) {
 
 function recordNeedsItemAmountRefresh(record) {
   if (record?.platform === "Shopee" && !record.incomeDetailCaptured) return true;
+  if (record?.platform === "Lazada" && !record.amountReceivedCaptured) return true;
   const items = Array.isArray(record?.items) ? record.items : [];
   if (!items.length) return true;
   const skuKeys = new Set(
@@ -912,30 +898,11 @@ async function callLazadaOrderQueryDirect(context, orderNo) {
 }
 
 function lazadaCollectedAmount(row) {
-  return firstPositive(
-    row?.totalUnitPrice,
-    row?.totalRetailPrice,
-    row?.totalPrice,
-    row?.paidPrice,
-    row?.paidAmount,
-    row?.actualAmount
-  );
+  return coreLazadaCollectedAmount(row);
 }
 
 function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:direct-api") {
-  return {
-    platform: "Lazada",
-    orderNo,
-    collectedAmount: lazadaCollectedAmount(row),
-    currency: "THB",
-    paymentMethod: row.paymentMethod || "",
-    status: row.tabStatus || row.packages?.[0]?.packageStatusName || "",
-    source: "Lazada Seller Center",
-    capturedAt: new Date().toISOString(),
-    orderId: row.orderNumber || "",
-    sessionMode,
-    items: lazadaItemsFromOrder(row),
-  };
+  return coreLazadaPaymentRecordFromRow(orderNo, row, sessionMode);
 }
 
 function lazadaPlatformSkipError(message) {
@@ -1114,26 +1081,7 @@ async function fetchLazadaPayment(page, orderNo) {
 }
 
 function lazadaItemsFromOrder(row) {
-  const items = [];
-  for (const pkg of row?.packages || []) {
-    for (const sku of pkg.skus || []) {
-      items.push({
-        name: sku.productName || sku.productTitle || "",
-        skuText: sku.sellerSku || sku.shopSku || "",
-        amount: numberValue(sku.quantity),
-        unitPrice: firstPositive(
-          sku.unitPrice,
-          sku.itemPrice,
-          sku.paidPrice,
-          sku.actualPrice,
-          sku.retailPrice,
-          sku.price
-        ),
-        lineAmount: lazadaItemLineAmount(sku),
-      });
-    }
-  }
-  return items;
+  return coreLazadaItemsFromOrder(row);
 }
 
 async function exportLazadaPaymentsBrowser(orderNos, existingMap, errors, onRecord) {

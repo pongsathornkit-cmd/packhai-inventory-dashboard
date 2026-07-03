@@ -65,6 +65,145 @@ function firstPositive(...values) {
   return 0;
 }
 
+function lazadaAmountReceived(row) {
+  return firstPositive(
+    row?.amountReceived,
+    row?.receivedAmount,
+    row?.sellerAmountReceived,
+    row?.sellerReceivedAmount,
+    row?.sellerReceiveAmount,
+    row?.sellerReceivableAmount,
+    row?.receivableAmount,
+    row?.netReceivable,
+    row?.netReceivedAmount,
+    row?.netAmount,
+    row?.payoutAmount,
+    row?.settlementAmount,
+    row?.settledAmount,
+    row?.incomeAmount,
+    row?.orderIncomeAmount,
+    row?.amount_received,
+    row?.received_amount,
+    row?.seller_received_amount,
+    row?.seller_receive_amount
+  );
+}
+
+function lazadaBuyerPaidAmount(row) {
+  return firstPositive(
+    row?.buyerPaidAmount,
+    row?.amountPaid,
+    row?.paidByBuyer,
+    row?.paymentAmount,
+    row?.paidAmount,
+    row?.paidPriceTotal,
+    row?.paidPrice,
+    row?.actualAmount,
+    row?.amount_paid,
+    row?.buyer_paid_amount
+  );
+}
+
+function lazadaProductSubtotal(row) {
+  return firstPositive(
+    row?.productSubtotal,
+    row?.merchandiseSubtotal,
+    row?.itemSubtotal,
+    row?.subtotal,
+    row?.totalRetailPrice,
+    row?.totalUnitPrice,
+    row?.totalPrice,
+    row?.itemTotalPrice,
+    row?.retailPrice,
+    row?.unitPrice,
+    row?.itemPrice,
+    row?.price
+  );
+}
+
+function lazadaItemLineAmount(sku) {
+  const quantity = firstPositive(sku?.quantity, sku?.amount, sku?.qty) || 1;
+  const receivedAmount = lazadaAmountReceived(sku);
+  if (receivedAmount > 0) return roundMoney(receivedAmount);
+  const lineAmount = firstPositive(
+    sku?.lineAmount,
+    sku?.netSalesAmount,
+    sku?.totalAmount,
+    sku?.totalPrice,
+    sku?.totalUnitPrice,
+    sku?.totalRetailPrice,
+    sku?.paidAmount,
+    sku?.paidPriceTotal,
+    sku?.itemTotalPrice,
+    sku?.actualAmount
+  );
+  if (lineAmount > 0) return roundMoney(lineAmount);
+  const unitPrice = firstPositive(
+    sku?.unitPrice,
+    sku?.itemPrice,
+    sku?.paidPrice,
+    sku?.actualPrice,
+    sku?.retailPrice,
+    sku?.price
+  );
+  return roundMoney(unitPrice > 0 ? unitPrice * quantity : 0);
+}
+
+function lazadaItemsFromOrder(row) {
+  const items = [];
+  for (const pkg of row?.packages || []) {
+    for (const sku of pkg.skus || []) {
+      items.push({
+        name: sku.productName || sku.productTitle || sku.name || "",
+        skuText: sku.sellerSku || sku.shopSku || sku.sku || "",
+        amount: numberValue(sku.quantity || sku.amount || sku.qty),
+        unitPrice: lazadaProductSubtotal(sku) || lazadaBuyerPaidAmount(sku),
+        amountReceived: lazadaAmountReceived(sku),
+        buyerPaidAmount: lazadaBuyerPaidAmount(sku),
+        productSubtotal: lazadaProductSubtotal(sku),
+        lineAmount: lazadaItemLineAmount(sku),
+      });
+    }
+  }
+  return items;
+}
+
+function lazadaCollectedAmount(row) {
+  const itemAmounts = lazadaItemsFromOrder(row)
+    .map((item) => numberValue(item.amountReceived || item.lineAmount))
+    .filter((amount) => amount > 0);
+  if (itemAmounts.length) return roundMoney(itemAmounts.reduce((sum, amount) => sum + amount, 0));
+  return roundMoney(lazadaAmountReceived(row) || lazadaBuyerPaidAmount(row) || lazadaProductSubtotal(row));
+}
+
+function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:direct-api") {
+  const items = lazadaItemsFromOrder(row);
+  const sumItemField = (field) => roundMoney(items.reduce((sum, item) => sum + numberValue(item[field]), 0));
+  const itemAmountReceived = sumItemField("amountReceived");
+  const rowAmountReceived = roundMoney(lazadaAmountReceived(row));
+  const hasAmountReceived = itemAmountReceived > 0 || rowAmountReceived > 0;
+  const amountReceived = roundMoney(itemAmountReceived || rowAmountReceived || lazadaCollectedAmount(row));
+  return {
+    platform: "Lazada",
+    orderNo,
+    collectedAmount: amountReceived,
+    currency: "THB",
+    paymentMethod: row?.paymentMethod || "",
+    status: row?.tabStatus || row?.packages?.[0]?.packageStatusName || "",
+    source: "Lazada Seller Center",
+    capturedAt: new Date().toISOString(),
+    orderId: row?.orderNumber || "",
+    sessionMode,
+    amountReceivedCaptured: hasAmountReceived,
+    paymentBreakdown: {
+      amountReceived: hasAmountReceived ? amountReceived : 0,
+      buyerPaidAmount: roundMoney(lazadaBuyerPaidAmount(row) || sumItemField("buyerPaidAmount")),
+      productSubtotal: roundMoney(lazadaProductSubtotal(row) || sumItemField("productSubtotal")),
+    },
+    items,
+  };
+}
+
 function normalizePaymentItem(item) {
   const skuText = firstText(
     item.sku,
@@ -88,6 +227,10 @@ function normalizePaymentItem(item) {
   );
   const lineAmount =
     firstPositive(
+      item.amountReceived,
+      item.receivedAmount,
+      item.sellerAmountReceived,
+      item.sellerReceivedAmount,
       item.lineAmount,
       item.netSalesAmount,
       item.itemNetSalesAmount,
@@ -156,6 +299,8 @@ function normalizePaymentRecord(record) {
     platform === "Shopee" && orderIncomeAmount != null
       ? orderIncomeAmount
       : firstPositive(
+          platform === "Lazada" ? lazadaAmountReceived(record) : 0,
+          platform === "Lazada" ? paymentBreakdown.amountReceived : 0,
           record.collectedAmount,
           platform === "Shopee" ? 0 : orderIncomeAmount,
           record.collected,
@@ -663,6 +808,13 @@ module.exports = {
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
+  lazadaAmountReceived,
+  lazadaBuyerPaidAmount,
+  lazadaCollectedAmount,
+  lazadaItemLineAmount,
+  lazadaItemsFromOrder,
+  lazadaPaymentRecordFromRow,
+  lazadaProductSubtotal,
   normalizeOrderNo,
   normalizePaymentRecord,
   normalizePlatform,

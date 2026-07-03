@@ -11,6 +11,7 @@ const {
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
+  lazadaPaymentRecordFromRow,
 } = require("../scripts/seller-order-payment-core.cjs");
 
 test("Packhai stock movement snapshot keeps every order row and picks latest by stock id", () => {
@@ -267,6 +268,70 @@ test("Shopee payment allocates order income by each SKU net sales amount", () =>
   assert.equal(skuB.platformPaymentStatus, "matched");
   assert.equal(skuB.platformPaymentAmount, 184.36);
   assert.equal(skuB.platformPaymentOrderAmount, 1225);
+});
+
+test("Lazada payment uses seller amount received per item before buyer paid or retail totals", () => {
+  const record = lazadaPaymentRecordFromRow("110433687887722", {
+    orderNumber: "110433687887722",
+    paymentMethod: "COD",
+    packages: [
+      {
+        packageStatusName: "Delivered",
+        skus: [
+          {
+            productName: "MARATHON รอกมือหมุน ผ้า 540KGS",
+            sellerSku: "M327-2025",
+            quantity: 1,
+            retailPrice: 669,
+            amountPaid: 711,
+            amountReceived: 540.12,
+            paidAmount: 711,
+            totalRetailPrice: 669,
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(record.collectedAmount, 540.12);
+  assert.equal(record.paymentBreakdown.amountReceived, 540.12);
+  assert.equal(record.paymentBreakdown.buyerPaidAmount, 711);
+  assert.equal(record.paymentBreakdown.productSubtotal, 669);
+  assert.equal(record.items[0].lineAmount, 540.12);
+
+  const paymentIndex = buildSellerPaymentIndex({ orders: [record] });
+  const movement = enrichMovementWithSellerPayment(
+    { channelName: "Lazada", platformOrderNo: "110433687887722", sku: "M327-2025", removeQuantity: 1 },
+    paymentIndex
+  );
+
+  assert.equal(movement.platformPaymentStatus, "matched");
+  assert.equal(movement.platformPaymentAmount, 540.12);
+  assert.equal(movement.platformPaymentOrderAmount, 540.12);
+  assert.equal(movement.platformPaymentAllocationMethod, "sku-line-amount");
+});
+
+test("Lazada payment without amount received stays refreshable instead of trusting list totals", () => {
+  const record = lazadaPaymentRecordFromRow("110433687887722", {
+    orderNumber: "110433687887722",
+    packages: [
+      {
+        skus: [
+          {
+            productName: "MARATHON รอกมือหมุน ผ้า 540KGS",
+            sellerSku: "M327-2025",
+            quantity: 1,
+            amountPaid: 711,
+            totalRetailPrice: 669,
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(record.collectedAmount, 669);
+  assert.equal(record.amountReceivedCaptured, false);
+  assert.equal(record.items[0].lineAmount, 669);
 });
 
 test("seller platform payment is not assigned to a SKU when multi-item order has no item amounts", () => {

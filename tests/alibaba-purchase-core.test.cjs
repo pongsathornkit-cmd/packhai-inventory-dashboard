@@ -76,6 +76,50 @@ test("Alibaba purchase order builder keeps only requested statuses and summarize
   assert.equal(result.metadata.exportedAtLabel, "03 ก.ค. 2569 11:00");
 });
 
+test("Alibaba purchase order builder preserves product lines, thumbnails, and order captures", () => {
+  const result = buildAlibabaPurchaseOrders({
+    exportedAt: "2026-07-03T04:00:00.000Z",
+    orders: [
+      {
+        orderNo: "A-2001",
+        supplierName: "Ningbo Tools",
+        status: "Waiting for delivery confirmation",
+        orderDate: "2026-07-01T00:00:00.000Z",
+        orderAmount: 640,
+        paidAmount: 640,
+        currency: "USD",
+        captureUrl: "https://example.com/captures/A-2001.png",
+        capturedAt: "2026-07-03T04:15:00.000Z",
+        capturedPage: 2,
+        products: [
+          {
+            title: "Portable pressure washer",
+            skuText: "V80L x 10 items",
+            quantity: 10,
+            productUrl: "https://www.alibaba.com/product-detail/sample.html",
+            imageUrl: "https://img.example.com/washer.jpg",
+          },
+        ],
+      },
+    ],
+  });
+
+  assert.equal(result.rows.length, 1);
+  assert.equal(result.rows[0].captureUrl, "https://example.com/captures/A-2001.png");
+  assert.equal(result.rows[0].capturedPage, 2);
+  assert.equal(result.rows[0].capturedAtLabel, "03 ก.ค. 2569 11:15");
+  assert.equal(result.rows[0].products.length, 1);
+  assert.deepEqual(result.rows[0].products[0], {
+    rowNo: 1,
+    title: "Portable pressure washer",
+    skuText: "V80L x 10 items",
+    quantity: 10,
+    productUrl: "https://www.alibaba.com/product-detail/sample.html",
+    imageUrl: "https://img.example.com/washer.jpg",
+  });
+  assert.equal(result.rows[0].skuSummary, "Portable pressure washer");
+});
+
 test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   const template = readRepoFile("src/index.template.html");
   const app = readRepoFile("src/app.js");
@@ -85,5 +129,9 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(template, /id="alibaba-orders"/);
   assert.match(app, /function\s+renderAlibabaPurchaseOrders/);
   assert.match(app, /alibabaPurchaseOrders/);
+  assert.match(app, /function\s+renderAlibabaOrderCapture/);
+  assert.match(app, /function\s+renderAlibabaProducts/);
+  assert.match(app, /class="alibaba-product-thumb/);
+  assert.match(app, /class="alibaba-capture-card/);
   assert.match(build, /alibabaPurchaseOrders/);
 });

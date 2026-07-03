@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generatedAt": "2026-07-03T07:28:25.828Z",
-    "generatedAtLabel": "03 ก.ค. 2569 14:28",
+    "generatedAt": "2026-07-03T07:51:06.648Z",
+    "generatedAtLabel": "03 ก.ค. 2569 14:51",
     "reportTitle": "สรุปมูลค่าสินค้าคงคลัง Packhai + Website Stock",
     "valuationRule": "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และ Website Stock เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
     "quantityRule": "ใช้ field quantity จาก Packhai และไฟล์ Website Stock เป็นจำนวนคงเหลือในคลัง โดย Website Stock เก็บเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์บนเว็บไซต์นี้ ไม่ต้อง sync จาก FlowAccount",
@@ -118836,10 +118836,33 @@
         "balanceAmount": 0,
         "itemCount": 1504,
         "skuSummary": "High quality pressure switch for air compressor / Wholesale water pump pressure switch mechanical",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "High quality pressure switch for air compressor",
+            "skuText": "PC-7 1WAYx 500 itemsPC-7 FOUR WAYx 500 items",
+            "quantity": 1000,
+            "productUrl": "https://www.alibaba.com/product-detail/High-quality-pressure-switch-for-air_1600191951503.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H7be1373cb9a5417e91ff55d453517e8bp.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Wholesale water pump pressure switch mechanical",
+            "skuText": "PC-2Bx 504 items",
+            "quantity": 504,
+            "productUrl": "https://www.alibaba.com/product-detail/Wholesale-water-pump-pressure-switch-mechanical_1600191974681.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/He3b98b95da924af58bf9ef871009c93fa.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=135156271501028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:07.777Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 7,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -118860,10 +118883,33 @@
         "balanceAmount": 0,
         "itemCount": 90,
         "skuSummary": "crimping plier / pin chisel set",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "crimping plier",
+            "skuText": "No variationx 30 items",
+            "quantity": 30,
+            "productUrl": "https://www.alibaba.com/product-detail/crimping-plier_1600247868495.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Ue442e0c9732143549fd50f0917e54eda1.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "pin chisel set",
+            "skuText": "No variationx 60 items",
+            "quantity": 60,
+            "productUrl": "https://www.alibaba.com/product-detail/pin-chisel-set_1600237292296.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H02f28743f92146269e0ead087062339fu.png_140x140.png"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=135841731501028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:07.777Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 7,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -118884,10 +118930,25 @@
         "balanceAmount": 0,
         "itemCount": 250,
         "skuSummary": "T-CZR Series 2\" 150W New Products Small Noise AC Blowers Electric Air Blower",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "T-CZR Series 2\" 150W New Products Small Noise AC Blowers Electric Air Blower",
+            "skuText": "No variationx 250 items",
+            "quantity": 250,
+            "productUrl": "https://www.alibaba.com/product-detail/T-CZR-Series-2-150W-New_1600365268149.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H64fa5432756e4a60a7276ad682479bb6U.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=136107994001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.300Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -118908,10 +118969,25 @@
         "balanceAmount": 0,
         "itemCount": 1000,
         "skuSummary": "Wynns Garden Pruning shears steel 8'' Bypass Pruner cuttiner tools",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Wynns Garden Pruning shears steel 8'' Bypass Pruner cuttiner tools",
+            "skuText": "No variationx 1000 items",
+            "quantity": 1000,
+            "productUrl": "https://www.alibaba.com/product-detail/Wynns-Garden-Pruning-shears-steel-8_62588400533.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hcf130e37e4254b8cbb3ba4123537761aF.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=143488094001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.300Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -118932,10 +119008,25 @@
         "balanceAmount": 0,
         "itemCount": 250,
         "skuSummary": "T-CZR Series 2\" 150W New Products Small Noise AC Blowers Electric Air Blower",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "T-CZR Series 2\" 150W New Products Small Noise AC Blowers Electric Air Blower",
+            "skuText": "No variationx 250 items",
+            "quantity": 250,
+            "productUrl": "https://www.alibaba.com/product-detail/T-CZR-Series-2-150W-New_1600365268149.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H64fa5432756e4a60a7276ad682479bb6U.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=145026631501028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.299Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -118956,10 +119047,33 @@
         "balanceAmount": 0,
         "itemCount": 400,
         "skuSummary": "Handle hand held Portable Electric Concrete Poker Vibrator 35MM 800W 220V Blue color and red(button) / Concrete hose 35MMX1.5M",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Handle hand held Portable Electric Concrete Poker Vibrator 35MM 800W 220V Blue color and red(button)",
+            "skuText": "No variationx 200 items",
+            "quantity": 200,
+            "productUrl": "https://www.alibaba.com/product-detail/Handle-hand-held-Portable-Electric-Concrete_1600324524332.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H5d290edb68984996ae9b36b4927ce3e8R.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Concrete hose 35MMX1.5M",
+            "skuText": "No variationx 200 items",
+            "quantity": 200,
+            "productUrl": "https://www.alibaba.com/product-detail/Concrete-hose-35MMX1-5M_60416946331.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/HTB1mRvkKkCWBuNjy0Faq6xUlXXaZ.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=145550702001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.299Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -118980,10 +119094,25 @@
         "balanceAmount": 0,
         "itemCount": 100,
         "skuSummary": "12 inch 300mm AC 220V Industrial Axial Exhaust Ventilation Fan Portable Blower",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "12 inch 300mm AC 220V Industrial Axial Exhaust Ventilation Fan Portable Blower",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/12-inch-300mm-AC-220V-Industrial_1600366426491.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H548ed3366b2d432db32dd7d871a537bcf.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=145556822001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.299Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119004,10 +119133,33 @@
         "balanceAmount": 0,
         "itemCount": 200,
         "skuSummary": "406mm 90W 230V 50Hz Talas ufleme fonksiyonu elektronik hiz kontrolu tezgah dekupaj testere tezgah dekupaj testere makinesi / Efficient 370W bench disc sander 2 in 1 compact design bench belt sander",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "406mm 90W 230V 50Hz Talas ufleme fonksiyonu elektronik hiz kontrolu tezgah dekupaj testere tezgah dekupaj testere makinesi",
+            "skuText": "SSA16Vx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/406mm-90W-230V-50Hz-Talas-ufleme_1600496599982.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hb334ea30c4644ce18ac95350195bb056a.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Efficient 370W bench disc sander 2 in 1 compact design bench belt sander",
+            "skuText": "Orangex 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/Efficient-370W-bench-disc-sander-2_1600444407905.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hb84499cead2e4ff49de6a19eaf9603c7Z.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=148214286001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.299Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119028,10 +119180,33 @@
         "balanceAmount": 0,
         "itemCount": 1300,
         "skuSummary": "Low Brass 5 Way Connector Fitting for Pump Accessories / Low stainless steel 5 Way Connector Fitting for Pump Accessories",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Low Brass 5 Way Connector Fitting for Pump Accessories",
+            "skuText": "Other10mmBrassx 1000 items",
+            "quantity": 1000,
+            "productUrl": "https://www.alibaba.com/product-detail/Low-Brass-5-Way-Connector-Fitting_62398183321.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/He6394448beef4d93bce70ee3911d23e05.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Low stainless steel 5 Way Connector Fitting for Pump Accessories",
+            "skuText": "Other10mmBrass Compression Fittingsx 300 items",
+            "quantity": 300,
+            "productUrl": "https://www.alibaba.com/product-detail/Low-stainless-steel-5-Way-Connector_1600596447950.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hdf89be0ce37c49e3a27b256d970d87b7I.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=148923147001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.299Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119052,10 +119227,25 @@
         "balanceAmount": 0,
         "itemCount": 300,
         "skuSummary": "Wynns tools 1.25-16 mm2 hand crimp pliers press terminal Crimping tools Manual crimper tools",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Wynns tools 1.25-16 mm2 hand crimp pliers press terminal Crimping tools Manual crimper tools",
+            "skuText": "No variationx 300 items",
+            "quantity": 300,
+            "productUrl": "https://www.alibaba.com/product-detail/Wynns-tools-1-25-16-mm2_1600625794248.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H299ad2d1d82a486cb86b84e9063b4995R.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=153254018501028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.299Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119076,10 +119266,33 @@
         "balanceAmount": 0,
         "itemCount": 350,
         "skuSummary": "T-CZR Series 2\" 150W New Products Small Noise AC Blowers Electric Air Blower / PVC High Temperature Resistance Flexible Duct Ventilation Fan Hose WIth Bag",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "T-CZR Series 2\" 150W New Products Small Noise AC Blowers Electric Air Blower",
+            "skuText": "No variationx 250 items",
+            "quantity": 250,
+            "productUrl": "https://www.alibaba.com/product-detail/T-CZR-Series-2-150W-New_1600365268149.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H64fa5432756e4a60a7276ad682479bb6U.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "PVC High Temperature Resistance Flexible Duct Ventilation Fan Hose WIth Bag",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/PVC-High-Temperature-Resistance-Flexible-Duct_62519460021.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H802b450738354c8b879b58bb94b6f106I.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=154126751501028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.298Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119100,10 +119313,33 @@
         "balanceAmount": 0,
         "itemCount": 110,
         "skuSummary": "Ventilation Fan Portable Blower / T-CZR Series Electric Air Blower",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Ventilation Fan Portable Blower",
+            "skuText": "No variationx 10 items",
+            "quantity": 10,
+            "productUrl": "https://www.alibaba.com/product-detail/Ventilation-Fan-Portable-Blower_1600366426491.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H548ed3366b2d432db32dd7d871a537bcf.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "T-CZR Series Electric Air Blower",
+            "skuText": "2 inchx 40 items3 inchx 60 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/T-CZR-Series-Electric-Air-Blower_1600365268149.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H64fa5432756e4a60a7276ad682479bb6U.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=155813218501028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:05.298Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 6,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119124,10 +119360,25 @@
         "balanceAmount": 0,
         "itemCount": 100,
         "skuSummary": "12inch Portable Axial Flow Fan 110V Ventilation Blower 200MM Portable Axial Flow Fan",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "12inch Portable Axial Flow Fan 110V Ventilation Blower 200MM Portable Axial Flow Fan",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/12inch-Portable-Axial-Flow-Fan-110V_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=11138589001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.996Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119148,10 +119399,33 @@
         "balanceAmount": 0,
         "itemCount": 300,
         "skuSummary": "VENTILATION TUBE SPRIAL TYPE 300MMX10MTR PVC Flexible Ventilation Tube / 220v 50/60hz 2 Inch Portable Industrial Aluminum Shell Newest Round Electric Air Blower",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "VENTILATION TUBE SPRIAL TYPE 300MMX10MTR PVC Flexible Ventilation Tube",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/VENTILATION-TUBE-SPRIAL-TYPE-300MMX10MTR-PVC_1600284032030.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H326fc547ce51486489c66fd27bd4eb4ez.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "220v 50/60hz 2 Inch Portable Industrial Aluminum Shell Newest Round Electric Air Blower",
+            "skuText": "No variationx 200 items",
+            "quantity": 200,
+            "productUrl": "https://www.alibaba.com/product-detail/220v-50-60hz-2-Inch-Portable_1600908106358.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=11842841001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.996Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119172,10 +119446,33 @@
         "balanceAmount": 0,
         "itemCount": 360,
         "skuSummary": "Handle hand held Portable Electric Concrete Poker Vibrator 35MM 800W 220V Blue color and red(button) / Concrete hose 35MMX1.5M",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Handle hand held Portable Electric Concrete Poker Vibrator 35MM 800W 220V Blue color and red(button)",
+            "skuText": "No variationx 180 items",
+            "quantity": 180,
+            "productUrl": "https://www.alibaba.com/product-detail/Handle-hand-held-Portable-Electric-Concrete_1600324524332.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H5d290edb68984996ae9b36b4927ce3e8R.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Concrete hose 35MMX1.5M",
+            "skuText": "No variationx 180 items",
+            "quantity": 180,
+            "productUrl": "https://www.alibaba.com/product-detail/Concrete-hose-35MMX1-5M_60416946331.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/HTB1mRvkKkCWBuNjy0Faq6xUlXXaZ.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=12417909001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.996Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119196,10 +119493,33 @@
         "balanceAmount": 0,
         "itemCount": 210,
         "skuSummary": "591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color / INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2/2.5/ 3 INCH",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color",
+            "skuText": "No variationx 100 itemsNo variationx 10 items",
+            "quantity": 110,
+            "productUrl": "https://www.alibaba.com/product-detail/591407-591408-PORTABLE-VENTILATION-FAN-300MM_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2/2.5/ 3 INCH",
+            "skuText": "No variationx 50 itemsNo variationx 50 itemsand 1 more variations",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/INDUSTRIAL-ALUMINUM-SHELL-NEWEST-ROUND-ELECTRIC_1600908106358.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17487773001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.996Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119220,10 +119540,33 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "591407 PORTABLE VENTILATION FAN 300MM 220V 60HZ Red Color / INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 3 INCH 220V 50/60HZ 370W",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "591407 PORTABLE VENTILATION FAN 300MM 220V 60HZ Red Color",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/591407-PORTABLE-VENTILATION-FAN-300MM-220V_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 3 INCH 220V 50/60HZ 370W",
+            "skuText": "No variationx 50 items",
+            "quantity": 50,
+            "productUrl": "https://www.alibaba.com/product-detail/INDUSTRIAL-ALUMINUM-SHELL-NEWEST-ROUND-ELECTRIC_1600908106358.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=190583146001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.996Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119244,10 +119587,25 @@
         "balanceAmount": 0,
         "itemCount": 230,
         "skuSummary": "Wynns tools 1.25-16 mm2 hand crimp pliers press terminal Crimping tools Manual crimper tools",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Wynns tools 1.25-16 mm2 hand crimp pliers press terminal Crimping tools Manual crimper tools",
+            "skuText": "No variationx 230 items",
+            "quantity": 230,
+            "productUrl": "https://www.alibaba.com/product-detail/Wynns-tools-1-25-16-mm2_1600625794248.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H299ad2d1d82a486cb86b84e9063b4995R.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17505617501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.995Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119268,10 +119626,33 @@
         "balanceAmount": 0,
         "itemCount": 750,
         "skuSummary": "Portable factory ship trailer manual winch with webbing or steel wire rope manual winch / 800lbs salt spray wall mounted3 ton lifting wire rope manual winch mini portable hand winch for boats",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Portable factory ship trailer manual winch with webbing or steel wire rope manual winch",
+            "skuText": "No variationx 300 itemsNo variationx 200 items",
+            "quantity": 500,
+            "productUrl": "https://www.alibaba.com/product-detail/Portable-factory-ship-trailer-manual-winch_1601045502453.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hf91cc2a4ea344bc5aceaaa18f2a5e7b5A.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "800lbs salt spray wall mounted3 ton lifting wire rope manual winch mini portable hand winch for boats",
+            "skuText": "No variationx 150 itemsNo variationx 100 items",
+            "quantity": 250,
+            "productUrl": "https://www.alibaba.com/product-detail/800lbs-salt-spray-wall-mounted3-ton_10000014822698.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Ha7e008749f804575ab506120d1549683p.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17784473001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.995Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119292,10 +119673,33 @@
         "balanceAmount": 0,
         "itemCount": 1720,
         "skuSummary": "Mechanical switch water pressure controller for pumps / Good quality and Low price pressure switch for water pump",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Mechanical switch water pressure controller for pumps",
+            "skuText": "Booster Pumpsx 720 items",
+            "quantity": 720,
+            "productUrl": "https://www.alibaba.com/product-detail/Mechanical-switch-water-pressure-controller-for_1601025867984.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H2f39eaccaab347269b8735d16b31621c4.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Good quality and Low price pressure switch for water pump",
+            "skuText": "PC-2x 1000 items",
+            "quantity": 1000,
+            "productUrl": "https://www.alibaba.com/product-detail/Good-quality-and-Low-price-pressure_1601026641536.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H2981262655bf450b9a0f3e53a1b7c42eA.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17803493001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.995Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119316,10 +119720,25 @@
         "balanceAmount": 0,
         "itemCount": 300,
         "skuSummary": "Low stainless steel 5 Way Connector Fitting for Pump Accessories",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Low stainless steel 5 Way Connector Fitting for Pump Accessories",
+            "skuText": "Other10mmBrass Compression Fittingsx 300 items",
+            "quantity": 300,
+            "productUrl": "https://www.alibaba.com/product-detail/Low-stainless-steel-5-Way-Connector_1600596447950.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hdf89be0ce37c49e3a27b256d970d87b7I.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=227982430001028359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:03.995Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 5,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119340,10 +119759,33 @@
         "balanceAmount": 0,
         "itemCount": 6,
         "skuSummary": "Professional High Quality Handheld Manual Hand Riveter Guns Hand Riveting Tool Rivet Screw Nut Gun / Heavy Duty Folding Utility Cutter Safe Knife",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Professional High Quality Handheld Manual Hand Riveter Guns Hand Riveting Tool Rivet Screw Nut Gun",
+            "skuText": "No variationx 1 items",
+            "quantity": 1,
+            "productUrl": "https://www.alibaba.com/product-detail/Professional-High-Quality-Handheld-Manual-Hand_1600240727464.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H1c40ce904da74f8aad521dddac286907p.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Heavy Duty Folding Utility Cutter Safe Knife",
+            "skuText": "No variationx 5 items",
+            "quantity": 5,
+            "productUrl": "https://www.alibaba.com/product-detail/Heavy-Duty-Folding-Utility-Cutter-Safe_1600072841027.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H507b421a4e3f41f1b3f34cfefb810b83W.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=21630617001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.710Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119364,10 +119806,33 @@
         "balanceAmount": 0,
         "itemCount": 960,
         "skuSummary": "Mechanical switch water pressure controller for pumps / Mechanical Switch Water Pressure Controller for Pumps",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Mechanical switch water pressure controller for pumps",
+            "skuText": "Booster Pumpsx 720 items",
+            "quantity": 720,
+            "productUrl": "https://www.alibaba.com/product-detail/Mechanical-switch-water-pressure-controller-for_1601025867984.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H2f39eaccaab347269b8735d16b31621c4.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Mechanical Switch Water Pressure Controller for Pumps",
+            "skuText": "No variationx 240 items",
+            "quantity": 240,
+            "productUrl": "https://www.alibaba.com/product-detail/Mechanical-Switch-Water-Pressure-Controller-for_1601027625188.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H2d91b20a08994152859dcfb9ab29d2887.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=21679461501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.710Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119388,10 +119853,33 @@
         "balanceAmount": 0,
         "itemCount": 290,
         "skuSummary": "591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color / INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2INCH",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color",
+            "skuText": "No variationx 80 itemsNo variationx 10 itemsand 1 more variations",
+            "quantity": 90,
+            "productUrl": "https://www.alibaba.com/product-detail/591407-591408-PORTABLE-VENTILATION-FAN-300MM_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2INCH",
+            "skuText": "No variationx 200 items",
+            "quantity": 200,
+            "productUrl": "https://www.alibaba.com/product-detail/INDUSTRIAL-ALUMINUM-SHELL-NEWEST-ROUND-ELECTRIC_1600908106358.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=21948589501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.710Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119412,10 +119900,33 @@
         "balanceAmount": 0,
         "itemCount": 800,
         "skuSummary": "2500lbs Pound 50mm 10m Durable Manual Winch with Black Woven Strap and Galvanized Hook Manual Winch / High Quality Small Manual Winch. the Manual Marine Winch Can Be Customized with Webbing and Steel Wire Rope Winch",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "2500lbs Pound 50mm 10m Durable Manual Winch with Black Woven Strap and Galvanized Hook Manual Winch",
+            "skuText": "No variationx 400 items",
+            "quantity": 400,
+            "productUrl": "https://www.alibaba.com/product-detail/2500lbs-Pound-50mm-10m-Durable-Manual_1601625823244.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hdd5cebb74048486bb29c17e3993d41b2H.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "High Quality Small Manual Winch. the Manual Marine Winch Can Be Customized with Webbing and Steel Wire Rope Winch",
+            "skuText": "No variationx 400 items",
+            "quantity": 400,
+            "productUrl": "https://www.alibaba.com/product-detail/High-Quality-Small-Manual-Winch-the_1601625874071.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H9574c0c35f8c4fada35433b42d64bf09g.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=24279129001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.709Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119436,10 +119947,25 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "Household Construction Pipeline Hydrostatic Pressure Tester Piston Pump Manual OEM 50BAR ZD-50C 6 Months Warranty",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Household Construction Pipeline Hydrostatic Pressure Tester Piston Pump Manual OEM 50BAR ZD-50C 6 Months Warranty",
+            "skuText": "No variationx 150 items",
+            "quantity": 150,
+            "productUrl": "https://www.alibaba.com/product-detail/Household-Construction-Pipeline-Hydrostatic-Pressure-Tester_1601569273182.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H0ed45c84cd7e49fcb2b5010ce9146d7fL.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25062825501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.709Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119460,10 +119986,25 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "YS Brand Assembly Cold Rolled Steel Heavy Duty Garage Industrial Work Bench Boltless Workbench Drawers Light Powder Coated",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "YS Brand Assembly Cold Rolled Steel Heavy Duty Garage Industrial Work Bench Boltless Workbench Drawers Light Powder Coated",
+            "skuText": "YS-WT01x 150 items",
+            "quantity": 150,
+            "productUrl": "https://www.alibaba.com/product-detail/YS-Brand-Assembly-Cold-Rolled-Steel_1601270018992.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/He41feb2ba8fa49a5a9c3ff5134a4f172u.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25065201501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.709Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119484,10 +120025,33 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "Machine Flex Air Ducts Industrial Ventilation Fan Air Hose Flexible Air Blower Duct Aviation Pvc Ducting Ventilation Tube / 591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Machine Flex Air Ducts Industrial Ventilation Fan Air Hose Flexible Air Blower Duct Aviation Pvc Ducting Ventilation Tube",
+            "skuText": "No variationx 30 itemsNo variationx 20 items",
+            "quantity": 50,
+            "productUrl": "https://www.alibaba.com/product-detail/Machine-Flex-Air-Ducts-Industrial-Ventilation_1600284032030.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hffe464240d0d46a8b819660cae6ee797u.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/591407-591408-PORTABLE-VENTILATION-FAN-300MM_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25121777001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:02.709Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 4,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119508,10 +120072,25 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "High-Pressure Self-Priming Stainless Steel Booster Pump Energy Saving Domestic Water Jet Pump",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "High-Pressure Self-Priming Stainless Steel Booster Pump Energy Saving Domestic Water Jet Pump",
+            "skuText": "No variationx 100 itemsNo variationx 50 items",
+            "quantity": 150,
+            "productUrl": "https://www.alibaba.com/product-detail/High-Pressure-Self-Priming-Stainless-Steel_1601481628589.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hebb441ab2af6440f971909a6fcde22bbc.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25134205001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119532,10 +120111,25 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "7.5HP 210CC Single Cylind Gasoline Engine Power Micro Tillage Machine 4-stroke 170F-1 Gasoline Engine for Agriculture",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "7.5HP 210CC Single Cylind Gasoline Engine Power Micro Tillage Machine 4-stroke 170F-1 Gasoline Engine for Agriculture",
+            "skuText": "No variationx 150 items",
+            "quantity": 150,
+            "productUrl": "https://www.alibaba.com/product-detail/7-5HP-210CC-Single-Cylind-Gasoline_1601592292483.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H0ff73ba9d1544579b33109c84036da246.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25156593001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119556,10 +120150,33 @@
         "balanceAmount": 0,
         "itemCount": 1454,
         "skuSummary": "Haitun Adjustable Digital 220V 50Hz Controller Automatic Pressure Switch for Pump / Haitun factory price air compressor switch pressure control",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Haitun Adjustable Digital 220V 50Hz Controller Automatic Pressure Switch for Pump",
+            "skuText": "No variationx 204 items",
+            "quantity": 204,
+            "productUrl": "https://www.alibaba.com/product-detail/Haitun-Adjustable-Digital-220V-50Hz-Controller_1601700257473.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hf531d85e37fa49bb9ee91d7f986df5b6I.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "Haitun factory price air compressor switch pressure control",
+            "skuText": "PC-6 1 WAYx 250 itemsPC-6 4 WAYx 1000 items",
+            "quantity": 1250,
+            "productUrl": "https://www.alibaba.com/product-detail/Haitun-factory-price-air-compressor-switch_1600191931578.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H58707cd44b234d82ad05b170760e89d3Z.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25199753001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119580,10 +120197,33 @@
         "balanceAmount": 0,
         "itemCount": 130,
         "skuSummary": "100type HSS dies 1-2 BSPT / 100type alloy dies 1/2-3/4 BSPT",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "100type HSS dies 1-2 BSPT",
+            "skuText": "No variationx 30 items",
+            "quantity": 30,
+            "productUrl": "https://www.alibaba.com/product-detail/100type-HSS-dies-1-2-BSPT_60760811309.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H3260736398684fa983d105c91299fdf5K.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "100type alloy dies 1/2-3/4 BSPT",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/100type-alloy-dies-1-2-3_1600791413144.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H9d15cce1489a40839d3b6630175ee1500.png_140x140.png"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25264849501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119604,10 +120244,25 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "Self-Priming Stainless Steel Jet Pump Energy Saving 1.5KW Centrifugal Pump for Domestic Use Watering",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Self-Priming Stainless Steel Jet Pump Energy Saving 1.5KW Centrifugal Pump for Domestic Use Watering",
+            "skuText": "No variationx 100 itemsNo variationx 50 items",
+            "quantity": 150,
+            "productUrl": "https://www.alibaba.com/product-detail/Self-Priming-Stainless-Steel-Jet-Pump_1601522528176.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H747291ed62f74accb3e1d8171e236f1cg.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25649525001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119628,10 +120283,25 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "CHLF Series Horizontal High-Pressure Multi-Stage Centrifugal Water Pumps Electric for Water Boosting Applications",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "CHLF Series Horizontal High-Pressure Multi-Stage Centrifugal Water Pumps Electric for Water Boosting Applications",
+            "skuText": "No variationx 100 itemsNo variationx 50 items",
+            "quantity": 150,
+            "productUrl": "https://www.alibaba.com/product-detail/CHLF-Series-Horizontal-High-Pressure-Multi_1600401854908.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hef28e6ea68834cc084ed69629b3949cdC.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25649617001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119652,10 +120322,33 @@
         "balanceAmount": 0,
         "itemCount": 280,
         "skuSummary": "591407 PORTABLE VENTILATION FAN 300MM 220V 60HZ Red Color / 59118202 INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2 INCH",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "591407 PORTABLE VENTILATION FAN 300MM 220V 60HZ Red Color",
+            "skuText": "No variationx 80 items",
+            "quantity": 80,
+            "productUrl": "https://www.alibaba.com/product-detail/591407-PORTABLE-VENTILATION-FAN-300MM-220V_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "59118202 INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2 INCH",
+            "skuText": "No variationx 200 items",
+            "quantity": 200,
+            "productUrl": "https://www.alibaba.com/product-detail/59118202-INDUSTRIAL-ALUMINUM-SHELL-NEWEST-ROUND_1600908106358.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25706929501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.377Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119676,10 +120369,33 @@
         "balanceAmount": 0,
         "itemCount": 110,
         "skuSummary": "Machine Flex Air Ducts Industrial Ventilation Fan Air Hose Flexible Air Blower Duct Aviation Pvc Ducting Ventilation Tube / PORTABLE VENTILATION FAN 300MM 220V 60HZ Red Color",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Machine Flex Air Ducts Industrial Ventilation Fan Air Hose Flexible Air Blower Duct Aviation Pvc Ducting Ventilation Tube",
+            "skuText": "500mm*5mtrsx 5 items500mm*10mtrsx 5 itemsand 1 more variations",
+            "quantity": 10,
+            "productUrl": "https://www.alibaba.com/product-detail/Machine-Flex-Air-Ducts-Industrial-Ventilation_1600284032030.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hffe464240d0d46a8b819660cae6ee797u.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "PORTABLE VENTILATION FAN 300MM 220V 60HZ Red Color",
+            "skuText": "No variationx 80 itemsNo variationx 20 itemsand 1 more variations",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/PORTABLE-VENTILATION-FAN-300MM-220V-60HZ_1600279763957.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25840357501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:01.376Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 3,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119700,10 +120416,33 @@
         "balanceAmount": 0,
         "itemCount": 750,
         "skuSummary": "Portable Boat Winch with Quick-release Hook and Ergonomic Crank for Boat Trailer Operation / Heavy Duty Boat Winch with 1200LBS Pulling Capacity for Marine Trailer Recovery",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Portable Boat Winch with Quick-release Hook and Ergonomic Crank for Boat Trailer Operation",
+            "skuText": "No variationx 300 itemsNo variationx 200 items",
+            "quantity": 500,
+            "productUrl": "https://www.alibaba.com/product-detail/Portable-Boat-Winch-with-Quick-release_1601748762982.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H410a36bd1bd449b889985a4b8edcc4e4D.png_140x140.png"
+          },
+          {
+            "rowNo": 2,
+            "title": "Heavy Duty Boat Winch with 1200LBS Pulling Capacity for Marine Trailer Recovery",
+            "skuText": "No variationx 150 itemsNo variationx 100 items",
+            "quantity": 250,
+            "productUrl": "https://www.alibaba.com/product-detail/Heavy-Duty-Boat-Winch-with-1200LBS_1601748881120.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H5b393f4dd07b4a4a84c39e576c807570N.png_140x140.png"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26071101001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.063Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119724,10 +120463,25 @@
         "balanceAmount": 0,
         "itemCount": 80,
         "skuSummary": "OEM Factory15HP Single Cylinder Gasoline Engine TF188F Air Cooled 4 Stroke Gasoline Engine with Electrical Startin",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "OEM Factory15HP Single Cylinder Gasoline Engine TF188F Air Cooled 4 Stroke Gasoline Engine with Electrical Startin",
+            "skuText": "No variationx 80 items",
+            "quantity": 80,
+            "productUrl": "https://www.alibaba.com/product-detail/OEM-Factory15HP-Single-Cylinder-Gasoline-Engine_1601588308862.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H71be6b845f7a40e6b1a641d29244f0b7c.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26207385001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.063Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119748,10 +120502,25 @@
         "balanceAmount": 0,
         "itemCount": 0,
         "skuSummary": "100Pcs of Socket Welder 20-63",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "100Pcs of Socket Welder 20-63",
+            "skuText": "Contains 1 order attachment(s)",
+            "quantity": 0,
+            "productUrl": "",
+            "imageUrl": ""
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26213061001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.063Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119772,10 +120541,33 @@
         "balanceAmount": 0,
         "itemCount": 150,
         "skuSummary": "Low Noise 16 Inch Variable Speed Bench Scroll Saw With Cast Iron Base / 370W Electric DIY Home Use Double Side Wide Belt Sander with Patent Disc Attachment for Woodworking and Sanding",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Low Noise 16 Inch Variable Speed Bench Scroll Saw With Cast Iron Base",
+            "skuText": "No variationx 50 items",
+            "quantity": 50,
+            "productUrl": "https://www.alibaba.com/product-detail/Low-Noise-16-Inch-Variable-Speed_1600695832637.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hf889400933a44194b7a3283edd74db05P.jpg_140x140.jpg"
+          },
+          {
+            "rowNo": 2,
+            "title": "370W Electric DIY Home Use Double Side Wide Belt Sander with Patent Disc Attachment for Woodworking and Sanding",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/370W-Electric-DIY-Home-Use-Double_1600472163772.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H3768744a09bd4150825aa8a5a7dc38046.png_140x140.png"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26221149501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.063Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119796,10 +120588,25 @@
         "balanceAmount": 0,
         "itemCount": 40,
         "skuSummary": "5kVA to 10kVA Single Phase AVR Portable Inverter Gasoline Generator Set with 10L Fuel Tank for Home Use",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "5kVA to 10kVA Single Phase AVR Portable Inverter Gasoline Generator Set with 10L Fuel Tank for Home Use",
+            "skuText": "No variationx 40 items",
+            "quantity": 40,
+            "productUrl": "https://www.alibaba.com/product-detail/5kVA-to-10kVA-Single-Phase-AVR_1601256284885.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfbab7a8b80d54eca8cd44f7005cb52d1D.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26313781001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.063Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119820,10 +120627,25 @@
         "balanceAmount": 0,
         "itemCount": 50,
         "skuSummary": "High Power Electric Home Car Washer Trendy Design With High Pressure 220V Voltage Home Cleaning Machine",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "High Power Electric Home Car Washer Trendy Design With High Pressure 220V Voltage Home Cleaning Machine",
+            "skuText": "No variationx 50 items",
+            "quantity": 50,
+            "productUrl": "https://www.alibaba.com/product-detail/High-Power-Electric-Home-Car-Washer_1601729868508.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hbd0afbf347904fb9baaa85961de9ceb4D.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26434609501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.062Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119844,10 +120666,25 @@
         "balanceAmount": 0,
         "itemCount": 100,
         "skuSummary": "High Power Electric Home Car Washer Trendy Design With High Pressure 220V Voltage Home Cleaning Machine",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "High Power Electric Home Car Washer Trendy Design With High Pressure 220V Voltage Home Cleaning Machine",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/High-Power-Electric-Home-Car-Washer_1601729868508.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hbd0afbf347904fb9baaa85961de9ceb4D.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26476733001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:41:00.062Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:41",
+        "capturedPage": 2,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119868,10 +120705,25 @@
         "balanceAmount": 0,
         "itemCount": 120,
         "skuSummary": "80 Liters Stainless Steel Car Cleaning Foam Machine Effective Tool for Car Washer",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "80 Liters Stainless Steel Car Cleaning Foam Machine Effective Tool for Car Washer",
+            "skuText": "No variationx 120 items",
+            "quantity": 120,
+            "productUrl": "https://www.alibaba.com/product-detail/80-Liters-Stainless-Steel-Car-Cleaning_1601421707477.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H00903ea3054647eb9de9237f2cdb4aef2.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26498833001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.696Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119892,10 +120744,25 @@
         "balanceAmount": 0,
         "itemCount": 200,
         "skuSummary": "3D 5-Line Green Beam Laser Level with Remote Control, Self-Leveling Laser Tool for Construction and Industrial Use",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "3D 5-Line Green Beam Laser Level with Remote Control, Self-Leveling Laser Tool for Construction and Industrial Use",
+            "skuText": "No variationx 200 items",
+            "quantity": 200,
+            "productUrl": "https://www.alibaba.com/product-detail/3D-5-Line-Green-Beam-Laser_1601715594896.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H14885d6245ba4b34848ceb956a5c4cfaJ.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26498929501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.696Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119916,10 +120783,33 @@
         "balanceAmount": 0,
         "itemCount": 560,
         "skuSummary": "60L and 100L pressure tank with base / Five Way",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "60L and 100L pressure tank with base",
+            "skuText": "No variationx 20 itemsNo variationx 40 items",
+            "quantity": 60,
+            "productUrl": "https://www.alibaba.com/product-detail/60L-and-100L-pressure-tank-with_1601794461846.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H2d2837771bec4c9d9362b85690c93834v.png_140x140.png"
+          },
+          {
+            "rowNo": 2,
+            "title": "Five Way",
+            "skuText": "No variationx 500 items",
+            "quantity": 500,
+            "productUrl": "https://www.alibaba.com/product-detail/Five-Way_1601794597348.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H1bab798dec5b4bc0af801b93f83df7c8d.png_140x140.png"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26582801501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.696Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119940,10 +120830,25 @@
         "balanceAmount": 0,
         "itemCount": 100,
         "skuSummary": "1L Per Rotary Hand Pump High Flow Rate Piston Pump for Oil diesel",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "1L Per Rotary Hand Pump High Flow Rate Piston Pump for Oil diesel",
+            "skuText": "No variationx 100 items",
+            "quantity": 100,
+            "productUrl": "https://www.alibaba.com/product-detail/1L-Per-Rotary-Hand-Pump-High_1600862295351.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/H15b650efee78419cb0a251b9ae51713d4.png_140x140.png"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26708749001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.696Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119964,10 +120869,25 @@
         "balanceAmount": 0,
         "itemCount": 40,
         "skuSummary": "5kVA to 10kVA Single Phase AVR Portable Inverter Gasoline Generator Set with 10L Fuel Tank for Home Use",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "5kVA to 10kVA Single Phase AVR Portable Inverter Gasoline Generator Set with 10L Fuel Tank for Home Use",
+            "skuText": "No variationx 40 items",
+            "quantity": 40,
+            "productUrl": "https://www.alibaba.com/product-detail/5kVA-to-10kVA-Single-Phase-AVR_1601256284885.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfbab7a8b80d54eca8cd44f7005cb52d1D.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26876305001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.695Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -119988,10 +120908,25 @@
         "balanceAmount": 0,
         "itemCount": 0,
         "skuSummary": "Drill Press 13 and 16, 150PCS total",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "Drill Press 13 and 16, 150PCS total",
+            "skuText": "Contains 1 order attachment(s)",
+            "quantity": 0,
+            "productUrl": "",
+            "imageUrl": ""
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26952029501038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.695Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       },
       {
@@ -120012,10 +120947,25 @@
         "balanceAmount": 0,
         "itemCount": 400,
         "skuSummary": "59118202 INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2 INCH",
+        "products": [
+          {
+            "rowNo": 1,
+            "title": "59118202 INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2 INCH",
+            "skuText": "No variationx 400 items",
+            "quantity": 400,
+            "productUrl": "https://www.alibaba.com/product-detail/59118202-INDUSTRIAL-ALUMINUM-SHELL-NEWEST-ROUND_1600908106358.html",
+            "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          }
+        ],
         "trackingNo": "",
         "logisticsProvider": "",
         "buyerAccount": "",
         "orderUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=27296729001038359&tracelog=from_orderlist_dropdown",
+        "captureUrl": "",
+        "capturedAt": "2026-07-03T06:40:58.695Z",
+        "capturedAtLabel": "03 ก.ค. 2569 13:40",
+        "capturedPage": 1,
+        "capturedUrl": "",
         "note": ""
       }
     ]
@@ -306522,7 +307472,7 @@
     }
   ],
   "platformSalesDashboard": {
-    "generatedAt": "2026-07-03T07:28:25.631Z",
+    "generatedAt": "2026-07-03T07:51:06.461Z",
     "timeZone": "Asia/Bangkok",
     "nowKey": "2026-07-03",
     "windowDays": 14,

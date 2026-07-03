@@ -57,6 +57,39 @@ function orderStatus(order) {
   return statusLabel(firstText(order.status, order.orderStatus, order.statusLabel, order.tradeStatus));
 }
 
+function normalizeProduct(product, index) {
+  return {
+    rowNo: index + 1,
+    title: firstText(product.title, product.productTitle, product.productName, product.name, product.itemName),
+    skuText: firstText(product.skuText, product.sku, product.variation, product.specification, product.optionText),
+    quantity: numberValue(product.quantity ?? product.qty ?? product.itemCount),
+    productUrl: firstText(product.productUrl, product.url, product.link),
+    imageUrl: firstText(
+      product.imageUrl,
+      product.productImageUrl,
+      product.thumbnailUrl,
+      product.thumbUrl,
+      product.image,
+      product.imageSrc,
+      product.picUrl,
+      product.imgUrl
+    ),
+  };
+}
+
+function normalizeProducts(order) {
+  const products = Array.isArray(order.products)
+    ? order.products
+    : Array.isArray(order.items)
+      ? order.items
+      : Array.isArray(order.orderItems)
+        ? order.orderItems
+        : Array.isArray(order.productList)
+          ? order.productList
+          : [];
+  return products.map(normalizeProduct).filter((product) => product.title || product.skuText || product.productUrl || product.imageUrl);
+}
+
 function statusGroup(status) {
   const normalized = normalizeStatus(status);
   if (normalized.includes("remaining balance") || normalized.includes("insufficient balance")) return "balance";
@@ -70,13 +103,21 @@ function statusGroup(status) {
 
 function normalizeOrder(order, index) {
   const status = orderStatus(order);
+  const products = normalizeProducts(order);
+  const productTitleSummary = products
+    .map((product) => product.title)
+    .filter(Boolean)
+    .join(" / ");
   const orderAmount = numberValue(order.orderAmount ?? order.amount ?? order.totalAmount ?? order.total);
   const paidAmount = numberValue(order.paidAmount ?? order.paymentAmount ?? order.paid ?? order.orderPaidAmount);
   const balanceAmount = numberValue(order.balanceAmount ?? order.remainingBalance ?? order.balanceDue);
-  const itemCount = numberValue(order.itemCount ?? order.productCount ?? order.quantity);
+  const itemCount =
+    numberValue(order.itemCount ?? order.productCount ?? order.quantity) ||
+    products.reduce((sum, product) => sum + numberValue(product.quantity), 0);
   const orderDate = firstText(order.orderDate, order.createdAt, order.createTime, order.orderedAt);
   const expectedShipDate = firstText(order.expectedShipDate, order.shipBy, order.shipBefore, order.supplierShipDeadline);
   const updatedAt = firstText(order.updatedAt, order.modifiedAt, order.lastUpdatedAt, order.capturedAt, orderDate);
+  const capturedAt = firstText(order.capturedAt, order.captureAt, order.snapshotAt);
 
   return {
     rowNo: index + 1,
@@ -95,11 +136,17 @@ function normalizeOrder(order, index) {
     paidAmount: roundMoney(paidAmount || orderAmount),
     balanceAmount: roundMoney(balanceAmount),
     itemCount,
-    skuSummary: firstText(order.skuSummary, order.productName, order.productTitle, order.itemName),
+    skuSummary: firstText(order.skuSummary, productTitleSummary, order.productName, order.productTitle, order.itemName),
+    products,
     trackingNo: firstText(order.trackingNo, order.trackingNumber, order.shipmentNo),
     logisticsProvider: firstText(order.logisticsProvider, order.carrier, order.shippingProvider),
     buyerAccount: firstText(order.buyerAccount, order.buyer, order.account),
     orderUrl: firstText(order.orderUrl, order.url, order.link),
+    captureUrl: firstText(order.captureUrl, order.captureImageUrl, order.screenshotUrl, order.orderScreenshotUrl, order.orderCaptureUrl),
+    capturedAt,
+    capturedAtLabel: thaiDateTime(capturedAt),
+    capturedPage: numberValue(order.capturedPage ?? order.pageNo ?? order.page),
+    capturedUrl: firstText(order.capturedUrl, order.sourceUrl),
     note: firstText(order.note, order.remark, order.memo),
   };
 }

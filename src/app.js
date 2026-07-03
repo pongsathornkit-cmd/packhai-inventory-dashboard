@@ -4020,6 +4020,9 @@
   }
 
   function alibabaOrderMatchesQuery(row, query) {
+    const productText = Array.isArray(row.products)
+      ? row.products.map((product) => [product.title, product.skuText, product.productUrl].join(" ")).join(" ")
+      : "";
     const text = compactText(
       [
         row.orderNo,
@@ -4027,6 +4030,7 @@
         row.status,
         alibabaStatusLabel(row.status),
         row.skuSummary,
+        productText,
         row.trackingNo,
         row.logisticsProvider,
         row.buyerAccount,
@@ -4047,6 +4051,84 @@
     return list;
   }
 
+  function alibabaProductThumb(product) {
+    const label = `Alibaba product ${product?.title || product?.skuText || ""}`.trim();
+    if (!product?.imageUrl) {
+      return `<div class="alibaba-product-thumb missing" aria-label="ยังไม่มีรูปสินค้า Alibaba"></div>`;
+    }
+    return `
+      <div class="alibaba-product-thumb">
+        <img src="${escapeHtml(product.imageUrl)}" alt="${escapeHtml(label)}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('missing'); this.remove();" />
+      </div>`;
+  }
+
+  function renderAlibabaProducts(row) {
+    const products = Array.isArray(row.products) ? row.products : [];
+    if (!products.length) {
+      return `
+        <div class="alibaba-product-list compact">
+          <article class="alibaba-product-line">
+            <div class="alibaba-product-thumb missing" aria-label="ยังไม่มีรูปสินค้า Alibaba"></div>
+            <div>
+              <strong>${escapeHtml(row.skuSummary || "-")}</strong>
+              <span>${fmtQty.format(row.itemCount || 0)} รายการ</span>
+            </div>
+          </article>
+        </div>`;
+    }
+
+    const visibleProducts = products.slice(0, 3);
+    return `
+      <div class="alibaba-product-list">
+        ${visibleProducts
+          .map((product) => {
+            const title = product.title || product.skuText || "Alibaba product";
+            const productTitle = product.productUrl
+              ? `<a href="${escapeHtml(product.productUrl)}" target="_blank" rel="noopener">${escapeHtml(title)}</a>`
+              : escapeHtml(title);
+            const meta = [
+              product.skuText,
+              numberValue(product.quantity) ? `${fmtQty.format(product.quantity)} pcs` : "",
+            ]
+              .filter(Boolean)
+              .join(" · ");
+            return `
+          <article class="alibaba-product-line">
+            ${alibabaProductThumb(product)}
+            <div>
+              <strong>${productTitle}</strong>
+              <span>${escapeHtml(meta || row.supplierName || "")}</span>
+            </div>
+          </article>`;
+          })
+          .join("")}
+        ${
+          products.length > visibleProducts.length
+            ? `<span class="alibaba-product-more">+${fmtInt.format(products.length - visibleProducts.length)} รายการสินค้า</span>`
+            : ""
+        }
+      </div>`;
+  }
+
+  function renderAlibabaOrderCapture(row) {
+    const capturedLabel = row.capturedAtLabel || formatDateTime(row.capturedAt) || row.updatedAtLabel || formatDateTime(row.updatedAt) || "";
+    const capturedPage = row.capturedPage ? `Page ${fmtInt.format(row.capturedPage)}` : "Alibaba";
+    const content = row.captureUrl
+      ? `<img class="alibaba-capture-image" src="${escapeHtml(row.captureUrl)}" alt="Alibaba order capture ${escapeHtml(row.orderNo || "")}" loading="lazy" referrerpolicy="no-referrer" />`
+      : `<span class="alibaba-capture-placeholder">Capture</span>`;
+    const inner = `
+      ${content}
+      <span class="alibaba-capture-meta">
+        <strong>${escapeHtml(row.orderNo || "-")}</strong>
+        <small>${escapeHtml([capturedPage, capturedLabel].filter(Boolean).join(" · "))}</small>
+      </span>`;
+
+    if (row.orderUrl) {
+      return `<a class="alibaba-capture-card" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener" title="เปิดออเดอร์ Alibaba">${inner}</a>`;
+    }
+    return `<div class="alibaba-capture-card">${inner}</div>`;
+  }
+
   function renderAlibabaRows() {
     const body = $("alibabaOrderRows");
     if (!body) return;
@@ -4064,6 +4146,9 @@
               : "";
             return `
           <tr>
+            <td class="alibaba-capture-cell">
+              ${renderAlibabaOrderCapture(row)}
+            </td>
             <td>
               <strong>${escapeHtml(row.orderNo || "-")}</strong>
               <span>${escapeHtml(row.buyerAccount || row.supplierName || "")}</span>
@@ -4085,8 +4170,7 @@
               <span>${escapeHtml([row.logisticsProvider, row.trackingNo].filter(Boolean).join(" · "))}</span>
             </td>
             <td>
-              <strong>${escapeHtml(row.skuSummary || "-")}</strong>
-              <span>${fmtQty.format(row.itemCount || 0)} รายการ</span>
+              ${renderAlibabaProducts(row)}
             </td>
             <td class="num">
               <strong>${escapeHtml(fmtCurrency(row.paidAmount || 0, row.currency || "USD"))}</strong>
@@ -4099,7 +4183,7 @@
           </tr>`;
           })
           .join("")
-      : `<tr><td colspan="8" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
+      : `<tr><td colspan="9" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
 
     const status = $("alibabaOrderPageStatus");
     if (status) {
@@ -4282,6 +4366,7 @@
           <table class="payment-orders-table alibaba-orders-table">
             <thead>
               <tr>
+                <th>Capture</th>
                 <th>Order</th>
                 <th>Supplier</th>
                 <th>สถานะ</th>

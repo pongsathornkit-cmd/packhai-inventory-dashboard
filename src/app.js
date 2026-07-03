@@ -66,6 +66,13 @@
     status: "All",
     page: 1,
   };
+  const alibabaReceivingStorageKey = "packhaiAlibabaReceivingDrafts";
+  const alibabaReceivingWarehouses = [
+    { id: "491662", label: "คลัง สุขสวัสดิ์", source: "website-stock" },
+    { id: "491661", label: "คลัง ซ.เจริญกิจ", source: "website-stock" },
+    { id: "packhai", label: "คลัง Packhai", source: "packhai" },
+  ];
+  const alibabaReceivingState = readAlibabaReceivingDrafts();
   const websiteStockEditWarehouses = [
     { id: 491661, name: "คลัง ซ.เจริญกิจ", label: "ซ.เจริญกิจ" },
     { id: 491662, name: "คลัง สุขสวัสดิ์", label: "สุขสวัสดิ์" },
@@ -4016,6 +4023,321 @@
     $("exportPaymentOrdersCsv")?.addEventListener("click", exportPlatformPaymentOrdersCsv);
   }
 
+  function readAlibabaReceivingDrafts() {
+    const fallback = { lotShippingCost: 0, exchangeRate: 36.5, lines: {} };
+    try {
+      const parsed = JSON.parse(localStorage.getItem(alibabaReceivingStorageKey) || "{}");
+      return {
+        lotShippingCost: numberValue(parsed.lotShippingCost),
+        exchangeRate: numberValue(parsed.exchangeRate) || fallback.exchangeRate,
+        lines: parsed.lines && typeof parsed.lines === "object" ? parsed.lines : {},
+      };
+    } catch {
+      return fallback;
+    }
+  }
+
+  function saveAlibabaReceivingDrafts() {
+    try {
+      localStorage.setItem(alibabaReceivingStorageKey, JSON.stringify(alibabaReceivingState));
+    } catch {
+      // Local storage can be unavailable in private or restricted browser contexts.
+    }
+  }
+
+  function alibabaReceivingLineKey(row, product) {
+    return [row.orderNo || "order", product?.rowNo || 0, product?.skuText || "", product?.title || ""].join("|");
+  }
+
+  function alibabaReceivingDraft(lineKey) {
+    if (!alibabaReceivingState.lines[lineKey]) {
+      alibabaReceivingState.lines[lineKey] = {};
+    }
+    return alibabaReceivingState.lines[lineKey];
+  }
+
+  function alibabaProductQuantity(row, product) {
+    return numberValue(product?.quantity) || numberValue(row?.itemCount) || 1;
+  }
+
+  function alibabaOrderProducts(row) {
+    const products = Array.isArray(row.products) ? row.products : [];
+    if (products.length) return products;
+    return [
+      {
+        rowNo: 1,
+        title: row.skuSummary || row.orderNo || "Alibaba item",
+        skuText: row.skuSummary || "",
+        quantity: row.itemCount || 1,
+      },
+    ];
+  }
+
+  function alibabaLotQuantity(orderRows = []) {
+    return orderRows.reduce(
+      (sum, row) => sum + alibabaOrderProducts(row).reduce((lineSum, product) => lineSum + alibabaProductQuantity(row, product), 0),
+      0
+    );
+  }
+
+  function alibabaProductLineAmount(row, product) {
+    const quantity = alibabaProductQuantity(row, product);
+    const explicitLineAmount = numberValue(product?.lineAmount || product?.totalAmount || product?.amount);
+    if (explicitLineAmount > 0) return explicitLineAmount;
+    const explicitUnitPrice = numberValue(product?.unitPrice || product?.price || product?.productPrice);
+    if (explicitUnitPrice > 0) return explicitUnitPrice * quantity;
+    const orderQuantity = alibabaOrderProducts(row).reduce((sum, item) => sum + alibabaProductQuantity(row, item), 0) || quantity;
+    return moneyValue(numberValue(row.paidAmount || row.orderAmount) * (quantity / orderQuantity));
+  }
+
+  function buildAlibabaSkuOptions() {
+    const bySku = new Map();
+    for (const row of rows || []) {
+      const sku = normalizeSkuValue(row.sku || row.productCode || row.productSKU);
+      if (!sku) continue;
+      const current = bySku.get(sku) || {
+        sku,
+        name: row.name || row.productName || row.sourceTitle || "",
+        price: 0,
+        imageUrl: row.imageUrl || "",
+        priceSource: row.priceSource || "",
+        warehouses: new Set(),
+      };
+      const price = moneyValue(row.price || row.salePrice || row.unitPrice);
+      if (price > 0 && (!current.price || price > current.price)) {
+        current.price = price;
+        current.priceSource = row.priceSource || current.priceSource;
+      }
+      if (!current.name && (row.name || row.productName)) current.name = row.name || row.productName;
+      if (!current.imageUrl && row.imageUrl) current.imageUrl = row.imageUrl;
+      const warehouse = row.warehouseName || row.stockSource || row.sourceName || "";
+      if (warehouse) current.warehouses.add(String(warehouse));
+      bySku.set(sku, current);
+    }
+    return [...bySku.values()]
+      .map((item) => ({
+        ...item,
+        warehouseSummary: [...item.warehouses].slice(0, 3).join(" / "),
+      }))
+      .sort((a, b) => a.sku.localeCompare(b.sku, "en"));
+  }
+
+  function alibabaSkuOptionMap() {
+    const map = new Map();
+    buildAlibabaSkuOptions().forEach((option) => {
+      map.set(normalizeSkuValue(option.sku), option);
+    });
+    return map;
+  }
+
+  function renderAlibabaSkuDatalist() {
+    return `
+      <datalist id="alibabaSkuOptions">
+        ${buildAlibabaSkuOptions()
+          .slice(0, 2500)
+          .map((option) => {
+            const label = [option.name, option.warehouseSummary, option.price ? fmtBaht2.format(option.price) : ""].filter(Boolean).join(" | ");
+            return `<option value="${escapeHtml(option.sku)}" label="${escapeHtml(label)}"></option>`;
+          })
+          .join("")}
+      </datalist>`;
+  }
+
+  function calculateAlibabaReceivingRows(orderRows = getAlibabaPurchaseOrders().rows) {
+    const lotQuantity = Math.max(1, alibabaLotQuantity(orderRows));
+    const lotShippingCost = moneyValue(alibabaReceivingState.lotShippingCost);
+    const exchangeRate = numberValue(alibabaReceivingState.exchangeRate) || 1;
+    const shippingCostPerPiece = moneyValue(lotShippingCost / lotQuantity);
+    const skuOptions = alibabaSkuOptionMap();
+    const lines = [];
+
+    for (const row of orderRows) {
+      for (const product of alibabaOrderProducts(row)) {
+        const lineKey = alibabaReceivingLineKey(row, product);
+        const draft = alibabaReceivingDraft(lineKey);
+        const quantity = alibabaProductQuantity(row, product);
+        const productCostForeign = alibabaProductLineAmount(row, product);
+        const productCostPerPiece = moneyValue((productCostForeign * exchangeRate) / Math.max(1, quantity));
+        const sku = normalizeSkuValue(draft.sku || "");
+        const skuOption = skuOptions.get(sku);
+        const salePrice = moneyValue(skuOption?.price || 0);
+        const landedCostPerPiece = moneyValue(productCostPerPiece + shippingCostPerPiece);
+        const profitPerPiece = salePrice > 0 ? moneyValue(salePrice - landedCostPerPiece) : 0;
+        lines.push({
+          row,
+          product,
+          lineKey,
+          draft,
+          quantity,
+          productCostForeign: moneyValue(productCostForeign),
+          productCostPerPiece,
+          shippingCostPerPiece,
+          landedCostPerPiece,
+          salePrice,
+          profitPerPiece,
+          skuOption,
+        });
+      }
+    }
+
+    return {
+      lotQuantity,
+      lotShippingCost,
+      exchangeRate,
+      shippingCostPerPiece,
+      lines,
+    };
+  }
+
+  function renderAlibabaReceivingWorkbench(report) {
+    const receiving = calculateAlibabaReceivingRows(report.rows || []);
+    const mappedCount = receiving.lines.filter((line) => normalizeSkuValue(line.draft.sku)).length;
+    const createSkuCount = receiving.lines.filter((line) => Boolean(line.draft.createSku)).length;
+    const readyCount = receiving.lines.filter((line) => normalizeSkuValue(line.draft.sku) && line.draft.warehouseId && numberValue(line.draft.stockInQty) > 0).length;
+    return `
+      <section class="alibaba-receiving-workbench" aria-label="Alibaba receiving workflow">
+        <div class="alibaba-receiving-head">
+          <div>
+            <span>Receiving Process</span>
+            <h3>เตรียมรับสินค้าเข้า stock จาก Alibaba</h3>
+            <p>ลงค่าขนส่งทั้ง Lot แล้วระบบคำนวณค่าขนส่งต่อชิ้น ต้นทุนสินค้าต่อชิ้น และกำไรต่อชิ้น พร้อมผูก SKU เข้าคลัง</p>
+          </div>
+          <div class="alibaba-receiving-inputs">
+            <label>
+              ค่าขนส่งทั้ง Lot (THB)
+              <input type="number" min="0" step="0.01" value="${escapeHtml(receiving.lotShippingCost)}" data-alibaba-lot-shipping-cost />
+            </label>
+            <label>
+              Rate THB/USD
+              <input type="number" min="0" step="0.01" value="${escapeHtml(receiving.exchangeRate)}" data-alibaba-exchange-rate />
+            </label>
+          </div>
+        </div>
+        <div class="alibaba-receiving-grid">
+          <article>
+            <span>จำนวนสินค้าใน Lot</span>
+            <strong>${fmtQty.format(receiving.lotQuantity)}</strong>
+            <small>ใช้กระจายค่าขนส่งต่อชิ้น</small>
+          </article>
+          <article>
+            <span>ค่าขนส่งต่อชิ้น</span>
+            <strong>${fmtBaht2.format(receiving.shippingCostPerPiece)}</strong>
+            <small>ค่าขนส่งรวม / จำนวนสินค้า</small>
+          </article>
+          <article>
+            <span>ผูก SKU แล้ว</span>
+            <strong>${fmtInt.format(mappedCount)} / ${fmtInt.format(receiving.lines.length)}</strong>
+            <small>${fmtInt.format(createSkuCount)} รายการเป็น SKU ใหม่</small>
+          </article>
+          <article>
+            <span>พร้อมลง stock</span>
+            <strong>${fmtInt.format(readyCount)}</strong>
+            <small>มี SKU + คลัง + จำนวนรับเข้า</small>
+          </article>
+        </div>
+        ${renderAlibabaSkuDatalist()}
+      </section>`;
+  }
+
+  function renderAlibabaWarehouseOptions(selectedWarehouseId) {
+    return alibabaReceivingWarehouses
+      .map((warehouse) => {
+        const selected = String(selectedWarehouseId || "") === String(warehouse.id) ? " selected" : "";
+        return `<option value="${escapeHtml(warehouse.id)}"${selected}>${escapeHtml(warehouse.label)}</option>`;
+      })
+      .join("");
+  }
+
+  function renderAlibabaReceivingCards(row) {
+    const allReceiving = calculateAlibabaReceivingRows(getAlibabaPurchaseOrders().rows || []);
+    const lineByKey = new Map(allReceiving.lines.map((line) => [line.lineKey, line]));
+    const lines = alibabaOrderProducts(row)
+      .map((product) => lineByKey.get(alibabaReceivingLineKey(row, product)))
+      .filter(Boolean);
+    return `
+      <div class="alibaba-receiving-card-list">
+        ${lines
+          .map((line) => {
+            const draft = line.draft;
+            const sku = normalizeSkuValue(draft.sku || "");
+            const createSku = Boolean(draft.createSku);
+            const stockInQty = numberValue(draft.stockInQty || line.quantity);
+            const profitClass = line.salePrice > 0 ? (line.profitPerPiece >= 0 ? "good" : "bad") : "muted";
+            const skuStatus = createSku
+              ? "สร้าง SKU ใหม่ แล้วรอ sync ชื่อ/รูปจาก Shopee Seller"
+              : line.skuOption
+                ? `${line.skuOption.name || line.skuOption.sku} · ${line.skuOption.warehouseSummary || "มีในระบบ"}`
+                : "ยังไม่ผูก SKU";
+            return `
+          <article class="alibaba-receiving-card" data-alibaba-receiving-line="${escapeHtml(line.lineKey)}">
+            <div class="alibaba-receiving-card-title">
+              <strong>${escapeHtml(line.product.title || line.product.skuText || row.skuSummary || "Alibaba item")}</strong>
+              <span>${fmtQty.format(line.quantity)} pcs · ${escapeHtml(row.currency || "USD")} ${fmtQty.format(line.productCostForeign)}</span>
+            </div>
+            <div class="alibaba-cost-strip">
+              <span class="alibaba-cost-metric">
+                <small>ต้นทุนสินค้า/ชิ้น</small>
+                <strong>${fmtBaht2.format(line.productCostPerPiece)}</strong>
+              </span>
+              <span class="alibaba-cost-metric">
+                <small>ค่าขนส่ง/ชิ้น</small>
+                <strong>${fmtBaht2.format(line.shippingCostPerPiece)}</strong>
+              </span>
+              <span class="alibaba-cost-metric">
+                <small>กำไรต่อชิ้น</small>
+                <strong class="${profitClass}">${line.salePrice ? fmtBaht2.format(line.profitPerPiece) : "-"}</strong>
+              </span>
+            </div>
+            <div class="alibaba-stock-in-grid">
+              <label>
+                SKU รับเข้า
+                <input
+                  type="text"
+                  list="alibabaSkuOptions"
+                  value="${escapeHtml(sku)}"
+                  placeholder="เลือก SKU หรือพิมพ์ SKU ใหม่"
+                  data-alibaba-sku-input
+                  data-alibaba-line-key="${escapeHtml(line.lineKey)}"
+                />
+              </label>
+              <label>
+                คลังรับเข้า
+                <select data-alibaba-warehouse-select data-alibaba-line-key="${escapeHtml(line.lineKey)}">
+                  <option value="">เลือกคลัง</option>
+                  ${renderAlibabaWarehouseOptions(draft.warehouseId)}
+                </select>
+              </label>
+              <label>
+                จำนวนรับเข้า
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  value="${escapeHtml(stockInQty)}"
+                  data-alibaba-stock-in-qty
+                  data-alibaba-line-key="${escapeHtml(line.lineKey)}"
+                />
+              </label>
+            </div>
+            <div class="alibaba-receiving-actions">
+              <label class="alibaba-create-sku-toggle">
+                <input
+                  type="checkbox"
+                  ${createSku ? "checked" : ""}
+                  data-alibaba-create-sku
+                  data-alibaba-line-key="${escapeHtml(line.lineKey)}"
+                />
+                สร้าง SKU ใหม่
+              </label>
+              <button type="button" data-alibaba-receiving-save data-alibaba-line-key="${escapeHtml(line.lineKey)}">บันทึก Draft</button>
+            </div>
+            <p class="alibaba-receiving-note">${escapeHtml(skuStatus)}</p>
+          </article>`;
+          })
+          .join("")}
+      </div>`;
+  }
+
   function getAlibabaPurchaseOrders() {
     const report = data.alibabaPurchaseOrders || {};
     return {
@@ -4255,6 +4577,9 @@
               <span>${escapeHtml(row.buyerAccount || row.supplierName || "")}</span>
             </td>
             <td>
+              ${renderAlibabaReceivingCards(row)}
+            </td>
+            <td>
               <strong>${escapeHtml(row.supplierName || "-")}</strong>
               <span>${orderLink || escapeHtml(row.note || "")}</span>
             </td>
@@ -4284,7 +4609,7 @@
           </tr>`;
           })
           .join("")
-      : `<tr><td colspan="9" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
+      : `<tr><td colspan="10" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
 
     const status = $("alibabaOrderPageStatus");
     if (status) {
@@ -4355,7 +4680,96 @@
     URL.revokeObjectURL(url);
   }
 
+  function bindAlibabaReceivingEvents() {
+    const root = $("alibabaPurchaseOrders");
+    if (!root || root.dataset.alibabaReceivingBound === "1") return;
+    root.dataset.alibabaReceivingBound = "1";
+
+    root.addEventListener("input", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.matches("[data-alibaba-lot-shipping-cost]")) {
+        alibabaReceivingState.lotShippingCost = moneyValue(target.value);
+        saveAlibabaReceivingDrafts();
+        return;
+      }
+      if (target.matches("[data-alibaba-exchange-rate]")) {
+        alibabaReceivingState.exchangeRate = numberValue(target.value) || 36.5;
+        saveAlibabaReceivingDrafts();
+        return;
+      }
+      if (target.matches("[data-alibaba-sku-input]")) {
+        const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
+        draft.sku = normalizeSkuValue(target.value);
+        saveAlibabaReceivingDrafts();
+        return;
+      }
+      if (target.matches("[data-alibaba-stock-in-qty]")) {
+        const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
+        draft.stockInQty = numberValue(target.value);
+        saveAlibabaReceivingDrafts();
+      }
+    });
+
+    root.addEventListener("change", (event) => {
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) return;
+      if (target.matches("[data-alibaba-lot-shipping-cost]")) {
+        alibabaReceivingState.lotShippingCost = moneyValue(target.value);
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+        return;
+      }
+      if (target.matches("[data-alibaba-exchange-rate]")) {
+        alibabaReceivingState.exchangeRate = numberValue(target.value) || 36.5;
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+        return;
+      }
+      if (target.matches("[data-alibaba-sku-input]")) {
+        const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
+        draft.sku = normalizeSkuValue(target.value);
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+        return;
+      }
+      if (target.matches("[data-alibaba-warehouse-select]")) {
+        const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
+        draft.warehouseId = target.value;
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+        return;
+      }
+      if (target.matches("[data-alibaba-stock-in-qty]")) {
+        const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
+        draft.stockInQty = numberValue(target.value);
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+        return;
+      }
+      if (target.matches("[data-alibaba-create-sku]")) {
+        const draft = alibabaReceivingDraft(target.dataset.alibabaLineKey || "");
+        draft.createSku = Boolean(target.checked);
+        saveAlibabaReceivingDrafts();
+        renderAlibabaPurchaseOrders();
+      }
+    });
+
+    root.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-alibaba-receiving-save]");
+      if (!button) return;
+      const draft = alibabaReceivingDraft(button.dataset.alibabaLineKey || "");
+      draft.savedAt = new Date().toISOString();
+      saveAlibabaReceivingDrafts();
+      button.textContent = "บันทึกแล้ว";
+      window.setTimeout(() => {
+        button.textContent = "บันทึก Draft";
+      }, 1200);
+    });
+  }
+
   function bindAlibabaOrderEvents() {
+    bindAlibabaReceivingEvents();
     $("alibabaOrderSearch")?.addEventListener("input", (event) => {
       alibabaOrderState.query = event.target.value;
       alibabaOrderState.page = 1;
@@ -4426,7 +4840,7 @@
           )
           .join("")}
       </div>
-      <div class="alibaba-status-strip">
+        <div class="alibaba-status-strip">
         ${
           report.statusBreakdown.length
             ? report.statusBreakdown
@@ -4441,6 +4855,7 @@
             : `<article><strong>ยังไม่มีรายการ</strong><span>ใส่ข้อมูลใน data/alibaba_purchase_orders.json หรือ sync snapshot เพื่อเริ่มใช้งาน</span></article>`
         }
       </div>
+      ${renderAlibabaReceivingWorkbench(report)}
       <div class="payment-orders-panel alibaba-orders-panel">
         <div class="payment-orders-toolbar alibaba-orders-toolbar">
           <div>
@@ -4459,6 +4874,7 @@
               <tr>
                 <th>Capture</th>
                 <th>Order</th>
+                <th>Process รับเข้า</th>
                 <th>Supplier</th>
                 <th>สถานะ</th>
                 <th>วันที่สั่ง</th>

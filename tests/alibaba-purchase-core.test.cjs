@@ -151,3 +151,27 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(css, /max-height:\s*max\(760px,\s*calc\(100vh - 260px\)\)/);
   assert.match(build, /alibabaPurchaseOrders/);
 });
+
+test("dashboard exposes an Alibaba receiving workflow for landed cost and stock-in prep", () => {
+  const app = readRepoFile("src/app.js");
+  const css = readRepoFile("src/styles.css");
+
+  assert.match(app, /alibabaReceivingStorageKey/);
+  assert.match(app, /function\s+renderAlibabaReceivingWorkbench/);
+  assert.match(app, /function\s+calculateAlibabaReceivingRows/);
+  assert.match(app, /data-alibaba-lot-shipping-cost/);
+  assert.match(app, /data-alibaba-exchange-rate/);
+  assert.match(app, /data-alibaba-sku-input/);
+  assert.match(app, /data-alibaba-warehouse-select/);
+  assert.match(app, /data-alibaba-create-sku/);
+  assert.match(app, /data-alibaba-stock-in-qty/);
+  assert.match(app, /data-alibaba-receiving-save/);
+  assert.match(app, /คลัง สุขสวัสดิ์/);
+  assert.match(app, /คลัง ซ\.เจริญกิจ/);
+  assert.match(app, /คลัง Packhai/);
+  assert.match(app, /กำไรต่อชิ้น/);
+  assert.match(css, /\.alibaba-receiving-workbench/);
+  assert.match(css, /\.alibaba-receiving-grid/);
+  assert.match(css, /\.alibaba-receiving-card/);
+  assert.match(css, /\.alibaba-cost-metric/);
+});

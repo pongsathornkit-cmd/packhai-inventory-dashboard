@@ -48,7 +48,7 @@ test("dashboard labels selected warehouse rows as Website Stock, not FlowAccount
   assert.match(appSource, /Website Stock/);
   assert.match(templateSource, /Website Stock/);
   assert.match(appSource, /syncFlowaccount/);
-  assert.match(templateSource, /id="syncFlowaccount"/);
+  assert.doesNotMatch(templateSource, /id="syncFlowaccount"/);
 });
 
 test("dashboard exposes a dedicated sync path for platform collection payments", () => {
@@ -62,14 +62,12 @@ test("dashboard exposes a dedicated sync path for platform collection payments",
   assert.match(appSource, /startSync\("seller-payments"\)/);
 });
 
-test("sidebar does not show platform collection payments as a sync menu item", () => {
+test("sidebar no longer shows manual sync controls", () => {
   const templateSource = readRepoFile("src/index.template.html");
-  const sidebarSync = templateSource.match(/<div class="sidebar-sync"[\s\S]*?<\/div>\s*<div class="sidebar-status">/)?.[0] || "";
-
-  assert.ok(sidebarSync.includes('id="syncPackhai"'));
-  assert.ok(sidebarSync.includes('id="syncSeller"'));
-  assert.doesNotMatch(sidebarSync, /id="syncSellerPayments"/);
-  assert.doesNotMatch(sidebarSync, /ยอดเก็บเงิน Platform/);
+  assert.doesNotMatch(templateSource, /class="sidebar-sync"/);
+  assert.doesNotMatch(templateSource, /id="syncPackhai"/);
+  assert.doesNotMatch(templateSource, /id="syncSeller"/);
+  assert.doesNotMatch(templateSource, /id="syncSellerPayments"/);
 });
 
 test("sync server exposes a health endpoint for cloud hosting checks", () => {

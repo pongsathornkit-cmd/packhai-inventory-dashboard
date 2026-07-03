@@ -33,6 +33,18 @@ test("executive summary and valuation are not shown in the left menu", () => {
   assert.doesNotMatch(cssSource, /\.sidebar-nav a\[href="#valuation"\]/);
 });
 
+test("methodology and manual sync controls are not shown in the sidebar", () => {
+  const navBlock = sidebarNav();
+  assert.doesNotMatch(navBlock, /href="#methodology"/);
+  assert.doesNotMatch(template, /class="sidebar-sync"/);
+  assert.doesNotMatch(template, /id="syncAll"/);
+  assert.doesNotMatch(template, /id="syncPackhai"/);
+  assert.doesNotMatch(template, /id="syncFlowaccount"/);
+  assert.doesNotMatch(template, /id="syncSeller"/);
+  assert.doesNotMatch(cssSource, /\.sidebar-nav a\[href="#methodology"\]/);
+  assert.doesNotMatch(cssSource, /\.sidebar-sync/);
+});
+
 test("inventory table route hides the dashboard shell content and keeps the legacy hash as an alias", () => {
   assert.match(appSource, /function isInventoryTableRoute\(\)/);
   assert.match(appSource, /route === "inventory-table" \|\| route === "inventory-detail"/);

@@ -175,3 +175,14 @@ test("dashboard exposes an Alibaba receiving workflow for landed cost and stock-
   assert.match(css, /\.alibaba-receiving-card/);
   assert.match(css, /\.alibaba-cost-metric/);
 });
+
+test("Alibaba receiving can post stock-in transactions to Website Stock only", () => {
+  const app = readRepoFile("src/app.js");
+
+  assert.match(app, /async function\s+postAlibabaReceivingStock/);
+  assert.match(app, /saveWebsiteStockAdjustment/);
+  assert.match(app, /operation:\s*"add"/);
+  assert.match(app, /actor:\s*"Alibaba Receiving UI"/);
+  assert.match(app, /คลัง Packhai รับเข้าผ่าน Packhai/);
+  assert.match(app, /รับเข้า stock/);
+});

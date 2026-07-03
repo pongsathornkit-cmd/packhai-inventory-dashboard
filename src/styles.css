@@ -1585,6 +1585,18 @@ svg {
   white-space: nowrap;
 }
 
+.alibaba-receiving-note.passed {
+  color: #13805d;
+}
+
+.alibaba-receiving-note.warning {
+  color: #9a5a11;
+}
+
+.alibaba-receiving-note.failed {
+  color: #c22042;
+}
+
 .payment-heading {
   margin-bottom: 0;
 }

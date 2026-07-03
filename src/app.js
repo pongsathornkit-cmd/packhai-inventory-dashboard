@@ -4268,6 +4268,8 @@
               : line.skuOption
                 ? `${line.skuOption.name || line.skuOption.sku} · ${line.skuOption.warehouseSummary || "มีในระบบ"}`
                 : "ยังไม่ผูก SKU";
+            const receivingStatus = draft.status || skuStatus;
+            const receivingStatusClass = draft.statusType ? ` ${draft.statusType}` : "";
             return `
           <article class="alibaba-receiving-card" data-alibaba-receiving-line="${escapeHtml(line.lineKey)}">
             <div class="alibaba-receiving-card-title">
@@ -4329,13 +4331,105 @@
                 />
                 สร้าง SKU ใหม่
               </label>
-              <button type="button" data-alibaba-receiving-save data-alibaba-line-key="${escapeHtml(line.lineKey)}">บันทึก Draft</button>
+              <button type="button" data-alibaba-receiving-save data-alibaba-line-key="${escapeHtml(line.lineKey)}">รับเข้า stock</button>
             </div>
-            <p class="alibaba-receiving-note">${escapeHtml(skuStatus)}</p>
+            <p class="alibaba-receiving-note${receivingStatusClass}">${escapeHtml(receivingStatus)}</p>
           </article>`;
           })
           .join("")}
       </div>`;
+  }
+
+  function alibabaReceivingWarehouse(id) {
+    return alibabaReceivingWarehouses.find((warehouse) => String(warehouse.id) === String(id)) || null;
+  }
+
+  function alibabaReceivingLineForKey(lineKey) {
+    return calculateAlibabaReceivingRows(getAlibabaPurchaseOrders().rows || []).lines.find((line) => line.lineKey === lineKey) || null;
+  }
+
+  function setAlibabaReceivingStatus(draft, type, message) {
+    draft.statusType = type || "";
+    draft.status = message || "";
+    saveAlibabaReceivingDrafts();
+    renderAlibabaPurchaseOrders();
+  }
+
+  async function postAlibabaReceivingStock(lineKey, button) {
+    const line = alibabaReceivingLineForKey(lineKey);
+    const draft = alibabaReceivingDraft(lineKey);
+    const sku = normalizeSkuValue(draft.sku || "");
+    const warehouse = alibabaReceivingWarehouse(draft.warehouseId);
+    const stockInQty = numberValue(draft.stockInQty || line?.quantity);
+    if (!line) {
+      setAlibabaReceivingStatus(draft, "failed", "ไม่พบรายการสินค้าในออเดอร์นี้ กรุณารีเฟรชหน้าแล้วลองใหม่");
+      return;
+    }
+    if (!sku) {
+      setAlibabaReceivingStatus(draft, "failed", "กรุณาเลือก SKU หรือพิมพ์ SKU ใหม่ก่อนรับเข้า stock");
+      return;
+    }
+    if (!warehouse) {
+      setAlibabaReceivingStatus(draft, "failed", "กรุณาเลือกคลังรับเข้าก่อน");
+      return;
+    }
+    if (stockInQty <= 0) {
+      setAlibabaReceivingStatus(draft, "failed", "กรุณาใส่จำนวนรับเข้าให้มากกว่า 0");
+      return;
+    }
+    if (warehouse.source !== "website-stock") {
+      setAlibabaReceivingStatus(draft, "warning", "คลัง Packhai รับเข้าผ่าน Packhai แล้ว sync กลับมาเท่านั้น ยังไม่เขียน stock ตรงจากเว็บนี้");
+      return;
+    }
+    if (!supabaseDirectConfigured() && !ensureRemoteSyncConfig("flowaccount")) {
+      setAlibabaReceivingStatus(draft, "failed", "ยังรับเข้า stock ออนไลน์ไม่ได้ เพราะยังไม่มี Cloud/Supabase write server");
+      return;
+    }
+
+    if (button) {
+      button.disabled = true;
+      button.textContent = "กำลังรับเข้า...";
+    }
+    try {
+      const productTitle = line.product.title || line.skuOption?.name || sku;
+      await saveWebsiteStockAdjustment({
+        sku,
+        name: productTitle,
+        operation: "add",
+        actor: "Alibaba Receiving UI",
+        note: `รับเข้า Alibaba ${line.row.orderNo || "-"} · ${productTitle}`,
+        sourceText: `Alibaba receiving order ${line.row.orderNo || "-"} · ${line.product.skuText || productTitle} · landed ${fmtBaht2.format(
+          line.landedCostPerPiece
+        )}/pc`,
+        allocations: [
+          {
+            warehouseId: Number(warehouse.id),
+            warehouseName: warehouse.label,
+            quantity: stockInQty,
+          },
+        ],
+      });
+      draft.stockPostedAt = new Date().toISOString();
+      draft.savedAt = draft.stockPostedAt;
+      draft.statusType = "passed";
+      draft.status = `รับเข้า stock ${fmtQty.format(stockInQty)} หน่วยที่${warehouse.label} แล้ว`;
+      saveAlibabaReceivingDrafts();
+      if (supabaseDirectConfigured()) refreshInventoryViews();
+      else {
+        renderAlibabaPurchaseOrders();
+        setTimeout(() => window.location.reload(), remoteSyncApiBase ? 25000 : 1200);
+      }
+    } catch (error) {
+      setAlibabaReceivingStatus(draft, "failed", `รับเข้า stock ไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
+    } finally {
+      const savedButton = [...document.querySelectorAll("[data-alibaba-receiving-save]")].find(
+        (candidate) => candidate.dataset.alibabaLineKey === lineKey
+      );
+      if (savedButton) {
+        savedButton.disabled = false;
+        savedButton.textContent = "รับเข้า stock";
+      }
+    }
   }
 
   function getAlibabaPurchaseOrders() {
@@ -4755,22 +4849,11 @@
       }
     });
 
-    root.addEventListener("click", (event) => {
+    root.addEventListener("click", async (event) => {
       const button = event.target.closest("[data-alibaba-receiving-save]");
       if (!button) return;
       const lineKey = button.dataset.alibabaLineKey || "";
-      const draft = alibabaReceivingDraft(lineKey);
-      draft.savedAt = new Date().toISOString();
-      saveAlibabaReceivingDrafts();
-      renderAlibabaPurchaseOrders();
-      const savedButton = [...document.querySelectorAll("[data-alibaba-receiving-save]")].find(
-        (candidate) => candidate.dataset.alibabaLineKey === lineKey
-      );
-      if (!savedButton) return;
-      savedButton.textContent = "บันทึกแล้ว";
-      window.setTimeout(() => {
-        savedButton.textContent = "บันทึก Draft";
-      }, 1200);
+      await postAlibabaReceivingStock(lineKey, button);
     });
   }
 

@@ -2297,14 +2297,20 @@
     return route === "inventory-table" || route === "inventory-detail";
   }
 
+  function isAlibabaOrderTableRoute() {
+    return currentHashRoute() === "alibaba-order-table";
+  }
+
   function updateRouteState() {
     const routeHash = `#${currentHashRoute()}`;
     const expensesPage = isExpenseRoute();
     const inventoryTableRoute = isInventoryTableRoute();
-    const activeRouteHash = inventoryTableRoute ? "#inventory-table" : routeHash;
+    const alibabaOrderTableRoute = isAlibabaOrderTableRoute();
+    const activeRouteHash = alibabaOrderTableRoute ? "#alibaba-order-table" : inventoryTableRoute ? "#inventory-table" : routeHash;
     const assistantPage = routeHash === "#ai-command";
     const expensesSection = $("expenses");
     document.body.classList.toggle("inventory-table-route", inventoryTableRoute);
+    document.body.classList.toggle("alibaba-order-table-route", alibabaOrderTableRoute);
     if (expensesSection) {
       expensesSection.hidden = !expensesPage;
     }
@@ -2320,6 +2326,9 @@
         renderTable();
       }
       window.requestAnimationFrame(() => $("inventory-detail")?.scrollIntoView({ block: "start" }));
+    }
+    if (alibabaOrderTableRoute) {
+      window.requestAnimationFrame(() => $("alibaba-order-table")?.scrollIntoView({ block: "start" }));
     }
     if (expensesPage) {
       if (!expenseState.loaded && !expenseState.loading) loadExpenses(true);

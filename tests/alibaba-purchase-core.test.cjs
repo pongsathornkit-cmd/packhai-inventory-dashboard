@@ -123,11 +123,17 @@ test("Alibaba purchase order builder preserves product lines, thumbnails, and or
 test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   const template = readRepoFile("src/index.template.html");
   const app = readRepoFile("src/app.js");
+  const css = readRepoFile("src/styles.css");
   const build = readRepoFile("scripts/build-dashboard.cjs");
 
   assert.match(template, /href="#alibaba-orders"/);
+  assert.match(template, /href="#alibaba-order-table"/);
   assert.match(template, /id="alibaba-orders"/);
+  assert.match(template, /id="alibaba-order-table"/);
   assert.match(app, /function\s+renderAlibabaPurchaseOrders/);
+  assert.match(app, /function\s+isAlibabaOrderTableRoute/);
+  assert.match(app, /body\.classList\.toggle\("alibaba-order-table-route", alibabaOrderTableRoute\)/);
+  assert.match(app, /const activeRouteHash = alibabaOrderTableRoute \? "#alibaba-order-table"/);
   assert.match(app, /alibabaPurchaseOrders/);
   assert.match(app, /function\s+renderAlibabaOrderCapture/);
   assert.match(app, /function\s+renderAlibabaProducts/);
@@ -138,5 +144,8 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(app, /class="alibaba-product-thumb/);
   assert.match(app, /class="alibaba-capture-card/);
   assert.match(app, /class="alibaba-status-tabs/);
+  assert.match(css, /body\.alibaba-order-table-route \.report-header/);
+  assert.match(css, /body\.alibaba-order-table-route main > section:not\(#alibaba-orders\)/);
+  assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-kpis/);
   assert.match(build, /alibabaPurchaseOrders/);
 });

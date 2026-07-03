@@ -27,7 +27,7 @@ test("inventory table route hides the dashboard shell content and keeps the lega
   assert.match(appSource, /function isInventoryTableRoute\(\)/);
   assert.match(appSource, /route === "inventory-table" \|\| route === "inventory-detail"/);
   assert.match(appSource, /body\.classList\.toggle\("inventory-table-route", inventoryTableRoute\)/);
-  assert.match(appSource, /const activeRouteHash = inventoryTableRoute \? "#inventory-table" : routeHash/);
+  assert.match(appSource, /inventoryTableRoute \? "#inventory-table" : routeHash/);
   assert.match(appSource, /if \(inventoryTableRoute\)/);
 
   assert.match(cssSource, /body\.inventory-table-route \.report-header/);

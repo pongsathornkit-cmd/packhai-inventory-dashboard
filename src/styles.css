@@ -171,7 +171,8 @@ select {
   order: 3;
 }
 
-.sidebar-nav a[href="#alibaba-orders"] {
+.sidebar-nav a[href="#alibaba-orders"],
+.sidebar-nav a[href="#alibaba-order-table"] {
   order: 4;
 }
 
@@ -358,6 +359,41 @@ body.inventory-table-route #inventory-detail {
   order: 0;
   margin-top: 18px;
   min-height: calc(100vh - 36px);
+}
+
+#alibaba-order-table {
+  display: block;
+  height: 0;
+  overflow: hidden;
+  scroll-margin-top: 18px;
+}
+
+body.alibaba-order-table-route .report-header,
+body.alibaba-order-table-route main > section:not(#alibaba-orders),
+body.alibaba-order-table-route main > .insight-layout,
+body.alibaba-order-table-route main > .panel {
+  display: none !important;
+}
+
+body.alibaba-order-table-route .app-shell {
+  padding-top: 0;
+}
+
+body.alibaba-order-table-route #alibaba-orders {
+  order: 0;
+  margin-top: 18px;
+  min-height: calc(100vh - 36px);
+}
+
+body.alibaba-order-table-route #alibaba-orders > .section-heading,
+body.alibaba-order-table-route #alibaba-orders .alibaba-meta-row,
+body.alibaba-order-table-route #alibaba-orders .alibaba-kpis,
+body.alibaba-order-table-route #alibaba-orders .alibaba-status-strip {
+  display: none !important;
+}
+
+body.alibaba-order-table-route #alibaba-orders .alibaba-orders-panel {
+  margin-top: 0;
 }
 
 .report-header {

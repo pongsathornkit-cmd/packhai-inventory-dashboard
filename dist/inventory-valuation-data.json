@@ -1,7 +1,7 @@
 {
   "metadata": {
-    "generatedAt": "2026-07-03T09:49:35.327Z",
-    "generatedAtLabel": "03 ก.ค. 2569 16:49",
+    "generatedAt": "2026-07-03T10:23:41.022Z",
+    "generatedAtLabel": "03 ก.ค. 2569 17:23",
     "reportTitle": "สรุปมูลค่าสินค้าคงคลัง Packhai + Website Stock",
     "valuationRule": "มูลค่าคงเหลือ = จำนวนคงเหลือจาก Packhai และ Website Stock เฉพาะคลัง ซ.เจริญกิจ / คลัง สุขสวัสดิ์ (เฉพาะค่าบวก) x ราคาขาย ตามลำดับ Shopee Seller > Lazada Seller > ktw.co.th",
     "quantityRule": "ใช้ field quantity จาก Packhai และไฟล์ Website Stock เป็นจำนวนคงเหลือในคลัง โดย Website Stock เก็บเฉพาะคลัง ซ.เจริญกิจ และคลัง สุขสวัสดิ์บนเว็บไซต์นี้ ไม่ต้อง sync จาก FlowAccount",
@@ -307472,7 +307472,7 @@
     }
   ],
   "platformSalesDashboard": {
-    "generatedAt": "2026-07-03T09:49:35.110Z",
+    "generatedAt": "2026-07-03T10:23:40.810Z",
     "timeZone": "Asia/Bangkok",
     "nowKey": "2026-07-03",
     "windowDays": 14,

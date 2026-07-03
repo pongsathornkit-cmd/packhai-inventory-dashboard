@@ -388,6 +388,10 @@ body.alibaba-order-table-route #alibaba-orders .alibaba-orders-panel {
   margin-top: 0;
 }
 
+body.alibaba-order-table-route #alibaba-orders .alibaba-orders-table-wrap {
+  max-height: max(760px, calc(100vh - 260px));
+}
+
 .report-header {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

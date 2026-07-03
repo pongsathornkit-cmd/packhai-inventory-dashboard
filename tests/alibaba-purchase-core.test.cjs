@@ -147,5 +147,7 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(css, /body\.alibaba-order-table-route \.report-header/);
   assert.match(css, /body\.alibaba-order-table-route main > section:not\(#alibaba-orders\)/);
   assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-kpis/);
+  assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap/);
+  assert.match(css, /max-height:\s*max\(760px,\s*calc\(100vh - 260px\)\)/);
   assert.match(build, /alibabaPurchaseOrders/);
 });

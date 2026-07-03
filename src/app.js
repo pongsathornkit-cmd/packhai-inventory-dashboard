@@ -684,12 +684,20 @@
     return items.filter((row) => row?.captureUrl || row?.captureImageUrl || row?.screenshotUrl).length;
   }
 
+  function alibabaReportProductLineCount(report) {
+    const items = Array.isArray(report?.rows) ? report.rows : Array.isArray(report?.orders) ? report.orders : [];
+    return items.reduce((sum, row) => sum + (Array.isArray(row?.products) ? row.products.length : 0), 0);
+  }
+
   function shouldKeepCurrentAlibabaPurchaseOrders(currentReport, incomingReport) {
     if (!currentReport || !incomingReport) return false;
     const currentTime = alibabaReportExportedAt(currentReport);
     const incomingTime = alibabaReportExportedAt(incomingReport);
     const currentCaptureCount = alibabaReportCaptureCount(currentReport);
     const incomingCaptureCount = alibabaReportCaptureCount(incomingReport);
+    const currentProductLineCount = alibabaReportProductLineCount(currentReport);
+    const incomingProductLineCount = alibabaReportProductLineCount(incomingReport);
+    if (incomingProductLineCount > currentProductLineCount) return false;
     if (currentCaptureCount > incomingCaptureCount && (!incomingTime || currentTime >= incomingTime)) return true;
     if (currentTime && incomingTime && currentTime > incomingTime && currentCaptureCount >= incomingCaptureCount) return true;
     return Boolean(currentCaptureCount && !incomingCaptureCount && currentTime >= incomingTime);

@@ -172,6 +172,8 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(app, /function\s+renderAlibabaStatusTabs/);
   assert.match(app, /data-alibaba-status-tab/);
   assert.match(app, /function\s+shouldKeepCurrentAlibabaPurchaseOrders/);
+  assert.match(app, /function\s+alibabaReportProductLineCount/);
+  assert.match(app, /incomingProductLineCount > currentProductLineCount/);
   assert.match(app, /data\.alibabaPurchaseOrders\s*=\s*currentAlibabaPurchaseOrders/);
   assert.match(app, /class="alibaba-product-thumb/);
   assert.match(app, /class="alibaba-capture-card/);

@@ -34,7 +34,9 @@
       "captureUrl": "alibaba-captures/order-27296729001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 196,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:47:53.075Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=27296729001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -66,7 +68,9 @@
       "captureUrl": "alibaba-captures/order-27080833501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 196,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:47:54.546Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=27080833501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -97,7 +101,9 @@
       "captureUrl": "alibaba-captures/order-26952029501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 196,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:51:08.279Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26952029501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -129,7 +135,9 @@
       "captureUrl": "alibaba-captures/order-26876305001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 207,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:00.530Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26876305001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -168,7 +176,9 @@
       "captureUrl": "alibaba-captures/order-26832717501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 290,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:02.027Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26832717501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -200,7 +210,9 @@
       "captureUrl": "alibaba-captures/order-26708749001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 196,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:03.637Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26708749001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -232,7 +244,9 @@
       "captureUrl": "alibaba-captures/order-26591277501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 207,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:05.367Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26591277501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -248,18 +262,56 @@
       "paidAmount": 6870,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/60L-and-100L-pressure-tank-with_1601794461846.html",
-          "quantity": 60,
-          "skuText": "No variationx 20 itemsNo variationx 40 items",
-          "title": "60L and 100L pressure tank with base",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H2d2837771bec4c9d9362b85690c93834v.png_140x140.png"
+          "rowNo": 1,
+          "title": "Haitun factory price air compressor switch pressure control",
+          "skuText": "PC-6 1 WAY",
+          "unitPriceText": "USD 2.4000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "250.00",
+          "quantity": 250,
+          "totalText": "USD 600.00",
+          "totalAmount": 600,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Factory-Price-air-Compressor-Switch_1600191931578.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H58707cd44b234d82ad05b170760e89d3Z.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Five-Way_1601794597348.html",
-          "quantity": 500,
-          "skuText": "No variationx 500 items",
+          "rowNo": 2,
+          "title": "High Quality 2L 4L 8L Diaphragm Pressure tank",
+          "skuText": "-",
+          "unitPriceText": "USD 12.5000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "100.00",
+          "quantity": 100,
+          "totalText": "USD 1,250.00",
+          "totalAmount": 1250,
+          "productUrl": "https://www.alibaba.com/product-detail/High-Quality-2L-4L-8L-Diaphragm_1600197144414.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H1492d581393e4c08a15d318c29898e39q.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "60L and 100L pressure tank with base",
+          "skuText": "-",
+          "unitPriceText": "USD 48.5000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "20.00",
+          "quantity": 20,
+          "totalText": "USD 970.00",
+          "totalAmount": 970,
+          "productUrl": "https://www.alibaba.com/product-detail/60L-and-100L-pressure-tank-with_1601794461846.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H2d2837771bec4c9d9362b85690c93834v.png"
+        },
+        {
+          "rowNo": 4,
           "title": "Five Way",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H1bab798dec5b4bc0af801b93f83df7c8d.png_140x140.png"
+          "skuText": "-",
+          "unitPriceText": "USD 2.9000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "500.00",
+          "quantity": 500,
+          "totalText": "USD 1,450.00",
+          "totalAmount": 1450,
+          "productUrl": "https://www.alibaba.com/product-detail/Five-Way_1601794597348.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H1bab798dec5b4bc0af801b93f83df7c8d.png"
         }
       ],
       "shippingText": "",
@@ -271,7 +323,12 @@
       "captureUrl": "alibaba-captures/order-26582801501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 322,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:06.695Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26582801501038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:48:06.695Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -303,7 +360,9 @@
       "captureUrl": "alibaba-captures/order-26498929501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 218,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:08.022Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26498929501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -335,7 +394,9 @@
       "captureUrl": "alibaba-captures/order-26498833001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 225,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:09.407Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26498833001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.062Z",
@@ -367,7 +428,9 @@
       "captureUrl": "alibaba-captures/order-26498017001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 217,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:10.610Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26498017001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.062Z",
@@ -399,7 +462,9 @@
       "captureUrl": "alibaba-captures/order-26434609501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:12.166Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26434609501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.062Z",
@@ -431,7 +496,9 @@
       "captureUrl": "alibaba-captures/order-26476733001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:13.585Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26476733001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -463,7 +530,9 @@
       "captureUrl": "alibaba-captures/order-26313781001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:15.061Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26313781001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -502,7 +571,9 @@
       "captureUrl": "alibaba-captures/order-26221149501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 294,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:16.487Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26221149501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -533,7 +604,9 @@
       "captureUrl": "alibaba-captures/order-26213061001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 221,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:51:12.152Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26213061001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -565,7 +638,9 @@
       "captureUrl": "alibaba-captures/order-26207385001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:21.893Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26207385001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -581,10 +656,20 @@
       "paidAmount": 1206.7,
       "products": [
         {
+          "rowNo": 1,
+          "imageUrl": "",
           "productUrl": "",
           "quantity": 0,
-          "skuText": "Contains 1 order attachment(s)",
-          "title": "Jaw size: 50 × 200 mm,200pcs;Jaw size: 80 × 300 mm ,210pcs"
+          "skuText": "",
+          "title": "Jaw size: 50 × 200 mm,200pcs"
+        },
+        {
+          "rowNo": 2,
+          "imageUrl": "",
+          "productUrl": "",
+          "quantity": 0,
+          "skuText": "",
+          "title": "Jaw size: 80 × 300 mm ,210pcs"
         }
       ],
       "shippingText": "",
@@ -596,7 +681,12 @@
       "captureUrl": "alibaba-captures/order-26186789001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:51:15.637Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26186789001038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 1,
+      "productDetailCapturedAt": "2026-07-03T16:51:15.637Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -635,7 +725,9 @@
       "captureUrl": "alibaba-captures/order-26071101001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 316,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:27.404Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=26071101001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -667,7 +759,9 @@
       "captureUrl": "alibaba-captures/order-25964245501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:29.159Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25964245501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.376Z",
@@ -706,7 +800,9 @@
       "captureUrl": "alibaba-captures/order-25840357501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 326,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:30.660Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25840357501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -738,7 +834,9 @@
       "captureUrl": "alibaba-captures/order-25814037501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:31.981Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25814037501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -770,7 +868,9 @@
       "captureUrl": "alibaba-captures/order-25809189501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:33.228Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25809189501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -809,7 +909,9 @@
       "captureUrl": "alibaba-captures/order-25706929501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 294,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:34.797Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25706929501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -841,7 +943,9 @@
       "captureUrl": "alibaba-captures/order-25649617001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 221,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:36.404Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25649617001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -873,7 +977,9 @@
       "captureUrl": "alibaba-captures/order-25649525001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:37.892Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25649525001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -889,18 +995,56 @@
       "paidAmount": 5696.7,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/100type-HSS-dies-1-2-BSPT_60760811309.html",
-          "quantity": 30,
-          "skuText": "No variationx 30 items",
-          "title": "100type HSS dies 1-2 BSPT",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H3260736398684fa983d105c91299fdf5K.jpg_140x140.jpg"
+          "rowNo": 1,
+          "title": "100type alloy dies 1-2 BSPT",
+          "skuText": "-",
+          "unitPriceText": "USD 4.8000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "100.00",
+          "quantity": 100,
+          "totalText": "USD 480.00",
+          "totalAmount": 480,
+          "productUrl": "https://www.alibaba.com/product-detail/Hongli-HSS-Full-Teeth-Milling-Pipe_60679914920.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hd5ad7ac453864ea49084d4615923c80dt.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/100type-alloy-dies-1-2-3_1600791413144.html",
-          "quantity": 100,
-          "skuText": "No variationx 100 items",
+          "rowNo": 2,
+          "title": "HL-112 Manual Ratchet Threader 1/2&quot;-1 1/4&#39;&#39;",
+          "skuText": "-",
+          "unitPriceText": "USD 17.8000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "200.00",
+          "quantity": 200,
+          "totalText": "USD 3,560.00",
+          "totalAmount": 3560,
+          "productUrl": "https://www.alibaba.com/product-detail/HL-112-Manual-Ratchet-Threader-1_60712513048.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/HTB1vni5cgfH8KJjy1zcq6ATzpXaW.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "100type HSS dies 1-2 BSPT",
+          "skuText": "-",
+          "unitPriceText": "USD 35.5000 /Units",
+          "unitPrice": 0,
+          "quantityText": "30.00",
+          "quantity": 30,
+          "totalText": "USD 1,065.00",
+          "totalAmount": 1065,
+          "productUrl": "https://www.alibaba.com/product-detail/HSS-Product-Material-and-Pipe-Threading_60760811309.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H3260736398684fa983d105c91299fdf5K.jpg"
+        },
+        {
+          "rowNo": 4,
           "title": "100type alloy dies 1/2-3/4 BSPT",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H9d15cce1489a40839d3b6630175ee1500.png_140x140.png"
+          "skuText": "-",
+          "unitPriceText": "USD 4.8000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "100.00",
+          "quantity": 100,
+          "totalText": "USD 480.00",
+          "totalAmount": 480,
+          "productUrl": "https://www.alibaba.com/product-detail/Best-Pipe-Threading-Dies-for-Sale_1600791413144.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H9d15cce1489a40839d3b6630175ee1500.png"
         }
       ],
       "shippingText": "",
@@ -912,7 +1056,12 @@
       "captureUrl": "alibaba-captures/order-25264849501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 326,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:39.511Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25264849501038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:48:39.511Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -928,18 +1077,43 @@
       "paidAmount": 10405.8,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Adjustable-Digital-220V-50Hz-Controller_1601700257473.html",
-          "quantity": 204,
-          "skuText": "No variationx 204 items",
-          "title": "Haitun Adjustable Digital 220V 50Hz Controller Automatic Pressure Switch for Pump",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/Hf531d85e37fa49bb9ee91d7f986df5b6I.jpg_140x140.jpg"
+          "rowNo": 1,
+          "title": "Haitun factory price air compressor switch pressure control",
+          "skuText": "PC-6 1 WAY",
+          "unitPriceText": "USD 2.3000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "250.00",
+          "quantity": 250,
+          "totalText": "USD 575.00",
+          "totalAmount": 575,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Factory-Price-air-Compressor-Switch_1600191931578.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H58707cd44b234d82ad05b170760e89d3Z.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Haitun-factory-price-air-compressor-switch_1600191931578.html",
-          "quantity": 1250,
-          "skuText": "PC-6 1 WAYx 250 itemsPC-6 4 WAYx 1000 items",
-          "title": "Haitun factory price air compressor switch pressure control",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H58707cd44b234d82ad05b170760e89d3Z.jpg_140x140.jpg"
+          "rowNo": 2,
+          "title": "Haitun Adjustable Digital 220V 50Hz Controller Automatic Pressure Switch for Pump",
+          "skuText": "-",
+          "unitPriceText": "USD 15.7000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "204.00",
+          "quantity": 204,
+          "totalText": "USD 3,202.80",
+          "totalAmount": 3202.8,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Adjustable-Digital-220V-50Hz-Controller_1601700257473.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hf531d85e37fa49bb9ee91d7f986df5b6I.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "Haitun High Pressure Automatic Electronic Pressure Pump Switch Controller",
+          "skuText": "-",
+          "unitPriceText": "USD 8.6000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "480.00",
+          "quantity": 480,
+          "totalText": "USD 4,128.00",
+          "totalAmount": 4128,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-High-Pressure-Automatic-Electronic-Pressure_1601700422559.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H0bbf51adda09419b938dd6894ddfc8fdx.jpg"
         }
       ],
       "shippingText": "",
@@ -951,7 +1125,12 @@
       "captureUrl": "alibaba-captures/order-25199753001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 326,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:40.861Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25199753001038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:48:40.861Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -983,7 +1162,9 @@
       "captureUrl": "alibaba-captures/order-25156593001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 221,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:42.294Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25156593001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -1015,7 +1196,9 @@
       "captureUrl": "alibaba-captures/order-25134205001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 186,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:43.592Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25134205001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1054,7 +1237,9 @@
       "captureUrl": "alibaba-captures/order-25121777001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 294,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:45.106Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25121777001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1086,7 +1271,9 @@
       "captureUrl": "alibaba-captures/order-25065201501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:46.562Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25065201501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1118,7 +1305,9 @@
       "captureUrl": "alibaba-captures/order-25062825501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 228,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:47.907Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25062825501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1150,7 +1339,9 @@
       "captureUrl": "alibaba-captures/order-25062681501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:49.307Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=25062681501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1189,7 +1380,9 @@
       "captureUrl": "alibaba-captures/order-24279129001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 316,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:50.715Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=24279129001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1221,7 +1414,9 @@
       "captureUrl": "alibaba-captures/order-24253229001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:52.133Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=24253229001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1260,7 +1455,9 @@
       "captureUrl": "alibaba-captures/order-23634157501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 291,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:53.404Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=23634157501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1299,7 +1496,9 @@
       "captureUrl": "alibaba-captures/order-21948589501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 294,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:54.826Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=21948589501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1315,18 +1514,56 @@
       "paidAmount": 6756,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Mechanical-switch-water-pressure-controller-for_1601025867984.html",
-          "quantity": 720,
-          "skuText": "Booster Pumpsx 720 items",
-          "title": "Mechanical switch water pressure controller for pumps",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H2f39eaccaab347269b8735d16b31621c4.jpg_140x140.jpg"
+          "rowNo": 1,
+          "title": "Haitun Controller Electric Water Pressure Switch",
+          "skuText": "PC-13A",
+          "unitPriceText": "USD 9.2000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "240.00",
+          "quantity": 240,
+          "totalText": "USD 2,208.00",
+          "totalAmount": 2208,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Controller-Electric-Water-Pressure-Switch_1600193144004.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H6d57b779b2404f71abf15c4a201c3cdbW.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Mechanical-Switch-Water-Pressure-Controller-for_1601027625188.html",
-          "quantity": 240,
-          "skuText": "No variationx 240 items",
+          "rowNo": 2,
+          "title": "Customized Hot Sale Stainless Steel Five Way",
+          "skuText": "size: 1in,material: Stainless Steel",
+          "unitPriceText": "USD 7.0000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "300.00",
+          "quantity": 300,
+          "totalText": "USD 2,100.00",
+          "totalAmount": 2100,
+          "productUrl": "https://www.alibaba.com/product-detail/Customized-Hot-Sale-Stainless-Steel-Five_1600197176243.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H731312eb9a864aa885d12c825df8800bq.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "Mechanical switch water pressure controller for pumps",
+          "skuText": "Type: Booster Pumps",
+          "unitPriceText": "USD 2.6000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "720.00",
+          "quantity": 720,
+          "totalText": "USD 1,872.00",
+          "totalAmount": 1872,
+          "productUrl": "https://www.alibaba.com/product-detail/Mechanical-Switch-Water-Pressure-Controller-for_1601025867984.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H2f39eaccaab347269b8735d16b31621c4.jpg"
+        },
+        {
+          "rowNo": 4,
           "title": "Mechanical Switch Water Pressure Controller for Pumps",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H2d91b20a08994152859dcfb9ab29d2887.jpg_140x140.jpg"
+          "skuText": "-",
+          "unitPriceText": "USD 2.4000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "240.00",
+          "quantity": 240,
+          "totalText": "USD 576.00",
+          "totalAmount": 576,
+          "productUrl": "https://www.alibaba.com/product-detail/PC-6-Mechanical-Switch-Water-Pressure_1601027625188.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H2d91b20a08994152859dcfb9ab29d2887.jpg"
         }
       ],
       "shippingText": "",
@@ -1338,7 +1575,12 @@
       "captureUrl": "alibaba-captures/order-21679461501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 326,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:56.113Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=21679461501038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:48:56.113Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1354,18 +1596,82 @@
       "paidAmount": 1152,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Professional-High-Quality-Handheld-Manual-Hand_1600240727464.html",
+          "rowNo": 1,
+          "title": "Portable Tote or Shoulder Heavy Duty Tool Kit Bag",
+          "skuText": "-",
+          "unitPriceText": "USD 7.0000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "1.00",
           "quantity": 1,
-          "skuText": "No variationx 1 items",
-          "title": "Professional High Quality Handheld Manual Hand Riveter Guns Hand Riveting Tool Rivet Screw Nut Gun",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H1c40ce904da74f8aad521dddac286907p.jpg_140x140.jpg"
+          "totalText": "USD 7.00",
+          "totalAmount": 7,
+          "productUrl": "https://www.alibaba.com/product-detail/Portable-Tote-or-Shoulder-Heavy-Duty_60763521263.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/HTB1eoKCksyYBuNkSnfoq6AWgVXao.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Heavy-Duty-Folding-Utility-Cutter-Safe_1600072841027.html",
-          "quantity": 5,
-          "skuText": "No variationx 5 items",
-          "title": "Heavy Duty Folding Utility Cutter Safe Knife",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H507b421a4e3f41f1b3f34cfefb810b83W.jpg_140x140.jpg"
+          "rowNo": 2,
+          "title": "Gas Welding Torch Copper Welding Welder Torch",
+          "skuText": "-",
+          "unitPriceText": "USD 8.0000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "19.00",
+          "quantity": 19,
+          "totalText": "USD 152.00",
+          "totalAmount": 152,
+          "productUrl": "https://www.alibaba.com/product-detail/Gas-Welding-Torch-Copper-Welding-Welder_60799689248.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/HTB1P7nnKxGYBuNjy0Fnq6x5lpXaH.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "Extra Long Standard Combination Wrenches",
+          "skuText": "-",
+          "unitPriceText": "USD 4.0000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "2.00",
+          "quantity": 2,
+          "totalText": "USD 8.00",
+          "totalAmount": 8,
+          "productUrl": "https://www.alibaba.com/product-detail/Extra-Long-Standard-Combination-Wrenches_62144477554.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/HTB1VIIWbgaH3KVjSZFjq6AFWpXag.jpg"
+        },
+        {
+          "rowNo": 4,
+          "title": "Professional CRV Steel 300 500 Nm Manual Adjustable Preset Torque Wrench Manual for Car Repair Tool",
+          "skuText": "-",
+          "unitPriceText": "USD 5.5000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "2.00",
+          "quantity": 2,
+          "totalText": "USD 11.00",
+          "totalAmount": 11,
+          "productUrl": "https://www.alibaba.com/product-detail/Professional-CRV-Steel-300-500-Nm_62309693422.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hf83a1a1a320e479bbafa28ff943c62f4r.jpg"
+        },
+        {
+          "rowNo": 5,
+          "title": "Wholesale Long Handle Adjustable Monkey Tool Big Open End Spanner Wrenches Industrial Spanners",
+          "skuText": "-",
+          "unitPriceText": "USD 1.8000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "2.00",
+          "quantity": 2,
+          "totalText": "USD 3.60",
+          "totalAmount": 3.6,
+          "productUrl": "https://www.alibaba.com/product-detail/Wholesale-Long-Handle-Adjustable-Monkey-Tool_62336162723.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H013287c8d69c4d16a2b81ca1d1567f39r.jpg"
+        },
+        {
+          "rowNo": 6,
+          "title": "Professional Silver Adjustable Torque Wrench Spanner Monkey Wrench",
+          "skuText": "-",
+          "unitPriceText": "USD 3.2000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "1.00",
+          "quantity": 1,
+          "totalText": "USD 3.20",
+          "totalAmount": 3.2,
+          "productUrl": "https://www.alibaba.com/product-detail/Professional-Silver-Adjustable-Torque-Wrench-Spanner_62336515429.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hfafee9a196fb483aa84bdee61bee456cS.jpg"
         }
       ],
       "shippingText": "",
@@ -1377,7 +1683,12 @@
       "captureUrl": "alibaba-captures/order-21630617001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 326,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:57.918Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=21630617001038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:48:57.918Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1393,18 +1704,69 @@
       "paidAmount": 8372,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Mechanical-switch-water-pressure-controller-for_1601025867984.html",
-          "quantity": 720,
-          "skuText": "Booster Pumpsx 720 items",
-          "title": "Mechanical switch water pressure controller for pumps",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H2f39eaccaab347269b8735d16b31621c4.jpg_140x140.jpg"
+          "rowNo": 1,
+          "title": "Best Quality Haitun PC-3B Pressure Control for water pump mechanical switch",
+          "skuText": "PC-3B 1.0-1.7BAR",
+          "unitPriceText": "USD 1.5000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "1,000.00",
+          "quantity": 1000,
+          "totalText": "USD 1,500.00",
+          "totalAmount": 1500,
+          "productUrl": "https://www.alibaba.com/product-detail/Best-Quality-Haitun-PC-3B-Pressure_1600189494366.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H717e1779363f41178656af894dca4bc7j.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Good-quality-and-Low-price-pressure_1601026641536.html",
-          "quantity": 1000,
-          "skuText": "PC-2x 1000 items",
+          "rowNo": 2,
+          "title": "Haitun factory price air compressor switch pressure control",
+          "skuText": "PC-6 ONE WAY",
+          "unitPriceText": "USD 2.2000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "500.00",
+          "quantity": 500,
+          "totalText": "USD 1,100.00",
+          "totalAmount": 1100,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Factory-Price-air-Compressor-Switch_1600191931578.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H58707cd44b234d82ad05b170760e89d3Z.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "Mechanical switch water pressure controller for pumps",
+          "skuText": "Type: Booster Pumps",
+          "unitPriceText": "USD 2.6000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "720.00",
+          "quantity": 720,
+          "totalText": "USD 1,872.00",
+          "totalAmount": 1872,
+          "productUrl": "https://www.alibaba.com/product-detail/Mechanical-Switch-Water-Pressure-Controller-for_1601025867984.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H2f39eaccaab347269b8735d16b31621c4.jpg"
+        },
+        {
+          "rowNo": 4,
           "title": "Good quality and Low price pressure switch for water pump",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H2981262655bf450b9a0f3e53a1b7c42eA.jpg_140x140.jpg"
+          "skuText": "PC-2",
+          "unitPriceText": "USD 1.6000 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "1,000.00",
+          "quantity": 1000,
+          "totalText": "USD 1,600.00",
+          "totalAmount": 1600,
+          "productUrl": "https://www.alibaba.com/product-detail/Good-Quality-and-Low-Price-Pressure_1601026641536.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H2981262655bf450b9a0f3e53a1b7c42eA.jpg"
+        },
+        {
+          "rowNo": 5,
+          "title": "Mechanical switch water pressure controller for pumps",
+          "skuText": "-",
+          "unitPriceText": "USD 1.6000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "500.00",
+          "quantity": 500,
+          "totalText": "USD 800.00",
+          "totalAmount": 800,
+          "productUrl": "https://www.alibaba.com/product-detail/PC-7-Mechanical-Switch-Water-Pressure_1601027617283.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H4d8db0d1e9394123a61019bfbef31371i.jpg"
         }
       ],
       "shippingText": "",
@@ -1416,7 +1778,12 @@
       "captureUrl": "alibaba-captures/order-17803493001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 326,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:48:59.467Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17803493001038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:48:59.467Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1455,7 +1822,9 @@
       "captureUrl": "alibaba-captures/order-17784473001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 316,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:00.887Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17784473001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1487,7 +1856,9 @@
       "captureUrl": "alibaba-captures/order-227982430001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:02.241Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=227982430001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1519,7 +1890,9 @@
       "captureUrl": "alibaba-captures/order-17505617501038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 199,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:03.651Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17505617501038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1535,18 +1908,43 @@
       "paidAmount": 10837.5,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/591407-591408-PORTABLE-VENTILATION-FAN-300MM_1600279763957.html",
-          "quantity": 110,
-          "skuText": "No variationx 100 itemsNo variationx 10 items",
+          "rowNo": 1,
           "title": "591407/591408 PORTABLE VENTILATION FAN 300MM /400mm 220V 60HZ Red Color",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H34ef87d4783b4809b260c83ff984190ah.jpg_140x140.jpg"
+          "skuText": "-",
+          "unitPriceText": "USD 41.0000 /Units",
+          "unitPrice": 0,
+          "quantityText": "100.00",
+          "quantity": 100,
+          "totalText": "USD 4,100.00",
+          "totalAmount": 4100,
+          "productUrl": "https://www.alibaba.com/product-detail/12inch-Portable-Axial-Flow-Fan-110V_1600279763957.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H34ef87d4783b4809b260c83ff984190ah.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/INDUSTRIAL-ALUMINUM-SHELL-NEWEST-ROUND-ELECTRIC_1600908106358.html",
-          "quantity": 100,
-          "skuText": "No variationx 50 itemsNo variationx 50 itemsand 1 more variations",
+          "rowNo": 2,
           "title": "INDUSTRIAL ALUMINUM SHELL NEWEST ROUND ELECTRIC AIR BLOWER 2/2.5/ 3 INCH",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg_140x140.jpg"
+          "skuText": "-",
+          "unitPriceText": "USD 22.0000 /Units",
+          "unitPrice": 0,
+          "quantityText": "50.00",
+          "quantity": 50,
+          "totalText": "USD 1,100.00",
+          "totalAmount": 1100,
+          "productUrl": "https://www.alibaba.com/product-detail/China-Supply-2-Inch-3-Inch_1600908106358.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hfee842a39d5d4b11b3db6d8db091c8f1x.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "591484 VENTILATION TUBE SPRIAL TYPE 300MM X10MTR",
+          "skuText": "-",
+          "unitPriceText": "USD 21.2000 /Units",
+          "unitPrice": 0,
+          "quantityText": "50.00",
+          "quantity": 50,
+          "totalText": "USD 1,060.00",
+          "totalAmount": 1060,
+          "productUrl": "https://www.alibaba.com/product-detail/8-32-5M-10M-Connect-with_1601198422829.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hd27965884ea94693af9cfdba44088999d.jpg"
         }
       ],
       "shippingText": "",
@@ -1558,7 +1956,12 @@
       "captureUrl": "alibaba-captures/order-17487773001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 294,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:05.276Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=17487773001038359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:49:05.276Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1597,7 +2000,9 @@
       "captureUrl": "alibaba-captures/order-190583146001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 316,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:06.566Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=190583146001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1636,7 +2041,9 @@
       "captureUrl": "alibaba-captures/order-12417909001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 345,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:08.373Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=12417909001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1675,7 +2082,9 @@
       "captureUrl": "alibaba-captures/order-11842841001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 316,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:09.940Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=11842841001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1707,7 +2116,9 @@
       "captureUrl": "alibaba-captures/order-11138589001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 220,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:11.385Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=11138589001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1746,7 +2157,9 @@
       "captureUrl": "alibaba-captures/order-11101789001038359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 293,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:12.772Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=11101789001038359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.298Z",
@@ -1785,7 +2198,9 @@
       "captureUrl": "alibaba-captures/order-155813218501028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 325,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:14.306Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=155813218501028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.298Z",
@@ -1824,7 +2239,9 @@
       "captureUrl": "alibaba-captures/order-154126751501028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 293,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:15.736Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=154126751501028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1856,7 +2273,9 @@
       "captureUrl": "alibaba-captures/order-153254018501028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 198,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:17.213Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=153254018501028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1895,7 +2314,9 @@
       "captureUrl": "alibaba-captures/order-148923147001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 293,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:18.715Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=148923147001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1934,7 +2355,9 @@
       "captureUrl": "alibaba-captures/order-148214286001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 293,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:20.231Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=148214286001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1966,7 +2389,9 @@
       "captureUrl": "alibaba-captures/order-145556822001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 198,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:21.708Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=145556822001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -2005,7 +2430,9 @@
       "captureUrl": "alibaba-captures/order-145550702001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 348,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:23.262Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=145550702001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -2037,7 +2464,9 @@
       "captureUrl": "alibaba-captures/order-145026631501028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 177,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:24.757Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=145026631501028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.300Z",
@@ -2069,7 +2498,9 @@
       "captureUrl": "alibaba-captures/order-143488094001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 198,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:26.284Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=143488094001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.300Z",
@@ -2101,7 +2532,9 @@
       "captureUrl": "alibaba-captures/order-136107994001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 172,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:27.773Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=136107994001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -2117,18 +2550,69 @@
       "paidAmount": 2159,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/crimping-plier_1600247868495.html",
-          "quantity": 30,
-          "skuText": "No variationx 30 items",
-          "title": "crimping plier",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/Ue442e0c9732143549fd50f0917e54eda1.jpg_140x140.jpg"
+          "rowNo": 1,
+          "title": "modular plug crimping tool",
+          "skuText": "-",
+          "unitPriceText": "USD 2.1900 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "60.00",
+          "quantity": 60,
+          "totalText": "USD 131.40",
+          "totalAmount": 131.4,
+          "productUrl": "https://www.alibaba.com/product-detail/Multifunctional-Network-Cable-Stripping-Cutter-Automatic_1600226967745.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/Hd69c68ee3fb24e4989cc18ee607a60e4c.png"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/pin-chisel-set_1600237292296.html",
+          "rowNo": 2,
+          "title": "piston ring compressor",
+          "skuText": "-",
+          "unitPriceText": "USD 2.1500 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "30.00",
+          "quantity": 30,
+          "totalText": "USD 64.50",
+          "totalAmount": 64.5,
+          "productUrl": "https://www.alibaba.com/product-detail/Mini-Small-Inflatables-Compressor-Ball-Car_1600233916271.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H146d88661bb443ab866ce522e26b4963R.jpg"
+        },
+        {
+          "rowNo": 3,
+          "title": "3&quot; &amp; 4&quot; high quality 3 jaws manual gear removal tool puller auto car bearing puller with cheap price",
+          "skuText": "Holding Capacity: 1 ton,Max Spread: 3 inch,Max Reach: 3-75mm",
+          "unitPriceText": "USD 2.4400 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "60.00",
           "quantity": 60,
-          "skuText": "No variationx 60 items",
+          "totalText": "USD 146.40",
+          "totalAmount": 146.4,
+          "productUrl": "https://www.alibaba.com/product-detail/3-4-High-Quality-3-Jaws_1600236869851.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H388fbd63546a4a929baa0621407f51a2y.png"
+        },
+        {
+          "rowNo": 4,
           "title": "pin chisel set",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H02f28743f92146269e0ead087062339fu.png_140x140.png"
+          "skuText": "-",
+          "unitPriceText": "USD 4.3900 /Set(s)",
+          "unitPrice": 0,
+          "quantityText": "60.00",
+          "quantity": 60,
+          "totalText": "USD 263.40",
+          "totalAmount": 263.4,
+          "productUrl": "https://www.alibaba.com/product-detail/Wynns-tools-Carving-Wood-Chisel-Woodworking_1600237292296.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H02f28743f92146269e0ead087062339fu.png"
+        },
+        {
+          "rowNo": 5,
+          "title": "25/40/60/80W High Temperature corded Hot Melt Glue Gun heating gun for Packaging, DIY, Arts &amp; Craft, Repairing",
+          "skuText": "Gun Type: Corded Hot Melting Glue Guns,Working Temperature: 180-240°,Power: 25W",
+          "unitPriceText": "USD 2.1300 /Pieces",
+          "unitPrice": 0,
+          "quantityText": "60.00",
+          "quantity": 60,
+          "totalText": "USD 127.80",
+          "totalAmount": 127.8,
+          "productUrl": "https://www.alibaba.com/product-detail/25-40-60-80W-High-Temperature_1600244798834.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H74178b0ee97546d99d0c7d424c370da0M.png"
         }
       ],
       "shippingText": "",
@@ -2140,7 +2624,12 @@
       "captureUrl": "alibaba-captures/order-135841731501028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 325,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:29.286Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=135841731501028359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:49:29.286Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -2156,18 +2645,69 @@
       "paidAmount": 12904.4,
       "products": [
         {
-          "productUrl": "https://www.alibaba.com/product-detail/High-quality-pressure-switch-for-air_1600191951503.html",
-          "quantity": 1000,
-          "skuText": "PC-7 1WAYx 500 itemsPC-7 FOUR WAYx 500 items",
-          "title": "High quality pressure switch for air compressor",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/H7be1373cb9a5417e91ff55d453517e8bp.jpg_140x140.jpg"
+          "rowNo": 1,
+          "title": "Haitun factory price air compressor switch pressure control",
+          "skuText": "PC-6 1 WAY",
+          "unitPriceText": "USD 2.5000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "500.00",
+          "quantity": 500,
+          "totalText": "USD 1,250.00",
+          "totalAmount": 1250,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Factory-Price-air-Compressor-Switch_1600191931578.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H58707cd44b234d82ad05b170760e89d3Z.jpg"
         },
         {
-          "productUrl": "https://www.alibaba.com/product-detail/Wholesale-water-pump-pressure-switch-mechanical_1600191974681.html",
-          "quantity": 504,
-          "skuText": "PC-2Bx 504 items",
+          "rowNo": 2,
+          "title": "High quality pressure switch for air compressor",
+          "skuText": "PC-7 1WAY",
+          "unitPriceText": "USD 1.9300 /Sets",
+          "unitPrice": 0,
+          "quantityText": "500.00",
+          "quantity": 500,
+          "totalText": "USD 965.00",
+          "totalAmount": 965,
+          "productUrl": "https://www.alibaba.com/product-detail/High-Quality-Pressure-Switch-for-air_1600191951503.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H7be1373cb9a5417e91ff55d453517e8bp.jpg"
+        },
+        {
+          "rowNo": 3,
           "title": "Wholesale water pump pressure switch mechanical",
-          "imageUrl": "https://s.alicdn.com/@sc04/kf/He3b98b95da924af58bf9ef871009c93fa.jpg_140x140.jpg"
+          "skuText": "PC-2B",
+          "unitPriceText": "USD 3.8000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "504.00",
+          "quantity": 504,
+          "totalText": "USD 1,915.20",
+          "totalAmount": 1915.2,
+          "productUrl": "https://www.alibaba.com/product-detail/Wholesale-Water-Pump-Pressure-Switch-Mechanical_1600191974681.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/He3b98b95da924af58bf9ef871009c93fa.jpg"
+        },
+        {
+          "rowNo": 4,
+          "title": "Haitun controller electric water pressure switch",
+          "skuText": "PC-13A",
+          "unitPriceText": "USD 11.0500 /Sets",
+          "unitPrice": 0,
+          "quantityText": "504.00",
+          "quantity": 504,
+          "totalText": "USD 5,569.20",
+          "totalAmount": 5569.2,
+          "productUrl": "https://www.alibaba.com/product-detail/Haitun-Controller-Electric-Water-Pressure-Switch_1600193144004.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H6d57b779b2404f71abf15c4a201c3cdbW.jpg"
+        },
+        {
+          "rowNo": 5,
+          "title": "Customized hot sale stainless steel five way",
+          "skuText": "Size: 1in,Material: Stainless Steel",
+          "unitPriceText": "USD 7.3000 /Sets",
+          "unitPrice": 0,
+          "quantityText": "300.00",
+          "quantity": 300,
+          "totalText": "USD 2,190.00",
+          "totalAmount": 2190,
+          "productUrl": "https://www.alibaba.com/product-detail/Customized-Hot-Sale-Stainless-Steel-Five_1600197176243.html",
+          "imageUrl": "https://sc04.alicdn.com/kf/H731312eb9a864aa885d12c825df8800bq.jpg"
         }
       ],
       "shippingText": "",
@@ -2179,7 +2719,12 @@
       "captureUrl": "alibaba-captures/order-135156271501028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 325,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:31.031Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=135156271501028359&tracelog=from_orderlist_dropdown",
+      "listPreviewProductCount": 2,
+      "productDetailCapturedAt": "2026-07-03T16:49:31.031Z",
+      "productDetailSource": "Alibaba order detail"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -2211,7 +2756,9 @@
       "captureUrl": "alibaba-captures/order-134864263001028359.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 198,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:32.488Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=134864263001028359&tracelog=from_orderlist_dropdown"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -2243,10 +2790,15 @@
       "captureUrl": "alibaba-captures/order-134158815501028662.jpg",
       "captureImageWidth": 960,
       "captureImageHeight": 209,
-      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z",
+      "productDetailCheckedAt": "2026-07-03T16:49:36.404Z",
+      "productDetailCapturedUrl": "https://biz.alibaba.com/ta/detail.htm?orderId=134158815501028662&tracelog=from_orderlist_dropdown"
     }
   ],
   "thumbnailCapturedAt": "2026-07-03T07:50:39.730Z",
   "captureCapturedAt": "2026-07-03T09:22:01.763Z",
-  "capturedRowImageCount": 64
+  "capturedRowImageCount": 64,
+  "productDetailEnrichedAt": "2026-07-03T16:51:15.672Z",
+  "productDetailEnrichedOrderCount": 10,
+  "productDetailEnrichmentErrors": []
 }

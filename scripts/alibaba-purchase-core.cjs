@@ -78,16 +78,50 @@ function normalizeProduct(product, index) {
 }
 
 function normalizeProducts(order) {
-  const products = Array.isArray(order.products)
-    ? order.products
-    : Array.isArray(order.items)
-      ? order.items
-      : Array.isArray(order.orderItems)
-        ? order.orderItems
-        : Array.isArray(order.productList)
-          ? order.productList
-          : [];
-  return products.map(normalizeProduct).filter((product) => product.title || product.skuText || product.productUrl || product.imageUrl);
+  const productLists = [
+    order.detailProducts,
+    order.productDetails,
+    order.products,
+    order.items,
+    order.orderItems,
+    order.productList,
+  ].filter(Array.isArray);
+
+  let bestProducts = [];
+  for (const productList of productLists) {
+    const normalized = productList
+      .map(normalizeProduct)
+      .filter((product) => product.title || product.skuText || product.productUrl || product.imageUrl);
+    if (normalized.length > bestProducts.length) bestProducts = normalized;
+  }
+  return bestProducts;
+}
+
+function mergeAlibabaOrderDetailProducts(order = {}, detail = {}) {
+  const currentProducts = normalizeProducts(order);
+  const detailProducts = normalizeProducts(detail);
+  const useDetailProducts = detailProducts.length > currentProducts.length;
+  if (!useDetailProducts) {
+    return {
+      ...order,
+      products: currentProducts,
+    };
+  }
+
+  return {
+    ...order,
+    products: detailProducts,
+    listPreviewProductCount: currentProducts.length,
+    productDetailCapturedAt: firstText(detail.capturedAt, detail.productDetailCapturedAt, order.productDetailCapturedAt),
+    productDetailCapturedUrl: firstText(
+      detail.capturedUrl,
+      detail.sourceUrl,
+      detail.detailUrl,
+      detail.url,
+      order.productDetailCapturedUrl
+    ),
+    productDetailSource: "Alibaba order detail",
+  };
 }
 
 function statusGroup(status) {
@@ -145,6 +179,9 @@ function normalizeOrder(order, index) {
     captureUrl: firstText(order.captureUrl, order.captureImageUrl, order.screenshotUrl, order.orderScreenshotUrl, order.orderCaptureUrl),
     capturedAt,
     capturedAtLabel: thaiDateTime(capturedAt),
+    productDetailCapturedAt: firstText(order.productDetailCapturedAt, order.detailCapturedAt),
+    productDetailCapturedUrl: firstText(order.productDetailCapturedUrl, order.detailCapturedUrl),
+    productDetailSource: firstText(order.productDetailSource, order.detailSource),
     capturedPage: numberValue(order.capturedPage ?? order.pageNo ?? order.page),
     capturedUrl: firstText(order.capturedUrl, order.sourceUrl),
     note: firstText(order.note, order.remark, order.memo),
@@ -232,5 +269,6 @@ module.exports = {
   ALIBABA_PAID_ORDER_STATUSES,
   buildAlibabaPurchaseOrders,
   emptyAlibabaPurchaseOrders,
+  mergeAlibabaOrderDetailProducts,
   normalizeStatus,
 };

@@ -4712,7 +4712,7 @@
         </div>`;
     }
 
-    const visibleProducts = products.slice(0, compact ? 1 : 3);
+    const visibleProducts = compact ? products.slice(0, 1) : products;
     return `
       <div class="alibaba-product-list${compact ? " compact" : ""}">
         ${visibleProducts

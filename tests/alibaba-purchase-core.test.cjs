@@ -6,6 +6,7 @@ const path = require("path");
 const {
   ALIBABA_PAID_ORDER_STATUSES,
   buildAlibabaPurchaseOrders,
+  mergeAlibabaOrderDetailProducts,
 } = require("../scripts/alibaba-purchase-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -120,6 +121,36 @@ test("Alibaba purchase order builder preserves product lines, thumbnails, and or
   assert.equal(result.rows[0].skuSummary, "Portable pressure washer");
 });
 
+test("Alibaba purchase order detail products replace incomplete list preview products", () => {
+  const previewOrder = {
+    orderNo: "ORDER-MANY",
+    status: "Waiting for supplier to ship",
+    products: [
+      { title: "Preview product A", quantity: 10 },
+      { title: "Preview product B", quantity: 20 },
+    ],
+  };
+  const detail = {
+    capturedAt: "2026-07-03T12:00:00.000Z",
+    capturedUrl: "https://biz.alibaba.com/ta/detail.htm?orderId=ORDER-MANY",
+    products: [
+      { title: "Detail product A", skuText: "Black", quantity: 10, imageUrl: "a.jpg" },
+      { title: "Detail product B", skuText: "Blue", quantity: 20, imageUrl: "b.jpg" },
+      { title: "Detail product C", skuText: "Green", quantity: 30, imageUrl: "c.jpg" },
+      { title: "Detail product D", skuText: "Red", quantity: 40, imageUrl: "d.jpg" },
+    ],
+  };
+
+  const merged = mergeAlibabaOrderDetailProducts(previewOrder, detail);
+  const report = buildAlibabaPurchaseOrders({ orders: [merged] });
+
+  assert.equal(report.rows[0].products.length, 4);
+  assert.equal(report.rows[0].products[2].title, "Detail product C");
+  assert.equal(report.rows[0].products[3].quantity, 40);
+  assert.equal(report.rows[0].productDetailCapturedAt, "2026-07-03T12:00:00.000Z");
+  assert.equal(report.rows[0].productDetailSource, "Alibaba order detail");
+});
+
 test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   const template = readRepoFile("src/index.template.html");
   const app = readRepoFile("src/app.js");
@@ -137,6 +168,7 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(app, /alibabaPurchaseOrders/);
   assert.match(app, /function\s+renderAlibabaOrderCapture/);
   assert.match(app, /function\s+renderAlibabaProducts/);
+  assert.match(app, /const visibleProducts = compact \? products\.slice\(0, 1\) : products;/);
   assert.match(app, /function\s+renderAlibabaStatusTabs/);
   assert.match(app, /data-alibaba-status-tab/);
   assert.match(app, /function\s+shouldKeepCurrentAlibabaPurchaseOrders/);
@@ -150,6 +182,16 @@ test("dashboard exposes an Alibaba paid orders section and renderer", () => {
   assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap/);
   assert.match(css, /body\.alibaba-order-table-route #alibaba-orders \.alibaba-orders-table-wrap\s*\{[\s\S]*?max-height:\s*none;/);
   assert.match(build, /alibabaPurchaseOrders/);
+});
+
+test("Alibaba detail enrichment script imports full product lines from order detail pages", () => {
+  const script = readRepoFile("scripts/enrich-alibaba-purchase-orders-from-details.cjs");
+
+  assert.match(script, /mergeAlibabaOrderDetailProducts/);
+  assert.match(script, /\.product-list/);
+  assert.match(script, /order\.orderUrl/);
+  assert.match(script, /detailProducts/);
+  assert.match(script, /storageState/);
 });
 
 test("dashboard exposes an Alibaba receiving workflow for landed cost and stock-in prep", () => {

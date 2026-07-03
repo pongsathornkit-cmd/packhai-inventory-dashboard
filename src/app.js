@@ -177,6 +177,13 @@
     return String(value ?? "").trim().toUpperCase();
   }
 
+  function packhaiOrderUrl(referenceNo) {
+    const orderNo = String(referenceNo || "").trim().toUpperCase();
+    const match = orderNo.match(/^PA([0-9]+)$/);
+    if (!match) return "";
+    return `https://shop.packhai.com/order/order-detail?id=${encodeURIComponent(match[1])}`;
+  }
+
   function dateTimeValue(value) {
     const time = new Date(value || 0).getTime();
     return Number.isFinite(time) ? time : 0;
@@ -1356,6 +1363,20 @@
     return movement.platform || movement.channelName || "-";
   }
 
+  function movementOrderRefs(movement) {
+    const packhaiOrderNo = String(movement.referenceNo || "").trim();
+    const platformOrderNo = String(movement.platformOrderNo || "").trim();
+    const packhaiText = `Packhai ${packhaiOrderNo || "-"}`;
+    const packhaiLink = packhaiOrderUrl(movement.referenceNo);
+    return `
+      ${
+        packhaiLink
+          ? `<a class="movement-order-link packhai-order-link" href="${escapeHtml(packhaiOrderUrl(movement.referenceNo))}" target="_blank" rel="noreferrer">${escapeHtml(packhaiText)}</a>`
+          : `<span>${escapeHtml(packhaiText)}</span>`
+      }
+      <span>Platform ${escapeHtml(platformOrderNo || "-")}</span>`;
+  }
+
   function movementPaymentBadge(movement) {
     if (Number(movement.removeQuantity || 0) <= 0) {
       return `<span class="payment-badge neutral">ไม่ใช่ขายออก</span>`;
@@ -1458,8 +1479,7 @@
                       </td>
                       <td>
                         <strong>${escapeHtml(movementPlatformLabel(movement))}</strong>
-                        <span>Packhai ${escapeHtml(movement.referenceNo || "-")}</span>
-                        <span>Platform ${escapeHtml(movement.platformOrderNo || "-")}</span>
+                        ${movementOrderRefs(movement)}
                       </td>
                       <td class="num">
                         <strong>${escapeHtml(movementQuantityText(movement))}</strong>

@@ -3589,6 +3589,20 @@ tbody tr:hover {
   display: block;
 }
 
+.movement-history-table td a.movement-order-link {
+  display: block;
+  margin-top: 3px;
+  color: var(--pink);
+  font-weight: 820;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
+.movement-history-table td a.movement-order-link:hover {
+  color: var(--pink-strong);
+  text-decoration: underline;
+}
+
 .movement-history-table td span {
   margin-top: 3px;
   color: var(--muted);

@@ -1,6 +1,6 @@
 {
-  "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser with product thumbnails)",
-  "exportedAt": "2026-07-03T07:50:39.730Z",
+  "source": "Alibaba buyer Trade Assurance orders (captured from authenticated browser with order-row captures and product thumbnails)",
+  "exportedAt": "2026-07-03T09:23:18.426Z",
   "capturedUrl": "https://biz.alibaba.com/ta/list/scene/mainList.htm?scene=order",
   "capturedRowCount": 64,
   "orders": [
@@ -30,7 +30,11 @@
       "status": "Waiting for supplier to ship",
       "supplierName": "Nanjing Chutuo Shipbuiiding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-27296729001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 196,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -58,7 +62,11 @@
       "status": "Order closed",
       "supplierName": "Dongguan BanMo Machinery Co., Ltd.",
       "supplierUrl": "https://banmomachinery.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-27080833501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 196,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -85,7 +93,11 @@
       "status": "Waiting for supplier to ship",
       "supplierName": "Jiangsu Yishou Machinery Technology Co., Ltd.",
       "supplierUrl": "https://yishoumachinery.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26952029501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 196,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -113,7 +125,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Hebei Tengka Import And Export Trade Co., Ltd.",
       "supplierUrl": "https://tengkaengine.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26876305001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 207,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.695Z",
@@ -148,7 +164,11 @@
       "status": "Waiting for initial payment",
       "supplierName": "Shanghai Sumore Industrial Co., Ltd.",
       "supplierUrl": "https://sumore-machine.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26832717501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 290,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -176,7 +196,11 @@
       "status": "Waiting for supplier to ship",
       "supplierName": "Yongjia Aocheng Import And Export Co.,ltd",
       "supplierUrl": "https://reelwell.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26708749001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 196,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -204,7 +228,11 @@
       "status": "Waiting for payment",
       "supplierName": "Haikou Kexin Import and Export Trading Co., Ltd.",
       "supplierUrl": "https://hkkx.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26591277501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 207,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -239,7 +267,11 @@
       "status": "Waiting for supplier to ship",
       "supplierName": "Zhejiang Shenneng Technology Co., Ltd.",
       "supplierUrl": "https://htqt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26582801501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 322,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -267,7 +299,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Ningbo Santwell Import & Export Co., Ltd.",
       "supplierUrl": "https://nbsantwell.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26498929501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 218,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:40:58.696Z",
@@ -295,7 +331,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Cangzhou Meeter Automobile Maintenance Equipment Co., Ltd.",
       "supplierUrl": "https://meetertools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26498833001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 225,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.062Z",
@@ -323,7 +363,11 @@
       "status": "Order closed",
       "supplierName": "Cangzhou Meeter Automobile Maintenance Equipment Co., Ltd.",
       "supplierUrl": "https://meetertools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26498017001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 217,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.062Z",
@@ -351,7 +395,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Shijiazhuang Ruili Machinery Equipment Co., Ltd.",
       "supplierUrl": "https://hbruili.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26434609501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.062Z",
@@ -379,7 +427,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Shijiazhuang Ruili Machinery Equipment Co., Ltd.",
       "supplierUrl": "https://hbruili.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26476733001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -407,7 +459,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Hebei Tengka Import And Export Trade Co., Ltd.",
       "supplierUrl": "https://tengkaengine.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26313781001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -442,7 +498,11 @@
       "status": "Waiting for remaining balance payment",
       "supplierName": "Weihai Allwin Electrical & Mechanical Tech. Co., Ltd.",
       "supplierUrl": "https://allwinmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26221149501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 294,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -469,7 +529,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Chengdu Chuangrong Trading Co., Ltd.",
       "supplierUrl": "https://cnchuangrong.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26213061001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 221,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -497,7 +561,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Taizhou Yantchau Agricultural Machinery Co., Ltd.",
       "supplierUrl": "https://plantmate.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26207385001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -524,7 +592,11 @@
       "status": "Order closed",
       "supplierName": "Jinhua Yulin Machinery Equipment Co., Ltd.",
       "supplierUrl": "https://vcc89980.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26186789001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -559,7 +631,11 @@
       "status": "Order completed",
       "supplierName": "Linyi Wowei Hardware Tools Co., Ltd.",
       "supplierUrl": "https://wovitools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-26071101001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 316,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:00.063Z",
@@ -587,7 +663,11 @@
       "status": "Waiting for payment",
       "supplierName": "Shaanxi Mingqiao Xinda Power Technology Co., Ltd.",
       "supplierUrl": "https://mqxd.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25964245501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.376Z",
@@ -622,7 +702,11 @@
       "status": "Waiting for delivery confirmation",
       "supplierName": "Nanjing Chutuo Shipbuiiding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25840357501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 326,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -650,7 +734,11 @@
       "status": "Waiting for payment",
       "supplierName": "Ganzhou Xiaoshi Industry And Trading Co., Ltd.",
       "supplierUrl": "https://xiaoshi2025.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25814037501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -678,7 +766,11 @@
       "status": "Waiting for payment",
       "supplierName": "Jilin Yicheng Technology Co., Ltd.",
       "supplierUrl": "https://jlyicheng.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25809189501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -713,7 +805,11 @@
       "status": "Order completed",
       "supplierName": "Nanjing Chutuo Shipbuiiding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25706929501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 294,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -741,7 +837,11 @@
       "status": "Shipment started",
       "supplierName": "Yeschamp Imp & Exp (taizhou) Co., Ltd.",
       "supplierUrl": "https://yeschamp.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25649617001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 221,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -769,7 +869,11 @@
       "status": "Insufficient balance payment",
       "supplierName": "Yeschamp Imp & Exp (taizhou) Co., Ltd.",
       "supplierUrl": "https://yeschamp.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25649525001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -804,7 +908,11 @@
       "status": "Waiting for buyer to confirm modified order",
       "supplierName": "Hangzhou Hongli Pipe Machinery Co., Ltd.",
       "supplierUrl": "https://pipetool.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25264849501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 326,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -839,7 +947,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Shenneng Technology Co., Ltd.",
       "supplierUrl": "https://htqt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25199753001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 326,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -867,7 +979,11 @@
       "status": "Order completed",
       "supplierName": "Taizhou Yantchau Agricultural Machinery Co., Ltd.",
       "supplierUrl": "https://plantmate.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25156593001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 221,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:01.377Z",
@@ -895,7 +1011,11 @@
       "status": "Order completed",
       "supplierName": "Yeschamp Imp & Exp (taizhou) Co., Ltd.",
       "supplierUrl": "https://yeschamp.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25134205001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 186,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -930,7 +1050,11 @@
       "status": "Order completed",
       "supplierName": "Nanjing Chutuo Shipbuiiding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25121777001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 294,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -958,7 +1082,11 @@
       "status": "Waiting for supplier to ship",
       "supplierName": "Nanjing Yarshung Tool Company Ltd",
       "supplierUrl": "https://yarshung.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25065201501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -986,7 +1114,11 @@
       "status": "Order completed",
       "supplierName": "Shaoxing Shangyu Bolitt Machinery Manufacturing Co.,Ltd",
       "supplierUrl": "https://sxblt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25062825501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 228,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1014,7 +1146,11 @@
       "status": "Order closed",
       "supplierName": "Hebei Boda Plastic Technology Co., Ltd.",
       "supplierUrl": "https://peweldingmachine.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-25062681501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1049,7 +1185,11 @@
       "status": "Order completed",
       "supplierName": "Linyi Wowei Hardware Tools Co., Ltd.",
       "supplierUrl": "https://wovitools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-24279129001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 316,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.709Z",
@@ -1077,7 +1217,11 @@
       "status": "Order closed",
       "supplierName": "Linyi Wowei Hardware Tools Co., Ltd.",
       "supplierUrl": "https://wovitools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-24253229001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1112,7 +1256,11 @@
       "status": "Order closed",
       "supplierName": "Linyi Wowei Hardware Tools Co., Ltd.",
       "supplierUrl": "https://wovitools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-23634157501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 291,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1147,7 +1295,11 @@
       "status": "Order completed",
       "supplierName": "Nanjing Chutuo Shipbuiiding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-21948589501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 294,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1182,7 +1334,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Shenneng Technology Co., Ltd.",
       "supplierUrl": "https://htqt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-21679461501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 326,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:02.710Z",
@@ -1217,7 +1373,11 @@
       "status": "Order completed",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-21630617001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 326,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1252,7 +1412,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Shenneng Technology Co., Ltd.",
       "supplierUrl": "https://htqt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-17803493001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 326,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1287,7 +1451,11 @@
       "status": "Order completed",
       "supplierName": "Linyi Wowei Hardware Tools Co., Ltd.",
       "supplierUrl": "https://wovitools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-17784473001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 316,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1315,7 +1483,11 @@
       "status": "Order completed",
       "supplierName": "Yuhuan Aqua-Migen Machinery Co., Ltd.",
       "supplierUrl": "https://migen.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-227982430001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.995Z",
@@ -1343,7 +1515,11 @@
       "status": "Order completed",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-17505617501038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 199,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1378,7 +1554,11 @@
       "status": "Shipment partially dispatched",
       "supplierName": "Nanjing Chutuo Shipbuiiding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-17487773001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 294,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1413,7 +1593,11 @@
       "status": "Order completed",
       "supplierName": "Nanjing Chutuo Shipbuilding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-190583146001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 316,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1448,7 +1632,11 @@
       "status": "Order completed",
       "supplierName": "Taizhou Julante Electromechanical Technology Co., Ltd.",
       "supplierUrl": "https://zjjlt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-12417909001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 345,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1483,7 +1671,11 @@
       "status": "Order completed",
       "supplierName": "Nanjing Chutuo Shipbuilding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-11842841001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 316,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1511,7 +1703,11 @@
       "status": "Order completed",
       "supplierName": "Nanjing Chutuo Shipbuilding Equipment Co., Ltd.",
       "supplierUrl": "https://tuoyuo.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-11138589001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 220,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:03.996Z",
@@ -1546,7 +1742,11 @@
       "status": "Order closed",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-11101789001038359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 293,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.298Z",
@@ -1581,7 +1781,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Larissa Mechanical Electric Technology Co., Ltd.",
       "supplierUrl": "https://detmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-155813218501028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 325,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.298Z",
@@ -1616,7 +1820,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Larissa Mechanical Electric Technology Co., Ltd.",
       "supplierUrl": "https://detmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-154126751501028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 293,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1644,7 +1852,11 @@
       "status": "Order completed",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-153254018501028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 198,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1679,7 +1891,11 @@
       "status": "Order completed",
       "supplierName": "Yuhuan Aqua-Migen Machinery Co., Ltd.",
       "supplierUrl": "https://migen.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-148923147001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 293,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1714,7 +1930,11 @@
       "status": "Order completed",
       "supplierName": "Weihai Allwin Electrical & Mechanical Tech. Co., Ltd.",
       "supplierUrl": "https://allwinmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-148214286001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 293,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1742,7 +1962,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Larissa Mechanical Electric Technology Co., Ltd.",
       "supplierUrl": "https://detmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-145556822001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 198,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1777,7 +2001,11 @@
       "status": "Order completed",
       "supplierName": "Taizhou Julante Electromechanical Technology Co., Ltd.",
       "supplierUrl": "https://zjjlt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-145550702001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 348,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.299Z",
@@ -1805,7 +2033,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Larissa Mechanical Electric Technology Co., Ltd.",
       "supplierUrl": "https://detmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-145026631501028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 177,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.300Z",
@@ -1833,7 +2065,11 @@
       "status": "Order completed",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-143488094001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 198,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:05.300Z",
@@ -1861,7 +2097,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Larissa Mechanical Electric Technology Co., Ltd.",
       "supplierUrl": "https://detmotor.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-136107994001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 172,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -1896,7 +2136,11 @@
       "status": "Order completed",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-135841731501028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 325,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -1931,7 +2175,11 @@
       "status": "Order completed",
       "supplierName": "Zhejiang Shenneng Technology Co., Ltd.",
       "supplierUrl": "https://htqt.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-135156271501028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 325,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -1959,7 +2207,11 @@
       "status": "Order closed",
       "supplierName": "Wenling Ou Yi Electric Co., Ltd.",
       "supplierUrl": "https://llaspa.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-134864263001028359.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 198,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     },
     {
       "capturedAt": "2026-07-03T06:41:07.777Z",
@@ -1987,8 +2239,14 @@
       "status": "Waiting for payment",
       "supplierName": "Guangdong Wynn's Holding Group Co., Ltd.",
       "supplierUrl": "https://wynnstools.en.alibaba.com/?tracelog=from_orderlist_company",
-      "trackingNo": ""
+      "trackingNo": "",
+      "captureUrl": "alibaba-captures/order-134158815501028662.jpg",
+      "captureImageWidth": 960,
+      "captureImageHeight": 209,
+      "captureImageCapturedAt": "2026-07-03T09:22:01.763Z"
     }
   ],
-  "thumbnailCapturedAt": "2026-07-03T07:50:39.730Z"
+  "thumbnailCapturedAt": "2026-07-03T07:50:39.730Z",
+  "captureCapturedAt": "2026-07-03T09:22:01.763Z",
+  "capturedRowImageCount": 64
 }

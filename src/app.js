@@ -666,11 +666,45 @@
     refreshInventoryViews();
   }
 
+  function alibabaReportExportedAt(report) {
+    return dateTimeValue(report?.metadata?.exportedAt || report?.exportedAt);
+  }
+
+  function alibabaReportCaptureCount(report) {
+    const items = Array.isArray(report?.rows) ? report.rows : Array.isArray(report?.orders) ? report.orders : [];
+    return items.filter((row) => row?.captureUrl || row?.captureImageUrl || row?.screenshotUrl).length;
+  }
+
+  function shouldKeepCurrentAlibabaPurchaseOrders(currentReport, incomingReport) {
+    if (!currentReport || !incomingReport) return false;
+    const currentTime = alibabaReportExportedAt(currentReport);
+    const incomingTime = alibabaReportExportedAt(incomingReport);
+    const currentCaptureCount = alibabaReportCaptureCount(currentReport);
+    const incomingCaptureCount = alibabaReportCaptureCount(incomingReport);
+    if (currentCaptureCount > incomingCaptureCount && (!incomingTime || currentTime >= incomingTime)) return true;
+    if (currentTime && incomingTime && currentTime > incomingTime && currentCaptureCount >= incomingCaptureCount) return true;
+    return Boolean(currentCaptureCount && !incomingCaptureCount && currentTime >= incomingTime);
+  }
+
   function mergeSupabaseDashboardState(payload) {
     const dashboard = payload?.dashboard || {};
     const dashboardHasPlatformPaymentOrders = Array.isArray(dashboard.platformPaymentOrders);
+    const currentAlibabaPurchaseOrders = data.alibabaPurchaseOrders;
+    const currentAlibabaPurchaseOrdersSource = data.metadata?.sources?.alibabaPurchaseOrders;
+    const keepCurrentAlibabaPurchaseOrders = shouldKeepCurrentAlibabaPurchaseOrders(
+      currentAlibabaPurchaseOrders,
+      dashboard.alibabaPurchaseOrders
+    );
     if (dashboard && typeof dashboard === "object") {
       Object.assign(data, dashboard);
+      if (keepCurrentAlibabaPurchaseOrders) {
+        data.alibabaPurchaseOrders = currentAlibabaPurchaseOrders;
+        if (currentAlibabaPurchaseOrdersSource) {
+          data.metadata = data.metadata || {};
+          data.metadata.sources = data.metadata.sources || {};
+          data.metadata.sources.alibabaPurchaseOrders = currentAlibabaPurchaseOrdersSource;
+        }
+      }
       if (Array.isArray(dashboard.rows)) {
         rows.splice(0, rows.length, ...dashboard.rows);
         data.rows = rows;

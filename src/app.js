@@ -4758,12 +4758,18 @@
     root.addEventListener("click", (event) => {
       const button = event.target.closest("[data-alibaba-receiving-save]");
       if (!button) return;
-      const draft = alibabaReceivingDraft(button.dataset.alibabaLineKey || "");
+      const lineKey = button.dataset.alibabaLineKey || "";
+      const draft = alibabaReceivingDraft(lineKey);
       draft.savedAt = new Date().toISOString();
       saveAlibabaReceivingDrafts();
-      button.textContent = "บันทึกแล้ว";
+      renderAlibabaPurchaseOrders();
+      const savedButton = [...document.querySelectorAll("[data-alibaba-receiving-save]")].find(
+        (candidate) => candidate.dataset.alibabaLineKey === lineKey
+      );
+      if (!savedButton) return;
+      savedButton.textContent = "บันทึกแล้ว";
       window.setTimeout(() => {
-        button.textContent = "บันทึก Draft";
+        savedButton.textContent = "บันทึก Draft";
       }, 1200);
     });
   }

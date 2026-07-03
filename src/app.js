@@ -60,6 +60,12 @@
     sort: "riskDesc",
     page: 1,
   };
+  const alibabaOrderPageSize = 50;
+  const alibabaOrderState = {
+    query: "",
+    status: "All",
+    page: 1,
+  };
   const websiteStockEditWarehouses = [
     { id: 491661, name: "คลัง ซ.เจริญกิจ", label: "ซ.เจริญกิจ" },
     { id: 491662, name: "คลัง สุขสวัสดิ์", label: "สุขสวัสดิ์" },
@@ -127,6 +133,20 @@
 
   function safePercent(value) {
     return Number.isFinite(value) ? fmtPercent.format(value) : "0.0%";
+  }
+
+  function fmtCurrency(value, currency = "USD") {
+    const code = String(currency || "USD").trim().toUpperCase();
+    try {
+      return new Intl.NumberFormat("th-TH", {
+        style: "currency",
+        currency: code,
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(numberValue(value));
+    } catch {
+      return `${code} ${fmtQty.format(numberValue(value))}`;
+    }
   }
 
   function normalizeSkuValue(value) {
@@ -690,6 +710,7 @@
     renderSidebarStatus();
     platformSalesLastRefreshAt = new Date().toISOString();
     renderPlatformSalesDashboard();
+    renderAlibabaPurchaseOrders();
     renderPaymentCollectionReport();
     renderUncollectedStockDashboard();
     renderMethodology();
@@ -709,6 +730,7 @@
     renderFilters();
     renderTable();
     renderPlatformSalesDashboard();
+    renderAlibabaPurchaseOrders();
     renderUncollectedStockDashboard();
   }
 
@@ -3923,6 +3945,340 @@
     $("exportPaymentOrdersCsv")?.addEventListener("click", exportPlatformPaymentOrdersCsv);
   }
 
+  function getAlibabaPurchaseOrders() {
+    const report = data.alibabaPurchaseOrders || {};
+    return {
+      metadata: {
+        source: report.metadata?.source || "Alibaba purchase orders",
+        exportedAt: report.metadata?.exportedAt || "",
+        exportedAtLabel: report.metadata?.exportedAtLabel || "",
+        allowedStatuses: Array.isArray(report.metadata?.allowedStatuses) ? report.metadata.allowedStatuses : [],
+      },
+      summary: {
+        totalOrders: numberValue(report.summary?.totalOrders),
+        totalOrderAmount: moneyValue(report.summary?.totalOrderAmount),
+        totalPaidAmount: moneyValue(report.summary?.totalPaidAmount),
+        totalBalanceAmount: moneyValue(report.summary?.totalBalanceAmount),
+        waitingSupplierShip: numberValue(report.summary?.waitingSupplierShip),
+        shipmentActive: numberValue(report.summary?.shipmentActive),
+        waitingBuyerAction: numberValue(report.summary?.waitingBuyerAction),
+        completed: numberValue(report.summary?.completed),
+      },
+      statusBreakdown: Array.isArray(report.statusBreakdown) ? report.statusBreakdown : [],
+      rows: Array.isArray(report.rows) ? report.rows : [],
+    };
+  }
+
+  function alibabaStatusLabel(status) {
+    const labels = {
+      "Waiting for remaining balance payment": "รอจ่ายยอดคงเหลือ",
+      "Waiting for supplier to ship": "รอ Supplier จัดส่ง",
+      "Waiting for delivery confirmation": "รอยืนยันรับสินค้า",
+      "Waiting for buyer to confirm modified order": "รอยืนยันออเดอร์ที่แก้ไข",
+      "Insufficient balance payment": "ยอดคงเหลือไม่พอ",
+      "Order completed": "ออเดอร์เสร็จสมบูรณ์",
+      "Shipment Started": "เริ่มจัดส่งแล้ว",
+      "Shipment partially dispatched": "จัดส่งบางส่วน",
+    };
+    return labels[status] || status || "-";
+  }
+
+  function alibabaStatusBadgeClass(statusGroup) {
+    if (statusGroup === "completed") return "matched";
+    if (statusGroup === "shipment" || statusGroup === "supplier-ship") return "warning";
+    if (statusGroup === "balance") return "danger";
+    if (statusGroup === "delivery" || statusGroup === "modified") return "neutral";
+    return "missing";
+  }
+
+  function alibabaOrderMatchesQuery(row, query) {
+    const text = compactText(
+      [
+        row.orderNo,
+        row.supplierName,
+        row.status,
+        alibabaStatusLabel(row.status),
+        row.skuSummary,
+        row.trackingNo,
+        row.logisticsProvider,
+        row.buyerAccount,
+        row.note,
+      ].join(" ")
+    );
+    return text.includes(compactText(query));
+  }
+
+  function filteredAlibabaOrders() {
+    let list = [...getAlibabaPurchaseOrders().rows];
+    if (alibabaOrderState.status !== "All") {
+      list = list.filter((row) => row.status === alibabaOrderState.status);
+    }
+    if (alibabaOrderState.query) {
+      list = list.filter((row) => alibabaOrderMatchesQuery(row, alibabaOrderState.query));
+    }
+    return list;
+  }
+
+  function renderAlibabaRows() {
+    const body = $("alibabaOrderRows");
+    if (!body) return;
+    const orders = filteredAlibabaOrders();
+    const maxPage = Math.max(1, Math.ceil(orders.length / alibabaOrderPageSize));
+    alibabaOrderState.page = Math.min(Math.max(1, alibabaOrderState.page), maxPage);
+    const start = (alibabaOrderState.page - 1) * alibabaOrderPageSize;
+    const pageRows = orders.slice(start, start + alibabaOrderPageSize);
+
+    body.innerHTML = pageRows.length
+      ? pageRows
+          .map((row) => {
+            const orderLink = row.orderUrl
+              ? `<a class="alibaba-order-link" href="${escapeHtml(row.orderUrl)}" target="_blank" rel="noopener">เปิด Alibaba</a>`
+              : "";
+            return `
+          <tr>
+            <td>
+              <strong>${escapeHtml(row.orderNo || "-")}</strong>
+              <span>${escapeHtml(row.buyerAccount || row.supplierName || "")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.supplierName || "-")}</strong>
+              <span>${orderLink || escapeHtml(row.note || "")}</span>
+            </td>
+            <td>
+              <span class="payment-badge ${alibabaStatusBadgeClass(row.statusGroup)}">${escapeHtml(alibabaStatusLabel(row.status))}</span>
+              <span>${escapeHtml(row.status || "-")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.orderDateLabel || formatDateTime(row.orderDate) || "-")}</strong>
+              <span>อัปเดต ${escapeHtml(row.updatedAtLabel || formatDateTime(row.updatedAt) || "-")}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.expectedShipDateLabel || formatDateTime(row.expectedShipDate) || "-")}</strong>
+              <span>${escapeHtml([row.logisticsProvider, row.trackingNo].filter(Boolean).join(" · "))}</span>
+            </td>
+            <td>
+              <strong>${escapeHtml(row.skuSummary || "-")}</strong>
+              <span>${fmtQty.format(row.itemCount || 0)} รายการ</span>
+            </td>
+            <td class="num">
+              <strong>${escapeHtml(fmtCurrency(row.paidAmount || 0, row.currency || "USD"))}</strong>
+              <span>Order ${escapeHtml(fmtCurrency(row.orderAmount || 0, row.currency || "USD"))}</span>
+            </td>
+            <td class="num">
+              <strong>${escapeHtml(fmtCurrency(row.balanceAmount || 0, row.currency || "USD"))}</strong>
+              <span>${escapeHtml(row.currency || "USD")}</span>
+            </td>
+          </tr>`;
+          })
+          .join("")
+      : `<tr><td colspan="8" class="empty-cell">ยังไม่มีข้อมูล Alibaba purchase orders ตามสถานะที่เลือก</td></tr>`;
+
+    const status = $("alibabaOrderPageStatus");
+    if (status) {
+      const first = orders.length ? start + 1 : 0;
+      const last = Math.min(start + pageRows.length, orders.length);
+      status.textContent = `แสดง ${fmtInt.format(first)}-${fmtInt.format(last)} จาก ${fmtInt.format(orders.length)} ออเดอร์`;
+    }
+    const prev = $("alibabaOrderPrev");
+    const next = $("alibabaOrderNext");
+    if (prev) prev.disabled = alibabaOrderState.page <= 1;
+    if (next) next.disabled = alibabaOrderState.page >= maxPage;
+  }
+
+  function exportAlibabaOrdersCsv() {
+    const headers = [
+      "Alibaba Order",
+      "Supplier",
+      "Status",
+      "Order Date",
+      "Expected Ship Date",
+      "Updated At",
+      "SKU Summary",
+      "Item Count",
+      "Currency",
+      "Order Amount",
+      "Paid Amount",
+      "Balance Amount",
+      "Logistics Provider",
+      "Tracking No",
+      "Buyer Account",
+      "Order URL",
+      "Note",
+    ];
+    const lines = [
+      headers.join(","),
+      ...filteredAlibabaOrders().map((row) =>
+        [
+          row.orderNo,
+          row.supplierName,
+          row.status,
+          row.orderDate,
+          row.expectedShipDate,
+          row.updatedAt,
+          row.skuSummary,
+          row.itemCount,
+          row.currency,
+          row.orderAmount,
+          row.paidAmount,
+          row.balanceAmount,
+          row.logisticsProvider,
+          row.trackingNo,
+          row.buyerAccount,
+          row.orderUrl,
+          row.note,
+        ]
+          .map(csvEscape)
+          .join(",")
+      ),
+    ];
+    const blob = new Blob([`\uFEFF${lines.join("\n")}`], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "alibaba-paid-purchase-orders.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function bindAlibabaOrderEvents() {
+    $("alibabaOrderSearch")?.addEventListener("input", (event) => {
+      alibabaOrderState.query = event.target.value;
+      alibabaOrderState.page = 1;
+      renderAlibabaRows();
+    });
+    $("alibabaStatusFilter")?.addEventListener("change", (event) => {
+      alibabaOrderState.status = event.target.value;
+      alibabaOrderState.page = 1;
+      renderAlibabaRows();
+    });
+    $("alibabaOrderPrev")?.addEventListener("click", () => {
+      alibabaOrderState.page -= 1;
+      renderAlibabaRows();
+    });
+    $("alibabaOrderNext")?.addEventListener("click", () => {
+      alibabaOrderState.page += 1;
+      renderAlibabaRows();
+    });
+    $("exportAlibabaOrdersCsv")?.addEventListener("click", exportAlibabaOrdersCsv);
+  }
+
+  function renderAlibabaPurchaseOrders() {
+    const el = $("alibabaPurchaseOrders");
+    if (!el) return;
+    const report = getAlibabaPurchaseOrders();
+    const summary = report.summary || {};
+    const sourceLabel = report.metadata.exportedAtLabel
+      ? `อัปเดต ${report.metadata.exportedAtLabel}`
+      : "รอนำเข้าข้อมูล Alibaba";
+    const cards = [
+      {
+        label: "PO ที่จ่ายเงินแล้วต้องติดตาม",
+        value: fmtInt.format(summary.totalOrders || 0),
+        sub: "เฉพาะสถานะที่กำหนดไว้",
+      },
+      {
+        label: "ยอดจ่ายแล้วรวม",
+        value: fmtCurrency(summary.totalPaidAmount || 0, "USD"),
+        sub: "Paid amount จาก Alibaba",
+      },
+      {
+        label: "ยอดคงเหลือรอจ่าย",
+        value: fmtCurrency(summary.totalBalanceAmount || 0, "USD"),
+        sub: "Remaining / insufficient balance",
+      },
+      {
+        label: "รอ supplier / อยู่ระหว่างจัดส่ง",
+        value: fmtInt.format((summary.waitingSupplierShip || 0) + (summary.shipmentActive || 0)),
+        sub: `${fmtInt.format(summary.waitingSupplierShip || 0)} รอ ship · ${fmtInt.format(summary.shipmentActive || 0)} shipment`,
+      },
+    ];
+    const statusOptions = report.metadata.allowedStatuses.length
+      ? report.metadata.allowedStatuses
+      : [...new Set(report.rows.map((row) => row.status).filter(Boolean))];
+
+    el.innerHTML = `
+      <div class="alibaba-meta-row">
+        <span>${escapeHtml(sourceLabel)}</span>
+        <span>${escapeHtml(report.metadata.source || "Alibaba purchase orders")}</span>
+      </div>
+      <div class="payment-report-grid alibaba-kpis">
+        ${cards
+          .map(
+            (card) => `
+          <article class="payment-report-card">
+            <span>${escapeHtml(card.label)}</span>
+            <strong>${escapeHtml(card.value)}</strong>
+            <small>${escapeHtml(card.sub)}</small>
+          </article>`
+          )
+          .join("")}
+      </div>
+      <div class="alibaba-status-strip">
+        ${
+          report.statusBreakdown.length
+            ? report.statusBreakdown
+                .map(
+                  (item) => `
+          <article>
+            <strong>${escapeHtml(alibabaStatusLabel(item.status))}</strong>
+            <span>${fmtInt.format(item.count || 0)} orders · ${escapeHtml(fmtCurrency(item.paidAmount || 0, "USD"))}</span>
+          </article>`
+                )
+                .join("")
+            : `<article><strong>ยังไม่มีรายการ</strong><span>ใส่ข้อมูลใน data/alibaba_purchase_orders.json หรือ sync snapshot เพื่อเริ่มใช้งาน</span></article>`
+        }
+      </div>
+      <div class="payment-orders-panel alibaba-orders-panel">
+        <div class="payment-orders-toolbar alibaba-orders-toolbar">
+          <div>
+            <h3>ตารางออเดอร์ Alibaba ที่จ่ายเงินแล้ว</h3>
+            <p>เก็บเฉพาะสถานะที่ต้องติดตามหลังสั่งซื้อ: balance, รอ supplier ship, shipment, delivery confirmation และ completed</p>
+          </div>
+          <div class="payment-orders-actions alibaba-orders-actions">
+            <input id="alibabaOrderSearch" type="search" value="${escapeHtml(alibabaOrderState.query)}" placeholder="ค้นหา Order / Supplier / Tracking / SKU" />
+            <select id="alibabaStatusFilter" aria-label="Alibaba status">
+              <option value="All"${alibabaOrderState.status === "All" ? " selected" : ""}>ทุกสถานะ</option>
+              ${statusOptions
+                .map(
+                  (status) =>
+                    `<option value="${escapeHtml(status)}"${alibabaOrderState.status === status ? " selected" : ""}>${escapeHtml(alibabaStatusLabel(status))}</option>`
+                )
+                .join("")}
+            </select>
+            <button id="exportAlibabaOrdersCsv" type="button">Export CSV</button>
+          </div>
+        </div>
+        <div class="payment-orders-table-wrap alibaba-orders-table-wrap">
+          <table class="payment-orders-table alibaba-orders-table">
+            <thead>
+              <tr>
+                <th>Order</th>
+                <th>Supplier</th>
+                <th>สถานะ</th>
+                <th>วันที่สั่ง</th>
+                <th>กำหนดจัดส่ง</th>
+                <th>สินค้า</th>
+                <th>จ่ายแล้ว</th>
+                <th>คงเหลือ</th>
+              </tr>
+            </thead>
+            <tbody id="alibabaOrderRows"></tbody>
+          </table>
+        </div>
+        <div class="payment-orders-footer">
+          <span id="alibabaOrderPageStatus"></span>
+          <div>
+            <button id="alibabaOrderPrev" type="button">ก่อนหน้า</button>
+            <button id="alibabaOrderNext" type="button">ถัดไป</button>
+          </div>
+        </div>
+      </div>`;
+    renderAlibabaRows();
+    bindAlibabaOrderEvents();
+  }
+
   function salesDateLabel(key) {
     const [year, month, day] = String(key || "")
       .split("-")
@@ -5140,6 +5496,7 @@
   renderSidebarStatus();
   renderKpis();
   renderPlatformSalesDashboard();
+  renderAlibabaPurchaseOrders();
   renderPaymentCollectionReport();
   renderUncollectedStockDashboard();
   renderOwnerCommand();

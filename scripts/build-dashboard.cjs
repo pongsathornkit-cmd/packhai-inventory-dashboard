@@ -10,6 +10,7 @@ const {
 const { buildPlatformSalesDashboard } = require("./platform-sales-core.cjs");
 const { selectPublicSyncApiBase } = require("./sync-api-base-core.cjs");
 const { buildPlainDesignInitialState } = require("./plain-design-core.cjs");
+const { buildAlibabaPurchaseOrders } = require("./alibaba-purchase-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -52,6 +53,10 @@ const inputFiles = {
   sellerPayments: preferExisting(
     path.join(dataDir, "seller_compare", "seller_order_payments.json"),
     path.join(workspaceRoot, "outputs", "seller_compare", "seller_order_payments.json")
+  ),
+  alibabaPurchaseOrders: preferExisting(
+    path.join(dataDir, "alibaba_purchase_orders.json"),
+    path.join(workspaceRoot, "outputs", "alibaba_purchase_orders.json")
   ),
 };
 
@@ -776,6 +781,9 @@ function build() {
   const lazada = readJson(inputFiles.lazada);
   const ktw = readJson(inputFiles.ktw);
   const sellerPayments = readOptionalJson(inputFiles.sellerPayments, emptySellerPayments());
+  const alibabaPurchaseOrders = buildAlibabaPurchaseOrders(
+    readOptionalJson(inputFiles.alibabaPurchaseOrders, { source: "Alibaba paid purchase orders export", orders: [] })
+  );
 
   const indices = {
     shopee: buildShopeeIndex(shopee),
@@ -880,9 +888,18 @@ function build() {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
     websiteStockTransactions,
+    alibabaPurchaseOrders,
     platformPaymentOrders,
     platformSalesDashboard,
     uncollectedStockDeductions,
+  };
+  dashboard.metadata.sources.alibabaPurchaseOrders = {
+    file: path.relative(projectRoot, inputFiles.alibabaPurchaseOrders).replace(/\\/g, "/"),
+    source: alibabaPurchaseOrders.metadata.source,
+    exportedAt: alibabaPurchaseOrders.metadata.exportedAt,
+    exportedAtLabel: alibabaPurchaseOrders.metadata.exportedAtLabel,
+    rowCount: alibabaPurchaseOrders.summary.totalOrders,
+    allowedStatuses: alibabaPurchaseOrders.metadata.allowedStatuses,
   };
   dashboard.summary.platformPayment = platformPaymentSummary;
   dashboard.summary.platformSales = platformSalesDashboard.summary;

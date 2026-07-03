@@ -170,12 +170,16 @@ select {
   order: 3;
 }
 
+.sidebar-nav a[href="#alibaba-orders"] {
+  order: 4;
+}
+
 .sidebar-nav a[href="#expenses"] {
-  order: 8;
+  order: 9;
 }
 
 .sidebar-nav a[href="#methodology"] {
-  order: 9;
+  order: 10;
 }
 
 .sidebar-nav a.active,
@@ -291,47 +295,51 @@ main {
 }
 
 #paymentCollectionReport {
+  order: 2;
+}
+
+#alibaba-orders {
   order: 1;
 }
 
 #uncollected-stock {
-  order: 2;
-}
-
-#inventory-detail {
   order: 3;
 }
 
-#warehouses {
+#inventory-detail {
   order: 4;
 }
 
-#executive {
+#warehouses {
   order: 5;
 }
 
-#ownerAnalyticsGrid {
+#executive {
   order: 6;
 }
 
-#valuation {
+#ownerAnalyticsGrid {
   order: 7;
 }
 
-main > .insight-layout {
+#valuation {
   order: 8;
 }
 
-main > .panel {
+main > .insight-layout {
   order: 9;
 }
 
-#expenses {
+main > .panel {
   order: 10;
 }
 
-#methodology {
+#expenses {
   order: 11;
+}
+
+#methodology {
+  order: 12;
 }
 
 .report-header {
@@ -1050,7 +1058,8 @@ svg {
 }
 
 .payment-collection-report,
-.uncollected-stock-dashboard {
+.uncollected-stock-dashboard,
+.alibaba-orders-dashboard {
   display: grid;
   gap: 14px;
   margin-bottom: 18px;
@@ -1066,6 +1075,95 @@ svg {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(255, 240, 246, 0.72)),
     var(--surface);
+}
+
+.alibaba-orders-dashboard {
+  border-left: 4px solid var(--sidebar-2);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.99), rgba(238, 241, 255, 0.88)),
+    var(--surface);
+}
+
+.alibaba-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.alibaba-meta-row span {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  padding: 0 11px;
+  border: 1px solid var(--strong-border);
+  border-radius: 999px;
+  background: #ffffff;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 780;
+}
+
+.alibaba-kpis .payment-report-card:first-child {
+  background: linear-gradient(135deg, var(--blue) 0%, var(--sidebar-2) 100%);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.alibaba-kpis .payment-report-card:first-child span,
+.alibaba-kpis .payment-report-card:first-child small,
+.alibaba-kpis .payment-report-card:first-child strong {
+  color: #ffffff;
+}
+
+.alibaba-status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.alibaba-status-strip article {
+  min-height: 72px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #ffffff;
+}
+
+.alibaba-status-strip strong,
+.alibaba-status-strip span {
+  display: block;
+  line-height: 1.35;
+}
+
+.alibaba-status-strip strong {
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 860;
+}
+
+.alibaba-status-strip span {
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.alibaba-orders-actions {
+  grid-template-columns: minmax(220px, 1fr) minmax(220px, 0.9fr) 120px;
+}
+
+.alibaba-orders-table {
+  min-width: 1220px;
+}
+
+.alibaba-order-link {
+  color: var(--pink);
+  font-weight: 820;
+  text-decoration: none;
+}
+
+.alibaba-order-link:hover {
+  text-decoration: underline;
 }
 
 .payment-heading {
@@ -3801,6 +3899,7 @@ tbody tr:hover {
   .sales-platform-grid,
   .payment-report-grid,
   .uncollected-breakdown,
+  .alibaba-status-strip,
   .expense-kpis,
   .prefix-grid,
   .warehouse-product-grid,
@@ -3816,6 +3915,10 @@ tbody tr:hover {
 
   .payment-orders-actions {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .alibaba-orders-actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   }
 
   .platform-sales-heading,
@@ -3873,6 +3976,7 @@ tbody tr:hover {
   .sales-platform-grid,
   .payment-report-grid,
   .uncollected-breakdown,
+  .alibaba-status-strip,
   .expense-kpis,
   .prefix-grid,
   .warehouse-product-grid,

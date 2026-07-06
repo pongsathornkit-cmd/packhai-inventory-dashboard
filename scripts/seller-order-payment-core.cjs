@@ -121,6 +121,110 @@ function lazadaProductSubtotal(row) {
   );
 }
 
+function lazadaExtraDetailSections(detail) {
+  const candidates = [
+    detail?.data?.data,
+    detail?.data?.data?.data,
+    detail?.data,
+    detail,
+  ];
+  return candidates.find(Array.isArray) || [];
+}
+
+function lazadaExtraDetailPayment(detail) {
+  const sections = lazadaExtraDetailSections(detail);
+  const byLineId = new Map();
+  let grandTotal = 0;
+
+  for (const section of sections) {
+    if (section?.name === "itemTable") {
+      for (const row of section.dataSource || []) {
+        const lineId = normalizeOrderNo(row.orderLineId || row.orderItemId || row.number || row.id);
+        const amount = firstPositive(
+          row.sellerReceivedAmount,
+          row.amountReceived,
+          row.receivedAmount,
+          row.sellerReceiveAmount
+        );
+        if (!lineId || amount <= 0) continue;
+        byLineId.set(lineId, {
+          lineId,
+          sellerReceivedAmount: roundMoney(amount),
+          transactions: row.orderDetailItemDetailVOS || row.transactions || [],
+        });
+      }
+    }
+    if (section?.name === "grandTotalInMPI") {
+      grandTotal = firstPositive(section.total, section.value, grandTotal);
+    }
+  }
+
+  const lineTotal = roundMoney([...byLineId.values()].reduce((sum, row) => sum + numberValue(row.sellerReceivedAmount), 0));
+  return {
+    byLineId,
+    grandTotal: roundMoney(lineTotal || grandTotal),
+    captured: byLineId.size > 0 || grandTotal > 0,
+  };
+}
+
+function clonePlain(value) {
+  return JSON.parse(JSON.stringify(value || {}));
+}
+
+function lazadaOrderLineId(sku) {
+  return normalizeOrderNo(sku?.orderItemId || sku?.orderLineId || sku?.order_item_id || sku?.id);
+}
+
+function lazadaDetailProductSubtotal(transactions) {
+  const positives = (transactions || [])
+    .map((item) => numberValue(item?.value ?? item?.total ?? item?.amount))
+    .filter((amount) => amount > 0);
+  return positives.length ? roundMoney(Math.max(...positives)) : 0;
+}
+
+function applyLazadaLinePayment(sku, line) {
+  sku.amountReceived = line.sellerReceivedAmount;
+  sku.sellerReceivedAmount = line.sellerReceivedAmount;
+  sku.lineAmount = line.sellerReceivedAmount;
+  sku.paymentTransactions = line.transactions;
+  const productSubtotal = lazadaDetailProductSubtotal(line.transactions);
+  if (productSubtotal > 0) {
+    sku.productSubtotal = productSubtotal;
+    sku.totalRetailPrice = productSubtotal;
+    sku.retailPrice = productSubtotal;
+  }
+}
+
+function applyLazadaPaymentDetail(row, detail) {
+  const payment = lazadaExtraDetailPayment(detail);
+  const enriched = clonePlain(row);
+  const skus = [];
+  for (const pkg of enriched.packages || []) {
+    for (const sku of pkg.skus || []) skus.push(sku);
+  }
+
+  let matchedCount = 0;
+  for (const sku of skus) {
+    const line = payment.byLineId.get(lazadaOrderLineId(sku));
+    if (!line) continue;
+    applyLazadaLinePayment(sku, line);
+    matchedCount += 1;
+  }
+
+  if (!matchedCount && skus.length === 1 && payment.byLineId.size === 1) {
+    const line = [...payment.byLineId.values()][0];
+    applyLazadaLinePayment(skus[0], line);
+    matchedCount = 1;
+  }
+
+  if (payment.grandTotal > 0) {
+    enriched.amountReceived = payment.grandTotal;
+    enriched.sellerReceivedAmount = payment.grandTotal;
+  }
+  enriched.amountReceivedCaptured = payment.captured && (matchedCount > 0 || skus.length <= 1);
+  return enriched;
+}
+
 function lazadaItemLineAmount(sku) {
   const receivedAmount = lazadaAmountReceived(sku);
   if (receivedAmount > 0) return roundMoney(receivedAmount);
@@ -158,6 +262,8 @@ function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:d
   const items = lazadaItemsFromOrder(row);
   const sumItemField = (field) => roundMoney(items.reduce((sum, item) => sum + numberValue(item[field]), 0));
   const itemAmountReceived = sumItemField("amountReceived");
+  const itemBuyerPaidAmount = sumItemField("buyerPaidAmount");
+  const itemProductSubtotal = sumItemField("productSubtotal");
   const rowAmountReceived = roundMoney(lazadaAmountReceived(row));
   const hasAmountReceived = itemAmountReceived > 0 || rowAmountReceived > 0;
   const amountReceived = roundMoney(itemAmountReceived || rowAmountReceived);
@@ -175,8 +281,8 @@ function lazadaPaymentRecordFromRow(orderNo, row, sessionMode = "storage-state:d
     amountReceivedCaptured: hasAmountReceived,
     paymentBreakdown: {
       amountReceived: hasAmountReceived ? amountReceived : 0,
-      buyerPaidAmount: roundMoney(lazadaBuyerPaidAmount(row) || sumItemField("buyerPaidAmount")),
-      productSubtotal: roundMoney(lazadaProductSubtotal(row) || sumItemField("productSubtotal")),
+      buyerPaidAmount: roundMoney(itemBuyerPaidAmount || lazadaBuyerPaidAmount(row)),
+      productSubtotal: roundMoney(itemProductSubtotal || lazadaProductSubtotal(row)),
     },
     items,
   };
@@ -787,6 +893,7 @@ module.exports = {
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
+  applyLazadaPaymentDetail,
   lazadaAmountReceived,
   lazadaBuyerPaidAmount,
   lazadaCollectedAmount,

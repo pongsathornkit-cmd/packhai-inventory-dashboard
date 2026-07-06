@@ -11,6 +11,7 @@ const {
   buildPlatformPaymentSummary,
   buildSellerPaymentIndex,
   enrichMovementWithSellerPayment,
+  applyLazadaPaymentDetail,
   lazadaPaymentRecordFromRow,
 } = require("../scripts/seller-order-payment-core.cjs");
 
@@ -377,6 +378,64 @@ test("Lazada payment-detail override beats stale order-list retail totals", () =
   assert.equal(movement.platformPaymentStatus, "matched");
   assert.equal(movement.platformPaymentAmount, 540.12);
   assert.equal(movement.platformPaymentOrderAmount, 540.12);
+});
+
+test("Lazada extra detail maps seller received amount to the matching order line", () => {
+  const order = {
+    orderNumber: "1104333687787722",
+    paymentMethod: "COD",
+    packages: [
+      {
+        packageStatusName: "confirmed",
+        skus: [
+          {
+            productName: "MARATHON FD-S1200",
+            sellerSku: "M327-2025",
+            orderItemId: "1104333687887722",
+            quantity: 1,
+            unitPrice: "669.00",
+            amountPaid: "711.00",
+            productSubtotal: "711.00",
+          },
+        ],
+      },
+    ],
+  };
+  const detail = {
+    data: {
+      data: [
+        {
+          name: "itemTable",
+          dataSource: [
+            {
+              orderLineId: "1104333687887722",
+              sellerReceivedAmount: "540.12",
+              orderDetailItemDetailVOS: [
+                { transactionType: "ยอดรวมค่าสินค้า", value: "669.00" },
+                { transactionType: "หักค่าธรรมเนียมการขายสินค้า", value: "-93.06" },
+              ],
+            },
+          ],
+        },
+        { name: "grandTotalInMPI", total: "540.12" },
+      ],
+    },
+  };
+
+  const record = lazadaPaymentRecordFromRow(
+    "1104333687787722",
+    applyLazadaPaymentDetail(order, detail),
+    "unit-test"
+  );
+
+  assert.equal(record.collectedAmount, 540.12);
+  assert.equal(record.amountReceivedCaptured, true);
+  assert.equal(record.paymentBreakdown.amountReceived, 540.12);
+  assert.equal(record.paymentBreakdown.productSubtotal, 669);
+  assert.equal(record.paymentBreakdown.buyerPaidAmount, 711);
+  assert.equal(record.items[0].skuText, "M327-2025");
+  assert.equal(record.items[0].amountReceived, 540.12);
+  assert.equal(record.items[0].lineAmount, 540.12);
 });
 
 test("seller platform payment is not assigned to a SKU when multi-item order has no item amounts", () => {

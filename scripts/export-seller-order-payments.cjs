@@ -15,6 +15,7 @@ const {
   lazadaItemLineAmount: coreLazadaItemLineAmount,
   lazadaItemsFromOrder: coreLazadaItemsFromOrder,
   lazadaPaymentRecordFromRow: coreLazadaPaymentRecordFromRow,
+  applyLazadaPaymentDetail,
 } = require("./seller-order-payment-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
@@ -64,6 +65,9 @@ const lazadaSellerHost = "sellercenter.lazada.co.th";
 const lazadaOrderQueryApi = "mtop.lazada.seller.order.query.list";
 const lazadaOrderQueryVersion = "1.0";
 const lazadaOrderQueryEndpoint = lazadaMtopEndpoint(lazadaOrderQueryApi, lazadaOrderQueryVersion);
+const lazadaOrderExtraDetailApi = "mtop.lazada.seller.order.extra.detail";
+const lazadaOrderExtraDetailVersion = "1.0";
+const lazadaOrderExtraDetailEndpoint = lazadaMtopEndpoint(lazadaOrderExtraDetailApi, lazadaOrderExtraDetailVersion);
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -897,6 +901,41 @@ async function callLazadaOrderQueryDirect(context, orderNo) {
   return rows.find((row) => String(row.orderNumber || "") === orderNo) || rows[0] || null;
 }
 
+async function callLazadaOrderExtraDetailDirect(context, orderNo) {
+  const data = JSON.stringify({ tradeOrderId: orderNo });
+  const { url } = createLazadaMtopUrl({
+    api: lazadaOrderExtraDetailApi,
+    version: lazadaOrderExtraDetailVersion,
+    endpoint: lazadaOrderExtraDetailEndpoint,
+    token: context.tokenCookie,
+    data,
+    timestamp: String(Date.now()),
+    appKey: process.env.LAZADA_ORDER_DETAIL_MTOP_APP_KEY || process.env.LAZADA_ORDER_MTOP_APP_KEY || "4272",
+  });
+  const response = await fetch(url, {
+    headers: {
+      accept: "application/json",
+      cookie: cookieHeaderForHosts(context.state, [lazadaApiHost, lazadaSellerHost], lazadaOrderExtraDetailEndpoint),
+      origin: `https://${lazadaSellerHost}`,
+      referer: `https://${lazadaSellerHost}/apps/order/detail?tradeOrderId=${encodeURIComponent(orderNo)}`,
+      "user-agent": "Mozilla/5.0",
+    },
+  });
+  const text = await response.text();
+  let json;
+  try {
+    json = text ? JSON.parse(text) : {};
+  } catch {
+    throw new Error(`${lazadaOrderExtraDetailApi} returned non-JSON status ${response.status}: ${text.slice(0, 160)}`);
+  }
+  if (!response.ok) {
+    throw new Error(`${lazadaOrderExtraDetailApi} returned HTTP ${response.status}: ${JSON.stringify(json).slice(0, 240)}`);
+  }
+  const ret = (json.ret || []).join(" ");
+  if (!/SUCCESS/i.test(ret)) throw new Error(ret || "Lazada order extra detail failed");
+  return json;
+}
+
 function lazadaCollectedAmount(row) {
   return coreLazadaCollectedAmount(row);
 }
@@ -924,7 +963,16 @@ async function exportLazadaPaymentsDirect(orderNos, existingMap, errors, onRecor
       if (!row) {
         errors.push(`Lazada ${orderNo}: order not found`);
       } else {
-        const record = lazadaPaymentRecordFromRow(orderNo, row);
+        let detail = null;
+        try {
+          detail = await callLazadaOrderExtraDetailDirect(context, orderNo);
+        } catch (error) {
+          errors.push(`Lazada ${orderNo}: payment detail unavailable (${error.message || error})`);
+        }
+        const record = lazadaPaymentRecordFromRow(
+          orderNo,
+          detail ? applyLazadaPaymentDetail(row, detail) : row
+        );
         records.push(record);
         if (onRecord) onRecord(record, { platform: "Lazada", current: current + 1, total: orderNos.length });
       }
@@ -1034,7 +1082,7 @@ async function openLazadaPage() {
 }
 
 async function fetchLazadaPayment(page, orderNo) {
-  return page.evaluate(async (orderNoValue) => {
+  const result = await page.evaluate(async (orderNoValue) => {
     function simplify(value) {
       try {
         return JSON.parse(JSON.stringify(value));
@@ -1076,8 +1124,26 @@ async function fetchLazadaPayment(page, orderNo) {
     const ret = (response.ret || []).join(" ");
     if (!/SUCCESS/i.test(ret)) throw new Error(ret || "Lazada order query failed");
     const rows = response?.data?.data?.dataSource || [];
-    return rows.find((row) => String(row.orderNumber || "") === orderNoValue) || rows[0] || null;
+    const row = rows.find((item) => String(item.orderNumber || "") === orderNoValue) || rows[0] || null;
+    if (!row) return { row: null, detail: null, detailError: "" };
+
+    let detail = null;
+    let detailError = "";
+    try {
+      detail = await callMtop("mtop.lazada.seller.order.extra.detail", {
+        tradeOrderId: orderNoValue,
+      });
+      const detailRet = (detail.ret || []).join(" ");
+      if (!/SUCCESS/i.test(detailRet)) throw new Error(detailRet || "Lazada order extra detail failed");
+    } catch (error) {
+      detailError = error?.message || String(error);
+    }
+    return { row, detail, detailError };
   }, orderNo);
+  if (!result?.row) return null;
+  const row = result.detail ? applyLazadaPaymentDetail(result.row, result.detail) : result.row;
+  if (result.detailError) row.paymentDetailError = result.detailError;
+  return row;
 }
 
 function lazadaItemsFromOrder(row) {
@@ -1098,6 +1164,9 @@ async function exportLazadaPaymentsBrowser(orderNos, existingMap, errors, onReco
         if (!row) {
           errors.push(`Lazada ${orderNo}: order not found`);
         } else {
+          if (row.paymentDetailError) {
+            errors.push(`Lazada ${orderNo}: payment detail unavailable (${row.paymentDetailError})`);
+          }
           const record = lazadaPaymentRecordFromRow(orderNo, row, session.mode || "browser");
           records.push(record);
           if (onRecord) onRecord(record, { platform: "Lazada", current: current + 1, total: orderNos.length });

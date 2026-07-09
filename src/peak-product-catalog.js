@@ -57,6 +57,9 @@ const els = {
   metricProducts: document.getElementById("metricProducts"),
   metricVendors: document.getElementById("metricVendors"),
   metricLatestSale: document.getElementById("metricLatestSale"),
+  hoverPreview: document.getElementById("imageHoverPreview"),
+  hoverPreviewImage: document.getElementById("hoverPreviewImage"),
+  hoverPreviewMeta: document.getElementById("hoverPreviewMeta"),
   reviewSelected: document.getElementById("reviewSelected"),
   reviewDraftCount: document.getElementById("reviewDraftCount"),
   reviewAiCount: document.getElementById("reviewAiCount"),
@@ -472,6 +475,7 @@ function updateLightbox() {
 function openLightbox(item, startIndex) {
   const images = getProductImages(item);
   if (!images.length) return;
+  hideHoverPreview();
 
   state.lightbox.images = images;
   state.lightbox.index = Math.min(Math.max(startIndex, 0), images.length - 1);
@@ -498,6 +502,56 @@ function showLightboxImage(direction) {
   if (images.length < 2) return;
   state.lightbox.index = (state.lightbox.index + direction + images.length) % images.length;
   updateLightbox();
+}
+
+function canShowHoverPreview() {
+  return window.matchMedia?.("(hover: hover) and (pointer: fine)")?.matches;
+}
+
+function positionHoverPreview(event, anchor) {
+  if (!els.hoverPreview) return;
+  const margin = 14;
+  const rect = els.hoverPreview.getBoundingClientRect();
+  const anchorRect = anchor?.getBoundingClientRect?.();
+  const pointerX = event?.clientX ?? anchorRect?.right ?? margin;
+  const pointerY = event?.clientY ?? anchorRect?.top ?? margin;
+  let left = pointerX + margin;
+  let top = pointerY + margin;
+
+  if (left + rect.width > window.innerWidth - margin) {
+    left = pointerX - rect.width - margin;
+  }
+  if (top + rect.height > window.innerHeight - margin) {
+    top = window.innerHeight - rect.height - margin;
+  }
+
+  left = Math.max(margin, left);
+  top = Math.max(margin, top);
+  els.hoverPreview.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+}
+
+function showHoverPreview(item, image, index, event, anchor) {
+  if (!canShowHoverPreview() || !els.hoverPreview || !image) return;
+  const src = getLightboxImageUrl(image) || getImageUrl(image);
+  if (!src) return;
+  const fallback = getImageUrl(image) && getImageUrl(image) !== src ? getImageUrl(image) : getFallbackImageUrl(image);
+  const productName = item.product_name || "สินค้า";
+
+  els.hoverPreviewImage.dataset.fallback = fallback || "";
+  els.hoverPreviewImage.src = src;
+  els.hoverPreviewImage.alt = `${productName} รูปที่ ${index + 1}`;
+  els.hoverPreviewMeta.textContent = `${productName} • รูปที่ ${numberFormatter.format(index + 1)}`;
+  els.hoverPreview.classList.add("is-visible");
+  els.hoverPreview.setAttribute("aria-hidden", "false");
+  positionHoverPreview(event, anchor);
+}
+
+function hideHoverPreview() {
+  if (!els.hoverPreview) return;
+  els.hoverPreview.classList.remove("is-visible");
+  els.hoverPreview.setAttribute("aria-hidden", "true");
+  els.hoverPreviewImage.removeAttribute("src");
+  els.hoverPreviewImage.dataset.fallback = "";
 }
 
 function compareProducts(a, b) {
@@ -715,6 +769,15 @@ function renderImageGallery(item) {
       frame.title = "ขยายรูปภาพ";
       frame.setAttribute("aria-label", `${item.product_name || "สินค้า"} รูปที่ ${index + 1}`);
       frame.addEventListener("click", () => openLightbox(item, index));
+      frame.addEventListener("mouseenter", (event) => showHoverPreview(item, image, index, event, frame));
+      frame.addEventListener("mouseover", (event) => showHoverPreview(item, image, index, event, frame));
+      frame.addEventListener("pointerenter", (event) => showHoverPreview(item, image, index, event, frame));
+      frame.addEventListener("mousemove", (event) => positionHoverPreview(event, frame));
+      frame.addEventListener("pointermove", (event) => positionHoverPreview(event, frame));
+      frame.addEventListener("mouseleave", hideHoverPreview);
+      frame.addEventListener("pointerleave", hideHoverPreview);
+      frame.addEventListener("focus", () => showHoverPreview(item, image, index, null, frame));
+      frame.addEventListener("blur", hideHoverPreview);
 
       const img = document.createElement("img");
       img.src = src;
@@ -1138,6 +1201,15 @@ els.clearSelectedRows.addEventListener("click", clearSelectedRows);
 els.applyBulkReview.addEventListener("click", applyBulkReview);
 els.clearReviewDrafts.addEventListener("click", clearReviewDrafts);
 els.lightboxClose.addEventListener("click", closeLightbox);
+els.hoverPreviewImage.addEventListener("error", () => {
+  const fallback = els.hoverPreviewImage.dataset.fallback;
+  if (fallback && els.hoverPreviewImage.src !== fallback) {
+    els.hoverPreviewImage.src = fallback;
+    els.hoverPreviewImage.dataset.fallback = "";
+    return;
+  }
+  hideHoverPreview();
+});
 els.lightboxPrev.addEventListener("click", () => showLightboxImage(-1));
 els.lightboxNext.addEventListener("click", () => showLightboxImage(1));
 els.lightbox.addEventListener("click", (event) => {

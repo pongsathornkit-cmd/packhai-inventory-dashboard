@@ -798,6 +798,45 @@ th {
   background: #ffffff;
 }
 
+.image-hover-preview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 45;
+  width: min(360px, calc(100vw - 28px));
+  display: none;
+  overflow: hidden;
+  pointer-events: none;
+  border: 1px solid rgba(15, 23, 42, 0.18);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: 0 24px 70px rgba(15, 23, 42, 0.28);
+}
+
+.image-hover-preview.is-visible {
+  display: block;
+}
+
+.image-hover-preview img {
+  width: 100%;
+  height: min(340px, 58vh);
+  display: block;
+  background: #f8fafc;
+  object-fit: contain;
+}
+
+.image-hover-preview span {
+  display: block;
+  border-top: 1px solid var(--line);
+  padding: 8px 10px;
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 800;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .image-lightbox {
   position: fixed;
   inset: 0;
@@ -919,6 +958,12 @@ th {
 
   .table-scroll {
     max-height: none;
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .image-hover-preview {
+    display: none !important;
   }
 }
 

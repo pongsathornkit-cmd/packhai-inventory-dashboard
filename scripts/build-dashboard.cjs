@@ -110,6 +110,12 @@ function readPublicSupabaseConfig() {
   };
 }
 
+function copyStaticPageAssets(fileNames) {
+  for (const fileName of fileNames) {
+    fs.copyFileSync(path.join(srcDir, fileName), path.join(distDir, fileName));
+  }
+}
+
 function sellerPaymentRecords(data) {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.orders)) return data.orders;
@@ -945,6 +951,7 @@ function build() {
 
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");
   writePlainDesignPage(dashboard);
+  copyStaticPageAssets(["peak-product-catalog.html", "peak-product-catalog.css", "peak-product-catalog.js"]);
   fs.writeFileSync(path.join(distDir, "inventory-valuation-data.json"), JSON.stringify(dashboard, null, 2), "utf8");
   fs.writeFileSync(
     path.join(distDir, "stock-movements.json"),

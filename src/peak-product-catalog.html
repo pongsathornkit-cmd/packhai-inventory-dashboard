@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>PEAK Product Catalog</title>
+    <link rel="stylesheet" href="peak-product-catalog.css" />
+    <script defer src="peak-product-catalog.js"></script>
+  </head>
+  <body>
+    <div class="catalog-shell">
+      <aside class="catalog-sidebar" aria-label="PEAK catalog navigation">
+        <a class="brand" href="index.html" aria-label="กลับ Dashboard">
+          <span class="brand-mark">P</span>
+          <span>
+            <strong>PEAK Catalog</strong>
+            <small>Seller price list</small>
+          </span>
+        </a>
+
+        <nav class="sidebar-links">
+          <a href="index.html">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5M5 9.5V21h14V9.5M9 21v-7h6v7" /></svg>
+            Dashboard เดิม
+          </a>
+          <a class="active" href="peak-product-catalog.html">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M7 7V5h10v2M6 10h12l-1 10H7zM9 14h6" /></svg>
+            Catalog สินค้า
+          </a>
+        </nav>
+
+        <div class="side-metrics" id="sideMetrics">
+          <div>
+            <span>สินค้า</span>
+            <strong id="metricProducts">-</strong>
+          </div>
+          <div>
+            <span>ร้านค้า</span>
+            <strong id="metricVendors">-</strong>
+          </div>
+          <div>
+            <span>ขายล่าสุด</span>
+            <strong id="metricLatestSale">-</strong>
+          </div>
+        </div>
+      </aside>
+
+      <main class="catalog-main">
+        <header class="catalog-header">
+          <div>
+            <p class="eyebrow">PEAK sales since 2021</p>
+            <h1>ตารางสินค้าแยกตามร้านค้าที่ซื้อ</h1>
+            <p class="header-copy">รวมรูปสินค้า 3 รูป, บิลซื้อล่าสุด, ราคาซื้อล่าสุด, ราคาขายล่าสุด และราคาขายสำหรับ Lazada / Shopee</p>
+          </div>
+          <div class="header-actions">
+            <button class="icon-button" id="refreshCatalog" type="button" title="รีเฟรชข้อมูล" aria-label="รีเฟรชข้อมูล">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 0 1-15.5 6.2M3 12A9 9 0 0 1 18.5 5.8M18 3v5h-5M6 21v-5h5" /></svg>
+            </button>
+            <button class="secondary-button" id="downloadCatalogCsv" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
+              CSV
+            </button>
+          </div>
+        </header>
+
+        <section class="summary-strip" aria-label="Catalog summary">
+          <div>
+            <span>Lazada</span>
+            <strong>+25%</strong>
+            <small>จากราคาขายล่าสุด</small>
+          </div>
+          <div>
+            <span>Shopee</span>
+            <strong>+30%</strong>
+            <small>จากราคาขายล่าสุด</small>
+          </div>
+          <div>
+            <span>รูปสินค้า</span>
+            <strong>3</strong>
+            <small>รูปต่อรายการ</small>
+          </div>
+        </section>
+
+        <section class="toolbar" aria-label="Catalog filters">
+          <label class="search-field">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m21 21-4.3-4.3M10.8 18a7.2 7.2 0 1 1 0-14.4 7.2 7.2 0 0 1 0 14.4z" /></svg>
+            <input id="catalogSearch" type="search" placeholder="ค้นหาชื่อสินค้า / รหัส / บิล / ร้านค้า" />
+          </label>
+          <label>
+            ร้านค้า
+            <select id="vendorFilter">
+              <option value="">ทั้งหมด</option>
+            </select>
+          </label>
+          <label>
+            เรียงในแต่ละร้าน
+            <select id="sortMode">
+              <option value="sale-date-desc">ขายล่าสุด</option>
+              <option value="sale-price-desc">ราคาขายสูงสุด</option>
+              <option value="purchase-price-desc">ราคาซื้อสูงสุด</option>
+              <option value="name-asc">ชื่อสินค้า</option>
+            </select>
+          </label>
+        </section>
+
+        <section class="status-bar" id="catalogStatus" role="status">กำลังโหลดข้อมูลสินค้า...</section>
+
+        <section class="table-panel" aria-label="Product catalog table">
+          <div class="table-meta">
+            <strong id="resultCount">-</strong>
+            <span>จัดกลุ่มตามร้านค้าที่ซื้อ</span>
+          </div>
+          <div class="table-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>รูปสินค้า</th>
+                  <th>ชื่อสินค้า</th>
+                  <th>อ้างอิงบิลซื้อล่าสุด</th>
+                  <th>ราคาซื้อล่าสุด</th>
+                  <th>ราคาขายล่าสุด</th>
+                  <th>Lazada +25%</th>
+                  <th>Shopee +30%</th>
+                  <th>อ้างอิงบิลขายล่าสุด</th>
+                </tr>
+              </thead>
+              <tbody id="catalogBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </main>
+    </div>
+    <noscript>ต้องเปิด JavaScript เพื่อโหลดข้อมูลจาก Supabase</noscript>
+  </body>
+</html>

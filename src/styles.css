@@ -148,6 +148,10 @@ select {
   order: 2;
 }
 
+.sidebar-nav a[href="peak-product-catalog.html"] {
+  order: 3;
+}
+
 .sidebar-nav a[href="#uncollected-stock"] {
   order: 4;
 }

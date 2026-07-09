@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PEAK Product Catalog</title>
     <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="peak-product-catalog.css?v=compact-rows-20260709" />
-    <script defer src="peak-product-catalog.js?v=compact-rows-20260709"></script>
+    <link rel="stylesheet" href="peak-product-catalog.css?v=compact-controls-20260709" />
+    <script defer src="peak-product-catalog.js?v=compact-controls-20260709"></script>
   </head>
   <body>
     <div class="catalog-shell">
@@ -154,6 +154,12 @@
             </button>
           </div>
 
+          <details class="bulk-panel">
+            <summary>
+              <span>ตั้งค่ารายละเอียด bulk</span>
+              <small>สถานะ รูปที่ผิด ชื่อใหม่ ราคาใหม่ และเหตุผล</small>
+            </summary>
+
           <div class="bulk-review-grid">
             <fieldset class="bulk-statuses">
               <legend>สถานะที่ต้องการตั้งแบบ bulk</legend>
@@ -191,6 +197,7 @@
               </fieldset>
             </div>
           </div>
+          </details>
         </section>
 
         <section class="status-bar" id="catalogStatus" role="status">กำลังโหลดข้อมูลสินค้า...</section>

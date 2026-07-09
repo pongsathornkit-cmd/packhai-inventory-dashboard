@@ -68,6 +68,7 @@ const els = {
   applyBulkReview: document.getElementById("applyBulkReview"),
   clearReviewDrafts: document.getElementById("clearReviewDrafts"),
   reviewCsv: document.getElementById("downloadReviewCsv"),
+  bulkPanel: document.querySelector(".bulk-panel"),
   bulkName: document.getElementById("bulkNewName"),
   bulkUnitSuffix: document.getElementById("bulkUnitSuffix"),
   bulkTargetSalePrice: document.getElementById("bulkTargetSalePrice"),
@@ -1124,6 +1125,10 @@ function applyBulkReview() {
   const bulkOtherReason = els.bulkOtherReason?.value.trim() || "";
 
   if (!statuses.length) {
+    if (els.bulkPanel && !els.bulkPanel.open) {
+      els.bulkPanel.open = true;
+      els.bulkPanel.scrollIntoView({ block: "nearest" });
+    }
     setStatus("เลือกสถานะอย่างน้อย 1 ข้อก่อน apply bulk", "error");
     return;
   }
@@ -1155,6 +1160,7 @@ function applyBulkReview() {
   }
 
   clearBulkInputs();
+  if (els.bulkPanel) els.bulkPanel.open = false;
   setStatus(`ตั้งสถานะ bulk แล้ว ${numberFormatter.format(targets.length)} รายการ`, "ready");
   render();
 }

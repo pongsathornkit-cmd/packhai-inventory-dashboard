@@ -194,6 +194,41 @@ function parseKtwSourcePrice(html, sku, options = {}) {
   return 0;
 }
 
+function selectKtwSourcePrice({ visibleSourcePrice, previousSourcePrice, seedSourcePrice }) {
+  const visible = moneyValue(numberValue(visibleSourcePrice));
+  if (visible > 0) {
+    return {
+      sourcePrice: visible,
+      priceIssue: "",
+      priceStale: false,
+    };
+  }
+
+  const previous = moneyValue(numberValue(previousSourcePrice));
+  if (previous > 0) {
+    return {
+      sourcePrice: previous,
+      priceIssue: "visible KTW sale price was not found; preserved previous verified price",
+      priceStale: true,
+    };
+  }
+
+  const seed = moneyValue(numberValue(seedSourcePrice));
+  if (seed > 0) {
+    return {
+      sourcePrice: seed,
+      priceIssue: "visible KTW sale price was not found; preserved seed price",
+      priceStale: true,
+    };
+  }
+
+  return {
+    sourcePrice: 0,
+    priceIssue: "visible KTW sale price was not found",
+    priceStale: true,
+  };
+}
+
 function parseConversionUnitTable(html) {
   const tableMatch = String(html).match(/id=["']conversionunit["'][\s\S]*?<tbody>([\s\S]*?)<\/tbody>/i);
   if (!tableMatch) return null;
@@ -230,7 +265,7 @@ function parseConversionUnitTable(html) {
   };
 }
 
-async function fetchProductKtwData(product) {
+async function fetchProductKtwData(product, previousItem = {}) {
   const sku = normalizeSku(product.sku);
   const sourceUrl = productUrl(product);
   const headers = {
@@ -251,7 +286,13 @@ async function fetchProductKtwData(product) {
   const parsed = parseConversionUnitTable(html);
   const ktwImages = parseProductImages(html, sourceUrl);
   const visibleSourcePrice = parseKtwSourcePrice(html, sku, { discountOnly: true });
-  const sourcePrice = visibleSourcePrice || moneyValue(numberValue(product.ktwPrice)) || parseKtwSourcePrice(html, sku);
+  const fallbackTrackingPrice = parseKtwSourcePrice(html, sku);
+  const selectedPrice = selectKtwSourcePrice({
+    visibleSourcePrice,
+    previousSourcePrice: previousItem.sourcePrice,
+    seedSourcePrice: product.ktwPrice,
+  });
+  const sourcePrice = selectedPrice.sourcePrice;
   const logisticsValid = Boolean(parsed?.widthCm && parsed?.lengthCm && parsed?.heightCm && parsed?.unitWeightKg);
   const logisticsIssue = !parsed
     ? "conversion-unit table was not found"
@@ -265,8 +306,14 @@ async function fetchProductKtwData(product) {
     capturedAt: new Date().toISOString(),
     sourcePrice,
     priceSourceLabel: "shop.ktw.co.th",
-    priceCapturedAt: new Date().toISOString(),
+    priceCapturedAt: selectedPrice.priceStale
+      ? previousItem.priceCapturedAt || previousItem.capturedAt || new Date().toISOString()
+      : new Date().toISOString(),
     priceValid: sourcePrice > 0,
+    priceIssue: selectedPrice.priceIssue,
+    priceStale: selectedPrice.priceStale,
+    visibleSourcePrice,
+    trackingPriceIgnored: fallbackTrackingPrice && fallbackTrackingPrice !== visibleSourcePrice ? fallbackTrackingPrice : 0,
     widthCm: parsed?.widthCm || 0,
     lengthCm: parsed?.lengthCm || 0,
     heightCm: parsed?.heightCm || 0,
@@ -282,18 +329,21 @@ async function fetchProductKtwData(product) {
 async function main() {
   const seed = readJson(seedFile);
   const products = seed.products || [];
+  const previousPayload = fs.existsSync(outputFile) ? readJson(outputFile) : { items: [] };
+  const previousBySku = new Map((previousPayload.items || []).map((item) => [normalizeSku(item.sku), item]));
   const items = [];
   const missing = [];
 
   for (const product of products) {
     const sku = normalizeSku(product.sku);
     try {
-      const item = await fetchProductKtwData(product);
+      const item = await fetchProductKtwData(product, previousBySku.get(sku) || {});
       items.push(item);
       const logisticsText = item.logisticsValid
         ? `${item.lengthCm} x ${item.widthCm} x ${item.heightCm} cm, ${item.unitWeightKg} kg`
         : item.logisticsIssue;
-      console.log(`${sku}: ${logisticsText}; ${item.imageCount} images`);
+      const priceText = item.priceStale ? `${item.sourcePrice} (preserved)` : `${item.sourcePrice}`;
+      console.log(`${sku}: ${logisticsText}; price ${priceText}; ${item.imageCount} images`);
       if (item.logisticsIssue) {
         missing.push({ sku, sourceUrl: productUrl(product), message: item.logisticsIssue });
       }

@@ -1,5 +1,5 @@
 {
-  "createdAt": "2026-07-01T07:49:20.223Z",
+  "createdAt": "2026-07-09T02:55:52.212Z",
   "sourceLabel": "shop.ktw.co.th",
   "source": "KTW product page data",
   "itemCount": 23,
@@ -12,7 +12,7 @@
       "capturedAt": "2026-07-01T07:48:50.858Z",
       "sourcePrice": 155,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T09:22:33.872Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 14.8,
       "lengthCm": 16.9,
@@ -70,16 +70,20 @@
         "dimensionUnit": "MM",
         "weight": 0.1,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 155,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1320",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1320",
       "capturedAt": "2026-07-01T07:48:52.258Z",
-      "sourcePrice": 546.12,
+      "sourcePrice": 450,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:52.258Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 21.8,
       "lengthCm": 24.1,
@@ -137,16 +141,20 @@
         "dimensionUnit": "MM",
         "weight": 0.36,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 450,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1330",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1330",
       "capturedAt": "2026-07-01T07:48:54.050Z",
-      "sourcePrice": 1336.6,
+      "sourcePrice": 1095,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:54.050Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29.2,
       "lengthCm": 31.6,
@@ -204,16 +212,20 @@
         "dimensionUnit": "MM",
         "weight": 0.78,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 1095,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1340",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1340",
       "capturedAt": "2026-07-01T07:48:54.788Z",
-      "sourcePrice": 1705.6,
+      "sourcePrice": 1400,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:54.788Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 31.5,
       "lengthCm": 31.8,
@@ -265,16 +277,20 @@
         "dimensionUnit": "MM",
         "weight": 1.15,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 1400,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1520",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1520",
       "capturedAt": "2026-07-01T07:48:55.467Z",
-      "sourcePrice": 394.42,
+      "sourcePrice": 325,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:55.467Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 21.7,
       "lengthCm": 24,
@@ -350,16 +366,20 @@
         "dimensionUnit": "MM",
         "weight": 0.325,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 325,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1510",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1510",
       "capturedAt": "2026-07-01T07:48:56.329Z",
-      "sourcePrice": 170.56,
+      "sourcePrice": 130,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:56.329Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 14.7,
       "lengthCm": 17,
@@ -435,16 +455,20 @@
         "dimensionUnit": "MM",
         "weight": 0.095,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 130,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1540",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1540",
       "capturedAt": "2026-07-01T07:48:57.100Z",
-      "sourcePrice": 1230,
+      "sourcePrice": 1010,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:57.100Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 31.5,
       "lengthCm": 31.5,
@@ -514,16 +538,20 @@
         "dimensionUnit": "MM",
         "weight": 1.135,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 1010,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1530",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1530",
       "capturedAt": "2026-07-01T07:48:58.107Z",
-      "sourcePrice": 959.4,
+      "sourcePrice": 790,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:58.107Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29,
       "lengthCm": 31.3,
@@ -599,16 +627,20 @@
         "dimensionUnit": "MM",
         "weight": 0.695,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 790,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1550",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1550",
       "capturedAt": "2026-07-01T07:48:59.133Z",
-      "sourcePrice": 1426.8,
+      "sourcePrice": 1170,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:59.133Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 0,
       "lengthCm": 0,
@@ -636,16 +668,20 @@
         "dimensionUnit": "",
         "weight": 0,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 1170,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1040",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1040",
       "capturedAt": "2026-07-01T07:48:59.884Z",
-      "sourcePrice": 220.58,
+      "sourcePrice": 175,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:48:59.884Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 22,
       "lengthCm": 24.1,
@@ -703,16 +739,20 @@
         "dimensionUnit": "MM",
         "weight": 0.26,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 175,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1060",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1060",
       "capturedAt": "2026-07-01T07:49:01.900Z",
-      "sourcePrice": 252.56,
+      "sourcePrice": 200,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:01.900Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 21.9,
       "lengthCm": 24.1,
@@ -770,16 +810,20 @@
         "dimensionUnit": "MM",
         "weight": 0.26,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 200,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1030",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1030",
       "capturedAt": "2026-07-01T07:49:04.135Z",
-      "sourcePrice": 145.14,
+      "sourcePrice": 115,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:04.135Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 14.8,
       "lengthCm": 16.8,
@@ -837,16 +881,20 @@
         "dimensionUnit": "MM",
         "weight": 0.08,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 115,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1050",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1050",
       "capturedAt": "2026-07-01T07:49:06.274Z",
-      "sourcePrice": 233.7,
+      "sourcePrice": 185,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:06.274Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 21.9,
       "lengthCm": 24.1,
@@ -904,16 +952,20 @@
         "dimensionUnit": "MM",
         "weight": 0.26,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 185,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1070",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1070",
       "capturedAt": "2026-07-01T07:49:07.881Z",
-      "sourcePrice": 279.62,
+      "sourcePrice": 235,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:07.881Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 21.8,
       "lengthCm": 24.1,
@@ -971,16 +1023,20 @@
         "dimensionUnit": "MM",
         "weight": 0.27,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 235,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1080",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1080",
       "capturedAt": "2026-07-01T07:49:09.068Z",
-      "sourcePrice": 363.26,
+      "sourcePrice": 305,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:09.068Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 27,
       "lengthCm": 29.1,
@@ -1038,16 +1094,20 @@
         "dimensionUnit": "MM",
         "weight": 0.56,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 305,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1010",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1010",
       "capturedAt": "2026-07-01T07:49:09.840Z",
-      "sourcePrice": 119.72,
+      "sourcePrice": 90,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:09.840Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 14.8,
       "lengthCm": 16.8,
@@ -1105,16 +1165,20 @@
         "dimensionUnit": "MM",
         "weight": 0.08,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 90,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1120",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1120",
       "capturedAt": "2026-07-01T07:49:11.190Z",
-      "sourcePrice": 425.58,
+      "sourcePrice": 365,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:11.190Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29.2,
       "lengthCm": 31.4,
@@ -1172,16 +1236,20 @@
         "dimensionUnit": "MM",
         "weight": 0.74,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 365,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1110",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1110",
       "capturedAt": "2026-07-01T07:49:13.563Z",
-      "sourcePrice": 414.1,
+      "sourcePrice": 355,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:13.563Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29.2,
       "lengthCm": 31.5,
@@ -1239,16 +1307,20 @@
         "dimensionUnit": "MM",
         "weight": 0.74,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 355,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1090",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1090",
       "capturedAt": "2026-07-01T07:49:16.259Z",
-      "sourcePrice": 378.84,
+      "sourcePrice": 325,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:16.259Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 27,
       "lengthCm": 29.1,
@@ -1306,16 +1378,20 @@
         "dimensionUnit": "MM",
         "weight": 0.56,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 325,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1020",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1020",
       "capturedAt": "2026-07-01T07:49:17.967Z",
-      "sourcePrice": 126.28,
+      "sourcePrice": 95,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:17.967Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 14.8,
       "lengthCm": 16.8,
@@ -1373,16 +1449,20 @@
         "dimensionUnit": "MM",
         "weight": 0.09,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 95,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1130",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1130",
       "capturedAt": "2026-07-01T07:49:18.825Z",
-      "sourcePrice": 449.36,
+      "sourcePrice": 385,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:18.825Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29.2,
       "lengthCm": 31.6,
@@ -1440,16 +1520,20 @@
         "dimensionUnit": "MM",
         "weight": 0.74,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 385,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1220",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1220",
       "capturedAt": "2026-07-01T07:49:19.553Z",
-      "sourcePrice": 819.18,
+      "sourcePrice": 675,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:19.553Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29.2,
       "lengthCm": 31.5,
@@ -1507,16 +1591,20 @@
         "dimensionUnit": "MM",
         "weight": 0.87,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 675,
+      "trackingPriceIgnored": 0
     },
     {
       "sku": "P525-1210",
       "sourceLabel": "shop.ktw.co.th",
       "sourceUrl": "https://shop.ktw.co.th/p/P525-1210",
       "capturedAt": "2026-07-01T07:49:20.223Z",
-      "sourcePrice": 770.8,
+      "sourcePrice": 635,
       "priceSourceLabel": "shop.ktw.co.th",
-      "priceCapturedAt": "2026-07-01T07:49:20.223Z",
+      "priceCapturedAt": "2026-07-09T02:55:52.212Z",
       "priceValid": true,
       "widthCm": 29.3,
       "lengthCm": 31.5,
@@ -1574,7 +1662,11 @@
         "dimensionUnit": "MM",
         "weight": 0.85,
         "weightUnit": "KG"
-      }
+      },
+      "priceIssue": "",
+      "priceStale": false,
+      "visibleSourcePrice": 635,
+      "trackingPriceIgnored": 0
     }
   ],
   "missing": [

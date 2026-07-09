@@ -20,7 +20,7 @@ function loadSyncHelpers() {
     module: { exports: {} },
     process: { env: {}, exitCode: 0 },
   };
-  vm.runInNewContext(`${source}\nmodule.exports = { parseKtwSourcePrice };`, sandbox, { filename: file });
+  vm.runInNewContext(`${source}\nmodule.exports = { parseKtwSourcePrice, selectKtwSourcePrice };`, sandbox, { filename: file });
   return sandbox.module.exports;
 }
 
@@ -71,6 +71,38 @@ test("KTW price parser can ignore public tracking price when a discounted price 
 
   assert.equal(parseKtwSourcePrice(html, "P525-1310"), 203.36);
   assert.equal(parseKtwSourcePrice(html, "P525-1310", { discountOnly: true }), 0);
+});
+
+test("KTW price parser uses the logged-in visible sale price for P525-1320", () => {
+  const { parseKtwSourcePrice } = loadSyncHelpers();
+  const html = `
+    <script>
+      // KTW-4976 fix pdp price
+      dataLayer.push({
+        ecommerce: { items: [{ "item_id": "P525-1320", "price": 546.12 }] }
+      });
+    </script>
+    <div class="pdp-price-currentprice text-left">ราคา : 450.00 บาท</div>
+    <span class="pdp-price-wasprice">ราคาตั้ง : 900.00</span>
+    <div>ราคาปลีกแนะนำ : 666.00</div>
+  `;
+
+  assert.equal(parseKtwSourcePrice(html, "P525-1320"), 450);
+  assert.equal(parseKtwSourcePrice(html, "P525-1320", { discountOnly: true }), 450);
+});
+
+test("KTW source price selection never promotes stale tracking prices", () => {
+  const { selectKtwSourcePrice } = loadSyncHelpers();
+  const selected = selectKtwSourcePrice({
+    visibleSourcePrice: 0,
+    previousSourcePrice: 450,
+    seedSourcePrice: 546.12,
+    fallbackTrackingPrice: 546.12,
+  });
+
+  assert.equal(selected.sourcePrice, 450);
+  assert.equal(selected.priceStale, true);
+  assert.match(selected.priceIssue, /preserved previous/i);
 });
 
 test("stored default cost follows a corrected KTW website price", () => {

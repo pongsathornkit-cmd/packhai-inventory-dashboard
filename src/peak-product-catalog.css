@@ -52,7 +52,7 @@ svg {
   top: 0;
   height: 100vh;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto auto 1fr;
   gap: 18px;
   padding: 20px;
   background: #142235;
@@ -106,6 +106,53 @@ svg {
   background: #ffffff;
   color: var(--ink);
   box-shadow: inset 3px 0 0 var(--teal);
+}
+
+.sidebar-summary {
+  display: grid;
+  gap: 10px;
+}
+
+.sidebar-summary div {
+  min-height: 78px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-summary span,
+.sidebar-summary small {
+  display: block;
+  color: rgba(255, 255, 255, 0.68);
+}
+
+.sidebar-summary span {
+  font-size: 13px;
+}
+
+.sidebar-summary small {
+  margin-top: 2px;
+  font-size: 11px;
+}
+
+.sidebar-summary strong {
+  display: block;
+  margin: 3px 0;
+  font-size: 25px;
+  line-height: 1.05;
+}
+
+.sidebar-summary div:nth-child(1) strong {
+  color: #5eead4;
+}
+
+.sidebar-summary div:nth-child(2) strong {
+  color: #fbbf24;
+}
+
+.sidebar-summary div:nth-child(3) strong {
+  color: #60a5fa;
 }
 
 .side-metrics {
@@ -166,11 +213,11 @@ h1 {
   margin: 10px 0 0;
   color: var(--muted);
   line-height: 1.6;
+  overflow-wrap: anywhere;
 }
 
 .header-actions,
-.toolbar,
-.summary-strip {
+.toolbar {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -218,44 +265,6 @@ button:hover {
   background: #1d4ed8;
   border-color: #1d4ed8;
   color: #ffffff;
-}
-
-.summary-strip {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-bottom: 16px;
-}
-
-.summary-strip div {
-  min-height: 82px;
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 14px;
-  background: var(--surface);
-}
-
-.summary-strip span,
-.summary-strip small {
-  display: block;
-  color: var(--muted);
-}
-
-.summary-strip strong {
-  display: block;
-  margin: 4px 0;
-  font-size: 26px;
-}
-
-.summary-strip div:nth-child(1) strong {
-  color: var(--teal);
-}
-
-.summary-strip div:nth-child(2) strong {
-  color: var(--amber);
-}
-
-.summary-strip div:nth-child(3) strong {
-  color: var(--blue);
 }
 
 .toolbar {
@@ -478,6 +487,7 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .sidebar-summary,
   .side-metrics {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -505,7 +515,7 @@ th {
     font-size: 24px;
   }
 
-  .summary-strip,
+  .sidebar-summary,
   .side-metrics {
     grid-template-columns: 1fr;
   }

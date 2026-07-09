@@ -451,6 +451,12 @@ h2 {
   white-space: nowrap;
 }
 
+.profit-percent {
+  margin-left: 4px;
+  font-size: 11px;
+  font-weight: 880;
+}
+
 .good-text {
   color: var(--good);
 }
@@ -1652,6 +1658,24 @@ h2 {
 
 .product-table td {
   overflow: hidden;
+}
+
+.product-table td.good-text,
+.po-table td.good-text,
+.product-table td.good-text strong,
+.po-table td.good-text strong,
+.product-table td.good-text .profit-percent,
+.po-table td.good-text .profit-percent {
+  color: var(--good);
+}
+
+.product-table td.danger-text,
+.po-table td.danger-text,
+.product-table td.danger-text strong,
+.po-table td.danger-text strong,
+.product-table td.danger-text .profit-percent,
+.po-table td.danger-text .profit-percent {
+  color: var(--danger);
 }
 
 .product-table.designer-mode td {

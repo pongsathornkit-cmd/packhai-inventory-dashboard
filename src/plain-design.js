@@ -1131,6 +1131,20 @@
     return calc.purchaseUnitCostUsd > 0 ? String(calc.purchaseUnitCostUsd) : "";
   }
 
+  function profitToneClass(calc) {
+    if (calc.profitUnit < 0) return "danger-text";
+    if (calc.profitUnit > 0) return "good-text";
+    return "";
+  }
+
+  function profitPercentLabel(calc) {
+    return calc.saleUnitPrice > 0 ? fmtPercent.format(calc.profitUnit / calc.saleUnitPrice) : "-";
+  }
+
+  function renderProfitCell(calc) {
+    return `<strong>${fmtMoney.format(calc.profitUnit)} <span class="profit-percent">${profitPercentLabel(calc)}</span></strong><small>${fmtMoney.format(calc.profitTotal)} รวม</small>`;
+  }
+
   function filteredProducts() {
     const q = state.query.trim().toLowerCase();
     return state.products.filter((product) => {
@@ -1286,9 +1300,8 @@
                 <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
                 <small>${calc.chargeBasis} · ${escapeHtml(calc.rate.modeLabel)}</small>
               </td>
-              <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}">
-                <strong>${fmtMoney.format(calc.profitUnit)}</strong>
-                <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+              <td class="num ${profitToneClass(calc)}">
+                ${renderProfitCell(calc)}
               </td>
               <td class="num">${fmtQty.format(calc.qty)}</td>
               <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
@@ -1371,9 +1384,8 @@
           <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
           <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
         </td>
-        <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-table-cell="profitUnit">
-          <strong>${fmtMoney.format(calc.profitUnit)}</strong>
-          <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+        <td class="num ${profitToneClass(calc)}" data-table-cell="profitUnit">
+          ${renderProfitCell(calc)}
         </td>
         <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
         <td class="num"><strong>${fmtMoney.format(calc.revenueTotal)}</strong></td>
@@ -1430,9 +1442,8 @@
           <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
           <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
         </td>
-        <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-table-cell="profitUnit">
-          <strong>${fmtMoney.format(calc.profitUnit)}</strong>
-          <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+        <td class="num ${profitToneClass(calc)}" data-table-cell="profitUnit">
+          ${renderProfitCell(calc)}
         </td>
         <td class="num"><strong>${fmtQty.format(calc.qty)}</strong><small>ใบ</small></td>
         <td><span class="status-badge ${escapeHtml(status.tone || "")}">${escapeHtml(status.label)}</span></td>
@@ -2341,9 +2352,8 @@
             <strong>${fmtMoney.format(calc.shippingUnit)}</strong>
             <small>${fmtMoney.format(calc.shippingTotal)} รวม</small>
           </td>
-          <td class="num ${calc.profitUnit < 0 ? "danger-text" : "good-text"}" data-po-cell="profitUnit">
-            <strong>${fmtMoney.format(calc.profitUnit)}</strong>
-            <small>${fmtMoney.format(calc.profitTotal)} รวม</small>
+          <td class="num ${profitToneClass(calc)}" data-po-cell="profitUnit">
+            ${renderProfitCell(calc)}
           </td>
           <td class="num">
             <input class="po-qty-input" data-po-qty="${escapeHtml(product.sku)}" type="number" min="0" step="1" inputmode="numeric" value="${calc.qty > 0 ? escapeHtml(calc.qty) : ""}" placeholder="0" aria-label="จำนวนในบิล ${escapeHtml(product.sku)}" />
@@ -2391,9 +2401,9 @@
       }
       const profitCell = row.querySelector('[data-po-cell="profitUnit"]');
       if (profitCell) {
-        profitCell.innerHTML = `<strong>${fmtMoney.format(calc.profitUnit)}</strong><small>${fmtMoney.format(calc.profitTotal)} รวม</small>`;
+        profitCell.innerHTML = renderProfitCell(calc);
         profitCell.classList.toggle("danger-text", calc.profitUnit < 0);
-        profitCell.classList.toggle("good-text", calc.profitUnit >= 0);
+        profitCell.classList.toggle("good-text", calc.profitUnit > 0);
       }
     });
   }
@@ -2414,9 +2424,9 @@
     }
     const profitCell = row.querySelector('[data-table-cell="profitUnit"]');
     if (profitCell) {
-      profitCell.innerHTML = `<strong>${fmtMoney.format(calc.profitUnit)}</strong><small>${fmtMoney.format(calc.profitTotal)} รวม</small>`;
+      profitCell.innerHTML = renderProfitCell(calc);
       profitCell.classList.toggle("danger-text", calc.profitUnit < 0);
-      profitCell.classList.toggle("good-text", calc.profitUnit >= 0);
+      profitCell.classList.toggle("good-text", calc.profitUnit > 0);
     }
   }
 

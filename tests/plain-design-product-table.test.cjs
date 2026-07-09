@@ -64,6 +64,9 @@ test("product list shows editable product cost, shipping cost, and profit column
   assert.match(combinedRowBlock, /data-table-usd=/);
   assert.match(combinedRowBlock, /data-table-cell="shippingUnit"/);
   assert.match(combinedRowBlock, /data-table-cell="profitUnit"/);
+  assert.match(source, /function profitPercentLabel\(calc\)/);
+  assert.match(source, /calc\.profitUnit \/ calc\.saleUnitPrice/);
+  assert.match(combinedRowBlock, /renderProfitCell\(calc\)/);
   assert.match(source, /productTableColspan\(mode\)/);
   assert.match(eventsBlock, /event\.target\.closest\("\[data-table-usd\]"\)/);
   assert.match(eventsBlock, /queueProductCommercialSave\(.*\.dataset\.tableUsd/);
@@ -78,6 +81,9 @@ test("product list keeps the cost, shipping, and profit columns near the visible
   assert.match(css, /\.product-table th:nth-child\(3\),\s*\.product-table td:nth-child\(3\)\s*\{\s*width:\s*150px;/);
   assert.match(css, /\.table-product-name\s*\{[\s\S]*?max-width:\s*145px;/);
   assert.match(css, /\.table-cost-input\s*\{[\s\S]*?width:\s*72px;/);
+  assert.match(css, /\.profit-percent\s*\{[\s\S]*?font-size:\s*11px;/);
+  assert.match(css, /\.product-table td\.good-text,\s*\.po-table td\.good-text/);
+  assert.match(css, /\.product-table td\.danger-text,\s*\.po-table td\.danger-text/);
 });
 
 test("product list USD cost editors display a dollar unit beside the numeric input", () => {

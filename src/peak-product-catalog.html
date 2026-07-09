@@ -4,8 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>PEAK Product Catalog</title>
-    <link rel="stylesheet" href="peak-product-catalog.css?v=profit-columns-20260709" />
-    <script defer src="peak-product-catalog.js?v=profit-columns-20260709"></script>
+    <link rel="stylesheet" href="peak-product-catalog.css?v=review-workflow-20260709" />
+    <script defer src="peak-product-catalog.js?v=review-workflow-20260709"></script>
   </head>
   <body>
     <div class="catalog-shell">
@@ -108,6 +108,90 @@
           </label>
         </section>
 
+        <section class="review-workbench" aria-label="Product review tools">
+          <div class="review-workbench__head">
+            <div>
+              <h2>ตรวจข้อมูลสินค้า</h2>
+              <p>เลือกสินค้า แก้ข้อมูลในตาราง แล้วตั้งสถานะให้ AI แก้ไขต่อได้ทั้งรายแถวหรือแบบ bulk</p>
+            </div>
+            <div class="review-counters" aria-label="Review summary">
+              <div>
+                <span>เลือกไว้</span>
+                <strong id="reviewSelected">0</strong>
+              </div>
+              <div>
+                <span>มี draft</span>
+                <strong id="reviewDraftCount">0</strong>
+              </div>
+              <div>
+                <span>รอ AI</span>
+                <strong id="reviewAiCount">0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="review-actions">
+            <button id="selectVisibleRows" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" /></svg>
+              เลือกที่แสดง
+            </button>
+            <button id="clearSelectedRows" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+              ล้างที่เลือก
+            </button>
+            <button id="applyBulkReview" class="secondary-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16M12 4v16" /></svg>
+              ตั้ง bulk
+            </button>
+            <button id="downloadReviewCsv" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" /></svg>
+              CSV ตรวจ
+            </button>
+            <button id="clearReviewDrafts" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15M10 11v6M14 11v6" /></svg>
+              ล้าง draft
+            </button>
+          </div>
+
+          <div class="bulk-review-grid">
+            <fieldset class="bulk-statuses">
+              <legend>สถานะที่ต้องการตั้งแบบ bulk</legend>
+              <label><input class="bulk-review-option" type="checkbox" value="all_correct" /> ถูกต้องทุกอย่าง</label>
+              <label><input class="bulk-review-option" type="checkbox" value="name_wrong" /> ชื่อสินค้าผิด</label>
+              <label><input class="bulk-review-option" type="checkbox" value="unit_unclear" /> หน่วยสินค้าไม่ชัดเจน</label>
+              <label><input class="bulk-review-option" type="checkbox" value="image_wrong" /> รูปภาพสินค้าผิด</label>
+              <label><input class="bulk-review-option" type="checkbox" value="low_profit" /> กำไรน้อยไป</label>
+              <label><input class="bulk-review-option" type="checkbox" value="other" /> อื่นๆ</label>
+            </fieldset>
+
+            <div class="bulk-fields">
+              <label>
+                ต้องการตั้งชื่อใหม่เป็น
+                <input id="bulkNewName" type="text" placeholder="ชื่อใหม่" />
+              </label>
+              <label>
+                ตั้งชื่อต่อท้ายหน่วยว่า
+                <input id="bulkUnitSuffix" type="text" placeholder="เช่น แพ็ค / กล่อง / ชิ้น" />
+              </label>
+              <label>
+                จะตั้งเป็นราคาล่าสุดเท่าไหร่
+                <input id="bulkTargetSalePrice" type="number" min="0" step="0.01" placeholder="0.00" />
+              </label>
+              <label>
+                เหตุผลเพิ่มเติม
+                <input id="bulkOtherReason" type="text" placeholder="รายละเอียดที่ต้องให้ AI แก้" />
+              </label>
+              <fieldset class="bulk-image-field">
+                <legend>รูปภาพสินค้าผิด</legend>
+                <label><input class="bulk-bad-image" type="checkbox" value="1" /> ภาพ 1</label>
+                <label><input class="bulk-bad-image" type="checkbox" value="2" /> ภาพ 2</label>
+                <label><input class="bulk-bad-image" type="checkbox" value="3" /> ภาพ 3</label>
+                <label><input class="bulk-bad-image" type="checkbox" value="all" /> ผิดทั้งหมด</label>
+              </fieldset>
+            </div>
+          </div>
+        </section>
+
         <section class="status-bar" id="catalogStatus" role="status">กำลังโหลดข้อมูลสินค้า...</section>
 
         <section class="table-panel" aria-label="Product catalog table">
@@ -119,8 +203,9 @@
             <table>
               <thead>
                 <tr>
+                  <th>เลือก</th>
                   <th>รูปสินค้า</th>
-                  <th>ชื่อสินค้า</th>
+                  <th>ชื่อสินค้า / ร้านค้า</th>
                   <th>อ้างอิงบิลซื้อล่าสุด</th>
                   <th>ราคาซื้อล่าสุด</th>
                   <th>ราคาขายล่าสุด</th>
@@ -130,6 +215,7 @@
                   <th>Lazada +25%</th>
                   <th>Shopee +30%</th>
                   <th>อ้างอิงบิลขายล่าสุด</th>
+                  <th>สถานะตรวจ</th>
                 </tr>
               </thead>
               <tbody id="catalogBody"></tbody>

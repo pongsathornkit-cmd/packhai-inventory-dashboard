@@ -384,7 +384,7 @@ a:focus-visible {
 
 table {
   width: 100%;
-  min-width: 1280px;
+  min-width: 1500px;
   border-collapse: collapse;
 }
 
@@ -491,6 +491,18 @@ th {
 
 .platform-shopee {
   color: var(--amber);
+}
+
+.profit-positive {
+  color: var(--teal-dark);
+}
+
+.profit-negative {
+  color: var(--red);
+}
+
+.profit-neutral {
+  color: var(--muted);
 }
 
 .muted {

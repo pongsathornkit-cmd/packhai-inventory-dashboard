@@ -42,6 +42,11 @@ const moneyFormatter = new Intl.NumberFormat("th-TH", {
   maximumFractionDigits: 2,
 });
 
+const percentFormatter = new Intl.NumberFormat("th-TH", {
+  maximumFractionDigits: 2,
+  minimumFractionDigits: 2,
+});
+
 const numberFormatter = new Intl.NumberFormat("th-TH");
 const dateFormatter = new Intl.DateTimeFormat("th-TH", { dateStyle: "medium" });
 const collator = new Intl.Collator("th-TH", { numeric: true, sensitivity: "base" });
@@ -65,11 +70,36 @@ function formatMoney(value) {
   return number === null ? "-" : moneyFormatter.format(number);
 }
 
+function formatPercent(value) {
+  const number = toNumber(value);
+  return number === null ? "-" : `${percentFormatter.format(number)}%`;
+}
+
 function platformPrice(value, basePrice, percent) {
   const explicit = toNumber(value);
   if (explicit !== null) return explicit;
   const base = toNumber(basePrice);
   return base === null ? null : Math.round(base * (1 + percent) * 100) / 100;
+}
+
+function profitAmount(item) {
+  const cost = toNumber(item.latest_purchase_price);
+  const sale = toNumber(item.latest_sale_price);
+  if (cost === null || sale === null) return null;
+  return Math.round((sale - cost) * 100) / 100;
+}
+
+function profitPercent(item) {
+  const cost = toNumber(item.latest_purchase_price);
+  const profit = profitAmount(item);
+  if (cost === null || cost <= 0 || profit === null) return null;
+  return Math.round((profit / cost) * 10000) / 100;
+}
+
+function profitClass(value) {
+  const number = toNumber(value);
+  if (number === null || number === 0) return "profit-neutral";
+  return number > 0 ? "profit-positive" : "profit-negative";
 }
 
 function formatDate(value) {
@@ -335,6 +365,16 @@ function renderProductRow(item) {
   salePrice.textContent = formatMoney(item.latest_sale_price);
   row.appendChild(salePrice);
 
+  const profit = profitAmount(item);
+  const profitCell = makeCell(`money ${profitClass(profit)}`);
+  profitCell.textContent = formatMoney(profit);
+  row.appendChild(profitCell);
+
+  const profitRate = profitPercent(item);
+  const profitPercentCell = makeCell(`money ${profitClass(profit)}`);
+  profitPercentCell.textContent = formatPercent(profitRate);
+  row.appendChild(profitPercentCell);
+
   const thaimart = makeCell("money platform-thaimart");
   thaimart.textContent = formatMoney(platformPrice(item.thaimart_price, item.latest_sale_price, 0.07));
   row.appendChild(thaimart);
@@ -369,7 +409,7 @@ function render() {
     const row = document.createElement("tr");
     row.className = "empty-row";
     const cell = makeCell();
-    cell.colSpan = 9;
+    cell.colSpan = 11;
     cell.textContent = "ไม่พบรายการที่ตรงกับเงื่อนไข";
     row.appendChild(cell);
     els.body.appendChild(row);
@@ -380,7 +420,7 @@ function render() {
     const groupRow = document.createElement("tr");
     groupRow.className = "vendor-row";
     const cell = makeCell();
-    cell.colSpan = 9;
+    cell.colSpan = 11;
     cell.textContent = `${vendor} (${numberFormatter.format(products.length)} รายการ)`;
     groupRow.appendChild(cell);
     els.body.appendChild(groupRow);
@@ -398,6 +438,8 @@ function downloadCsv() {
     "latest_purchase_bill",
     "latest_purchase_price",
     "latest_sale_price",
+    "profit",
+    "profit_percent",
     "thaimart_price",
     "lazada_price",
     "shopee_price",
@@ -408,7 +450,13 @@ function downloadCsv() {
     headers
       .map((key) => {
         const value =
-          key === "thaimart_price" ? platformPrice(item.thaimart_price, item.latest_sale_price, 0.07) : item[key];
+          key === "profit"
+            ? profitAmount(item)
+            : key === "profit_percent"
+              ? profitPercent(item)
+              : key === "thaimart_price"
+                ? platformPrice(item.thaimart_price, item.latest_sale_price, 0.07)
+                : item[key];
         return `"${String(value ?? "").replace(/"/g, '""')}"`;
       })
       .join(",")

@@ -696,6 +696,23 @@ function makeCell(className = "") {
 }
 
 function makeEditableInput(item, field, options = {}) {
+  const wrapper = document.createElement("div");
+  wrapper.className = "edit-field";
+
+  const display = document.createElement("span");
+  display.className = "edit-display";
+
+  const displayValue = document.createElement("span");
+  displayValue.className = "edit-display-value";
+
+  const editButton = document.createElement("button");
+  editButton.className = "edit-pencil";
+  editButton.type = "button";
+  editButton.title = "แก้ไข";
+  editButton.setAttribute("aria-label", options.label || `แก้ไข ${field}`);
+  editButton.innerHTML =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.1 5.9 4 4M4 20l4.2-.8L19 8.4a2.8 2.8 0 0 0-4-4L4.2 15.2 4 20z" /></svg>';
+
   const input = document.createElement("input");
   input.className = `cell-input${options.className ? ` ${options.className}` : ""}`;
   input.type = options.type || "text";
@@ -707,14 +724,50 @@ function makeEditableInput(item, field, options = {}) {
     input.step = "0.01";
     input.inputMode = "decimal";
   }
+
+  const readDisplayValue = () => {
+    if (input.type === "date") return formatDate(input.value || item[field]);
+    if (input.type === "number") return formatMoney(input.value);
+    const text = String(input.value || "").trim();
+    return text || "-";
+  };
+
+  const finishEditing = () => {
+    wrapper.classList.remove("is-editing");
+    displayValue.textContent = readDisplayValue();
+  };
+
+  displayValue.textContent = readDisplayValue();
+  display.append(displayValue, editButton);
+
+  editButton.addEventListener("click", () => {
+    wrapper.classList.add("is-editing");
+    window.requestAnimationFrame(() => {
+      input.focus();
+      input.select?.();
+    });
+  });
+
   input.addEventListener("input", () => {
     storeEditableField(item, field, input.value);
+    displayValue.textContent = readDisplayValue();
     if (field === "latest_purchase_price" || field === "latest_sale_price") {
       refreshComputedCells(input.closest("tr"), item);
     }
   });
   input.addEventListener("change", () => updateEditableField(item, field, input.value));
-  return input;
+  input.addEventListener("blur", finishEditing);
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") input.blur();
+    if (event.key === "Escape") {
+      input.value = input.type === "date" ? dateInputValue(item[field]) : item[field] ?? "";
+      finishEditing();
+      editButton.focus();
+    }
+  });
+
+  wrapper.append(display, input);
+  return wrapper;
 }
 
 function makeReviewTextInput(item, field, placeholder, enabled, type = "text") {
@@ -822,13 +875,30 @@ function renderProductNameCell(item) {
   const name = makeCell("product-name");
   name.appendChild(makeEditableInput(item, "product_name", { label: "แก้ชื่อสินค้า", className: "product-title-input" }));
 
-  const meta = document.createElement("span");
-  meta.textContent = item.product_code || "-";
-
   const vendorLabel = document.createElement("label");
   vendorLabel.className = "mini-field";
   vendorLabel.textContent = "ร้านค้า";
   vendorLabel.appendChild(makeEditableInput(item, "vendor", { label: "แก้ร้านค้า" }));
+
+  const meta = document.createElement("div");
+  meta.className = "product-meta";
+
+  const code = document.createElement("span");
+  code.textContent = item.product_code || "-";
+
+  const vendorEdit = document.createElement("button");
+  vendorEdit.className = "vendor-edit-pencil";
+  vendorEdit.type = "button";
+  vendorEdit.title = "แก้ร้านค้า";
+  vendorEdit.setAttribute("aria-label", "แก้ร้านค้า");
+  vendorEdit.innerHTML =
+    '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.1 5.9 4 4M4 20l4.2-.8L19 8.4a2.8 2.8 0 0 0-4-4L4.2 15.2 4 20z" /></svg>';
+  vendorEdit.addEventListener("click", () => {
+    vendorLabel.classList.add("is-open");
+    window.requestAnimationFrame(() => vendorLabel.querySelector(".edit-pencil")?.click());
+  });
+
+  meta.append(code, vendorEdit);
 
   name.append(meta, vendorLabel);
   return name;

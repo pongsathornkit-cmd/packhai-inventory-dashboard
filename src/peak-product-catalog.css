@@ -718,14 +718,20 @@ th {
   max-width: 300px;
 }
 
-.product-name span,
+.product-meta,
 .mini-field,
 .bill-cell {
   display: block;
 }
 
-.product-name span {
+.product-meta {
   margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.product-meta span {
   color: var(--muted);
   font-size: 11px;
 }
@@ -749,13 +755,30 @@ th {
   font-weight: 700;
 }
 
-.product-name:hover .mini-field,
-.product-name:focus-within .mini-field {
+.mini-field.is-open,
+.mini-field:focus-within {
   display: grid;
 }
 
-.mini-field .cell-input {
-  margin-top: 0;
+.vendor-edit-pencil {
+  width: 22px;
+  min-height: 22px;
+  height: 22px;
+  padding: 0;
+  border-color: transparent;
+  background: #ffffff;
+  color: var(--muted);
+  opacity: 0;
+}
+
+.vendor-edit-pencil svg {
+  width: 13px;
+  height: 13px;
+}
+
+.product-name:hover .vendor-edit-pencil,
+.product-name:focus-within .vendor-edit-pencil {
+  opacity: 1;
 }
 
 .cell-input {
@@ -765,8 +788,75 @@ th {
   font-size: 12px;
 }
 
+.edit-field {
+  position: relative;
+  min-width: 0;
+}
+
+.edit-display {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 0 30px 0 8px;
+  background: transparent;
+}
+
+.edit-display-value {
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.edit-pencil {
+  position: absolute;
+  top: 50%;
+  right: 3px;
+  width: 24px;
+  min-height: 24px;
+  height: 24px;
+  padding: 0;
+  border-color: transparent;
+  background: #ffffff;
+  color: var(--muted);
+  opacity: 0;
+  transform: translateY(-50%);
+}
+
+.edit-pencil svg {
+  width: 14px;
+  height: 14px;
+}
+
+.edit-field:hover .edit-display,
+.edit-field:focus-within .edit-display {
+  border-color: var(--line);
+  background: #ffffff;
+}
+
+.edit-field:hover .edit-pencil,
+.edit-field:focus-within .edit-pencil {
+  opacity: 1;
+}
+
+.edit-field:not(.is-editing) .cell-input {
+  display: none;
+}
+
+.edit-field.is-editing .edit-display {
+  display: none;
+}
+
+.edit-field.is-editing .cell-input {
+  display: block;
+}
+
+.product-name .edit-display-value,
 .product-title-input {
-  min-height: 30px;
   font-size: 13px;
   font-weight: 800;
 }
@@ -775,7 +865,7 @@ th {
   width: 160px;
 }
 
-.bill-cell .cell-input + .cell-input {
+.bill-cell .edit-field + .edit-field {
   margin-top: 4px;
 }
 
@@ -783,6 +873,7 @@ th {
   width: 140px;
 }
 
+.editable-money .edit-display-value,
 .editable-money .cell-input {
   text-align: right;
   font-weight: 800;

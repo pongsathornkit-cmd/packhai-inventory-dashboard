@@ -136,6 +136,28 @@
         </section>
       </main>
     </div>
+
+    <div class="image-lightbox" id="imageLightbox" aria-hidden="true">
+      <div class="image-lightbox__backdrop" data-lightbox-close></div>
+      <section class="image-lightbox__dialog" role="dialog" aria-modal="true" aria-labelledby="lightboxTitle">
+        <button class="lightbox-close" id="lightboxClose" type="button" title="ปิดรูปภาพ" aria-label="ปิดรูปภาพ">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12" /></svg>
+        </button>
+        <button class="lightbox-nav lightbox-prev" id="lightboxPrev" type="button" title="รูปก่อนหน้า" aria-label="รูปก่อนหน้า">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 18-6-6 6-6" /></svg>
+        </button>
+        <figure class="lightbox-figure">
+          <img id="lightboxImage" alt="" />
+          <figcaption>
+            <strong id="lightboxTitle">-</strong>
+            <span id="lightboxMeta">-</span>
+          </figcaption>
+        </figure>
+        <button class="lightbox-nav lightbox-next" id="lightboxNext" type="button" title="รูปถัดไป" aria-label="รูปถัดไป">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6" /></svg>
+        </button>
+      </section>
+    </div>
     <noscript>ต้องเปิด JavaScript เพื่อโหลดข้อมูลจาก Supabase</noscript>
   </body>
 </html>

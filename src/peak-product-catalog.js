@@ -7,6 +7,12 @@ const state = {
   query: "",
   vendor: "",
   sortMode: "sale-date-desc",
+  lightbox: {
+    images: [],
+    index: 0,
+    productName: "",
+    trigger: null,
+  },
 };
 
 const els = {
@@ -21,6 +27,13 @@ const els = {
   metricProducts: document.getElementById("metricProducts"),
   metricVendors: document.getElementById("metricVendors"),
   metricLatestSale: document.getElementById("metricLatestSale"),
+  lightbox: document.getElementById("imageLightbox"),
+  lightboxImage: document.getElementById("lightboxImage"),
+  lightboxTitle: document.getElementById("lightboxTitle"),
+  lightboxMeta: document.getElementById("lightboxMeta"),
+  lightboxClose: document.getElementById("lightboxClose"),
+  lightboxPrev: document.getElementById("lightboxPrev"),
+  lightboxNext: document.getElementById("lightboxNext"),
 };
 
 const moneyFormatter = new Intl.NumberFormat("th-TH", {
@@ -71,6 +84,60 @@ function getImageUrl(image) {
 
 function getFallbackImageUrl(image) {
   return image?.imageOriginalUrl && image.imageOriginalUrl !== image.imageUrl ? image.imageOriginalUrl : "";
+}
+
+function getLightboxImageUrl(image) {
+  return image?.imageOriginalUrl || image?.imageUrl || "";
+}
+
+function getProductImages(item) {
+  if (!Array.isArray(item.images)) return [];
+  return item.images.slice(0, 3).filter((image) => getImageUrl(image) || getLightboxImageUrl(image));
+}
+
+function updateLightbox() {
+  const { images, index, productName } = state.lightbox;
+  const image = images[index];
+  const src = getLightboxImageUrl(image) || getImageUrl(image);
+  const title = productName || "สินค้า";
+
+  els.lightboxImage.src = src || "";
+  els.lightboxImage.alt = `${title} รูปที่ ${index + 1}`;
+  els.lightboxTitle.textContent = title;
+  els.lightboxMeta.textContent = `รูปที่ ${numberFormatter.format(index + 1)} / ${numberFormatter.format(images.length)}`;
+  els.lightboxPrev.disabled = images.length < 2;
+  els.lightboxNext.disabled = images.length < 2;
+}
+
+function openLightbox(item, startIndex) {
+  const images = getProductImages(item);
+  if (!images.length) return;
+
+  state.lightbox.images = images;
+  state.lightbox.index = Math.min(Math.max(startIndex, 0), images.length - 1);
+  state.lightbox.productName = item.product_name || "สินค้า";
+  state.lightbox.trigger = document.activeElement;
+  updateLightbox();
+  els.lightbox.classList.add("is-open");
+  els.lightbox.setAttribute("aria-hidden", "false");
+  document.body.classList.add("is-lightbox-open");
+  els.lightboxClose.focus();
+}
+
+function closeLightbox() {
+  els.lightbox.classList.remove("is-open");
+  els.lightbox.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-lightbox-open");
+  els.lightboxImage.removeAttribute("src");
+  state.lightbox.trigger?.focus?.();
+  state.lightbox.trigger = null;
+}
+
+function showLightboxImage(direction) {
+  const { images } = state.lightbox;
+  if (images.length < 2) return;
+  state.lightbox.index = (state.lightbox.index + direction + images.length) % images.length;
+  updateLightbox();
 }
 
 function compareProducts(a, b) {
@@ -205,14 +272,19 @@ function renderImageGallery(item) {
   const cell = makeCell();
   const gallery = document.createElement("div");
   gallery.className = "image-gallery";
-  const images = Array.isArray(item.images) ? item.images.slice(0, 3) : [];
+  const images = getProductImages(item);
 
   for (let index = 0; index < 3; index += 1) {
-    const frame = document.createElement("span");
-    frame.className = "thumb";
     const image = images[index];
-    const src = getImageUrl(image);
+    const src = getImageUrl(image) || getLightboxImageUrl(image);
+    const frame = document.createElement(src ? "button" : "span");
+    frame.className = "thumb";
     if (src) {
+      frame.type = "button";
+      frame.title = "ขยายรูปภาพ";
+      frame.setAttribute("aria-label", `${item.product_name || "สินค้า"} รูปที่ ${index + 1}`);
+      frame.addEventListener("click", () => openLightbox(item, index));
+
       const img = document.createElement("img");
       img.src = src;
       img.alt = `${item.product_name || "สินค้า"} รูปที่ ${index + 1}`;
@@ -226,6 +298,7 @@ function renderImageGallery(item) {
         }
         img.remove();
         frame.classList.add("is-missing");
+        frame.disabled = true;
       });
       frame.appendChild(img);
     } else {
@@ -365,5 +438,26 @@ els.sort.addEventListener("change", (event) => {
 
 els.refresh.addEventListener("click", loadCatalog);
 els.csv.addEventListener("click", downloadCsv);
+els.lightboxClose.addEventListener("click", closeLightbox);
+els.lightboxPrev.addEventListener("click", () => showLightboxImage(-1));
+els.lightboxNext.addEventListener("click", () => showLightboxImage(1));
+els.lightbox.addEventListener("click", (event) => {
+  if (event.target?.hasAttribute("data-lightbox-close")) {
+    closeLightbox();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (!els.lightbox.classList.contains("is-open")) return;
+  if (event.key === "Escape") {
+    closeLightbox();
+  }
+  if (event.key === "ArrowLeft") {
+    showLightboxImage(-1);
+  }
+  if (event.key === "ArrowRight") {
+    showLightboxImage(1);
+  }
+});
 
 loadCatalog();

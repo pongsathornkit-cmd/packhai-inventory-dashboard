@@ -78,8 +78,9 @@ test("product list keeps the cost, shipping, and profit columns near the visible
   assert.match(css, /\.product-table\s*\{\s*min-width:\s*920px;/);
   assert.match(css, /\.product-table th,\s*\.po-table th\s*\{[\s\S]*?padding:\s*0 6px;/);
   assert.match(css, /\.product-table td,\s*\.po-table td\s*\{[\s\S]*?padding:\s*7px 6px;/);
-  assert.match(css, /\.product-table th:nth-child\(3\),\s*\.product-table td:nth-child\(3\)\s*\{\s*width:\s*150px;/);
-  assert.match(css, /\.table-product-name\s*\{[\s\S]*?max-width:\s*145px;/);
+  assert.match(css, /\.product-table th:nth-child\(3\),\s*\.product-table td:nth-child\(3\)\s*\{\s*width:\s*clamp\(300px,\s*30vw,\s*460px\);/);
+  assert.match(css, /\.table-product-name\s*\{[\s\S]*?display:\s*-webkit-box;/);
+  assert.match(css, /\.table-product-name\s*\{[\s\S]*?-webkit-line-clamp:\s*2;/);
   assert.match(css, /\.table-cost-input\s*\{[\s\S]*?width:\s*72px;/);
   assert.match(css, /\.profit-percent\s*\{[\s\S]*?font-size:\s*11px;/);
   assert.match(css, /\.product-table td\.good-text,\s*\.po-table td\.good-text/);

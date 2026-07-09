@@ -1367,7 +1367,7 @@
           ${renderTableCoverImage(product)}
         </td>
         <td>
-          <span class="table-product-name">${escapeHtml(product.name)}</span>
+          <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
         </td>
         <td class="num"><strong>${fmtMoney.format(calc.saleUnitPrice)}</strong><small>ราคา Plain</small></td>
@@ -1400,7 +1400,7 @@
       <tr class="${escapeHtml(productRowClass(product, "designer-product-row"))}" data-sku="${escapeHtml(product.sku)}">
         ${renderBulkSelectionCell(product, index, bulkChecked)}
         <td>
-          <span class="table-product-name">${escapeHtml(product.name)}</span>
+          <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
           <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))}</small>
           <div class="designer-row-version-slot">${renderRowPlainVersionControls(product)}</div>
@@ -1424,7 +1424,7 @@
           ${renderTableCoverImage(product)}
         </td>
         <td>
-          <span class="table-product-name">${escapeHtml(product.name)}</span>
+          <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
           <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
         </td>
@@ -2331,7 +2331,7 @@
             ${renderTableCoverImage(product)}
           </td>
           <td>
-            <span class="table-product-name">${escapeHtml(product.name)}</span>
+            <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
             <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
             <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${escapeHtml(calc.rate.modeLabel)} | ${escapeHtml(calc.rate.label)} | ฐาน ${calc.chargeBasis}</small>
           </td>

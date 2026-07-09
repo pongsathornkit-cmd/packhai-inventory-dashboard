@@ -57,6 +57,7 @@ svg {
   padding: 20px;
   background: #142235;
   color: #ffffff;
+  overflow-y: auto;
 }
 
 .brand {
@@ -152,6 +153,10 @@ svg {
 }
 
 .sidebar-summary div:nth-child(3) strong {
+  color: #93c5fd;
+}
+
+.sidebar-summary div:nth-child(4) strong {
   color: #60a5fa;
 }
 
@@ -375,7 +380,7 @@ a:focus-visible {
 
 table {
   width: 100%;
-  min-width: 1180px;
+  min-width: 1280px;
   border-collapse: collapse;
 }
 
@@ -460,6 +465,10 @@ th {
 
 .platform-lazada {
   color: var(--teal-dark);
+}
+
+.platform-thaimart {
+  color: var(--blue);
 }
 
 .platform-shopee {

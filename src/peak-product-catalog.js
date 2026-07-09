@@ -52,6 +52,13 @@ function formatMoney(value) {
   return number === null ? "-" : moneyFormatter.format(number);
 }
 
+function platformPrice(value, basePrice, percent) {
+  const explicit = toNumber(value);
+  if (explicit !== null) return explicit;
+  const base = toNumber(basePrice);
+  return base === null ? null : Math.round(base * (1 + percent) * 100) / 100;
+}
+
 function formatDate(value) {
   if (!value) return "-";
   const date = new Date(value);
@@ -96,6 +103,7 @@ async function loadCatalog() {
       "latest_sale_price",
       "latest_sale_bill",
       "latest_sale_date",
+      "thaimart_price",
       "lazada_price",
       "shopee_price",
       "images",
@@ -254,6 +262,10 @@ function renderProductRow(item) {
   salePrice.textContent = formatMoney(item.latest_sale_price);
   row.appendChild(salePrice);
 
+  const thaimart = makeCell("money platform-thaimart");
+  thaimart.textContent = formatMoney(platformPrice(item.thaimart_price, item.latest_sale_price, 0.07));
+  row.appendChild(thaimart);
+
   const lazada = makeCell("money platform-lazada");
   lazada.textContent = formatMoney(item.lazada_price);
   row.appendChild(lazada);
@@ -284,7 +296,7 @@ function render() {
     const row = document.createElement("tr");
     row.className = "empty-row";
     const cell = makeCell();
-    cell.colSpan = 8;
+    cell.colSpan = 9;
     cell.textContent = "ไม่พบรายการที่ตรงกับเงื่อนไข";
     row.appendChild(cell);
     els.body.appendChild(row);
@@ -295,7 +307,7 @@ function render() {
     const groupRow = document.createElement("tr");
     groupRow.className = "vendor-row";
     const cell = makeCell();
-    cell.colSpan = 8;
+    cell.colSpan = 9;
     cell.textContent = `${vendor} (${numberFormatter.format(products.length)} รายการ)`;
     groupRow.appendChild(cell);
     els.body.appendChild(groupRow);
@@ -313,13 +325,20 @@ function downloadCsv() {
     "latest_purchase_bill",
     "latest_purchase_price",
     "latest_sale_price",
+    "thaimart_price",
     "lazada_price",
     "shopee_price",
     "latest_sale_bill",
     "latest_sale_date",
   ];
   const rows = filteredProducts().map((item) =>
-    headers.map((key) => `"${String(item[key] ?? "").replace(/"/g, '""')}"`).join(",")
+    headers
+      .map((key) => {
+        const value =
+          key === "thaimart_price" ? platformPrice(item.thaimart_price, item.latest_sale_price, 0.07) : item[key];
+        return `"${String(value ?? "").replace(/"/g, '""')}"`;
+      })
+      .join(",")
   );
   const blob = new Blob([[headers.join(","), ...rows].join("\n")], { type: "text/csv;charset=utf-8" });
   const link = document.createElement("a");

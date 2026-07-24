@@ -11,6 +11,7 @@ const { buildPlatformSalesDashboard } = require("./platform-sales-core.cjs");
 const { selectPublicSyncApiBase } = require("./sync-api-base-core.cjs");
 const { buildPlainDesignInitialState } = require("./plain-design-core.cjs");
 const { buildAlibabaPurchaseOrders } = require("./alibaba-purchase-core.cjs");
+const { publicDeliveryNoteState, readDeliveryNoteStore } = require("./delivery-note-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const workspaceRoot = path.resolve(projectRoot, "..");
@@ -61,6 +62,10 @@ const inputFiles = {
   alibabaPurchaseOrders: preferExisting(
     path.join(dataDir, "alibaba_purchase_orders.json"),
     path.join(workspaceRoot, "outputs", "alibaba_purchase_orders.json")
+  ),
+  deliveryNotes: preferExisting(
+    path.join(dataDir, "delivery_notes.json"),
+    path.join(projectRoot, "data", "delivery_notes.json")
   ),
 };
 
@@ -913,12 +918,14 @@ function build() {
     generatedAt: new Date().toISOString(),
   });
   const uncollectedStockDeductions = buildUncollectedStockDeductionReport(stockMovements, rows);
+  const deliveryNotes = publicDeliveryNoteState(readDeliveryNoteStore(inputFiles.deliveryNotes));
 
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
     websiteStockTransactions,
     alibabaPurchaseOrders,
+    deliveryNotes,
     platformPaymentOrders,
     platformSalesDashboard,
     uncollectedStockDeductions,
@@ -935,6 +942,7 @@ function build() {
   dashboard.summary.platformSales = platformSalesDashboard.summary;
   dashboard.platformPaymentSummary = platformPaymentSummary;
   dashboard.summary.uncollectedStockDeductions = uncollectedStockDeductions.summary;
+  dashboard.summary.deliveryNotes = deliveryNotes.summary;
 
   const template = fs.readFileSync(path.join(srcDir, "index.template.html"), "utf8");
   const styles = fs.readFileSync(path.join(srcDir, "styles.css"), "utf8");

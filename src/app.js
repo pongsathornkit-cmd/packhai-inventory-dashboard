@@ -79,6 +79,24 @@
     { id: 491661, name: "คลัง ซ.เจริญกิจ", label: "ซ.เจริญกิจ" },
     { id: 491662, name: "คลัง สุขสวัสดิ์", label: "สุขสวัสดิ์" },
   ];
+  const deliveryNoteWarehouseOptions = websiteStockEditWarehouses.map((warehouse) => ({
+    ...warehouse,
+    id: String(warehouse.id),
+  }));
+  const deliveryNotePageSize = 80;
+  const deliveryNoteState = {
+    query: "",
+    status: "All",
+    notes: Array.isArray(data.deliveryNotes?.notes) ? data.deliveryNotes.notes : [],
+    summary: data.deliveryNotes?.summary || {},
+    warehouses: Array.isArray(data.deliveryNotes?.warehouses) ? data.deliveryNotes.warehouses : deliveryNoteWarehouseOptions,
+    selectedId: "",
+    draft: null,
+    loading: false,
+    loaded: Boolean(data.deliveryNotes),
+    message: "",
+    messageType: "",
+  };
 
   const sourceColors = {
     Shopee: "Shopee",
@@ -787,6 +805,7 @@
     renderWarehouseFilters();
     renderFilters();
     renderTable();
+    renderDeliveryNotes();
     renderPlatformSalesDashboard();
     renderAlibabaPurchaseOrders();
     renderUncollectedStockDashboard();
@@ -2318,21 +2337,28 @@
     return currentHashRoute() === "alibaba-order-table";
   }
 
+  function isDeliveryNoteRoute() {
+    return currentHashRoute() === "delivery-notes";
+  }
+
   function updateRouteState() {
     const routeHash = `#${currentHashRoute()}`;
     const expensesPage = isExpenseRoute();
     const inventoryTableRoute = isInventoryTableRoute();
     const alibabaOrderTableRoute = isAlibabaOrderTableRoute();
+    const deliveryNoteRoute = isDeliveryNoteRoute();
     const activeRouteHash = alibabaOrderTableRoute ? "#alibaba-order-table" : inventoryTableRoute ? "#inventory-table" : routeHash;
+    const finalActiveRouteHash = deliveryNoteRoute ? "#delivery-notes" : activeRouteHash;
     const assistantPage = routeHash === "#ai-command";
     const expensesSection = $("expenses");
     document.body.classList.toggle("inventory-table-route", inventoryTableRoute);
     document.body.classList.toggle("alibaba-order-table-route", alibabaOrderTableRoute);
+    document.body.classList.toggle("delivery-notes-route", deliveryNoteRoute);
     if (expensesSection) {
       expensesSection.hidden = !expensesPage;
     }
     document.querySelectorAll(".sidebar-nav a").forEach((link) => {
-      link.classList.toggle("active", link.getAttribute("href") === activeRouteHash);
+      link.classList.toggle("active", link.getAttribute("href") === finalActiveRouteHash);
     });
     if (inventoryTableRoute) {
       const sku = normalizeSkuValue(currentHashParams().get("sku") || "");
@@ -2346,6 +2372,11 @@
     }
     if (alibabaOrderTableRoute) {
       window.requestAnimationFrame(() => $("alibaba-order-table")?.scrollIntoView({ block: "start" }));
+    }
+    if (deliveryNoteRoute) {
+      renderDeliveryNotes();
+      if (!deliveryNoteState.loaded && !deliveryNoteState.loading) loadDeliveryNotes(false);
+      window.requestAnimationFrame(() => $("delivery-notes")?.scrollIntoView({ block: "start" }));
     }
     if (expensesPage) {
       if (!expenseState.loaded && !expenseState.loading) loadExpenses(true);
@@ -4113,14 +4144,24 @@
     return moneyValue(numberValue(row.paidAmount || row.orderAmount) * (quantity / orderQuantity));
   }
 
+  function productNameScoreForSku(name, sku) {
+    const text = String(name ?? "").replace(/\s+/g, " ").trim();
+    if (!text) return 0;
+    const compactName = compactSkuValue(text);
+    const compactSku = compactSkuValue(sku);
+    if (compactSku && compactName === compactSku) return 1;
+    return Math.min(100, text.length) + 10;
+  }
+
   function buildAlibabaSkuOptions() {
     const bySku = new Map();
     for (const row of rows || []) {
       const sku = normalizeSkuValue(row.sku || row.productCode || row.productSKU);
       if (!sku) continue;
+      const candidateName = row.name || row.productName || row.sourceTitle || "";
       const current = bySku.get(sku) || {
         sku,
-        name: row.name || row.productName || row.sourceTitle || "",
+        name: candidateName,
         price: 0,
         imageUrl: row.imageUrl || "",
         priceSource: row.priceSource || "",
@@ -4131,7 +4172,9 @@
         current.price = price;
         current.priceSource = row.priceSource || current.priceSource;
       }
-      if (!current.name && (row.name || row.productName)) current.name = row.name || row.productName;
+      if (productNameScoreForSku(candidateName, sku) > productNameScoreForSku(current.name, sku)) {
+        current.name = candidateName;
+      }
       if (!current.imageUrl && row.imageUrl) current.imageUrl = row.imageUrl;
       const warehouse = row.warehouseName || row.stockSource || row.sourceName || "";
       if (warehouse) current.warehouses.add(String(warehouse));
@@ -4211,6 +4254,652 @@
           </button>`
       )
       .join("");
+  }
+
+  function deliveryStatusText(status) {
+    if (status === "checked") return "ยืนยันการตรวจแล้ว";
+    if (status === "legacy_imported") return "นำเข้าเดิม";
+    if (status === "ready") return "รอตรวจ";
+    if (status === "void") return "ยกเลิก";
+    return "ร่าง";
+  }
+
+  function deliveryStatusClass(status) {
+    if (status === "checked") return "done";
+    if (status === "legacy_imported") return "legacy";
+    if (status === "ready") return "warning";
+    if (status === "void") return "danger";
+    return "draft";
+  }
+
+  function deliveryDateLabel(value) {
+    const text = String(value || "").trim();
+    if (!text) return "-";
+    const date = new Date(`${text}T00:00:00+07:00`);
+    if (Number.isNaN(date.getTime())) return text;
+    return new Intl.DateTimeFormat("th-TH", {
+      timeZone: "Asia/Bangkok",
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    }).format(date);
+  }
+
+  function deliveryNoteLineId(index = 0) {
+    return `line-${Date.now().toString(36)}-${index}-${Math.random().toString(36).slice(2, 7)}`;
+  }
+
+  function cloneDeliveryNote(note) {
+    return JSON.parse(JSON.stringify(note || {}));
+  }
+
+  function emptyDeliveryNote() {
+    const today = new Date().toISOString().slice(0, 10);
+    return {
+      id: "",
+      deliveryNo: "",
+      status: "draft",
+      warehouseId: String(deliveryNoteWarehouseOptions[1]?.id || deliveryNoteWarehouseOptions[0]?.id || ""),
+      warehouseName: deliveryNoteWarehouseOptions[1]?.name || deliveryNoteWarehouseOptions[0]?.name || "",
+      deliveryDate: today,
+      destination: "",
+      customerName: "",
+      preparedBy: "",
+      checkedBy: "",
+      remark: "",
+      lines: [
+        {
+          id: deliveryNoteLineId(1),
+          rowNo: 1,
+          groupNote: "",
+          sku: "",
+          name: "",
+          quantity: 1,
+          unit: "PCS",
+          previousCheck: "",
+          stockCutCheck: "",
+          evidenceLink: "",
+          inspectionStatus: "",
+          remark: "",
+        },
+      ],
+    };
+  }
+
+  function deliveryNoteById(id) {
+    return deliveryNoteState.notes.find((note) => note.id === id || note.deliveryNo === id) || null;
+  }
+
+  function ensureDeliveryDraft() {
+    if (deliveryNoteState.draft) return deliveryNoteState.draft;
+    const selected = deliveryNoteById(deliveryNoteState.selectedId) || deliveryNoteState.notes[0] || null;
+    deliveryNoteState.selectedId = selected?.id || "__new";
+    deliveryNoteState.draft = selected ? cloneDeliveryNote(selected) : emptyDeliveryNote();
+    return deliveryNoteState.draft;
+  }
+
+  function deliveryNoteLocked(note) {
+    return Boolean(note?.stockDeductedAt || note?.status === "checked");
+  }
+
+  function applyDeliveryNotePayload(payload = {}) {
+    const statePayload = payload.store || payload;
+    if (Array.isArray(statePayload.notes)) deliveryNoteState.notes = statePayload.notes;
+    if (statePayload.summary) deliveryNoteState.summary = statePayload.summary;
+    if (Array.isArray(statePayload.warehouses) && statePayload.warehouses.length) {
+      deliveryNoteState.warehouses = statePayload.warehouses;
+    }
+    deliveryNoteState.loaded = true;
+    if (payload.note?.id) {
+      deliveryNoteState.selectedId = payload.note.id;
+      deliveryNoteState.draft = cloneDeliveryNote(payload.note);
+    }
+  }
+
+  function setDeliveryNoteMessage(type, message) {
+    deliveryNoteState.messageType = type || "";
+    deliveryNoteState.message = message || "";
+    renderDeliveryNotes();
+  }
+
+  function filteredDeliveryNotes() {
+    const query = compactText(deliveryNoteState.query);
+    return deliveryNoteState.notes
+      .filter((note) => {
+        if (deliveryNoteState.status !== "All" && note.status !== deliveryNoteState.status) return false;
+        if (!query) return true;
+        const text = compactText(
+          [
+            note.deliveryNo,
+            note.sourceSheet,
+            note.warehouseName,
+            note.destination,
+            note.customerName,
+            note.preparedBy,
+            note.lines?.map((line) => `${line.sku} ${line.name}`).join(" "),
+          ].join(" ")
+        );
+        return text.includes(query);
+      })
+      .sort((a, b) => {
+        const dateCompare = String(b.deliveryDate || "").localeCompare(String(a.deliveryDate || ""));
+        if (dateCompare) return dateCompare;
+        return String(b.updatedAt || "").localeCompare(String(a.updatedAt || ""));
+      });
+  }
+
+  function deliverySkuOption(line) {
+    const sku = normalizeSkuValue(line?.sku);
+    if (!sku) return null;
+    const exact = alibabaSkuOptionMap().get(sku);
+    if (exact) return exact;
+    const compact = compactSkuValue(sku);
+    return buildAlibabaSkuOptions().find((option) => compactSkuValue(option.sku) === compact) || null;
+  }
+
+  function deliveryLineProductName(line) {
+    const option = deliverySkuOption(line);
+    return line?.name || option?.name || line?.sku || "";
+  }
+
+  function deliveryLineImage(line) {
+    const option = deliverySkuOption(line);
+    const imageUrl = option?.imageUrl || "";
+    if (!imageUrl) return `<span class="delivery-line-thumb missing" aria-hidden="true"></span>`;
+    return `
+      <span class="delivery-line-thumb">
+        <img src="${escapeHtml(imageUrl)}" alt="${escapeHtml(line?.sku || "SKU")}" loading="lazy" referrerpolicy="no-referrer" onerror="this.parentElement.classList.add('missing'); this.remove();" />
+      </span>`;
+  }
+
+  function deliveryWarehouseOption(warehouseId) {
+    const id = String(warehouseId || "");
+    return (
+      deliveryNoteWarehouseOptions.find((warehouse) => String(warehouse.id) === id) ||
+      deliveryNoteState.warehouses.find((warehouse) => String(warehouse.id) === id) ||
+      null
+    );
+  }
+
+  function deliveryWarehouseStock(sku, warehouseId) {
+    const normalized = normalizeSkuValue(sku);
+    if (!normalized) return 0;
+    if (warehouseId) {
+      return numberValue(findWebsiteStockRow(normalized, warehouseId)?.quantity);
+    }
+    return websiteStockEditWarehouses.reduce((sum, warehouse) => sum + numberValue(findWebsiteStockRow(normalized, warehouse.id)?.quantity), 0);
+  }
+
+  function deliveryLineStockHint(line, note) {
+    const stock = deliveryWarehouseStock(line.sku, note.warehouseId);
+    const qty = numberValue(line.quantity);
+    const shortage = qty > stock;
+    return `
+      <span class="delivery-stock-hint ${shortage ? "short" : ""}">
+        คงเหลือ ${fmtQty.format(stock)}${shortage ? ` · ขาด ${fmtQty.format(qty - stock)}` : ""}
+      </span>`;
+  }
+
+  function renderDeliverySkuDatalist() {
+    return `
+      <datalist id="deliverySkuOptions">
+        ${buildAlibabaSkuOptions()
+          .slice(0, 2500)
+          .map((option) => {
+            const label = [option.name, option.warehouseSummary, option.price ? fmtBaht2.format(option.price) : ""].filter(Boolean).join(" | ");
+            return `<option value="${escapeHtml(option.sku)}" label="${escapeHtml(label)}"></option>`;
+          })
+          .join("")}
+      </datalist>`;
+  }
+
+  function deliveryNoteStatusTabs() {
+    const summary = deliveryNoteState.summary || {};
+    const tabs = [
+      { status: "All", label: `ทั้งหมด ${fmtInt.format(summary.totalNotes || deliveryNoteState.notes.length)}` },
+      { status: "draft", label: `ร่าง ${fmtInt.format(summary.draft || 0)}` },
+      { status: "ready", label: `รอตรวจ ${fmtInt.format(summary.ready || 0)}` },
+      { status: "checked", label: `ตรวจแล้ว ${fmtInt.format(summary.checked || 0)}` },
+      { status: "legacy_imported", label: `นำเข้าเดิม ${fmtInt.format(summary.legacyImported || 0)}` },
+    ];
+    return tabs
+      .map(
+        (tab) => `
+          <button type="button" class="delivery-filter ${deliveryNoteState.status === tab.status ? "active" : ""}" data-delivery-status="${escapeHtml(tab.status)}">
+            ${escapeHtml(tab.label)}
+          </button>`
+      )
+      .join("");
+  }
+
+  function renderDeliveryNoteList(notes) {
+    if (!notes.length) {
+      return `<div class="delivery-empty">ไม่พบใบส่งของตามเงื่อนไขนี้</div>`;
+    }
+    return notes
+      .slice(0, deliveryNotePageSize)
+      .map(
+        (note) => `
+          <button type="button" class="delivery-note-card ${deliveryNoteState.selectedId === note.id ? "active" : ""}" data-delivery-select="${escapeHtml(note.id)}">
+            <span class="delivery-card-head">
+              <strong>${escapeHtml(note.deliveryNo || "-")}</strong>
+              <span class="delivery-status ${deliveryStatusClass(note.status)}">${deliveryStatusText(note.status)}</span>
+            </span>
+            <span>${deliveryDateLabel(note.deliveryDate)} · ${escapeHtml(note.warehouseName || "-")}</span>
+            <small>${fmtInt.format((note.lines || []).length)} รายการ · ${fmtQty.format((note.lines || []).reduce((sum, line) => sum + numberValue(line.quantity), 0))} หน่วย</small>
+          </button>`
+      )
+      .join("");
+  }
+
+  function renderDeliveryLineRow(line, index, note, locked) {
+    const productName = deliveryLineProductName(line);
+    const option = deliverySkuOption(line);
+    return `
+      <tr data-delivery-line="${escapeHtml(line.id)}">
+        <td>${deliveryLineImage(line)}</td>
+        <td>
+          <input class="delivery-sku-input" list="deliverySkuOptions" value="${escapeHtml(line.sku || "")}" data-delivery-line-field="sku" data-line-id="${escapeHtml(line.id)}" placeholder="ค้นหา SKU" ${locked ? "disabled" : ""} />
+          <small>${escapeHtml(option?.warehouseSummary || "เลือก SKU เพื่อดึงชื่อและรูป")}</small>
+        </td>
+        <td>
+          <textarea rows="2" data-delivery-line-field="name" data-line-id="${escapeHtml(line.id)}" placeholder="ชื่อสินค้า" ${locked ? "disabled" : ""}>${escapeHtml(productName)}</textarea>
+        </td>
+        <td>
+          <input type="number" min="0" step="1" value="${escapeHtml(line.quantity || 0)}" data-delivery-line-field="quantity" data-line-id="${escapeHtml(line.id)}" ${locked ? "disabled" : ""} />
+          ${deliveryLineStockHint(line, note)}
+        </td>
+        <td>
+          <input value="${escapeHtml(line.unit || "PCS")}" data-delivery-line-field="unit" data-line-id="${escapeHtml(line.id)}" ${locked ? "disabled" : ""} />
+        </td>
+        <td>
+          <input value="${escapeHtml(line.previousCheck || "")}" data-delivery-line-field="previousCheck" data-line-id="${escapeHtml(line.id)}" placeholder="ตรวจเดิม" ${locked ? "disabled" : ""} />
+          <input value="${escapeHtml(line.stockCutCheck || "")}" data-delivery-line-field="stockCutCheck" data-line-id="${escapeHtml(line.id)}" placeholder="ตัด stock" ${locked ? "disabled" : ""} />
+          <input value="${escapeHtml(line.evidenceLink || "")}" data-delivery-line-field="evidenceLink" data-line-id="${escapeHtml(line.id)}" placeholder="ลิงก์หลักฐาน / เปิดรูป" ${locked ? "disabled" : ""} />
+        </td>
+        <td>
+          <button class="icon-button delivery-remove-line" type="button" data-delivery-remove-line="${escapeHtml(line.id)}" title="ลบรายการ" aria-label="ลบรายการที่ ${index + 1}" ${locked ? "disabled" : ""}>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M10 11v6M14 11v6M6 6l1 15h10l1-15" /></svg>
+          </button>
+        </td>
+      </tr>`;
+  }
+
+  function renderDeliveryNoteEditor(note) {
+    const locked = deliveryNoteLocked(note);
+    const warehouseOptions =
+      `<option value=""${note.warehouseId ? "" : " selected"}>เลือกคลังต้นทาง</option>` +
+      deliveryNoteWarehouseOptions
+        .map((warehouse) => `<option value="${escapeHtml(warehouse.id)}"${String(note.warehouseId || "") === String(warehouse.id) ? " selected" : ""}>${escapeHtml(warehouse.name)}</option>`)
+        .join("");
+    const totalQty = (note.lines || []).reduce((sum, line) => sum + numberValue(line.quantity), 0);
+    const missingSkuCount = (note.lines || []).filter((line) => !normalizeSkuValue(line.sku)).length;
+    const shortageCount = (note.lines || []).filter((line) => normalizeSkuValue(line.sku) && numberValue(line.quantity) > deliveryWarehouseStock(line.sku, note.warehouseId)).length;
+    return `
+      <article class="delivery-editor-panel">
+        <div class="delivery-editor-head">
+          <div>
+            <span>Delivery Note</span>
+            <h3>${escapeHtml(note.deliveryNo || "ใบส่งของใหม่")}</h3>
+            <p>${locked ? "ยืนยันตรวจแล้วและมี transaction ตัด stock แล้ว" : "เพิ่มสินค้า ตรวจงาน และยืนยันเพื่อตัด stock อัตโนมัติ"}</p>
+          </div>
+          <div class="delivery-editor-actions">
+            <button class="secondary-button" type="button" data-delivery-new>สร้างใหม่</button>
+            <button class="secondary-button" type="button" data-delivery-refresh>รีเฟรช</button>
+          </div>
+        </div>
+
+        <div class="delivery-note-meta-grid">
+          <label>
+            วันที่ส่งสินค้า
+            <input type="date" value="${escapeHtml(note.deliveryDate || "")}" data-delivery-field="deliveryDate" ${locked ? "disabled" : ""} />
+          </label>
+          <label>
+            คลังต้นทาง
+            <select data-delivery-field="warehouseId" ${locked ? "disabled" : ""}>${warehouseOptions}</select>
+          </label>
+          <label>
+            ผู้รับ/ปลายทาง
+            <input value="${escapeHtml(note.destination || "")}" data-delivery-field="destination" placeholder="เช่น หน้าร้าน, ลูกค้า, รถบริษัท" ${locked ? "disabled" : ""} />
+          </label>
+          <label>
+            ผู้จัด / ผู้รับผิดชอบ
+            <input value="${escapeHtml(note.preparedBy || "")}" data-delivery-field="preparedBy" ${locked ? "disabled" : ""} />
+          </label>
+          <label>
+            ผู้ตรวจ
+            <input value="${escapeHtml(note.checkedBy || "")}" data-delivery-field="checkedBy" placeholder="ชื่อผู้ตรวจ" ${locked ? "disabled" : ""} />
+          </label>
+          <label>
+            หมายเหตุ
+            <input value="${escapeHtml(note.remark || "")}" data-delivery-field="remark" placeholder="หมายเหตุใบส่งของ" ${locked ? "disabled" : ""} />
+          </label>
+        </div>
+
+        <div class="delivery-note-metrics">
+          <article><span>รายการสินค้า</span><strong>${fmtInt.format((note.lines || []).length)}</strong></article>
+          <article><span>จำนวนรวม</span><strong>${fmtQty.format(totalQty)}</strong></article>
+          <article class="${missingSkuCount ? "warn" : ""}"><span>ยังไม่ใส่ SKU</span><strong>${fmtInt.format(missingSkuCount)}</strong></article>
+          <article class="${shortageCount ? "warn" : ""}"><span>stock ไม่พอ</span><strong>${fmtInt.format(shortageCount)}</strong></article>
+        </div>
+
+        ${renderDeliverySkuDatalist()}
+        <div class="delivery-line-table-wrap">
+          <table class="delivery-line-table">
+            <thead>
+              <tr>
+                <th>รูป</th>
+                <th>SKU</th>
+                <th>สินค้า</th>
+                <th>จำนวนส่ง</th>
+                <th>หน่วย</th>
+                <th>ตรวจงานแบบ Sheet205</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(note.lines || []).map((line, index) => renderDeliveryLineRow(line, index, note, locked)).join("")}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="delivery-editor-foot">
+          <button class="secondary-button" type="button" data-delivery-add-line ${locked ? "disabled" : ""}>เพิ่มรายการสินค้า</button>
+          <div>
+            <button class="secondary-button" type="button" data-delivery-save ${locked ? "disabled" : ""}>บันทึกร่าง</button>
+            <button class="primary-button" type="button" data-delivery-confirm ${locked ? "disabled" : ""}>ยืนยันตรวจแล้ว + ตัด stock</button>
+          </div>
+        </div>
+      </article>`;
+  }
+
+  function renderDeliveryRecommendations() {
+    return `
+      <div class="delivery-recommendations">
+        <strong>ฟังก์ชั่นที่ควรมีต่อ</strong>
+        <span>พิมพ์/Export PDF ใบส่งของ</span>
+        <span>สแกนบาร์โค้ดตอนจัดของ</span>
+        <span>แนบรูปหลักฐานก่อนกดตรวจ</span>
+        <span>แจ้งเตือนเมื่อ stock ไม่พอก่อนส่ง</span>
+      </div>`;
+  }
+
+  function renderDeliveryNotes() {
+    const target = $("deliveryNotesApp");
+    if (!target) return;
+    if (!deliveryNoteState.selectedId && deliveryNoteState.notes.length) {
+      deliveryNoteState.selectedId = deliveryNoteState.notes[0].id;
+    }
+    const notes = filteredDeliveryNotes();
+    if (!deliveryNoteState.draft) ensureDeliveryDraft();
+    const draft = ensureDeliveryDraft();
+    const summary = deliveryNoteState.summary || {};
+    target.innerHTML = `
+      <div class="delivery-page">
+        <div class="delivery-page-head">
+          <div>
+            <span>Warehouse Dispatch Control</span>
+            <h2>ใบส่งของรายการสินค้า</h2>
+            <p>สร้างใบยืนยันรายการส่งของจากคลัง ซ.เจริญกิจ หรือ คลังสุขสวัสดิ์ พร้อมรูปสินค้า ตรวจงาน และตัด stock อัตโนมัติเมื่อยืนยัน</p>
+          </div>
+          <button class="primary-button" type="button" data-delivery-new>สร้างใบส่งของใหม่</button>
+        </div>
+
+        <div class="delivery-kpis">
+          <article><span>ใบส่งของทั้งหมด</span><strong>${fmtInt.format(summary.totalNotes || deliveryNoteState.notes.length)}</strong></article>
+          <article><span>ยืนยันตรวจแล้ว</span><strong>${fmtInt.format(summary.checked || 0)}</strong></article>
+          <article><span>จำนวนสินค้ารวม</span><strong>${fmtQty.format(summary.totalQuantity || 0)}</strong></article>
+          <article><span>นำเข้าจาก Sheet</span><strong>${fmtInt.format(summary.legacyImported || 0)}</strong></article>
+        </div>
+
+        ${deliveryNoteState.message ? `<div class="delivery-message ${escapeHtml(deliveryNoteState.messageType)}">${escapeHtml(deliveryNoteState.message)}</div>` : ""}
+
+        <div class="delivery-toolbar">
+          <input type="search" value="${escapeHtml(deliveryNoteState.query)}" data-delivery-search placeholder="ค้นหาใบส่งของ / SKU / ชื่อสินค้า" />
+          <div class="delivery-status-tabs">${deliveryNoteStatusTabs()}</div>
+        </div>
+
+        <div class="delivery-workspace">
+          <aside class="delivery-note-list">${renderDeliveryNoteList(notes)}</aside>
+          ${renderDeliveryNoteEditor(draft)}
+        </div>
+        ${renderDeliveryRecommendations()}
+      </div>`;
+  }
+
+  async function loadDeliveryNotes(showMessage = false) {
+    if (!deliveryNoteApiReady(showMessage)) return false;
+    deliveryNoteState.loading = true;
+    if (showMessage) setDeliveryNoteMessage("running", "กำลังโหลดใบส่งของล่าสุดจาก server...");
+    try {
+      const response = await fetch(expenseApiUrl("/api/delivery-notes"), expenseFetchOptions("GET"));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      const currentId = deliveryNoteState.selectedId;
+      applyDeliveryNotePayload(payload);
+      if (currentId && deliveryNoteById(currentId)) {
+        deliveryNoteState.selectedId = currentId;
+        deliveryNoteState.draft = cloneDeliveryNote(deliveryNoteById(currentId));
+      }
+      if (showMessage) {
+        deliveryNoteState.messageType = "passed";
+        deliveryNoteState.message = "โหลดใบส่งของล่าสุดแล้ว";
+      }
+      renderDeliveryNotes();
+      return true;
+    } catch (error) {
+      setDeliveryNoteMessage("failed", `โหลดใบส่งของไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
+      return false;
+    } finally {
+      deliveryNoteState.loading = false;
+    }
+  }
+
+  function deliveryNoteApiReady(showMessage = true) {
+    if (!staticReportHost || remoteSyncApiBase) return true;
+    if (showMessage) setDeliveryNoteMessage("failed", "ต้องเปิดผ่าน Render website หรือกำหนด Sync API URL ก่อน จึงจะบันทึกใบส่งของออนไลน์ได้");
+    return false;
+  }
+
+  function deliveryDraftPayload() {
+    const note = ensureDeliveryDraft();
+    const warehouse = deliveryWarehouseOption(note.warehouseId);
+    return {
+      ...note,
+      warehouseId: warehouse?.id || note.warehouseId,
+      warehouseName: warehouse?.name || note.warehouseName,
+      warehouseLabel: warehouse?.label || note.warehouseLabel,
+      status: note.status === "legacy_imported" ? "ready" : note.status || "draft",
+      lines: (note.lines || [])
+        .map((line, index) => ({
+          ...line,
+          rowNo: index + 1,
+          sku: normalizeSkuValue(line.sku),
+          name: deliveryLineProductName(line),
+          quantity: numberValue(line.quantity),
+          unit: line.unit || "PCS",
+        }))
+        .filter((line) => line.sku || line.name || line.quantity > 0),
+    };
+  }
+
+  async function saveDeliveryNoteDraft(showMessage = true) {
+    if (!deliveryNoteApiReady(showMessage)) return null;
+    if (showMessage) setDeliveryNoteMessage("running", "กำลังบันทึกใบส่งของ...");
+    try {
+      const response = await fetch(expenseApiUrl("/api/delivery-notes"), expenseFetchOptions("POST", deliveryDraftPayload()));
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      applyDeliveryNotePayload(payload);
+      if (showMessage) {
+        deliveryNoteState.messageType = "passed";
+        deliveryNoteState.message = `บันทึก ${payload.note?.deliveryNo || "ใบส่งของ"} แล้ว`;
+      }
+      renderDeliveryNotes();
+      return payload;
+    } catch (error) {
+      setDeliveryNoteMessage("failed", `บันทึกใบส่งของไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
+      return null;
+    }
+  }
+
+  async function confirmDeliveryNoteDraft() {
+    const draft = deliveryDraftPayload();
+    const missingSku = draft.lines.filter((line) => !normalizeSkuValue(line.sku));
+    if (!draft.warehouseId || !deliveryWarehouseOption(draft.warehouseId)) {
+      setDeliveryNoteMessage("failed", "กรุณาเลือกคลัง ซ.เจริญกิจ หรือ คลังสุขสวัสดิ์ก่อนยืนยัน");
+      return;
+    }
+    if (!draft.lines.length || missingSku.length) {
+      setDeliveryNoteMessage("failed", "กรุณาใส่ SKU ให้ครบทุกแถวก่อนยืนยันและตัด stock");
+      return;
+    }
+    const saved = await saveDeliveryNoteDraft(false);
+    if (!saved?.note?.id) return;
+    setDeliveryNoteMessage("running", "กำลังยืนยันการตรวจและตัด stock บน Supabase...");
+    try {
+      const response = await fetch(
+        expenseApiUrl(`/api/delivery-notes/${encodeURIComponent(saved.note.id)}/confirm`),
+        expenseFetchOptions("POST", { ...saved.note, checkedBy: draft.checkedBy || saved.note.checkedBy || "Website" })
+      );
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok || payload.ok === false) throw new Error(payload.message || `Status ${response.status}`);
+      applyDeliveryNotePayload(payload);
+      deliveryNoteState.messageType = "passed";
+      deliveryNoteState.message = payload.message || "ยืนยันใบส่งของและตัด stock แล้ว";
+      await loadLiveWebsiteStockFromSupabase().catch(() => false);
+      renderDeliveryNotes();
+      renderTable();
+    } catch (error) {
+      setDeliveryNoteMessage("failed", `ยืนยันใบส่งของไม่สำเร็จ: ${syncNetworkErrorMessage(error)}`);
+    }
+  }
+
+  function updateDeliveryDraftField(field, value) {
+    const draft = ensureDeliveryDraft();
+    draft[field] = field === "warehouseId" ? String(value || "") : value;
+    if (field === "warehouseId") {
+      const warehouse = deliveryWarehouseOption(value);
+      if (warehouse) {
+        draft.warehouseName = warehouse.name;
+        draft.warehouseLabel = warehouse.label;
+      }
+    }
+  }
+
+  function updateDeliveryLineField(lineId, field, value, rerender = false) {
+    const draft = ensureDeliveryDraft();
+    const line = (draft.lines || []).find((item) => item.id === lineId);
+    if (!line) return;
+    line[field] = field === "quantity" ? numberValue(value) : value;
+    if (field === "sku") {
+      line.sku = normalizeSkuValue(value);
+      const option = deliverySkuOption(line);
+      if (option && (!line.name || compactText(line.name) === compactText(value))) {
+        line.name = option.name || line.name;
+      }
+    }
+    if (rerender) renderDeliveryNotes();
+  }
+
+  function handleDeliveryNoteInput(event) {
+    const search = event.target.closest("[data-delivery-search]");
+    if (search) {
+      const cursor = search.selectionStart || search.value.length;
+      deliveryNoteState.query = search.value;
+      renderDeliveryNotes();
+      window.requestAnimationFrame(() => {
+        const next = document.querySelector("[data-delivery-search]");
+        next?.focus();
+        next?.setSelectionRange?.(cursor, cursor);
+      });
+      return;
+    }
+    const field = event.target.closest("[data-delivery-field]");
+    if (field) {
+      updateDeliveryDraftField(field.dataset.deliveryField, field.value);
+      return;
+    }
+    const lineField = event.target.closest("[data-delivery-line-field]");
+    if (lineField) {
+      updateDeliveryLineField(lineField.dataset.lineId, lineField.dataset.deliveryLineField, lineField.value, false);
+    }
+  }
+
+  function handleDeliveryNoteChange(event) {
+    const field = event.target.closest("[data-delivery-field]");
+    if (field) {
+      updateDeliveryDraftField(field.dataset.deliveryField, field.value);
+      if (field.dataset.deliveryField === "warehouseId") renderDeliveryNotes();
+      return;
+    }
+    const lineField = event.target.closest("[data-delivery-line-field]");
+    if (lineField) {
+      const shouldRerender = ["sku", "quantity"].includes(lineField.dataset.deliveryLineField);
+      updateDeliveryLineField(lineField.dataset.lineId, lineField.dataset.deliveryLineField, lineField.value, shouldRerender);
+    }
+  }
+
+  function handleDeliveryNoteClick(event) {
+    const status = event.target.closest("[data-delivery-status]");
+    if (status) {
+      deliveryNoteState.status = status.dataset.deliveryStatus || "All";
+      renderDeliveryNotes();
+      return;
+    }
+    const select = event.target.closest("[data-delivery-select]");
+    if (select) {
+      const id = select.dataset.deliverySelect || "";
+      deliveryNoteState.selectedId = id;
+      deliveryNoteState.draft = cloneDeliveryNote(deliveryNoteById(id));
+      deliveryNoteState.message = "";
+      renderDeliveryNotes();
+      return;
+    }
+    if (event.target.closest("[data-delivery-new]")) {
+      deliveryNoteState.selectedId = "__new";
+      deliveryNoteState.draft = emptyDeliveryNote();
+      deliveryNoteState.message = "";
+      renderDeliveryNotes();
+      return;
+    }
+    if (event.target.closest("[data-delivery-refresh]")) {
+      loadDeliveryNotes(true);
+      return;
+    }
+    if (event.target.closest("[data-delivery-add-line]")) {
+      const draft = ensureDeliveryDraft();
+      draft.lines = Array.isArray(draft.lines) ? draft.lines : [];
+      draft.lines.push({
+        id: deliveryNoteLineId(draft.lines.length + 1),
+        rowNo: draft.lines.length + 1,
+        sku: "",
+        name: "",
+        quantity: 1,
+        unit: "PCS",
+        previousCheck: "",
+        stockCutCheck: "",
+        evidenceLink: "",
+        inspectionStatus: "",
+        remark: "",
+      });
+      renderDeliveryNotes();
+      return;
+    }
+    const remove = event.target.closest("[data-delivery-remove-line]");
+    if (remove) {
+      const draft = ensureDeliveryDraft();
+      draft.lines = (draft.lines || []).filter((line) => line.id !== remove.dataset.deliveryRemoveLine);
+      renderDeliveryNotes();
+      return;
+    }
+    if (event.target.closest("[data-delivery-save]")) {
+      saveDeliveryNoteDraft(true);
+      return;
+    }
+    if (event.target.closest("[data-delivery-confirm]")) {
+      confirmDeliveryNoteDraft();
+    }
   }
 
   function renderAlibabaSkuSuggestionsForInput(input) {
@@ -6436,6 +7125,9 @@
     window.addEventListener("hashchange", updateRouteState);
     $("downloadCsv").addEventListener("click", exportCsv);
     $("printReport").addEventListener("click", () => window.print());
+    $("deliveryNotesApp")?.addEventListener("click", handleDeliveryNoteClick);
+    $("deliveryNotesApp")?.addEventListener("input", handleDeliveryNoteInput);
+    $("deliveryNotesApp")?.addEventListener("change", handleDeliveryNoteChange);
     $("closeProductDetail")?.addEventListener("click", closeProductDetail);
     $("closeStockAdjust")?.addEventListener("click", closeStockAdjustModal);
     $("stockAdjustForm")?.addEventListener("submit", submitStockAdjustment);
@@ -6498,6 +7190,7 @@
   renderWarehouseFilters();
   renderFilters();
   renderTable();
+  renderDeliveryNotes();
   renderMethodology();
   initExpenseDefaults();
   bindEvents();

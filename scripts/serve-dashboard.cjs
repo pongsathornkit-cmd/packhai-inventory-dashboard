@@ -39,12 +39,20 @@ const {
   updatePlainDesignCodexImageJob,
   updatePlainDesignProduct,
 } = require("./plain-design-core.cjs");
+const {
+  buildStockDeductionPayloads,
+  confirmDeliveryNote,
+  publicDeliveryNoteState,
+  readDeliveryNoteStore,
+  upsertDeliveryNote,
+} = require("./delivery-note-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const dashboardDataFile = path.join(distDir, "inventory-valuation-data.json");
 const dataDir = process.env.PACKHAI_DATA_DIR ? path.resolve(process.env.PACKHAI_DATA_DIR) : path.join(projectRoot, "data");
 const expensesFile = path.join(dataDir, "expenses.json");
+const deliveryNotesFile = path.join(dataDir, "delivery_notes.json");
 const plainDesignSeedFile = path.join(projectRoot, "data", "plain_design_products.json");
 const plainDesignKtwLogisticsFile = path.join(projectRoot, "data", "plain_design_ktw_logistics.json");
 const plainDesignStateFile = path.join(dataDir, "plain-design-state.json");
@@ -682,6 +690,61 @@ async function saveSupabaseStockUpdate(body) {
   };
 }
 
+async function saveDeliveryNoteStockDeductions(note) {
+  const payloads = buildStockDeductionPayloads(note);
+  const stockResults = [];
+  const mirrorResults = [];
+
+  for (const payload of payloads) {
+    if (supabaseConfigured()) {
+      const result = await callSupabaseStockAdjustment(payload);
+      stockResults.push({ sku: payload.sku, result: result.result || result });
+      try {
+        mirrorResults.push({ sku: payload.sku, result: applyGithubStockUpdate(flowaccountSnapshotFile, payload) });
+      } catch (error) {
+        mirrorResults.push({ sku: payload.sku, ok: false, message: error.message });
+      }
+    } else {
+      const result = applyGithubStockUpdate(flowaccountSnapshotFile, payload);
+      stockResults.push({ sku: payload.sku, result });
+      mirrorResults.push({ sku: payload.sku, result });
+    }
+  }
+
+  return {
+    ok: true,
+    payloads,
+    stockResults,
+    mirrorResults,
+  };
+}
+
+async function confirmDeliveryNoteWithStock(id, body = {}) {
+  const store = readDeliveryNoteStore(deliveryNotesFile);
+  const note = store.notes.find((item) => item.id === id || item.deliveryNo === id);
+  if (!note) throw new Error("Delivery note was not found.");
+  if (note.stockDeductedAt) {
+    return { ...confirmDeliveryNote(deliveryNotesFile, id, body, note.stockResults || []), stockUpdate: { alreadyConfirmed: true } };
+  }
+
+  const draft = {
+    ...note,
+    ...body,
+    id: note.id,
+    deliveryNo: note.deliveryNo,
+    lines: Array.isArray(body.lines) ? body.lines : note.lines,
+  };
+  const stockUpdate = await saveDeliveryNoteStockDeductions(draft);
+  const confirmed = confirmDeliveryNote(deliveryNotesFile, id, body, stockUpdate.stockResults);
+  stockUpdate.buildStep = await runCommand("Build dashboard", nodePath, [path.join(projectRoot, "scripts", "build-dashboard.cjs")], projectRoot);
+  stockUpdate.publishStep = await runPublishSupabase();
+  return {
+    ...confirmed,
+    stockUpdate,
+    message: `ยืนยันใบส่งของ ${confirmed.note.deliveryNo} และตัด stock ${stockUpdate.payloads.length} SKU แล้ว`,
+  };
+}
+
 function summarizeOutput(text) {
   const lines = String(text || "")
     .split(/\r?\n/)
@@ -1255,6 +1318,31 @@ const server = http.createServer((req, res) => {
     } catch (error) {
       sendJson(res, 404, { ok: false, message: error.message });
     }
+    return;
+  }
+
+  if (url.pathname === "/api/delivery-notes" && req.method === "GET") {
+    if (!syncAuthorized(req, res)) return;
+    sendJson(res, 200, publicDeliveryNoteState(readDeliveryNoteStore(deliveryNotesFile)));
+    return;
+  }
+
+  if (url.pathname === "/api/delivery-notes" && req.method === "POST") {
+    if (!syncAuthorized(req, res)) return;
+    readJsonBody(req)
+      .then((body) => upsertDeliveryNote(deliveryNotesFile, body))
+      .then((result) => sendJson(res, result.note?.createdAt === result.note?.updatedAt ? 201 : 200, result))
+      .catch((error) => sendJson(res, /required|warehouse|quantity|valid/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
+    return;
+  }
+
+  const deliveryConfirmMatch = url.pathname.match(/^\/api\/delivery-notes\/([^/]+)\/confirm$/);
+  if (deliveryConfirmMatch && req.method === "POST") {
+    if (!syncAuthorized(req, res)) return;
+    readJsonBody(req)
+      .then((body) => confirmDeliveryNoteWithStock(decodeURIComponent(deliveryConfirmMatch[1]), body))
+      .then((result) => sendJson(res, 200, result))
+      .catch((error) => sendJson(res, /not found|warehouse|quantity|SKU|already/i.test(error.message) ? 400 : 500, { ok: false, message: error.message }));
     return;
   }
 

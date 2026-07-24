@@ -67,6 +67,10 @@ const inputFiles = {
     path.join(dataDir, "delivery_notes.json"),
     path.join(projectRoot, "data", "delivery_notes.json")
   ),
+  productNameOverrides: preferExisting(
+    path.join(dataDir, "product_name_overrides.json"),
+    path.join(projectRoot, "data", "product_name_overrides.json")
+  ),
 };
 
 function readJson(file) {
@@ -234,6 +238,99 @@ function stockSourceLabel(item) {
   if (item.stockSource === "FlowAccount") return warehouseName ? `FlowAccount - ${warehouseName}` : "FlowAccount";
   if (item.stockSource === "GitHub") return warehouseName ? `GitHub - ${warehouseName}` : "GitHub";
   return warehouseName || "คลัง Packhai";
+}
+
+function cleanProductName(value) {
+  return String(value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function productNameScoreForSku(name, sku) {
+  const text = cleanProductName(name);
+  if (!text) return 0;
+  const compactName = compactSku(text);
+  const compactSkuValue = compactSku(sku);
+  if (compactSkuValue && compactName === compactSkuValue) return 1;
+  let score = Math.min(140, text.length) + 10;
+  if (/[\u0E00-\u0E7FA-Za-z]/.test(text)) score += 15;
+  if (compactSkuValue && compactName.includes(compactSkuValue) && text.length <= String(sku || "").length + 8) score -= 30;
+  return score;
+}
+
+function productNameSourceWeight(candidate) {
+  if (candidate.kind === "override") return 1000;
+  if (candidate.stockSource === "Packhai" && candidate.field === "name") return 140;
+  if (candidate.kind === "seller") return 80;
+  if (candidate.stockSource === WEBSITE_STOCK_SOURCE && candidate.field === "name") return 35;
+  if (candidate.field === "sourceTitle") return 55;
+  return 45;
+}
+
+function productNameCandidateScore(candidate, sku) {
+  const nameScore = productNameScoreForSku(candidate.name, sku);
+  if (!nameScore) return 0;
+  return nameScore + productNameSourceWeight(candidate);
+}
+
+function selectBestProductName(sku, candidates, fallback = "") {
+  const normalizedSku = normalizeSku(sku);
+  const best =
+    [...(candidates || [])]
+      .map((candidate) => ({ ...candidate, name: cleanProductName(candidate.name) }))
+      .filter((candidate) => candidate.name)
+      .sort(
+        (a, b) =>
+          productNameCandidateScore(b, normalizedSku) - productNameCandidateScore(a, normalizedSku) ||
+          b.name.length - a.name.length
+      )[0] || null;
+  return best?.name || cleanProductName(fallback) || normalizedSku;
+}
+
+function productNameOverrideEntries(raw) {
+  const source = raw?.overrides || raw?.items || raw || {};
+  if (Array.isArray(source)) {
+    return source.map((item) => [item.sku || item.SKU || item.code || item.productCode, item.name || item.productName || item.title]);
+  }
+  return Object.entries(source).map(([sku, value]) => [sku, typeof value === "string" ? value : value?.name || value?.productName || value?.title]);
+}
+
+function buildProductNameOverrideMap(raw) {
+  const map = new Map();
+  for (const [sku, name] of productNameOverrideEntries(raw)) {
+    const normalizedSku = normalizeSku(sku);
+    const cleanName = cleanProductName(name);
+    if (normalizedSku && cleanName) map.set(normalizedSku, cleanName);
+  }
+  return map;
+}
+
+function buildStockProductNameCandidates(stockRows, overrides) {
+  const bySku = new Map();
+  const add = (sku, candidate) => {
+    const normalizedSku = normalizeSku(sku);
+    if (!normalizedSku || !cleanProductName(candidate?.name)) return;
+    if (!bySku.has(normalizedSku)) bySku.set(normalizedSku, []);
+    bySku.get(normalizedSku).push(candidate);
+  };
+
+  for (const [sku, name] of overrides.entries()) {
+    add(sku, { name, kind: "override", field: "name" });
+  }
+
+  for (const row of stockRows || []) {
+    const sku = row.sku || row.productCode || row.productSKU;
+    add(sku, { name: row.name || row.productName, stockSource: row.stockSource || "Packhai", field: "name" });
+    add(sku, { name: row.sourceTitle, stockSource: row.stockSource || "Packhai", field: "sourceTitle" });
+  }
+  return bySku;
+}
+
+function productDisplayNameForRow(item, selectedPrice, nameCandidatesBySku) {
+  const sku = normalizeSku(item.sku);
+  const candidates = [...(nameCandidatesBySku.get(sku) || [])];
+  if (selectedPrice?.title) {
+    candidates.push({ name: selectedPrice.title, kind: "seller", field: "sourceTitle", stockSource: selectedPrice.sourceName });
+  }
+  return selectBestProductName(sku, candidates, item.name || selectedPrice?.title || sku);
 }
 
 function buildStockRows(packhai, flowaccount, paymentIndex) {
@@ -816,6 +913,7 @@ function build() {
   const sellerPaymentsRaw = readOptionalJson(inputFiles.sellerPayments, emptySellerPayments());
   const sellerPaymentOverrides = readOptionalJson(inputFiles.sellerPaymentOverrides, { orders: [] });
   const sellerPayments = mergeSellerPaymentOverrides(sellerPaymentsRaw, sellerPaymentOverrides);
+  const productNameOverrides = buildProductNameOverrideMap(readOptionalJson(inputFiles.productNameOverrides, {}));
   const alibabaPurchaseOrders = buildAlibabaPurchaseOrders(
     readOptionalJson(inputFiles.alibabaPurchaseOrders, { source: "Alibaba paid purchase orders export", orders: [] })
   );
@@ -828,6 +926,7 @@ function build() {
   const sellerPaymentIndex = buildSellerPaymentIndex(sellerPayments);
 
   const stockRows = buildStockRows(packhai, flowaccount, sellerPaymentIndex);
+  const nameCandidatesBySku = buildStockProductNameCandidates(stockRows, productNameOverrides);
   const duplicateStockRows = stockRows.length - new Set(stockRows.map((row) => `${row.warehouseId || row.stockSource}|${normalizeSku(row.sku)}`)).size;
   const stockSources = {
     packhai,
@@ -859,7 +958,7 @@ function build() {
       warehouseName: item.warehouseName || "",
       stockSourceLabel: item.stockSourceLabel || stockSourceLabel(item),
       stockShopId: item.stockShopId || "",
-      name: String(item.name || sku).trim(),
+      name: productDisplayNameForRow(item, selected, nameCandidatesBySku),
       barcode: String(item.barcode || "").trim(),
       prop: String(item.prop || "").trim(),
       quantity,
@@ -923,6 +1022,7 @@ function build() {
   const dashboard = {
     ...summarizeRows(rows, stockSources, shopee, lazada, ktw, indices),
     rows,
+    productNameOverrides: Object.fromEntries(productNameOverrides),
     websiteStockTransactions,
     alibabaPurchaseOrders,
     deliveryNotes,

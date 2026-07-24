@@ -1,0 +1,18 @@
+{
+  "HAITUN-PC10": {
+    "name": "Haitun ( PC-10 ) สวิทซ์ควบคุมปั้มน้ำ อัตโนมัติ สำหรับควบคุมปั้มน้ำปรับแรงดันได้",
+    "reason": "Correct SKU brand/name mismatch found in Packhai/Seller source exports."
+  },
+  "15901_BLUE": {
+    "name": "Haitun ( PC-13A ) สวิทซ์ควบคุมปั้มน้ำ อัตโนมัติ สำหรับควบคุมปั้มน้ำปรับแรงดันได้ รับประกันสินค้า 1 ปีสีน้ำเงิน",
+    "reason": "Website Stock row name was only the SKU; use the product name from Packhai."
+  },
+  "P231-0070": {
+    "name": "POLO SHT-30 พัดลมดูดเป่า 12 นิ้ว (สินค้าพร้อมจัดส่งทันที) ถ่ายเทความร้อน งานดูดหรือเป่าลมในปริมาณมาก (เฉพาะตัวเครื่อง)",
+    "reason": "Keep inventory product name aligned with Packhai instead of seller marketplace wording."
+  },
+  "P231-0075": {
+    "name": "POLO SHT-40 พัดลมดูดเป่า 16 นิ้ว วัสดุใบพัดทำจากอลูมิเนียม เหมาะสำหรับใช้ในงาน ดูดหรือเป่าลมในปริมาณมาก (สินค้าพร้อมจัดส่งทันที)( P231-0075 )",
+    "reason": "Pin verified Packhai product name for the SKU requested."
+  }
+}

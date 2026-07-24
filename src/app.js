@@ -601,6 +601,7 @@
     if (!sku || !warehouseId) return null;
     const existing = findWebsiteStockRow(sku, warehouseId);
     const template = existing || rows.find((row) => normalizeSkuValue(row.sku) === sku) || {};
+    const sameSkuRows = rows.filter((row) => normalizeSkuValue(row.sku) === sku && row !== existing);
     const row =
       existing ||
       {
@@ -619,7 +620,20 @@
       };
 
     row.sku = sku;
-    row.name = item.name || template.name || sku;
+    row.name = bestProductNameForRows(
+      [
+        {
+          ...item,
+          sku,
+          stockSource: "Website Stock",
+          name: item.name,
+          sourceTitle: item.sourceTitle || item.source_title,
+        },
+        template,
+        ...sameSkuRows,
+      ],
+      sku
+    );
     row.barcode = item.barcode ?? template.barcode ?? "";
     row.prop = item.prop ?? template.prop ?? "";
     row.productId = item.productId ?? template.productId ?? "";
@@ -1094,7 +1108,7 @@
   function stockAdjustContextForRow(row) {
     const sku = normalizeSkuValue(row?.sku);
     if (!sku) return null;
-    const productRow = rows.find((item) => normalizeSkuValue(item.sku) === sku && item.name) || row || {};
+    const skuRows = rows.filter((item) => normalizeSkuValue(item.sku) === sku);
     const warehouses = websiteStockEditWarehouses.map((warehouse) => {
       const stockRow = websiteStockRowForSkuWarehouse(row, warehouse.id);
       return {
@@ -1106,7 +1120,7 @@
     });
     return {
       sku,
-      productName: productRow.name || sku,
+      productName: bestProductNameForRows([...skuRows, row || {}], sku),
       sourceRow: row,
       warehouses,
       totalQuantity: warehouses.reduce((total, warehouse) => total + numberValue(warehouse.quantity), 0),
@@ -1235,6 +1249,7 @@
     return (
       [...items].sort(
         (a, b) =>
+          productNameCandidateScore(b, b?.name, "name") - productNameCandidateScore(a, a?.name, "name") ||
           Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)) ||
           Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0) ||
           movementDateValue(b) - movementDateValue(a)
@@ -1275,6 +1290,13 @@
         const base = preferredProductRow(warehouseRows);
         const priceRow = bestPriceRow(warehouseRows);
         const movementRow = newestMovementRow(warehouseRows);
+        const imageRow =
+          [...warehouseRows].sort(
+            (a, b) =>
+              Number(Boolean(b.imageUrl)) - Number(Boolean(a.imageUrl)) ||
+              pricePriority(a) - pricePriority(b) ||
+              Number(b.inventoryValue || 0) - Number(a.inventoryValue || 0)
+          )[0] || base;
         const stockMovements = warehouseRows
           .flatMap((item) => stockMovementsForRow(item))
           .sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
@@ -1284,6 +1306,9 @@
         return {
           ...base,
           detailId: isGrouped ? `sku-group-${index}-${key.replace(/[^a-z0-9_-]/gi, "-")}` : detailIdForRow(base),
+          name: bestProductNameForRows(warehouseRows, base.sku || priceRow.sku || ""),
+          imageUrl: imageRow.imageUrl || base.imageUrl || "",
+          imageSource: imageRow.imageSource || base.imageSource || "",
           isSkuGroup: isGrouped,
           warehouseRows,
           stockMovements,
@@ -4145,12 +4170,67 @@
   }
 
   function productNameScoreForSku(name, sku) {
-    const text = String(name ?? "").replace(/\s+/g, " ").trim();
+    const text = cleanProductNameText(name);
     if (!text) return 0;
     const compactName = compactSkuValue(text);
     const compactSku = compactSkuValue(sku);
     if (compactSku && compactName === compactSku) return 1;
-    return Math.min(100, text.length) + 10;
+    let score = Math.min(140, text.length) + 10;
+    if (/[\u0E00-\u0E7FA-Za-z]/.test(text)) score += 15;
+    if (compactSku && compactName.includes(compactSku) && text.length <= String(sku || "").length + 8) score -= 30;
+    return score;
+  }
+
+  function cleanProductNameText(value) {
+    return String(value ?? "").replace(/\s+/g, " ").trim();
+  }
+
+  function productNameOverrideForSku(sku) {
+    const overrides = data.productNameOverrides || {};
+    const normalizedSku = normalizeSkuValue(sku);
+    const exact = overrides[normalizedSku] || overrides[String(sku || "")];
+    return typeof exact === "string" ? exact : exact?.name || "";
+  }
+
+  function productNameSourceWeight(row, field) {
+    if (field === "override") return 1000;
+    if (row?.stockSource === "Packhai" && field === "name") return 140;
+    if (row?.priceSource && field === "sourceTitle") return 80;
+    if (field === "sourceTitle") return 55;
+    if (row?.stockSource === "Website Stock" && field === "name") return 35;
+    return 45;
+  }
+
+  function productNameCandidateScore(row, name, field = "name") {
+    const sku = normalizeSkuValue(row?.sku || row?.sourceSku || "");
+    const score = productNameScoreForSku(name, sku);
+    if (!score) return 0;
+    return score + productNameSourceWeight(row, field);
+  }
+
+  function productNameCandidatesForRow(row) {
+    if (!row) return [];
+    return [
+      { row, name: row.name || row.productName, field: "name" },
+      { row, name: row.sourceTitle, field: "sourceTitle" },
+    ];
+  }
+
+  function bestProductNameForRows(items, fallbackSku = "") {
+    const sku = normalizeSkuValue(fallbackSku || items?.find((item) => normalizeSkuValue(item?.sku))?.sku || "");
+    const overrideName = productNameOverrideForSku(sku);
+    const overrideCandidate = overrideName ? [{ row: { sku }, name: overrideName, field: "override" }] : [];
+    const candidates = [...overrideCandidate, ...(items || []).flatMap(productNameCandidatesForRow)];
+    const best =
+      candidates
+        .map((candidate) => ({ ...candidate, name: cleanProductNameText(candidate.name) }))
+        .filter((candidate) => candidate.name)
+        .sort(
+          (a, b) =>
+            productNameCandidateScore(b.row, b.name, b.field) - productNameCandidateScore(a.row, a.name, a.field) ||
+            b.name.length - a.name.length
+        )[0] || null;
+    return best?.name || sku;
   }
 
   function buildAlibabaSkuOptions() {
@@ -4158,7 +4238,7 @@
     for (const row of rows || []) {
       const sku = normalizeSkuValue(row.sku || row.productCode || row.productSKU);
       if (!sku) continue;
-      const candidateName = row.name || row.productName || row.sourceTitle || "";
+      const candidateName = bestProductNameForRows([row], sku);
       const current = bySku.get(sku) || {
         sku,
         name: candidateName,

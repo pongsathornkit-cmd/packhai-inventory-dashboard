@@ -52,6 +52,81 @@ test("product list places SKU under the product name instead of a separate SKU c
   assert.match(source, /return 12;/);
 });
 
+test("every product table mode renders an exact KTW comparison link or an unavailable label", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const comparisonStart = source.indexOf("function exactKtwProductUrl");
+  const accountingStart = source.indexOf("function renderAccountingProductRow");
+  const comparisonBlock = comparisonStart >= 0 && accountingStart > comparisonStart
+    ? source.slice(comparisonStart, accountingStart)
+    : "";
+  const accountingRowBlock = functionBlock(source, "renderAccountingProductRow", "renderDesignerProductRow");
+  const designerRowBlock = functionBlock(source, "renderDesignerProductRow", "renderCombinedProductRow");
+  const combinedRowBlock = functionBlock(source, "renderCombinedProductRow", "renderTrackerTable");
+  const context = {
+    URL,
+    state: { bulkStatusSelectedSkus: new Set(), selectedSku: "" },
+    escapeHtml: (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;"),
+    productRowClass: () => "",
+    renderBulkSelectionCell: () => "<td></td>",
+    renderTableCoverImage: () => "<img>",
+    lineCalc: () => ({
+      saleUnitPrice: 475,
+      purchaseUnitCostUsd: 5.422,
+      purchaseUnitCost: 181.77,
+      shippingUnit: 48.16,
+      shippingTotal: 963.2,
+      profitUnit: 245.07,
+      profitTotal: 4901.4,
+      revenueTotal: 9500,
+      qty: 20,
+    }),
+    fmtMoney: { format: (value) => `THB ${Number(value).toFixed(2)}` },
+    fmtUsd: { format: (value) => `USD ${Number(value).toFixed(2)}` },
+    fmtQty: { format: (value) => String(value) },
+    trackerCostInputValue: () => "5.422",
+    profitToneClass: () => "good-text",
+    renderProfitCell: () => "profit",
+    statusMeta: () => ({ label: "Ready", tone: "green" }),
+    categoryLabel: () => "Wynn's Tools",
+    renderRowPlainVersionControls: () => "versions",
+    renderProductImagePairs: () => "images",
+    assetPill: () => "assets",
+    linkedRows: null,
+    unavailableRows: null,
+  };
+  const script = `${comparisonBlock}\n${accountingRowBlock}\n${designerRowBlock}\n${combinedRowBlock}
+    const linked = {
+      sku: "W0586",
+      name: "Butter Gun",
+      category: "wynns_tools",
+      status: "waiting_ai_images",
+      ktwComparableProductUrl: "https://shop.ktw.co.th/ktw/th/THB/p/I121-GRG015002"
+    };
+    const unavailable = { ...linked, sku: "W4618", ktwComparableProductUrl: "" };
+    linkedRows = [
+      renderAccountingProductRow(linked, 0),
+      renderDesignerProductRow(linked, 0),
+      renderCombinedProductRow(linked, 0)
+    ];
+    unavailableRows = [
+      renderAccountingProductRow(unavailable, 0),
+      renderDesignerProductRow(unavailable, 0),
+      renderCombinedProductRow(unavailable, 0)
+    ];`;
+  vm.runInNewContext(script, context);
+
+  for (const row of context.linkedRows) {
+    assert.match(row, /href="https:\/\/shop\.ktw\.co\.th\/ktw\/th\/THB\/p\/I121-GRG015002"/);
+    assert.match(row, /target="_blank"/);
+    assert.match(row, /rel="noopener noreferrer"/);
+    assert.match(row, /ดูสินค้าเทียบ KTW/);
+  }
+  for (const row of context.unavailableRows) {
+    assert.match(row, /ยังไม่มีลิงก์ KTW/);
+    assert.doesNotMatch(row, /href=/);
+  }
+});
+
 test("product list shows editable product cost, shipping cost, and profit columns", () => {
   const source = readRepoFile("src/plain-design.js");
   const headerBlock = functionBlock(source, "renderProductTableHead", "filteredProducts");

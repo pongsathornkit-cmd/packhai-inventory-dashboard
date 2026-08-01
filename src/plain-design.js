@@ -1369,6 +1369,35 @@
       </div>`;
   }
 
+  function exactKtwProductUrl(value) {
+    try {
+      const url = new URL(String(value || "").trim());
+      const exactProductPath = /\/p\/[^/]+\/?$/i.test(url.pathname);
+      return url.protocol === "https:" && url.hostname.toLowerCase() === "shop.ktw.co.th" && exactProductPath
+        ? url.toString()
+        : "";
+    } catch {
+      return "";
+    }
+  }
+
+  function ktwComparisonUrl(product) {
+    return [
+      product?.ktwComparableProductUrl,
+      product?.plainPriceSourceUrl,
+      product?.ktwPriceSourceUrl,
+      product?.ktwLogistics?.sourceUrl,
+      product?.sourceUrl,
+    ].map(exactKtwProductUrl).find(Boolean) || "";
+  }
+
+  function renderKtwComparisonLink(product) {
+    const url = ktwComparisonUrl(product);
+    if (!url) return `<small class="table-ktw-product-link unavailable">ยังไม่มีลิงก์ KTW</small>`;
+    const model = product?.plainPriceReferenceModel ? ` รุ่น ${product.plainPriceReferenceModel}` : "";
+    return `<a class="table-ktw-product-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="เปิดสินค้าเทียบ KTW ${escapeHtml(product?.sku || "")}${escapeHtml(model)}">ดูสินค้าเทียบ KTW ↗</a>`;
+  }
+
   function renderAccountingProductRow(product, index) {
     const calc = lineCalc(product);
     const bulkChecked = state.bulkStatusSelectedSkus.has(product.sku) ? "checked" : "";
@@ -1381,6 +1410,7 @@
         <td>
           <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+          ${renderKtwComparisonLink(product)}
         </td>
         <td class="num"><strong>${fmtMoney.format(calc.saleUnitPrice)}</strong><small>ราคา Plain</small></td>
         <td class="num">
@@ -1414,6 +1444,7 @@
         <td>
           <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+          ${renderKtwComparisonLink(product)}
           <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))}</small>
           <div class="designer-row-version-slot">${renderRowPlainVersionControls(product)}</div>
         </td>
@@ -1438,6 +1469,7 @@
         <td>
           <span class="table-product-name" title="${escapeHtml(product.name)}">${escapeHtml(product.name)}</span>
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
+          ${renderKtwComparisonLink(product)}
           <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
         </td>
         <td class="num"><strong>${fmtMoney.format(calc.saleUnitPrice)}</strong><small>${escapeHtml(product.plainPriceReferenceModel || "อ้างอิง INGCO")}</small></td>

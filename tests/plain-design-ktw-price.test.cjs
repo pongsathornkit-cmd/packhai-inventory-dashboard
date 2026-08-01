@@ -224,6 +224,37 @@ test("an explicit PLAIN price from an INGCO comparison survives a state reload",
   }
 });
 
+test("an exact KTW comparable product URL survives a state reload independently of the price source", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-comparison-url-"));
+  const files = {
+    seedFile: path.join(dir, "seed.json"),
+    dashboardFile: path.join(dir, "dashboard.json"),
+    ktwLogisticsFile: path.join(dir, "ktw.json"),
+    stateFile: path.join(dir, "state.json"),
+  };
+  fs.writeFileSync(files.seedFile, JSON.stringify({ products: [{ sku: "W0334C", name: "Axe" }] }), "utf8");
+  fs.writeFileSync(files.dashboardFile, JSON.stringify({ rows: [] }), "utf8");
+  fs.writeFileSync(files.ktwLogisticsFile, JSON.stringify({ items: [] }), "utf8");
+
+  try {
+    const updated = updatePlainDesignProduct(files, {
+      sku: "W0334C",
+      saleUnitPrice: 495,
+      plainPriceSourceLabel: "INGCO Lazada",
+      plainPriceSourceUrl: "https://www.lazada.co.th/products/ingco-axe.html",
+      ktwComparableProductUrl: "https://shop.ktw.co.th/ktw/th/THB/p/I121-HAX02012508",
+    });
+    assert.equal(updated.ktwComparableProductUrl, "https://shop.ktw.co.th/ktw/th/THB/p/I121-HAX02012508");
+    assert.equal(updated.plainPriceSourceUrl, "https://www.lazada.co.th/products/ingco-axe.html");
+
+    const reloaded = loadPlainDesignState(files).products[0];
+    assert.equal(reloaded.ktwComparableProductUrl, "https://shop.ktw.co.th/ktw/th/THB/p/I121-HAX02012508");
+    assert.equal(reloaded.plainPriceSourceUrl, "https://www.lazada.co.th/products/ingco-axe.html");
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
 test("stored cleared cost stays zero instead of falling back to the KTW website price", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-cleared-cost-"));
   const files = {

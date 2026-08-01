@@ -50,7 +50,7 @@ test("purchase order table uses the same combined product table layout as the pr
   assert.match(renderBlock, /class="product-table po-table po-product-table combined-mode"/);
   assert.match(renderBlock, /<th>รูปสินค้า<\/th>/);
   assert.match(renderBlock, /<th>ชื่อสินค้า<\/th>/);
-  assert.match(renderBlock, /<th class="num">ราคา KTW<\/th>/);
+  assert.match(renderBlock, /<th class="num">ราคา PLAIN<\/th>/);
   assert.match(renderBlock, /<th class="num">ต้นทุนสินค้า<\/th>/);
   assert.match(renderBlock, /<th class="num">ต้นทุนขนส่ง<\/th>/);
   assert.match(renderBlock, /<th class="num">กำไร<\/th>/);

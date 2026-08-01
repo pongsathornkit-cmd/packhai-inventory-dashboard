@@ -5,7 +5,7 @@ const os = require("os");
 const path = require("path");
 const vm = require("vm");
 
-const { loadPlainDesignState } = require("../scripts/plain-design-core.cjs");
+const { loadPlainDesignState, updatePlainDesignProduct } = require("../scripts/plain-design-core.cjs");
 
 const projectRoot = path.resolve(__dirname, "..");
 
@@ -178,6 +178,47 @@ test("stored edited cost is preserved when it differs from the old KTW website p
   try {
     const state = loadPlainDesignState(files);
     assert.equal(state.products[0].purchaseUnitCost, 120);
+  } finally {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+test("an explicit PLAIN price from an INGCO comparison survives a state reload", () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ingco-price-"));
+  const files = {
+    seedFile: path.join(dir, "seed.json"),
+    dashboardFile: path.join(dir, "dashboard.json"),
+    ktwLogisticsFile: path.join(dir, "ktw.json"),
+    stateFile: path.join(dir, "state.json"),
+  };
+  fs.writeFileSync(files.seedFile, JSON.stringify({ products: [{ sku: "W0586", name: "Puller" }] }), "utf8");
+  fs.writeFileSync(files.dashboardFile, JSON.stringify({ rows: [] }), "utf8");
+  fs.writeFileSync(
+    files.ktwLogisticsFile,
+    JSON.stringify({
+      sourceLabel: "shop.ktw.co.th",
+      items: [{ sku: "W0586", sourceLabel: "shop.ktw.co.th", sourceUrl: "https://shop.ktw.co.th/p/W0586", sourcePrice: 155 }],
+    }),
+    "utf8"
+  );
+
+  try {
+    const updated = updatePlainDesignProduct(files, {
+      sku: "W0586",
+      saleUnitPrice: 590,
+      plainPriceSourceLabel: "INGCO Lazada",
+      plainPriceSourceUrl: "https://www.lazada.co.th/products/ingco-example.html",
+      plainPriceReferenceModel: "HGP08016",
+      plainPriceCapturedAt: "2026-07-29",
+    });
+    assert.equal(updated.saleUnitPrice, 590);
+    assert.equal(updated.ktwPrice, 155);
+
+    const reloaded = loadPlainDesignState(files).products[0];
+    assert.equal(reloaded.saleUnitPrice, 590);
+    assert.equal(reloaded.ktwPrice, 155);
+    assert.equal(reloaded.plainPriceSourceLabel, "INGCO Lazada");
+    assert.equal(reloaded.plainPriceReferenceModel, "HGP08016");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

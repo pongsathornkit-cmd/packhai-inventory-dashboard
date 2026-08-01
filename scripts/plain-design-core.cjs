@@ -13,6 +13,7 @@ const COMMERCIAL_NUMBER_FIELDS = [
   "orderQuantity",
   "purchaseUnitCostUsd",
   "purchaseUnitCost",
+  "saleUnitPrice",
   "widthCm",
   "lengthCm",
   "heightCm",
@@ -22,6 +23,12 @@ const COMMERCIAL_NUMBER_FIELDS = [
 ];
 const COMMERCIAL_BOOLEAN_FIELDS = [
   "purchaseUnitCostCleared",
+];
+const PLAIN_PRICE_TEXT_FIELDS = [
+  "plainPriceSourceLabel",
+  "plainPriceSourceUrl",
+  "plainPriceReferenceModel",
+  "plainPriceCapturedAt",
 ];
 const REDESIGN_STATUS_OPTIONS = [
   { id: "passed", label: "ผ่าน", tone: "green" },
@@ -251,6 +258,11 @@ function storedPurchaseUnitCost(stored, product) {
   return wasDefaultKtwCost ? product.purchaseUnitCost : storedCost;
 }
 
+function storedPlainSaleUnitPrice(stored, product) {
+  const hasPlainPriceSource = PLAIN_PRICE_TEXT_FIELDS.some((field) => String(stored?.[field] || "").trim());
+  return hasPlainPriceSource ? numberValue(stored.saleUnitPrice) : product.saleUnitPrice;
+}
+
 function ktwWebsitePrice(logistics) {
   if (!logistics) return 0;
   const sourceLabel = String(logistics.sourceLabel || "").toLowerCase();
@@ -371,7 +383,11 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       sourceDocument: String(product.sourceDocument || "").trim(),
       purchaseUnitCost: numberValue(product.purchaseUnitCost || ktwPrice),
       purchaseUnitCostCleared: Boolean(product.purchaseUnitCostCleared),
-      saleUnitPrice: ktwPrice,
+      saleUnitPrice: numberValue(product.saleUnitPrice || ktwPrice),
+      plainPriceSourceLabel: String(product.plainPriceSourceLabel || ""),
+      plainPriceSourceUrl: String(product.plainPriceSourceUrl || ""),
+      plainPriceReferenceModel: String(product.plainPriceReferenceModel || ""),
+      plainPriceCapturedAt: String(product.plainPriceCapturedAt || ""),
       widthCm: logisticsValue(product, logistics, "widthCm"),
       lengthCm: logisticsValue(product, logistics, "lengthCm"),
       heightCm: logisticsValue(product, logistics, "heightCm"),
@@ -430,7 +446,11 @@ function mergeStoredState(initialState, storedState) {
           ? numberValue(stored.purchaseUnitCostUsd)
           : product.purchaseUnitCostUsd,
         purchaseUnitCostCleared: Boolean(stored.purchaseUnitCostCleared),
-        saleUnitPrice: product.ktwPrice,
+        saleUnitPrice: storedPlainSaleUnitPrice(stored, product),
+        plainPriceSourceLabel: String(stored.plainPriceSourceLabel || product.plainPriceSourceLabel || ""),
+        plainPriceSourceUrl: String(stored.plainPriceSourceUrl || product.plainPriceSourceUrl || ""),
+        plainPriceReferenceModel: String(stored.plainPriceReferenceModel || product.plainPriceReferenceModel || ""),
+        plainPriceCapturedAt: String(stored.plainPriceCapturedAt || product.plainPriceCapturedAt || ""),
         widthCm: storedOrKtwLogisticsValue(stored, product, "widthCm"),
         lengthCm: storedOrKtwLogisticsValue(stored, product, "lengthCm"),
         heightCm: storedOrKtwLogisticsValue(stored, product, "heightCm"),
@@ -506,6 +526,11 @@ function updatePlainDesignProduct(options, payload) {
         found[field] = Boolean(payload[field]);
       }
     }
+    for (const field of PLAIN_PRICE_TEXT_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(payload, field)) {
+        found[field] = String(payload[field] || "").trim();
+      }
+    }
     found.plainImageVersionSelections = normalizePlainImageVersionSelections(product.plainImageVersionSelections);
     if (Object.prototype.hasOwnProperty.call(payload, "plainImageVersionSelections")) {
       found.plainImageVersionSelections = {
@@ -521,7 +546,6 @@ function updatePlainDesignProduct(options, payload) {
         ? String(payload.cargoType).toUpperCase()
         : product.cargoType;
     }
-    found.saleUnitPrice = found.ktwPrice;
     return found;
   });
   if (!found) throw new Error(`Product ${sku} was not found.`);

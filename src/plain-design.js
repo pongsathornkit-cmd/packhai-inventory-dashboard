@@ -180,7 +180,7 @@
       purchaseUnitCostUsd: numberValue(product.purchaseUnitCostUsd),
       purchaseUnitCost: purchaseUnitCostCleared ? 0 : numberValue(product.purchaseUnitCost || ktwPrice),
       purchaseUnitCostCleared,
-      saleUnitPrice: ktwPrice,
+      saleUnitPrice: numberValue(product.saleUnitPrice || ktwPrice),
       widthCm: numberValue(product.widthCm),
       lengthCm: numberValue(product.lengthCm),
       heightCm: numberValue(product.heightCm),
@@ -1127,7 +1127,7 @@
       ${selectHeader}
       <th>รูปสินค้า</th>
       <th>ชื่อสินค้า</th>
-      <th class="num">ราคา KTW</th>
+      <th class="num">ราคา PLAIN</th>
       <th class="num">ต้นทุนสินค้า</th>
       <th class="num">ต้นทุนขนส่ง</th>
       <th class="num">กำไร</th>
@@ -1440,7 +1440,7 @@
           <small class="table-product-sku">SKU ${escapeHtml(product.sku)}</small>
           <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${fmtUsd.format(calc.purchaseUnitCostUsd)} / ${fmtMoney.format(calc.purchaseUnitCost)}</small>
         </td>
-        <td class="num"><strong>${fmtMoney.format(product.ktwPrice || 0)}</strong></td>
+        <td class="num"><strong>${fmtMoney.format(calc.saleUnitPrice)}</strong><small>${escapeHtml(product.plainPriceReferenceModel || "อ้างอิง INGCO")}</small></td>
         <td class="num">
           <label class="table-cost-editor">
             <span class="table-cost-input-wrap">
@@ -1712,12 +1712,13 @@
   }
 
   function lockedSalePriceField(product) {
-    const source = product.ktwPriceSourceLabel || "shop.ktw.co.th";
+    const source = product.plainPriceSourceLabel || "INGCO comparison";
+    const referenceModel = product.plainPriceReferenceModel ? ` รุ่น ${product.plainPriceReferenceModel}` : "";
     return `
       <label class="field locked-price-field">
         <span>ราคาขาย PLAIN/ชิ้น</span>
-        <input type="text" value="${escapeHtml(fmtMoney.format(product.ktwPrice || 0))}" readonly />
-        <small>ใช้ราคา KTW จาก ${escapeHtml(source)} เท่านั้น</small>
+        <input type="text" value="${escapeHtml(fmtMoney.format(product.saleUnitPrice || product.ktwPrice || 0))}" readonly />
+        <small>อ้างอิง ${escapeHtml(source)}${escapeHtml(referenceModel)}</small>
       </label>`;
   }
 
@@ -2349,7 +2350,7 @@
             <small class="table-product-meta">${escapeHtml(categoryLabel(product.category))} · ${escapeHtml(calc.rate.modeLabel)} | ${escapeHtml(calc.rate.label)} | ฐาน ${calc.chargeBasis}</small>
           </td>
           <td class="num">
-            <strong>${fmtMoney.format(product.ktwPrice || 0)}</strong>
+            <strong>${fmtMoney.format(calc.saleUnitPrice)}</strong>
             <small data-po-cell="revenueTotal">${fmtMoney.format(calc.revenueTotal)} รวม</small>
           </td>
           <td class="num">
@@ -2525,7 +2526,7 @@
                   <th class="row-index">ลำดับ</th>
                   <th>รูปสินค้า</th>
                   <th>ชื่อสินค้า</th>
-                  <th class="num">ราคา KTW</th>
+                  <th class="num">ราคา PLAIN</th>
                   <th class="num">ต้นทุนสินค้า</th>
                   <th class="num">ต้นทุนขนส่ง</th>
                   <th class="num">กำไร</th>

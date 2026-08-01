@@ -1,0 +1,989 @@
+{
+  "sourceFile": "PI 20260731 Pongsathorn CHAISANGUANJIRAKUL.pdf",
+  "sourceCreatedAt": "2026-07-31T16:39:32+07:00",
+  "supplier": "Wynn's tools",
+  "supplierContact": "Lydia kuo +86 13480760917",
+  "customer": "Pongsathorn CHAISANGUANJIRAKUL",
+  "documentDate": "2026-07-31",
+  "currencyColumns": [
+    "RMB",
+    "USD"
+  ],
+  "shippingFeeRmb": null,
+  "shippingFeeUsd": null,
+  "totalRmb": null,
+  "totalUsd": null,
+  "shippingNote": "The PI leaves shipping fee and Total blank.",
+  "items": [
+    {
+      "sku": "W0586",
+      "description": "(W0586) Industrial grade high-grade Butter Gun 600CC",
+      "unitsPerCarton": 10,
+      "quantity": 20,
+      "unitCostRmb": 36.546,
+      "amountRmb": 730.92,
+      "unitCostUsd": 5.422,
+      "amountUsd": 108.44
+    },
+    {
+      "sku": "W0156B",
+      "description": "(W0156B) American Style Glue Sleeve Handle Butter Gun 400G",
+      "unitsPerCarton": 20,
+      "quantity": 20,
+      "unitCostRmb": 32.544,
+      "amountRmb": 650.87,
+      "unitCostUsd": 4.828,
+      "amountUsd": 96.57
+    },
+    {
+      "sku": "W0276",
+      "description": "(W0276) 9-piece set Telecom Screwdriver Type C",
+      "unitsPerCarton": 144,
+      "quantity": 144,
+      "unitCostRmb": 6.009,
+      "amountRmb": 865.33,
+      "unitCostUsd": 0.892,
+      "amountUsd": 128.39
+    },
+    {
+      "sku": "W0486C",
+      "description": "(W0486C) Plastic Handle F Frame 10\"",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 30.138,
+      "amountRmb": 723.32,
+      "unitCostUsd": 4.472,
+      "amountUsd": 107.32
+    },
+    {
+      "sku": "W0486D",
+      "description": "(W0486D) Plastic Handle F Frame 12\"",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 31.475,
+      "amountRmb": 755.4,
+      "unitCostUsd": 4.67,
+      "amountUsd": 112.08
+    },
+    {
+      "sku": "W0486E",
+      "description": "(W0486E) F Frame with Plastic Handle 18\"",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 37.35,
+      "amountRmb": 896.4,
+      "unitCostUsd": 5.542,
+      "amountUsd": 133.0
+    },
+    {
+      "sku": "W0486F",
+      "description": "(W0486F) F Frame with Plastic handle 24\"",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 39.407,
+      "amountRmb": 945.76,
+      "unitCostUsd": 5.847,
+      "amountUsd": 140.32
+    },
+    {
+      "sku": "W0485D",
+      "description": "(W0485D) Heavy Duty F Frame 300X120MM",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 47.063,
+      "amountRmb": 1129.51,
+      "unitCostUsd": 6.983,
+      "amountUsd": 167.58
+    },
+    {
+      "sku": "W0485E",
+      "description": "(W0485E) Heavy Duty F Frame 400X120MM",
+      "unitsPerCarton": 18,
+      "quantity": 18,
+      "unitCostRmb": 51.318,
+      "amountRmb": 923.73,
+      "unitCostUsd": 7.614,
+      "amountUsd": 137.05
+    },
+    {
+      "sku": "W0485F",
+      "description": "(W0485F) Heavy Duty F Frame 500X120MM",
+      "unitsPerCarton": 18,
+      "quantity": 18,
+      "unitCostRmb": 56.274,
+      "amountRmb": 1012.94,
+      "unitCostUsd": 8.349,
+      "amountUsd": 150.29
+    },
+    {
+      "sku": "W0485G",
+      "description": "(W0485G) Heavy Duty F Frame 600X120MM",
+      "unitsPerCarton": 18,
+      "quantity": 18,
+      "unitCostRmb": 60.579,
+      "amountRmb": 1090.42,
+      "unitCostUsd": 8.988,
+      "amountUsd": 161.78
+    },
+    {
+      "sku": "W1008",
+      "description": "(W1008) Folding Saw 8\"",
+      "unitsPerCarton": 48,
+      "quantity": 48,
+      "unitCostRmb": 25.033,
+      "amountRmb": 1201.58,
+      "unitCostUsd": 3.714,
+      "amountUsd": 178.28
+    },
+    {
+      "sku": "W201B",
+      "description": "(W201B) Aluminum plastic pipe cutter plastic handle PVC",
+      "unitsPerCarton": 60,
+      "quantity": 48,
+      "unitCostRmb": 16.622,
+      "amountRmb": 797.87,
+      "unitCostUsd": 2.466,
+      "amountUsd": 118.38
+    },
+    {
+      "sku": "W4618",
+      "description": "(W4618) digital tire pressure gauge",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 43.057,
+      "amountRmb": 1033.36,
+      "unitCostUsd": 6.388,
+      "amountUsd": 153.32
+    },
+    {
+      "sku": "W0475",
+      "description": "(W0475) Multifunctional automatic wire stripper",
+      "unitsPerCarton": 48,
+      "quantity": 48,
+      "unitCostRmb": 21.528,
+      "amountRmb": 1033.36,
+      "unitCostUsd": 3.194,
+      "amountUsd": 153.32
+    },
+    {
+      "sku": "W104A",
+      "description": "（W104A) Single non-replaceable riveting gun 250MM",
+      "unitsPerCarton": 60,
+      "quantity": 24,
+      "unitCostRmb": 22.417,
+      "amountRmb": 538.01,
+      "unitCostUsd": 3.326,
+      "amountUsd": 79.82
+    },
+    {
+      "sku": "W0327A",
+      "description": "(W0327A) Complete Dual-Purpose Mirror 8-piece Set (8-19)",
+      "unitsPerCarton": 18,
+      "quantity": 20,
+      "unitCostRmb": 31.732,
+      "amountRmb": 634.63,
+      "unitCostUsd": 4.708,
+      "amountUsd": 94.16
+    },
+    {
+      "sku": "W0328A",
+      "description": "(W0328A) Complete Set Open Mirror 8pcs (8-24)",
+      "unitsPerCarton": 18,
+      "quantity": 20,
+      "unitCostRmb": 50.487,
+      "amountRmb": 1009.74,
+      "unitCostUsd": 7.491,
+      "amountUsd": 149.81
+    },
+    {
+      "sku": "W0329A",
+      "description": "(W0329A) Complete Set Plum Mirror 8pcs (8-24)",
+      "unitsPerCarton": 12,
+      "quantity": 20,
+      "unitCostRmb": 60.698,
+      "amountRmb": 1213.96,
+      "unitCostUsd": 9.006,
+      "amountUsd": 180.11
+    },
+    {
+      "sku": "W300A",
+      "description": "(W300A) Heavy Duty Pipe Clamp with Sticky Plastic Handle 12\"",
+      "unitsPerCarton": 36,
+      "quantity": 36,
+      "unitCostRmb": 18.12,
+      "amountRmb": 652.31,
+      "unitCostUsd": 2.688,
+      "amountUsd": 96.78
+    },
+    {
+      "sku": "W350A",
+      "description": "(W350A) Heavy Duty Pipe Tongs with Adhesive Plastic Handle 14\"",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 23.026,
+      "amountRmb": 552.62,
+      "unitCostUsd": 3.416,
+      "amountUsd": 81.99
+    },
+    {
+      "sku": "W450A",
+      "description": "(W450A) Heavy Duty Pipe Tongs with Adhesive Plastic Handle 18\"",
+      "unitsPerCarton": 12,
+      "quantity": 12,
+      "unitCostRmb": 32.509,
+      "amountRmb": 390.11,
+      "unitCostUsd": 4.823,
+      "amountUsd": 57.88
+    },
+    {
+      "sku": "W600A",
+      "description": "(W600A) Heavy Duty Pipe Clamp with Adhesive Plastic Handle 24\"",
+      "unitsPerCarton": 10,
+      "quantity": 10,
+      "unitCostRmb": 45.167,
+      "amountRmb": 451.67,
+      "unitCostUsd": 6.701,
+      "amountUsd": 67.01
+    },
+    {
+      "sku": "W900A",
+      "description": "(W900A) Heavy Duty Pipe Tongs with Adhesive Plastic Handle 36\"",
+      "unitsPerCarton": 4,
+      "quantity": 4,
+      "unitCostRmb": 86.34,
+      "amountRmb": 345.36,
+      "unitCostUsd": 12.81,
+      "amountUsd": 51.24
+    },
+    {
+      "sku": "W9910A",
+      "description": "(W9910A) Flat head Hexagon metric extended 9-piece set",
+      "unitsPerCarton": 60,
+      "quantity": 60,
+      "unitCostRmb": 10.107,
+      "amountRmb": 606.44,
+      "unitCostUsd": 1.5,
+      "amountUsd": 89.98
+    },
+    {
+      "sku": "W0198A",
+      "description": "(W0198A) Hexagonal metric extended 9-piece set",
+      "unitsPerCarton": 72,
+      "quantity": 72,
+      "unitCostRmb": 9.464,
+      "amountRmb": 681.4,
+      "unitCostUsd": 1.404,
+      "amountUsd": 101.1
+    },
+    {
+      "sku": "W9913A",
+      "description": "(W9913A) Plum Hexagon extended 9- piece set",
+      "unitsPerCarton": 72,
+      "quantity": 72,
+      "unitCostRmb": 8.212,
+      "amountRmb": 591.23,
+      "unitCostUsd": 1.218,
+      "amountUsd": 87.72
+    },
+    {
+      "sku": "W0475A",
+      "description": "(W0475A) Water pump pliers 10 inches",
+      "unitsPerCarton": 48,
+      "quantity": 48,
+      "unitCostRmb": 15.921,
+      "amountRmb": 764.22,
+      "unitCostUsd": 2.362,
+      "amountUsd": 113.39
+    },
+    {
+      "sku": "W406N",
+      "description": "(W406N) Wire pliers German type 6\"",
+      "unitsPerCarton": 60,
+      "quantity": 120,
+      "unitCostRmb": 10.513,
+      "amountRmb": 1261.6,
+      "unitCostUsd": 1.56,
+      "amountUsd": 187.18
+    },
+    {
+      "sku": "W707N",
+      "description": "(W707N) Wire pliers German style 7\"",
+      "unitsPerCarton": 60,
+      "quantity": 80,
+      "unitCostRmb": 12.317,
+      "amountRmb": 985.38,
+      "unitCostUsd": 1.827,
+      "amountUsd": 146.2
+    },
+    {
+      "sku": "W208N",
+      "description": "(W208N) Wire pliers German Type 8\"",
+      "unitsPerCarton": 60,
+      "quantity": 80,
+      "unitCostRmb": 13.018,
+      "amountRmb": 1041.45,
+      "unitCostUsd": 1.931,
+      "amountUsd": 154.52
+    },
+    {
+      "sku": "W306N",
+      "description": "(W306N) Diagonal Pliers German type 6\"",
+      "unitsPerCarton": 120,
+      "quantity": 120,
+      "unitCostRmb": 9.613,
+      "amountRmb": 1153.6,
+      "unitCostUsd": 1.426,
+      "amountUsd": 171.16
+    },
+    {
+      "sku": "W608N",
+      "description": "(W608N) Diagonal Pliers German Type 8\"",
+      "unitsPerCarton": 60,
+      "quantity": 80,
+      "unitCostRmb": 12.015,
+      "amountRmb": 961.18,
+      "unitCostUsd": 1.783,
+      "amountUsd": 142.61
+    },
+    {
+      "sku": "W0144",
+      "description": "(W0144) Top Cutting Forceps German type 6 inches",
+      "unitsPerCarton": 120,
+      "quantity": 120,
+      "unitCostRmb": 14.818,
+      "amountRmb": 1778.19,
+      "unitCostUsd": 2.199,
+      "amountUsd": 263.83
+    },
+    {
+      "sku": "W0089A",
+      "description": "(W0089A) Cable Tying Pliers 8 inches",
+      "unitsPerCarton": 60,
+      "quantity": 60,
+      "unitCostRmb": 11.444,
+      "amountRmb": 686.64,
+      "unitCostUsd": 1.698,
+      "amountUsd": 101.88
+    },
+    {
+      "sku": "W0117A",
+      "description": "(W0117A) Wire Cutter 14 inches",
+      "unitsPerCarton": 30,
+      "quantity": 30,
+      "unitCostRmb": 31.64,
+      "amountRmb": 949.19,
+      "unitCostUsd": 4.694,
+      "amountUsd": 140.83
+    },
+    {
+      "sku": "W0119A",
+      "description": "(W0119A) Wire Cutter 24 inches",
+      "unitsPerCarton": 10,
+      "quantity": 10,
+      "unitCostRmb": 54.673,
+      "amountRmb": 546.73,
+      "unitCostUsd": 8.112,
+      "amountUsd": 81.12
+    },
+    {
+      "sku": "W0425E",
+      "description": "(W0425E) American Cable Scissors 36\"",
+      "unitsPerCarton": 5,
+      "quantity": 5,
+      "unitCostRmb": 96.926,
+      "amountRmb": 484.63,
+      "unitCostUsd": 14.381,
+      "amountUsd": 71.9
+    },
+    {
+      "sku": "W1110A",
+      "description": "(W1110A) Aviation Scissors 10\" , Straight Nose",
+      "unitsPerCarton": 36,
+      "quantity": 48,
+      "unitCostRmb": 16.523,
+      "amountRmb": 793.09,
+      "unitCostUsd": 2.451,
+      "amountUsd": 117.67
+    },
+    {
+      "sku": "W1110B",
+      "description": "(W1110B) Aviation Scissors10 \", right bend Nose",
+      "unitsPerCarton": 36,
+      "quantity": 48,
+      "unitCostRmb": 16.523,
+      "amountRmb": 793.09,
+      "unitCostUsd": 2.451,
+      "amountUsd": 117.67
+    },
+    {
+      "sku": "W1110C",
+      "description": "(W1110C) Aviation Scissors 10 \", left bend Nose",
+      "unitsPerCarton": 36,
+      "quantity": 36,
+      "unitCostRmb": 16.523,
+      "amountRmb": 594.81,
+      "unitCostUsd": 2.451,
+      "amountUsd": 88.25
+    },
+    {
+      "sku": "W0473D",
+      "description": "(W0473D) Heavy Duty G Frame 4\"",
+      "unitsPerCarton": 36,
+      "quantity": 30,
+      "unitCostRmb": 11.785,
+      "amountRmb": 353.55,
+      "unitCostUsd": 1.749,
+      "amountUsd": 52.46
+    },
+    {
+      "sku": "W0473E",
+      "description": "(W0473E) Heavy Duty G Frame 5\"",
+      "unitsPerCarton": 30,
+      "quantity": 24,
+      "unitCostRmb": 14.52,
+      "amountRmb": 348.47,
+      "unitCostUsd": 2.154,
+      "amountUsd": 51.7
+    },
+    {
+      "sku": "W0473F",
+      "description": "(W0473F) Heavy Duty G Frame 6\"",
+      "unitsPerCarton": 24,
+      "quantity": 48,
+      "unitCostRmb": 18.909,
+      "amountRmb": 907.62,
+      "unitCostUsd": 2.805,
+      "amountUsd": 134.66
+    },
+    {
+      "sku": "W0339E",
+      "description": "(W0339E) 20-inch handboard saw",
+      "unitsPerCarton": 60,
+      "quantity": 48,
+      "unitCostRmb": 9.747,
+      "amountRmb": 467.87,
+      "unitCostUsd": 1.446,
+      "amountUsd": 69.42
+    },
+    {
+      "sku": "WS13B",
+      "description": "(WS13B) hacksaw frame Adjustable",
+      "unitsPerCarton": 24,
+      "quantity": 40,
+      "unitCostRmb": 6.909,
+      "amountRmb": 276.37,
+      "unitCostUsd": 1.025,
+      "amountUsd": 41.0
+    },
+    {
+      "sku": "W2669",
+      "description": "(W2669) Ceiling saw",
+      "unitsPerCarton": 60,
+      "quantity": 60,
+      "unitCostRmb": 10.751,
+      "amountRmb": 645.05,
+      "unitCostUsd": 1.595,
+      "amountUsd": 95.7
+    },
+    {
+      "sku": "W1017B",
+      "description": "(W1017B) Hand and waist saw 350MM",
+      "unitsPerCarton": 120,
+      "quantity": 120,
+      "unitCostRmb": 7.511,
+      "amountRmb": 901.28,
+      "unitCostUsd": 1.114,
+      "amountUsd": 133.72
+    },
+    {
+      "sku": "W0358",
+      "description": "(W0358) High grade telescopic force shear aluminum alloy handle",
+      "unitsPerCarton": 12,
+      "quantity": 12,
+      "unitCostRmb": 51.567,
+      "amountRmb": 618.81,
+      "unitCostUsd": 7.651,
+      "amountUsd": 91.81
+    },
+    {
+      "sku": "W0354C",
+      "description": "（W0354C) Telescopic lawn mower steel pipe handle",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 20.226,
+      "amountRmb": 485.43,
+      "unitCostUsd": 3.001,
+      "amountUsd": 72.02
+    },
+    {
+      "sku": "W0336",
+      "description": "(W0336) Fiber-handled mini axe 1LB",
+      "unitsPerCarton": 36,
+      "quantity": 36,
+      "unitCostRmb": 19.927,
+      "amountRmb": 717.39,
+      "unitCostUsd": 2.957,
+      "amountUsd": 106.44
+    },
+    {
+      "sku": "W0334C",
+      "description": "(W0334C) Axe Fiberglass Handle 3LB",
+      "unitsPerCarton": 12,
+      "quantity": 12,
+      "unitCostRmb": 47.063,
+      "amountRmb": 564.76,
+      "unitCostUsd": 6.983,
+      "amountUsd": 83.79
+    },
+    {
+      "sku": "W4435A",
+      "description": "(W4435A) Fiber handle Meta Head Hammer 1LB",
+      "unitsPerCarton": 36,
+      "quantity": 36,
+      "unitCostRmb": 10.387,
+      "amountRmb": 373.93,
+      "unitCostUsd": 1.541,
+      "amountUsd": 55.48
+    },
+    {
+      "sku": "W4438A",
+      "description": "(W4438A) Fiber Handle Claw Hammer TPR Coated 0.25P",
+      "unitsPerCarton": 48,
+      "quantity": 24,
+      "unitCostRmb": 7.208,
+      "amountRmb": 172.99,
+      "unitCostUsd": 1.069,
+      "amountUsd": 25.67
+    },
+    {
+      "sku": "W4436C",
+      "description": "(W4436C) Pliers Hammer with Fiber Handle 300G",
+      "unitsPerCarton": 36,
+      "quantity": 48,
+      "unitCostRmb": 9.387,
+      "amountRmb": 450.59,
+      "unitCostUsd": 1.393,
+      "amountUsd": 66.85
+    },
+    {
+      "sku": "W0335C",
+      "description": "(W0335C) Octagonal Hammer Glass Fiber Handle 4P",
+      "unitsPerCarton": 12,
+      "quantity": 36,
+      "unitCostRmb": 30.376,
+      "amountRmb": 1093.53,
+      "unitCostUsd": 4.507,
+      "amountUsd": 162.24
+    },
+    {
+      "sku": "W0335G",
+      "description": "(W0335G) Octagonal Hammer Glass Fiber Handle 12P",
+      "unitsPerCarton": 4,
+      "quantity": 12,
+      "unitCostRmb": 97.209,
+      "amountRmb": 1166.51,
+      "unitCostUsd": 14.423,
+      "amountUsd": 173.07
+    },
+    {
+      "sku": "W0082",
+      "description": "(W0082) Mini level 230MM",
+      "unitsPerCarton": 100,
+      "quantity": 240,
+      "unitCostRmb": 4.366,
+      "amountRmb": 1047.89,
+      "unitCostUsd": 0.648,
+      "amountUsd": 155.47
+    },
+    {
+      "sku": "W0093E",
+      "description": "(W0093E) White Aluminum alloy level 800MM",
+      "unitsPerCarton": 50,
+      "quantity": 50,
+      "unitCostRmb": 13.765,
+      "amountRmb": 688.25,
+      "unitCostUsd": 2.042,
+      "amountUsd": 102.11
+    },
+    {
+      "sku": "W0093H",
+      "description": "(W0093H) White Aluminum Alloy level 1500MM",
+      "unitsPerCarton": 50,
+      "quantity": 50,
+      "unitCostRmb": 32.521,
+      "amountRmb": 1626.03,
+      "unitCostUsd": 4.825,
+      "amountUsd": 241.25
+    },
+    {
+      "sku": "W6006",
+      "description": "(W6006) Powder box",
+      "unitsPerCarton": 0,
+      "quantity": 72,
+      "unitCostRmb": 4.807,
+      "amountRmb": 346.08,
+      "unitCostUsd": 0.713,
+      "amountUsd": 51.35
+    },
+    {
+      "sku": "W0665",
+      "description": "(W0665) Flashlight LED",
+      "unitsPerCarton": 144,
+      "quantity": 144,
+      "unitCostRmb": 9.012,
+      "amountRmb": 1297.73,
+      "unitCostUsd": 1.337,
+      "amountUsd": 192.54
+    },
+    {
+      "sku": "W4614",
+      "description": "(W4614) Lithium battery flashlight LED",
+      "unitsPerCarton": 48,
+      "quantity": 24,
+      "unitCostRmb": 38.652,
+      "amountRmb": 927.66,
+      "unitCostUsd": 5.735,
+      "amountUsd": 137.63
+    },
+    {
+      "sku": "W0666",
+      "description": "(W0666) Headlight LED",
+      "unitsPerCarton": 24,
+      "quantity": 72,
+      "unitCostRmb": 17.748,
+      "amountRmb": 1277.87,
+      "unitCostUsd": 2.633,
+      "amountUsd": 189.6
+    },
+    {
+      "sku": "W0632",
+      "description": "(W0632) Multi-functional water gun Section eight",
+      "unitsPerCarton": 72,
+      "quantity": 144,
+      "unitCostRmb": 13.478,
+      "amountRmb": 1940.8,
+      "unitCostUsd": 2.0,
+      "amountUsd": 287.95
+    },
+    {
+      "sku": "W0625D",
+      "description": "(W0625D) Putty Knife Plastic handle 2.5 inches",
+      "unitsPerCarton": 240,
+      "quantity": 240,
+      "unitCostRmb": 2.401,
+      "amountRmb": 576.34,
+      "unitCostUsd": 0.356,
+      "amountUsd": 85.51
+    },
+    {
+      "sku": "W0625E",
+      "description": "(W0625E) Putty Knife Plastic handle 3 inches",
+      "unitsPerCarton": 240,
+      "quantity": 240,
+      "unitCostRmb": 2.505,
+      "amountRmb": 601.16,
+      "unitCostUsd": 0.372,
+      "amountUsd": 89.19
+    },
+    {
+      "sku": "W0625F",
+      "description": "(W0625F) Putty Knife Plastic handle 4\"",
+      "unitsPerCarton": 240,
+      "quantity": 240,
+      "unitCostRmb": 2.685,
+      "amountRmb": 644.36,
+      "unitCostUsd": 0.398,
+      "amountUsd": 95.6
+    },
+    {
+      "sku": "W0625G",
+      "description": "(W0625G) Putty Knife Plastic handle 5\"",
+      "unitsPerCarton": 240,
+      "quantity": 240,
+      "unitCostRmb": 3.003,
+      "amountRmb": 720.65,
+      "unitCostUsd": 0.446,
+      "amountUsd": 106.92
+    },
+    {
+      "sku": "W0625H",
+      "description": "(W0625H) Putty Knife Plastic handle 6\"",
+      "unitsPerCarton": 240,
+      "quantity": 240,
+      "unitCostRmb": 3.305,
+      "amountRmb": 793.27,
+      "unitCostUsd": 0.49,
+      "amountUsd": 117.7
+    },
+    {
+      "sku": "W4528C",
+      "description": "(W4528C) Straight handle circlip ratchet wrench 1/2",
+      "unitsPerCarton": 36,
+      "quantity": 36,
+      "unitCostRmb": 25.033,
+      "amountRmb": 901.18,
+      "unitCostUsd": 3.714,
+      "amountUsd": 133.71
+    },
+    {
+      "sku": "W4528A",
+      "description": "(W4528A) Straight handle circlip ratchet wrench 1/4",
+      "unitsPerCarton": 120,
+      "quantity": 120,
+      "unitCostRmb": 15.822,
+      "amountRmb": 1898.61,
+      "unitCostUsd": 2.347,
+      "amountUsd": 281.69
+    },
+    {
+      "sku": "W0556",
+      "description": "(W0556) 6 PCS high grade telecom lot with plastic handle",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 26.098,
+      "amountRmb": 626.34,
+      "unitCostUsd": 3.872,
+      "amountUsd": 92.93
+    },
+    {
+      "sku": "W3085B",
+      "description": "(W3085B) Strong magnetic dual purpose Screwdriver 6X150MM",
+      "unitsPerCarton": 240,
+      "quantity": 240,
+      "unitCostRmb": 9.073,
+      "amountRmb": 2177.58,
+      "unitCostUsd": 1.346,
+      "amountUsd": 323.08
+    },
+    {
+      "sku": "W0570",
+      "description": "(W0570) Telecom combination Screwdriver Bit 16PC",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 24.298,
+      "amountRmb": 583.14,
+      "unitCostUsd": 3.605,
+      "amountUsd": 86.52
+    },
+    {
+      "sku": "W3475",
+      "description": "(W3475) 32 piece set of telecommunications unit",
+      "unitsPerCarton": 100,
+      "quantity": 100,
+      "unitCostRmb": 11.44,
+      "amountRmb": 1144.02,
+      "unitCostUsd": 1.697,
+      "amountUsd": 169.74
+    },
+    {
+      "sku": "W0183",
+      "description": "(W0183) Test pen with hanging",
+      "unitsPerCarton": 480,
+      "quantity": 480,
+      "unitCostRmb": 1.425,
+      "amountRmb": 683.88,
+      "unitCostUsd": 0.211,
+      "amountUsd": 101.47
+    },
+    {
+      "sku": "WB103",
+      "description": "(WB103) Plastic dust blower with copper tip",
+      "unitsPerCarton": 100,
+      "quantity": 100,
+      "unitCostRmb": 4.454,
+      "amountRmb": 445.43,
+      "unitCostUsd": 0.661,
+      "amountUsd": 66.09
+    },
+    {
+      "sku": "W-77S",
+      "description": "(W-77S) Spray gun lower pot 1000CC 2.5mm",
+      "unitsPerCarton": 20,
+      "quantity": 10,
+      "unitCostRmb": 39.851,
+      "amountRmb": 398.51,
+      "unitCostUsd": 5.913,
+      "amountUsd": 59.13
+    },
+    {
+      "sku": "WS2723C",
+      "description": "(WS2723C) Nitrile Gloves palm Dip 9 inches",
+      "unitsPerCarton": 120,
+      "quantity": 240,
+      "unitCostRmb": 2.053,
+      "amountRmb": 492.69,
+      "unitCostUsd": 0.305,
+      "amountUsd": 73.1
+    },
+    {
+      "sku": "WS2724",
+      "description": "(WS2724) Latex Embossed Gloves palm Dip 9\"",
+      "unitsPerCarton": 120,
+      "quantity": 120,
+      "unitCostRmb": 4.6,
+      "amountRmb": 551.98,
+      "unitCostUsd": 0.682,
+      "amountUsd": 81.9
+    },
+    {
+      "sku": "W0081",
+      "description": "(W0081) Mini level with magnetic",
+      "unitsPerCarton": 100,
+      "quantity": 160,
+      "unitCostRmb": 4.803,
+      "amountRmb": 768.45,
+      "unitCostUsd": 0.713,
+      "amountUsd": 114.01
+    },
+    {
+      "sku": "W201A",
+      "description": "(W201A) PVC aluminum plastic pipe cutter",
+      "unitsPerCarton": 48,
+      "quantity": 48,
+      "unitCostRmb": 14.374,
+      "amountRmb": 689.95,
+      "unitCostUsd": 2.133,
+      "amountUsd": 102.37
+    },
+    {
+      "sku": "W4113",
+      "description": "(W4113) High-end garden shears 8\"",
+      "unitsPerCarton": 0,
+      "quantity": 60,
+      "unitCostRmb": 27.385,
+      "amountRmb": 1643.07,
+      "unitCostUsd": 4.063,
+      "amountUsd": 243.78
+    },
+    {
+      "sku": "W0197",
+      "description": "(W0197) PVC Cutter Fish Type 25MM",
+      "unitsPerCarton": 36,
+      "quantity": 60,
+      "unitCostRmb": 8.679,
+      "amountRmb": 520.73,
+      "unitCostUsd": 1.288,
+      "amountUsd": 77.26
+    },
+    {
+      "sku": "W0130",
+      "description": "(W0130) Grip Pliers Mini 2 pieces pack 5\"",
+      "unitsPerCarton": 144,
+      "quantity": 144,
+      "unitCostRmb": 13.918,
+      "amountRmb": 2004.22,
+      "unitCostUsd": 2.065,
+      "amountUsd": 297.36
+    },
+    {
+      "sku": "W0113",
+      "description": "(W0113) Wire rope shear 235MM",
+      "unitsPerCarton": 60,
+      "quantity": 60,
+      "unitCostRmb": 22.792,
+      "amountRmb": 1367.54,
+      "unitCostUsd": 3.382,
+      "amountUsd": 202.9
+    },
+    {
+      "sku": "W106P",
+      "description": "(W106P) Tip Pliers 6 inches",
+      "unitsPerCarton": 60,
+      "quantity": 120,
+      "unitCostRmb": 10.215,
+      "amountRmb": 1225.75,
+      "unitCostUsd": 1.516,
+      "amountUsd": 181.86
+    },
+    {
+      "sku": "WS863",
+      "description": "(WS863) Cut the branches 9 inches",
+      "unitsPerCarton": 72,
+      "quantity": 72,
+      "unitCostRmb": 13.516,
+      "amountRmb": 973.16,
+      "unitCostUsd": 2.005,
+      "amountUsd": 144.39
+    },
+    {
+      "sku": "W0571",
+      "description": "(W0571) Imperial reamer",
+      "unitsPerCarton": 28,
+      "quantity": 20,
+      "unitCostRmb": 41.272,
+      "amountRmb": 825.44,
+      "unitCostUsd": 6.123,
+      "amountUsd": 122.47
+    },
+    {
+      "sku": "T50",
+      "description": "(T50) pneumatic nailing machine",
+      "unitsPerCarton": 10,
+      "quantity": 10,
+      "unitCostRmb": 120.185,
+      "amountRmb": 1201.85,
+      "unitCostUsd": 17.832,
+      "amountUsd": 178.32
+    },
+    {
+      "sku": "W0558",
+      "description": "(W0558) Nail gun",
+      "unitsPerCarton": 24,
+      "quantity": 24,
+      "unitCostRmb": 22.831,
+      "amountRmb": 547.94,
+      "unitCostUsd": 3.387,
+      "amountUsd": 81.3
+    },
+    {
+      "sku": "W3302",
+      "description": "(W3302) High voltage insulation electrical lot 7 pieces set",
+      "unitsPerCarton": 18,
+      "quantity": 18,
+      "unitCostRmb": 46.722,
+      "amountRmb": 841.0,
+      "unitCostUsd": 6.932,
+      "amountUsd": 124.78
+    },
+    {
+      "sku": "WNS150F",
+      "description": "(WNS150F) Adjustable wrench plastic sleeve handle 6 inches",
+      "unitsPerCarton": 120,
+      "quantity": 120,
+      "unitCostRmb": 12.038,
+      "amountRmb": 1444.52,
+      "unitCostUsd": 1.786,
+      "amountUsd": 214.32
+    },
+    {
+      "sku": "WNS200F",
+      "description": "(WNS200F) Adjustable wrench plastic sleeve handle 8\"",
+      "unitsPerCarton": 60,
+      "quantity": 60,
+      "unitCostRmb": 17.48,
+      "amountRmb": 1048.81,
+      "unitCostUsd": 2.593,
+      "amountUsd": 155.61
+    },
+    {
+      "sku": "WNS250F",
+      "description": "(WNS250F) Adjustable wrench plastic sleeve handle 10\"",
+      "unitsPerCarton": 60,
+      "quantity": 60,
+      "unitCostRmb": 22.36,
+      "amountRmb": 1341.57,
+      "unitCostUsd": 3.317,
+      "amountUsd": 199.05
+    },
+    {
+      "sku": "WNS300F",
+      "description": "(WNS300F) Adjustable wrench with rubber sleeve handle 12\"",
+      "unitsPerCarton": 36,
+      "quantity": 36,
+      "unitCostRmb": 31.077,
+      "amountRmb": 1118.76,
+      "unitCostUsd": 4.611,
+      "amountUsd": 165.99
+    }
+  ]
+}

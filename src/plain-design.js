@@ -1394,8 +1394,10 @@
   function renderKtwComparisonLink(product) {
     const url = ktwComparisonUrl(product);
     if (!url) return `<small class="table-ktw-product-link unavailable">ยังไม่มีลิงก์ KTW</small>`;
-    const model = product?.plainPriceReferenceModel ? ` รุ่น ${product.plainPriceReferenceModel}` : "";
-    return `<a class="table-ktw-product-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="เปิดสินค้าเทียบ KTW ${escapeHtml(product?.sku || "")}${escapeHtml(model)}">ดูสินค้าเทียบ KTW ↗</a>`;
+    const comparableModel = String(product?.ktwComparableProductModel || product?.plainPriceReferenceModel || "").trim();
+    const modelLabel = comparableModel ? ` รุ่น ${comparableModel}` : "";
+    const linkLabel = comparableModel ? `ดูสินค้าเทียบ KTW รุ่น ${comparableModel} ↗` : "ดูสินค้าเทียบ KTW ↗";
+    return `<a class="table-ktw-product-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" aria-label="เปิดสินค้าเทียบ KTW ${escapeHtml(product?.sku || "")}${escapeHtml(modelLabel)}">${escapeHtml(linkLabel)}</a>`;
   }
 
   function renderAccountingProductRow(product, index) {

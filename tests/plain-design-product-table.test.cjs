@@ -100,7 +100,8 @@ test("every product table mode renders an exact KTW comparison link or an unavai
       name: "Butter Gun",
       category: "wynns_tools",
       status: "waiting_ai_images",
-      ktwComparableProductUrl: "https://shop.ktw.co.th/ktw/th/THB/p/I121-GRG015002"
+      ktwComparableProductUrl: "https://shop.ktw.co.th/ktw/th/THB/p/I121-GRG015002",
+      ktwComparableProductModel: "GRG015002"
     };
     const unavailable = { ...linked, sku: "W4618", ktwComparableProductUrl: "" };
     linkedRows = [
@@ -119,6 +120,8 @@ test("every product table mode renders an exact KTW comparison link or an unavai
     assert.match(row, /href="https:\/\/shop\.ktw\.co\.th\/ktw\/th\/THB\/p\/I121-GRG015002"/);
     assert.match(row, /target="_blank"/);
     assert.match(row, /rel="noopener noreferrer"/);
+    assert.match(row, /GRG015002/);
+    assert.match(row, />[^<]*GRG015002[^<]*<\/a>/);
     assert.match(row, /ดูสินค้าเทียบ KTW/);
   }
   for (const row of context.unavailableRows) {

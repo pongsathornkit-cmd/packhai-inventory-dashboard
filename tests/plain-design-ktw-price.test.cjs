@@ -224,7 +224,7 @@ test("an explicit PLAIN price from an INGCO comparison survives a state reload",
   }
 });
 
-test("an exact KTW comparable product URL survives a state reload independently of the price source", () => {
+test("an exact KTW comparable product and model survive a state reload independently of the price source", () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "plain-ktw-comparison-url-"));
   const files = {
     seedFile: path.join(dir, "seed.json"),
@@ -242,14 +242,20 @@ test("an exact KTW comparable product URL survives a state reload independently 
       saleUnitPrice: 495,
       plainPriceSourceLabel: "INGCO Lazada",
       plainPriceSourceUrl: "https://www.lazada.co.th/products/ingco-axe.html",
+      plainPriceReferenceModel: "HAX020125",
       ktwComparableProductUrl: "https://shop.ktw.co.th/ktw/th/THB/p/I121-HAX02012508",
+      ktwComparableProductModel: "HAX02012508",
     });
     assert.equal(updated.ktwComparableProductUrl, "https://shop.ktw.co.th/ktw/th/THB/p/I121-HAX02012508");
+    assert.equal(updated.ktwComparableProductModel, "HAX02012508");
     assert.equal(updated.plainPriceSourceUrl, "https://www.lazada.co.th/products/ingco-axe.html");
+    assert.equal(updated.plainPriceReferenceModel, "HAX020125");
 
     const reloaded = loadPlainDesignState(files).products[0];
     assert.equal(reloaded.ktwComparableProductUrl, "https://shop.ktw.co.th/ktw/th/THB/p/I121-HAX02012508");
+    assert.equal(reloaded.ktwComparableProductModel, "HAX02012508");
     assert.equal(reloaded.plainPriceSourceUrl, "https://www.lazada.co.th/products/ingco-axe.html");
+    assert.equal(reloaded.plainPriceReferenceModel, "HAX020125");
   } finally {
     fs.rmSync(dir, { recursive: true, force: true });
   }

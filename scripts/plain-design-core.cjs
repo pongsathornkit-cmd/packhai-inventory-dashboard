@@ -30,6 +30,7 @@ const PLAIN_PRICE_TEXT_FIELDS = [
   "plainPriceReferenceModel",
   "plainPriceCapturedAt",
   "ktwComparableProductUrl",
+  "ktwComparableProductModel",
 ];
 const REDESIGN_STATUS_OPTIONS = [
   { id: "passed", label: "ผ่าน", tone: "green" },
@@ -390,6 +391,7 @@ function buildPlainDesignInitialState({ seed, dashboard, ktwLogistics }) {
       plainPriceReferenceModel: String(product.plainPriceReferenceModel || ""),
       plainPriceCapturedAt: String(product.plainPriceCapturedAt || ""),
       ktwComparableProductUrl: String(product.ktwComparableProductUrl || logistics?.sourceUrl || ""),
+      ktwComparableProductModel: String(product.ktwComparableProductModel || ""),
       widthCm: logisticsValue(product, logistics, "widthCm"),
       lengthCm: logisticsValue(product, logistics, "lengthCm"),
       heightCm: logisticsValue(product, logistics, "heightCm"),
@@ -454,6 +456,7 @@ function mergeStoredState(initialState, storedState) {
         plainPriceReferenceModel: String(stored.plainPriceReferenceModel || product.plainPriceReferenceModel || ""),
         plainPriceCapturedAt: String(stored.plainPriceCapturedAt || product.plainPriceCapturedAt || ""),
         ktwComparableProductUrl: String(stored.ktwComparableProductUrl || product.ktwComparableProductUrl || ""),
+        ktwComparableProductModel: String(stored.ktwComparableProductModel || product.ktwComparableProductModel || ""),
         widthCm: storedOrKtwLogisticsValue(stored, product, "widthCm"),
         lengthCm: storedOrKtwLogisticsValue(stored, product, "lengthCm"),
         heightCm: storedOrKtwLogisticsValue(stored, product, "heightCm"),

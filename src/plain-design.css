@@ -2987,11 +2987,6 @@ body.image-lightbox-open {
   font-weight: 650;
 }
 
-body.product-form-view .plain-shell {
-  grid-template-columns: minmax(0, 1fr);
-}
-
-body.product-form-view .plain-sidebar,
 body.product-form-view .topbar-actions,
 body.product-form-view .status-filter-control,
 body.product-form-view .clear-filters {

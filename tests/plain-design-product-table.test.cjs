@@ -561,8 +561,9 @@ test("product form opens in Accounting Expert while preserving later valid mode 
   assert.deepEqual(Array.from(context.results), ["accounting", "designer", "combined", "accounting"]);
 });
 
-test("products route activates the full-width form layout without changing purchase-order routing", () => {
+test("products route keeps the left menu visible without changing purchase-order routing", () => {
   const source = readRepoFile("src/plain-design.js");
+  const css = readRepoFile("src/plain-design.css");
   const viewBlock = functionBlock(source, "activePlainHash", "applyReferenceCopy");
   const classes = new Set();
   const elements = {
@@ -590,6 +591,8 @@ test("products route activates the full-width form layout without changing purch
 
   vm.runInNewContext(`${viewBlock}\nsyncActiveView();`, context);
   assert.equal(classes.has("product-form-view"), true);
+  assert.doesNotMatch(css, /body\.product-form-view \.plain-shell/);
+  assert.doesNotMatch(css, /body\.product-form-view \.plain-sidebar\s*,/);
   assert.equal(elements.products.hidden, false);
   assert.equal(elements.plainMainGrid.hidden, false);
   assert.equal(elements["purchase-order"].hidden, true);

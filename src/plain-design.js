@@ -768,6 +768,13 @@
         empty: true,
       };
     }
+    if (!ktwImage.src && plainAsset?.publicUrl) {
+      return {
+        src: plainAsset.publicUrl,
+        alt: plainAsset.fileName || product.name || product.sku || "",
+        mode: "plain",
+      };
+    }
     return ktwImage;
   }
 

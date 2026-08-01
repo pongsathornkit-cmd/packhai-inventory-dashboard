@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("fs");
 const path = require("path");
+const vm = require("node:vm");
 
 const projectRoot = path.resolve(__dirname, "..");
 
@@ -259,6 +260,33 @@ test("Plain Mode shows no table cover image when a product has no Plain image", 
   assert.match(combinedRowBlock, /renderTableCoverImage\(product\)/);
   assert.match(source, /table-product-image-empty/);
   assert.match(css, /\.table-product-image-empty/);
+});
+
+test("KTW Mode falls back to an uploaded product image when the KTW source image is missing", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const coverBlock = functionBlock(source, "tableCoverImageFor", "tableImageGalleryFor");
+  const context = {
+    result: null,
+    state: { productImageMode: "ktw" },
+    product: { sku: "W0586", name: "Butter Gun", sourceImageUrl: "", sourceUrl: "" },
+    ktwImagesFor: () => [],
+    plainImageAssetFor: () => ({
+      publicUrl: "/api/plain-design/assets/W0586/product_images/W0586-PI-20260731.jpg",
+      fileName: "W0586-PI-20260731.jpg",
+    }),
+    assetsFor: () => [],
+  };
+
+  vm.runInNewContext(`${coverBlock}\nresult = tableCoverImageFor(product);`, context);
+
+  assert.deepEqual(
+    { ...context.result },
+    {
+      src: "/api/plain-design/assets/W0586/product_images/W0586-PI-20260731.jpg",
+      alt: "W0586-PI-20260731.jpg",
+      mode: "plain",
+    }
+  );
 });
 
 test("table product cover images open a multi-angle image gallery", () => {

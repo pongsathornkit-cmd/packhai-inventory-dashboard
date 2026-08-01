@@ -45,7 +45,7 @@
     activePurchaseOrderId: localStorage.getItem("plainActivePurchaseOrderId") || "",
     bulkStatusSelectedSkus: new Set(),
     bulkStatusTarget: "",
-    productTableMode: localStorage.getItem("plainProductTableMode") || "combined",
+    productTableMode: initialProductTableMode(localStorage.getItem("plainProductTableModeV2")),
     productImageMode: localStorage.getItem("plainProductImageMode") || "ktw",
     detailPanelCollapsed: localStorage.getItem("plainDetailPanelCollapsed") === "1",
     aiImageRequests: new Map(),
@@ -1064,6 +1064,10 @@
       </section>`;
   }
 
+  function initialProductTableMode(storedMode) {
+    return ["accounting", "designer", "combined"].includes(storedMode) ? storedMode : "accounting";
+  }
+
   function normalizeProductTableMode(mode) {
     return ["accounting", "designer", "combined"].includes(mode) ? mode : "combined";
   }
@@ -1214,11 +1218,12 @@
     const grid = $("plainMainGrid");
     const detail = $("design");
     const expandButton = $("detailPanelExpandButton");
-    const collapsed = Boolean(state.detailPanelCollapsed);
+    const isAccountingForm = activePlainHash() === "#products" && normalizeProductTableMode(state.productTableMode) === "accounting";
+    const collapsed = isAccountingForm || Boolean(state.detailPanelCollapsed);
     grid?.classList.toggle("detail-collapsed", collapsed);
     detail?.setAttribute("aria-hidden", collapsed ? "true" : "false");
     if (expandButton) {
-      expandButton.hidden = !collapsed;
+      expandButton.hidden = !collapsed || isAccountingForm;
       expandButton.setAttribute("aria-expanded", collapsed ? "false" : "true");
     }
   }
@@ -2255,6 +2260,7 @@
   function syncActiveView() {
     const activeHash = activePlainHash();
     const isPurchaseOrderView = activeHash === "#purchase-order";
+    document.body.classList.toggle("product-form-view", !isPurchaseOrderView);
     $("purchase-order").hidden = !isPurchaseOrderView;
     $("products").hidden = isPurchaseOrderView;
     $("plainMainGrid").hidden = isPurchaseOrderView;
@@ -2898,9 +2904,10 @@
       const mode = normalizeProductTableMode(button.dataset.productTableMode);
       if (state.productTableMode === mode) return;
       state.productTableMode = mode;
-      localStorage.setItem("plainProductTableMode", mode);
+      localStorage.setItem("plainProductTableModeV2", mode);
       renderProductTableModeToggle();
       renderProductImageModeToggle();
+      renderDetailPanelShell();
       renderTrackerTable();
     });
     $("productImageModeToggle")?.addEventListener("click", (event) => {

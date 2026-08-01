@@ -438,7 +438,7 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(template, /<span class="table-mode-emoji table-mode-emoji-accounting" aria-hidden="true">฿<\/span>\s*Accounting Expert/);
   assert.match(template, /<span class="table-mode-emoji table-mode-emoji-designer" aria-hidden="true">✎<\/span>\s*Designer Expert/);
   assert.match(template, /Accounting&Design Mode/);
-  assert.match(source, /productTableMode:\s*localStorage\.getItem\("plainProductTableMode"\)\s*\|\|\s*"combined"/);
+  assert.match(source, /productTableMode:\s*initialProductTableMode\(/);
   assert.match(source, /function normalizeProductTableMode/);
   assert.match(source, /function renderProductTableModeToggle/);
   assert.match(source, /if \(normalized === "accounting"\) return 10/);
@@ -466,6 +466,62 @@ test("product list supports Accounting, Designer, and combined table modes", () 
   assert.match(css, /\.table-mode-emoji\s*\{[\s\S]*?background:\s*#efe6dc;[\s\S]*?color:\s*#9f7658;/);
   assert.match(css, /\.product-table-mode-toggle \.table-mode-emoji\s*\{[\s\S]*?color:\s*#9f7658;/);
   assert.match(css, /\.product-table-mode-toggle button\.active \.table-mode-emoji\s*\{[\s\S]*?color:\s*#fff;/);
+});
+
+test("product form opens in Accounting Expert while preserving later valid mode choices", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const modeBlock = functionBlock(source, "initialProductTableMode", "normalizeProductTableMode");
+  const context = { results: null };
+
+  vm.runInNewContext(`${modeBlock}\nresults = [
+    initialProductTableMode(null),
+    initialProductTableMode("designer"),
+    initialProductTableMode("combined"),
+    initialProductTableMode("unknown")
+  ];`, context);
+
+  assert.deepEqual(Array.from(context.results), ["accounting", "designer", "combined", "accounting"]);
+});
+
+test("products route activates the full-width form layout without changing purchase-order routing", () => {
+  const source = readRepoFile("src/plain-design.js");
+  const viewBlock = functionBlock(source, "activePlainHash", "applyReferenceCopy");
+  const classes = new Set();
+  const elements = {
+    "purchase-order": { hidden: false },
+    products: { hidden: false },
+    plainMainGrid: { hidden: false },
+  };
+  const context = {
+    window: { location: { hash: "#products" } },
+    document: {
+      body: {
+        classList: {
+          toggle(name, active) {
+            if (active) classes.add(name);
+            else classes.delete(name);
+          },
+        },
+      },
+      querySelectorAll() {
+        return [];
+      },
+    },
+    $: (id) => elements[id],
+  };
+
+  vm.runInNewContext(`${viewBlock}\nsyncActiveView();`, context);
+  assert.equal(classes.has("product-form-view"), true);
+  assert.equal(elements.products.hidden, false);
+  assert.equal(elements.plainMainGrid.hidden, false);
+  assert.equal(elements["purchase-order"].hidden, true);
+
+  context.window.location.hash = "#purchase-order";
+  vm.runInNewContext("syncActiveView();", context);
+  assert.equal(classes.has("product-form-view"), false);
+  assert.equal(elements.products.hidden, true);
+  assert.equal(elements.plainMainGrid.hidden, true);
+  assert.equal(elements["purchase-order"].hidden, false);
 });
 
 test("Designer Expert can switch and upload Plain product image versions per KTW angle", () => {

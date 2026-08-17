@@ -115,5 +115,21 @@ test("frontend hydrates large Supabase dashboard row chunks", () => {
   assert.match(appSource, /async function\s+hydrateSupabaseDashboardRows/);
   assert.match(appSource, /dashboard_rows_index/);
   assert.match(appSource, /uncollected_stock_rows_index/);
-  assert.match(appSource, /hydrateSupabaseDashboardRows\(payload\)/);
+  assert.match(appSource, /hydrateSupabaseDashboardRows\(payload,\s*\{/);
+  assert.match(appSource, /hydrateRows:\s*options\.hydrateRows \?\? Boolean\(showStatus\)/);
+  assert.match(appSource, /hydrateUncollectedRows:\s*options\.hydrateUncollectedRows \?\? Boolean\(showStatus\)/);
+  assert.match(appSource, /function\s+ensureUncollectedStockRowsLoaded/);
+  assert.match(appSource, /function\s+ensurePlatformPaymentOrdersLoaded/);
+  assert.match(appSource, /platform-payment-orders\.json/);
+});
+
+test("build keeps first-page dashboard payload lightweight", () => {
+  const buildSource = fs.readFileSync(path.join(__dirname, "..", "scripts", "build-dashboard.cjs"), "utf8");
+
+  assert.match(buildSource, /function\s+inlineDashboardPayload/);
+  assert.match(buildSource, /delete payload\.platformPaymentOrders/);
+  assert.match(buildSource, /delete payload\.uncollectedStockDeductions\.rows/);
+  assert.match(buildSource, /JSON\.stringify\(inlineDashboardPayload\(dashboard\)\)/);
+  assert.match(buildSource, /platform-payment-orders\.json/);
+  assert.match(buildSource, /rows:\s*platformPaymentOrders/);
 });

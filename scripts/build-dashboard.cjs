@@ -119,6 +119,43 @@ function readPublicSupabaseConfig() {
   };
 }
 
+function omittedRowsMeta(rows, reason) {
+  return {
+    omittedFromInlinePayload: true,
+    reason,
+    rowCount: Array.isArray(rows) ? rows.length : 0,
+    generatedAt: new Date().toISOString(),
+  };
+}
+
+function inlineDashboardPayload(dashboard) {
+  if (!dashboard || typeof dashboard !== "object") return {};
+  const payload = { ...dashboard };
+  const platformPaymentOrders = Array.isArray(payload.platformPaymentOrders) ? payload.platformPaymentOrders : [];
+  if (platformPaymentOrders.length) {
+    delete payload.platformPaymentOrders;
+    payload.platformPaymentOrdersMeta = omittedRowsMeta(
+      platformPaymentOrders,
+      "Large order-level table is loaded on demand instead of blocking the first page render."
+    );
+  }
+
+  const uncollectedRows = Array.isArray(payload.uncollectedStockDeductions?.rows)
+    ? payload.uncollectedStockDeductions.rows
+    : [];
+  if (uncollectedRows.length) {
+    payload.uncollectedStockDeductions = { ...payload.uncollectedStockDeductions };
+    delete payload.uncollectedStockDeductions.rows;
+    payload.uncollectedStockDeductions.rowsMeta = omittedRowsMeta(
+      uncollectedRows,
+      "Risk-detail rows are hydrated only when the uncollected-stock page is opened."
+    );
+    payload.uncollectedStockRowsMeta = payload.uncollectedStockDeductions.rowsMeta;
+  }
+
+  return payload;
+}
+
 function copyStaticPageAssets(fileNames) {
   for (const fileName of fileNames) {
     fs.copyFileSync(path.join(srcDir, fileName), path.join(distDir, fileName));
@@ -1051,7 +1088,7 @@ function build() {
     `window.__PACKHAI_SYNC_API_BASE__ = ${JSON.stringify(readPublicSyncApiBase())};`,
     `window.__PACKHAI_SUPABASE__ = ${JSON.stringify(readPublicSupabaseConfig())};`,
   ].join("\n");
-  const dataScript = `window.__PACKHAI_DASHBOARD__ = ${JSON.stringify(dashboard)};`;
+  const dataScript = `window.__PACKHAI_DASHBOARD__ = ${JSON.stringify(inlineDashboardPayload(dashboard))};`;
   const html = template
     .replace("/* __INLINE_STYLES__ */", styles)
     .replace("/* __INLINE_DATA__ */", `${configScript}\n${dataScript}`)
@@ -1060,6 +1097,19 @@ function build() {
   fs.writeFileSync(path.join(distDir, "index.html"), html, "utf8");
   writePlainDesignPage(dashboard);
   copyStaticPageAssets(["peak-product-catalog.html", "peak-product-catalog.css", "peak-product-catalog.js"]);
+  fs.writeFileSync(
+    path.join(distDir, "platform-payment-orders.json"),
+    JSON.stringify(
+      {
+        generatedAt: dashboard.metadata?.generatedAt || new Date().toISOString(),
+        rowCount: platformPaymentOrders.length,
+        rows: platformPaymentOrders,
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
   fs.writeFileSync(path.join(distDir, "inventory-valuation-data.json"), JSON.stringify(dashboard, null, 2), "utf8");
   fs.writeFileSync(
     path.join(distDir, "stock-movements.json"),

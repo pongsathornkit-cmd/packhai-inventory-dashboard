@@ -84,5 +84,5 @@ test("dashboard source exposes realtime platform sales UI hooks", () => {
   assert.match(app, /PLATFORM_SALES_REFRESH_MS/);
   assert.match(app, /function\s+renderPlatformSalesDashboard/);
   assert.match(app, /function\s+startPlatformSalesRealtimeRefresh/);
-  assert.match(app, /loadSupabaseDashboardState\(false\)/);
+  assert.match(app, /loadSupabaseDashboardState\(false,\s*\{\s*hydrateRows:\s*false,\s*hydrateUncollectedRows:\s*false\s*\}\)/);
 });

@@ -10,6 +10,8 @@
   let stockMovementLoadState = stockMovementRows.length ? "loaded" : "idle";
   let stockMovementLoadError = "";
   let stockMovementLoadPromise = null;
+  let uncollectedRowsHydrationPromise = null;
+  let platformPaymentOrdersLoadPromise = null;
   const PLATFORM_SALES_REFRESH_MS = 60000;
   let platformSalesRefreshTimer = null;
   let platformSalesLastRefreshAt = "";
@@ -552,11 +554,13 @@
       .flatMap((chunk) => chunk.rows);
   }
 
-  async function hydrateSupabaseDashboardRows(payload) {
+  async function hydrateSupabaseDashboardRows(payload, options = {}) {
     const dashboard = payload?.dashboard;
     if (!dashboard || typeof dashboard !== "object") return;
+    const hydrateRows = options.hydrateRows !== false;
+    const hydrateUncollectedRows = options.hydrateUncollectedRows !== false;
 
-    if (!Array.isArray(dashboard.rows) && dashboard.rowsMeta?.omittedFromSupabaseSnapshot) {
+    if (hydrateRows && !Array.isArray(dashboard.rows) && dashboard.rowsMeta?.omittedFromSupabaseSnapshot) {
       const hydratedRows = await fetchRowsFromSupabaseSnapshotIndex(dashboard.rowsMeta.indexKey || "dashboard_rows_index");
       if (hydratedRows.length || Number(dashboard.rowsMeta.rowCount || 0) === 0) {
         dashboard.rows = hydratedRows;
@@ -569,6 +573,7 @@
       uncollected &&
       typeof uncollected === "object" &&
       !Array.isArray(uncollected.rows) &&
+      hydrateUncollectedRows &&
       uncollectedMeta?.omittedFromSupabaseSnapshot
     ) {
       const hydratedRows = await fetchRowsFromSupabaseSnapshotIndex(
@@ -832,10 +837,13 @@
     return true;
   }
 
-  async function loadSupabaseDashboardState(showStatus = false) {
+  async function loadSupabaseDashboardState(showStatus = false, options = {}) {
     if (!supabaseAppHubConfigured()) return false;
     const payload = await callSupabaseRpc("dashboard_state", {});
-    await hydrateSupabaseDashboardRows(payload);
+    await hydrateSupabaseDashboardRows(payload, {
+      hydrateRows: options.hydrateRows ?? Boolean(showStatus),
+      hydrateUncollectedRows: options.hydrateUncollectedRows ?? Boolean(showStatus),
+    });
     mergeSupabaseDashboardState(payload);
     if (showStatus) {
       renderSyncStatus(
@@ -1937,7 +1945,7 @@
       const button = event.currentTarget;
       button.disabled = true;
       button.textContent = "กำลังโหลดข้อมูล...";
-      loadSupabaseDashboardState(true)
+      loadSupabaseDashboardState(true, { hydrateRows: false, hydrateUncollectedRows: false })
         .catch((error) => {
           renderSyncStatus(
             {
@@ -2227,7 +2235,7 @@
   async function startSync(type) {
     if (!ensureRemoteSyncConfig(type)) {
       if (supabaseAppHubConfigured()) {
-        loadSupabaseDashboardState(true).catch((error) => {
+        loadSupabaseDashboardState(true, { hydrateRows: false, hydrateUncollectedRows: false }).catch((error) => {
           renderSyncStatus(
             {
               ok: false,
@@ -2366,12 +2374,17 @@
     return currentHashRoute() === "delivery-notes";
   }
 
+  function isUncollectedStockRoute() {
+    return currentHashRoute() === "uncollected-stock";
+  }
+
   function updateRouteState() {
     const routeHash = `#${currentHashRoute()}`;
     const expensesPage = isExpenseRoute();
     const inventoryTableRoute = isInventoryTableRoute();
     const alibabaOrderTableRoute = isAlibabaOrderTableRoute();
     const deliveryNoteRoute = isDeliveryNoteRoute();
+    const uncollectedStockRoute = isUncollectedStockRoute();
     const activeRouteHash = alibabaOrderTableRoute ? "#alibaba-order-table" : inventoryTableRoute ? "#inventory-table" : routeHash;
     const finalActiveRouteHash = deliveryNoteRoute ? "#delivery-notes" : activeRouteHash;
     const assistantPage = routeHash === "#ai-command";
@@ -2402,6 +2415,16 @@
       renderDeliveryNotes();
       if (!deliveryNoteState.loaded && !deliveryNoteState.loading) loadDeliveryNotes(false);
       window.requestAnimationFrame(() => $("delivery-notes")?.scrollIntoView({ block: "start" }));
+    }
+    if (uncollectedStockRoute) {
+      ensureUncollectedStockRowsLoaded()
+        .then((loaded) => {
+          if (loaded) renderUncollectedStockDashboard();
+        })
+        .catch(() => {
+          renderUncollectedStockRows();
+        });
+      window.requestAnimationFrame(() => $("uncollected-stock")?.scrollIntoView({ block: "start" }));
     }
     if (expensesPage) {
       if (!expenseState.loaded && !expenseState.loading) loadExpenses(true);
@@ -3509,6 +3532,61 @@
     return Array.isArray(data.platformPaymentOrders) ? data.platformPaymentOrders : [];
   }
 
+  function platformPaymentOrdersOmitted() {
+    return Boolean(data.platformPaymentOrdersMeta?.omittedFromInlinePayload || data.platformPaymentOrdersMeta?.omittedFromSupabaseSnapshot);
+  }
+
+  function platformPaymentOrdersFileUrl() {
+    const version = encodeURIComponent(data.metadata?.generatedAt || Date.now());
+    return `platform-payment-orders.json?v=${version}`;
+  }
+
+  function mergePlatformPaymentOrdersSnapshot(payload) {
+    const orders = Array.isArray(payload?.rows) ? payload.rows : Array.isArray(payload?.orders) ? payload.orders : [];
+    data.platformPaymentOrders = orders;
+    data.platformPaymentOrdersMeta = {
+      ...(data.platformPaymentOrdersMeta || {}),
+      rowCount: orders.length,
+      loadedFromFile: true,
+      omittedFromInlinePayload: false,
+      omittedFromSupabaseSnapshot: false,
+      loadedAt: new Date().toISOString(),
+    };
+    if (!data.summary?.platformPayment && orders.length) {
+      const paymentSummary = buildPlatformPaymentSummaryFromOrders(orders);
+      data.summary = data.summary || {};
+      data.summary.platformPayment = paymentSummary;
+      data.platformPaymentSummary = paymentSummary;
+    }
+    if (!data.platformSalesDashboard && orders.length) {
+      data.platformSalesDashboard = buildPlatformSalesDashboardFromOrders(orders);
+      data.summary = data.summary || {};
+      data.summary.platformSales = data.platformSalesDashboard.summary;
+    }
+    return orders;
+  }
+
+  function ensurePlatformPaymentOrdersLoaded() {
+    if (Array.isArray(data.platformPaymentOrders)) return Promise.resolve(true);
+    if (!platformPaymentOrdersOmitted()) return Promise.resolve(false);
+    if (platformPaymentOrdersLoadPromise) return platformPaymentOrdersLoadPromise;
+    platformPaymentOrdersLoadPromise = fetch(platformPaymentOrdersFileUrl(), { cache: "no-store" })
+      .then((response) => {
+        if (!response.ok) throw new Error(`platform payment orders ${response.status}`);
+        return response.json();
+      })
+      .then((payload) => {
+        mergePlatformPaymentOrdersSnapshot(payload);
+        renderPlatformSalesDashboard();
+        renderPaymentCollectionReport();
+        return true;
+      })
+      .finally(() => {
+        platformPaymentOrdersLoadPromise = null;
+      });
+    return platformPaymentOrdersLoadPromise;
+  }
+
   function platformSalesDateKey(value) {
     const date = new Date(value || 0);
     if (Number.isNaN(date.getTime())) return "";
@@ -3860,7 +3938,33 @@
     if (data.uncollectedStockDeductions?.summary && Array.isArray(data.uncollectedStockDeductions?.rows)) {
       return data.uncollectedStockDeductions;
     }
+    if (data.uncollectedStockDeductions?.summary) {
+      return { ...data.uncollectedStockDeductions, rows: [] };
+    }
     return buildUncollectedStockDeductionsFromMovements([], rows);
+  }
+
+  function uncollectedRowsOmitted() {
+    const report = data.uncollectedStockDeductions;
+    const meta = data.uncollectedStockRowsMeta || report?.rowsMeta;
+    return Boolean(report?.summary && !Array.isArray(report.rows) && (meta?.omittedFromInlinePayload || meta?.omittedFromSupabaseSnapshot));
+  }
+
+  function ensureUncollectedStockRowsLoaded() {
+    if (!uncollectedRowsOmitted() || !supabaseAppHubConfigured()) return Promise.resolve(false);
+    if (uncollectedRowsHydrationPromise) return uncollectedRowsHydrationPromise;
+    uncollectedRowsHydrationPromise = loadSupabaseDashboardState(false, {
+      hydrateRows: false,
+      hydrateUncollectedRows: true,
+    })
+      .catch((error) => {
+        console.warn("Uncollected stock rows hydration failed", error);
+        throw error;
+      })
+      .finally(() => {
+        uncollectedRowsHydrationPromise = null;
+      });
+    return uncollectedRowsHydrationPromise;
   }
 
   function uncollectedReasonLabel(reason) {
@@ -3959,6 +4063,7 @@
     paymentOrderState.page = Math.min(Math.max(1, paymentOrderState.page), maxPage);
     const start = (paymentOrderState.page - 1) * paymentOrderPageSize;
     const pageRows = orders.slice(start, start + paymentOrderPageSize);
+    const omitted = platformPaymentOrdersOmitted() && !orders.length;
 
     body.innerHTML = pageRows.length
       ? pageRows
@@ -3992,6 +4097,8 @@
           </tr>`
           )
           .join("")
+      : omitted
+      ? `<tr><td colspan="6" class="empty-cell">ตารางออเดอร์เต็มถูกพักไว้เพื่อให้หน้าเว็บเปิดเร็วขึ้น ใช้ Dashboard เก็บเงินไม่ได้สำหรับรายการที่ต้องตามยอด หรือกดโหลดตารางเต็มเมื่อต้องการดู/Export</td></tr>`
       : `<tr><td colspan="6" class="empty-cell">ไม่พบออเดอร์ตามตัวกรอง</td></tr>`;
 
     const status = $("paymentOrderTableStatus");
@@ -4003,7 +4110,10 @@
     const subtitle = $("paymentOrderFilterSummary");
     if (subtitle) {
       const allOrders = getPlatformPaymentOrders();
-      subtitle.textContent = `นำเข้ารายการสถานะทั้งหมด ${fmtInt.format(allOrders.length)} ออเดอร์จาก Packhai แล้ว เติมยอดเงินจริงเมื่อพบใน Shopee/Lazada Seller`;
+      const metaCount = data.platformPaymentOrdersMeta?.rowCount || allOrders.length;
+      subtitle.textContent = omitted
+        ? `มีรายการสถานะทั้งหมด ${fmtInt.format(metaCount)} ออเดอร์ แต่ไม่โหลดตารางเต็มในหน้าแรกเพื่อกันเว็บค้าง`
+        : `นำเข้ารายการสถานะทั้งหมด ${fmtInt.format(allOrders.length)} ออเดอร์จาก Packhai แล้ว เติมยอดเงินจริงเมื่อพบใน Shopee/Lazada Seller`;
     }
     const prev = $("prevPaymentOrders");
     const next = $("nextPaymentOrders");
@@ -4086,7 +4196,43 @@
       paymentOrderState.page += 1;
       renderPlatformPaymentOrderRows();
     });
-    $("exportPaymentOrdersCsv")?.addEventListener("click", exportPlatformPaymentOrdersCsv);
+    $("loadPaymentOrdersFull")?.addEventListener("click", (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "กำลังโหลด...";
+      ensurePlatformPaymentOrdersLoaded()
+        .catch((error) => {
+          const body = $("paymentOrderTableBody");
+          if (body) {
+            body.innerHTML = `<tr><td colspan="6" class="empty-cell">โหลดตารางเต็มไม่สำเร็จ: ${escapeHtml(
+              error.message || String(error)
+            )}</td></tr>`;
+          }
+        })
+        .finally(() => {
+          button.disabled = false;
+          button.textContent = "โหลดตารางเต็ม";
+        });
+    });
+    $("exportPaymentOrdersCsv")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      button.textContent = "กำลัง Export...";
+      try {
+        await ensurePlatformPaymentOrdersLoaded();
+        exportPlatformPaymentOrdersCsv();
+      } catch (error) {
+        const body = $("paymentOrderTableBody");
+        if (body) {
+          body.innerHTML = `<tr><td colspan="6" class="empty-cell">Export ไม่สำเร็จ: ${escapeHtml(
+            error.message || String(error)
+          )}</td></tr>`;
+        }
+      } finally {
+        button.disabled = false;
+        button.textContent = "Export ทุกออเดอร์";
+      }
+    });
   }
 
   function readAlibabaReceivingDrafts() {
@@ -6109,7 +6255,7 @@
     refresh.onclick = () => {
       refresh.disabled = true;
       refresh.textContent = "กำลังโหลด...";
-      loadSupabaseDashboardState(true)
+      loadSupabaseDashboardState(true, { hydrateRows: false, hydrateUncollectedRows: false })
         .catch((error) => {
           renderSyncStatus(
             {
@@ -6250,7 +6396,7 @@
     if (platformSalesRefreshTimer || !supabaseAppHubConfigured()) return;
     platformSalesRefreshTimer = window.setInterval(() => {
       if (document.hidden) return;
-      loadSupabaseDashboardState(false).catch((error) => {
+      loadSupabaseDashboardState(false, { hydrateRows: false, hydrateUncollectedRows: false }).catch((error) => {
         console.warn("Realtime platform sales refresh failed", error);
       });
     }, PLATFORM_SALES_REFRESH_MS);
@@ -6343,6 +6489,7 @@
               <option value="missing-seller-data"${paymentOrderState.status === "missing-seller-data" ? " selected" : ""}>รอข้อมูล Seller</option>
               <option value="missing-platform-order-no"${paymentOrderState.status === "missing-platform-order-no" ? " selected" : ""}>ไม่มีเลขออเดอร์</option>
             </select>
+            <button id="loadPaymentOrdersFull" type="button">โหลดตารางเต็ม</button>
             <button id="exportPaymentOrdersCsv" type="button">Export ทุกออเดอร์</button>
           </div>
         </div>
@@ -6381,6 +6528,7 @@
     uncollectedState.page = Math.min(Math.max(1, uncollectedState.page), maxPage);
     const start = (uncollectedState.page - 1) * uncollectedPageSize;
     const pageRows = allRows.slice(start, start + uncollectedPageSize);
+    const omitted = uncollectedRowsOmitted() && !allRows.length;
 
     body.innerHTML = pageRows.length
       ? pageRows
@@ -6419,13 +6567,18 @@
           </tr>`;
           })
           .join("")
+      : omitted
+      ? `<tr><td colspan="6" class="empty-cell">กำลังโหลดรายละเอียดรายการเสี่ยงเมื่อเปิดหน้านี้ เพื่อให้หน้าแรกไม่ค้างจากข้อมูลหลายพันแถว</td></tr>`
       : `<tr><td colspan="6" class="empty-cell">ไม่พบรายการที่ตัด stock แล้วแต่ยังเก็บเงินไม่ได้ตามตัวกรอง</td></tr>`;
 
     const status = $("uncollectedStockTableStatus");
     if (status) {
       const first = allRows.length ? start + 1 : 0;
       const last = Math.min(start + pageRows.length, allRows.length);
-      status.textContent = `แสดง ${fmtInt.format(first)}-${fmtInt.format(last)} จาก ${fmtInt.format(allRows.length)} รายการ`;
+      const meta = data.uncollectedStockRowsMeta || data.uncollectedStockDeductions?.rowsMeta || {};
+      status.textContent = omitted
+        ? `รายละเอียด ${fmtInt.format(meta.rowCount || 0)} รายการจะโหลดเมื่อเปิดหน้านี้`
+        : `แสดง ${fmtInt.format(first)}-${fmtInt.format(last)} จาก ${fmtInt.format(allRows.length)} รายการ`;
     }
     const prev = $("prevUncollectedStock");
     const next = $("nextUncollectedStock");

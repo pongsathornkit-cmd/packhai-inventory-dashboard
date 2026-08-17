@@ -194,7 +194,7 @@ function dashboardSnapshotPayload(dashboard, generatedAt = new Date().toISOStrin
     delete payload.platformPaymentOrders;
     payload.platformPaymentOrdersMeta = {
       omittedFromSupabaseSnapshot: true,
-      reason: "Use the Render-built inline dashboard payload for the full platform order table.",
+      reason: "Use platform-payment-orders.json for the full platform order table on demand.",
       rowCount: platformPaymentOrders.length,
       generatedAt: new Date().toISOString(),
     };
